@@ -1,0 +1,117 @@
+{
+	"L" : {
+		"value" : 1.0,
+		"description" : "Total Population",
+		"type" : "exogenous",
+		"symbol" : "L"
+	},
+	"γ" : {
+		"value" : 0.25,
+		"description" : "Utility Weight of Housing",
+		"type" : "exogenous",
+		"symbol" : "\\gamma"
+	},
+	"σ" : {
+		"value" : 0.99,
+		"description" : "Land-Labor Elasticity of Substitution",
+		"type" : "exogenous",
+		"symbol" : "\\sigma"
+	},
+	"η" : {
+		"value" : 0.0,
+		"description" : "Agglomeration Forces",
+		"type" : "exogenous",
+		"symbol" : "\\eta"
+	},
+	"ν" : {
+		"value" : 0.015,
+		"description" : "Preference Weight for Rural Consumption Good",
+		"type" : "exogenous",
+		"symbol" : "\\nu"
+	},
+	"ϵ" : {
+		"value" : 4.0,
+		"description" : "Housing Supply Elasticity",
+		"type" : "exogenous",
+		"symbol" : "\\epsilon"
+	},
+	"cbar" : {
+		"value" : 0.2,
+		"description" : "Rural Consumption Subsistence Level",
+		"type" : "exogenous",
+		"symbol" : "\\underline{c}"
+	},
+	"sbar" : {
+		"value" : 0.0,
+		"description" : "Negative Urban Subsistence Level",
+		"type" : "exogenous",
+		"symbol" : "\\underline{s}"
+	},
+	"α" : {
+		"value" : 0.75,
+		"description" : "Labor Weight in Rural Production",
+		"type" : "exogenous",
+		"symbol" : "\\alpha"
+	},
+	"λ" : {
+		"value" : 0.0,
+		"description" : "Useless Land",
+		"type" : "exogenous",
+		"symbol" : "\\lambda"
+	},
+	"ψ" : {
+		"value" : 1.0,
+		"description" : "Urban Amenities relative to Rural",
+		"type" : "exogenous",
+		"symbol" : "\\Psi"
+	},
+	"χu" : {
+		"value" : 1.0,
+		"description" : "Construction Cost in Urban Sector",
+		"type" : "exogenous",
+		"symbol" : "\\chi_u"
+	},
+	"χr" : {
+		"value" : 1.0,
+		"description" : "Construction Cost in Rural Sector",
+		"type" : "exogenous",
+		"symbol" : "\\chi_r"
+	},
+	"τ" : {
+		"value" : [1.0],
+		"description" : "Commuting Costs",
+		"type" : "exogenous",
+		"symbol" : "\\tau(l)"
+	},
+	"T" : {
+		"value" : [1855,1870,1885,1900,1915,1930,1945,1960,1975,1990,2005,2020,2035,2050],
+		"description" : "Years",
+		"type" : "exogenous",
+		"symbol" : "\\mathcal{T}"
+	},
+	"Θr" : {
+		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5],
+		"description" : "Set of Rural Productivities",
+		"type" : "exogenous",
+		"symbol" : "\\Theta_r"
+	},
+	"Θu" : {
+		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5],
+		"description" : "Set of Urban Productivities",
+		"type" : "exogenous",
+		"symbol" : "\\Theta_u"
+	},
+	"θr" : {
+		"value" : 0.32,
+		"description" : "Rural Productivity",
+		"type" : "exogenous",
+		"symbol" : "\\theta_r"
+	},
+	"θu" : {
+		"value" : 0.32,
+		"description" : "Urban Productivity",
+		"type" : "exogenous",
+		"symbol" : "\\theta_u"
+	}
+
+}
