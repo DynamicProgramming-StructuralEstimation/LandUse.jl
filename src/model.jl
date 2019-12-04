@@ -12,7 +12,7 @@ mutable struct Model
 	r       :: Float64   # per capita land rental income
 	pr      :: Float64   # relative price of rural good
 	ϕ       :: Float64   # size of the city
-	ur      :: Float64  # net utility rural worker
+	xsr      :: Float64  # excess subsistence rural worker
 	# integration setup
 	inodes   :: Vector{Float64}  # theoretical integration nodes
 	iweights :: Vector{Float64}  # int weights
@@ -37,7 +37,7 @@ mutable struct Model
 		m.r   = NaN
 		m.pr  = NaN
 		m.ϕ   = NaN
-		m.ur  = NaN
+		m.xsr  = NaN
 		m.inodes, m.iweights = gausslegendre(p.int_nodes)
 		m.nodes = zeros(p.int_nodes)
 		icu_input = NaN
@@ -47,6 +47,22 @@ mutable struct Model
 		ir        = NaN
 		return m
 	end
+end
+
+
+function show(io::IO, ::MIME"text/plain", m::Model) 
+    print(io,"LandUse Model:\n")
+    print(io,"m.qr  : $(m.qr ) \n")
+    print(io,"m.Lr  : $(m.Lr ) \n")
+    print(io,"m.Lu  : $(m.Lu ) \n")
+    print(io,"m.wu0 : $(m.wu0) \n")
+    print(io,"m.wr  : $(m.wr ) \n")
+    print(io,"m.Sr  : $(m.Sr ) \n")
+    print(io,"m.Srh : $(m.Srh) \n")
+    print(io,"m.r   : $(m.r  ) \n")
+    print(io,"m.pr  : $(m.pr ) \n")
+    print(io,"m.ϕ   : $(m.ϕ  ) \n")
+    print(io,"m.xsr : $(m.xsr) \n")
 end
 
 
@@ -63,6 +79,12 @@ function integrate!(m::Model,p::Param)
 	m.icu       = sum(m.iweights[i] * cu(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iτ        = sum(m.iweights[i] * τ(m.nodes[i],m.ϕ,p) for i in 1:p.int_nodes)[1]
 	m.ir        = sum(m.iweights[i] * qr(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	@debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ ir=m.ir phi=m.ϕ
+	if m.iDensity < 0
+		println("D = $([D(m.nodes[i],p,m) for i in 1:p.int_nodes])")
+		println("H = $([H(m.nodes[i],p,m) for i in 1:p.int_nodes])")
+		println("h = $([h(m.nodes[i],p,m) for i in 1:p.int_nodes])")
+	end
 end
 
 """
@@ -82,7 +104,7 @@ function update!(m::Model,m0::CD0Model,p::Param)
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
-	m.ur   = ur(p,m)
+	m.xsr   = xsr(p,m)
 	m.Srh  = Srh(p,m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 
@@ -105,7 +127,7 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
-	m.ur   = ur(p,m)
+	m.xsr   = xsr(p,m)
 	m.Srh  = Srh(p,m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 
@@ -124,31 +146,38 @@ wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
 "rural wage from indifference condition at ϕ. Eq (11)"
 wr(Lu::Float64,ϕ::Float64,p::Param) = wu(Lu,ϕ,ϕ,p)
 
-"net utility urban worker"
-uu(l::Float64,p::Param,m::Model) = m.r - m.pr * p.cbar + p.sbar .+ wu(m.Lu,l,m.ϕ,p) 
+"wage at location ``l``"
+w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)
 
-"net utility rural worker"
-ur(p::Param,m::Model) = m.r + wr(m.Lu,m.ϕ,p) - m.pr * p.cbar + p.sbar
+"excess subsistence  urban worker"
+xsu(l::Float64,p::Param,m::Model) = w(m.Lu,l,m.ϕ,p) .+ m.r .- m.pr .* p.cbar .+ p.sbar
+
+"excess subsistence rural worker"
+xsr(p::Param,m::Model) = m.r + wr(m.Lu,m.ϕ,p) - m.pr * p.cbar + p.sbar
 
 "Residential Land in Rural sector"
-Srh(p::Param,m::Model) = m.Lr * (p.γ * m.ur) / ((1.0+p.ϵ) * m.qr)
+Srh(p::Param,m::Model) = m.Lr * (p.γ * m.xsr) / ((1.0+p.ϵ) * m.qr)
 
 "urban good consumption at location ``l``. Equation (8)"
-cu(l::Float64,p::Param,m::Model) = (1.0 - p.γ)*(1.0 - p.ν)*(wu(m.Lu,l,m.ϕ,p) .+ (m.r - m.pr * p.cbar))
+cu(l::Float64,p::Param,m::Model) = (1.0 - p.γ)*(1.0 - p.ν)*(w(m.Lu,l,m.ϕ,p) .+ (m.r - m.pr * p.cbar))
+
+
+"urban good consumption in rural sector. Equation (8)"
+cur(p::Param,m::Model) = cu(m.ϕ,p,m)
 
 "cost of construction at location ``l``"
 cost(l::Float64,p::Param) = p.c0 + p.c1 * l + p.c2 * l^2
 
 
 "house price function at ``l``"
-q(l::Float64,p::Param,m::Model) = m.qr * (uu(l,p,m) / m.ur).^(1.0/p.γ)
+q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
 
 "land price function at ``l``"
 qr(l::Float64,p::Param,m::Model) = H(l,p,m) .* q(l,p,m) / (1.0 + p.ϵ)
 
 
 "housing demand at location ``l``"
-h(l::Float64,p::Param,m::Model) = l >= m.ϕ ? (p.γ / m.qr) * m.ur : (p.γ / m.qr) * m.ur^((p.γ-1)/p.γ) * m.ur^(1/p.γ)
+h(l::Float64,p::Param,m::Model) = l >= m.ϕ ? (p.γ / m.qr) * m.xsr : (p.γ / m.qr) * m.xsr^((p.γ-1)/p.γ) * m.xsr^(1/p.γ)
 
 "housing supply at location ``l``"
 H(l::Float64,p::Param,m::Model) = cost(l,p).^(-p.ϵ) * q(l,p,m).^p.ϵ 
@@ -168,8 +197,14 @@ function solve!(F,x,p::Param,m::Model)
 		F .= PEN
 	else
 		update!(m,p,x)
-		integrate!(m,p)
-		# Eqsys!(F,m,p)
+		if (xsu(0.0,p,m) < 0.0) 
+		# if (xsu(0.0,p,m) < 0.0) || (xsr(p,m) < 0.0)
+			# F .= PEN
+			println("true")
+		else
+			integrate!(m,p)
+			Eqsys!(F,m,p)
+		end
 		# @debug "StructChange! values:" qr=qr Lr=Lr wu wr Sr r F1=F[1] F2=F[2]
 	end
 	
@@ -182,17 +217,25 @@ compute system of equations for general commuting cost case.
 """
 function Eqsys!(F::Vector{Float64},m::Model,p::Param)
 	σ1 = (p.σ-1)/p.σ
-	σ2 = p.σ / (p.σ-1)
-	σ_ = -1.0/p.σ
-	y  = m.qr / p.L  + m.wu * (1.0 - m.τ * m.ϕ * m.Lr / p.L)
+	σ2 = 1.0 / (p.σ-1)
 
-	F[1] = p.α * m.pr * p.θr * (p.α + (1 - p.α) * (m.Sr / m.Lr)^σ1)^σ2 - m.wr  # w-FOC of rural firm
-	F[2] = (1 - p.α) * m.pr * p.θr * (p.α * (m.Sr / m.Lr)^σ1 + (1 - p.α))^σ2 - m.qr  # q-FOC of rural firm
-	# Urban workers = density from 0 to ϕ. this is a closed form expression for this case
-	F[3] = 1.0 + p.τ*m.wu*m.Lu/(p.χu*m.qr) - ((m.wu + m.r- m.pr*p.cbar+p.sbar)/(m.wu*(1-p.τ*m.ϕ)+m.r-m.p1*p.cbar+p.sbar))^(1/p.γ) 
-	# definition of land rentes (equation 20). this is another closed form. 
-	F[4] = m.qr * m.Sr + m.qr * p.χr * m.Srh + p.χu * p.γ * p.qr / (p.τ * (1 + p.γ) * m.wu) * 
-		   (m.uu^(1/p.γ+1)/((m.wu*(1-p.τ*m.ϕ)+m.r-m.pr*p.cbar+p.sbar)^(1/p.γ))-(m.wu*(1-p.τ*m.ϕ)+m.r-m.p1*p.cbar+p.sbar)) - m.r * p.L
-	F[5] = 1.0 - p.λ - m.ϕ - m.Srh - m.Sr   # land market clearing equation (18)
-	# F[6] = 
+	# rural firm w-FOC: equation (2)
+	F[1] = m.wr - p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2  #
+
+	# rural firm q-FOC: equation (3)
+	F[2] = m.qr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2 
+
+	# city size - Urban population relationship: equation (16)
+	F[3] = m.Lu - m.iDensity
+
+	#  total land rent per capita: equation before (19)
+	F[4] = m.r * p.L - m.ir - m.qr * (m.Sr + m.Srh)
+
+	# land market clearing: after equation (18)  
+	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh 
+
+	# urban goods market clearing. equation before (22) but not in per capita terms
+	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
+	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.iτ - wu0(m.Lu, p)*m.Lu
+	
 end

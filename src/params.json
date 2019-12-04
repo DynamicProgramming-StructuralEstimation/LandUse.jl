@@ -59,7 +59,7 @@
 		"type" : "exogenous",
 		"symbol" : "\\lambda"
 	},
-	"ψ" : {
+	"Ψ" : {
 		"value" : 1.0,
 		"description" : "Urban Amenities relative to Rural",
 		"type" : "exogenous",
@@ -78,7 +78,7 @@
 		"symbol" : "\\chi_r"
 	},
 	"τ" : {
-		"value" : [1.0],
+		"value" : 0.5,
 		"description" : "Commuting Costs",
 		"type" : "exogenous",
 		"symbol" : "\\tau(l)"

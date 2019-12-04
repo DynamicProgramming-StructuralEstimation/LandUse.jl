@@ -11,17 +11,16 @@ mutable struct Param
 	θu    :: Float64 # urban sector TFP
 	α     :: Float64 # labor weight on farm sector production function
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
-	τ     :: Vector{Float64} # commuting cost function
+	τ     :: Float64 # commuting cost parameter
 	χr    :: Float64 # "easiness" to convert land into housing in rural sector
 	χu    :: Float64 # "easiness" to convert land into housing in urban sector
 	L     :: Float64 # total population (note: total land normalized to 1)
-	ψ     :: Float64 # urban ammenities relative to rural ammenities (note: creates wedge in urban-rural wage)
 	T     :: Vector{Float64}
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
 	c0    :: Float64  # construction cost function intercept
 	c1    :: Float64  # construction cost function intercept
 	c2    :: Float64  # construction cost function intercept
-	Ψ     :: Float64  # urban ammenities rel to rural
+	Ψ     :: Float64  # urban ammenities rel to rural 
 	int_nodes :: Int  # number of integration nodes
 
 	function Param(;par=Dict())
