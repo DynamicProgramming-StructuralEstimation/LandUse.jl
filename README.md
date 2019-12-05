@@ -1,7 +1,6 @@
 # LandUse
 
-[![Build Status](https://travis-ci.com/floswald/LandUse.jl.svg?branch=master)](https://travis-ci.com/floswald/LandUse.jl)
-
+[![Build Status](https://travis-ci.com/floswald/LandUse.jl.svg?token=yCXmyQ4r4F8RyxxzHZFG&branch=master)](https://travis-ci.com/floswald/LandUse.jl)
 
 ## How to Use this
 
