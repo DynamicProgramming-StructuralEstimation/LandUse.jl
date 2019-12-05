@@ -108,7 +108,7 @@ using Test
 
 		@test m.Sr ≈ 1.0 - m.ϕ - m.Srh
 		@test m.Lu ≈ m.iDensity
-		@test m.qr == (chi(m.ϕ)/(1+p.ϵ)) * m.qbar^(1+p.ϵ)
+		@test m.qr ≈ (chi(m.ϕ)/(1+p.ϵ)) * m.qbar^(1+p.ϵ)
 		@test m.qr ≈ (1-p.α) * m.pr * p.θr * (p.α * (m.Lr / m.Sr)^((p.σ-1)/p.σ) + (1-p.α))^(1/(p.σ-1))
 		@test p.L  ≈ m.Lu + m.Lr
 		@test isapprox(LandUse.utility(1.0,p,m), m.U, atol = tol)
