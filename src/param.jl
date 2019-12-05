@@ -18,8 +18,8 @@ mutable struct Param
 	T     :: Vector{Float64}
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
 	c0    :: Float64  # construction cost function intercept
-	c1    :: Float64  # construction cost function intercept
-	c2    :: Float64  # construction cost function intercept
+	c1    :: Float64  # construction cost function gradient
+	c2    :: Float64  # construction cost function quadratic term
 	Ψ     :: Float64  # urban ammenities rel to rural 
 	int_nodes :: Int  # number of integration nodes
 

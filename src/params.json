@@ -120,13 +120,13 @@
 		"symbol" : "c_0"
 	},
 	"c1" : {
-		"value" : -0.5,
+		"value" : -2.0,
 		"description" : "Linear Coeff of Construction Cost Function",
 		"type" : "exogenous",
 		"symbol" : "c_1"
 	},
 	"c2" : {
-		"value" : 0.0,
+		"value" : 1.0,
 		"description" : "Quadratic Coeff of Construction Cost Function",
 		"type" : "exogenous",
 		"symbol" : "c_2"

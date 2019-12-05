@@ -22,6 +22,7 @@ module LandUse
 
 	function main(;pars=Dict())
 		# generate starting values
+		# p = LandUse.Param()
 		p = LandUse.Param(par=pars)
 		m0 = LandUse.CD0Model(p)
 		StructChange_closure(F,x) = LandUse.StructChange!(F,x,p,m0)
@@ -41,6 +42,9 @@ module LandUse
 		println("Lr = $(res[4])")
 		println("pr = $(res[5])")
 		println("Sr = $(res[6])")
+
+		LandUse.update!(m,p,r.zero)
+		return m
 
 		# 
 	end
