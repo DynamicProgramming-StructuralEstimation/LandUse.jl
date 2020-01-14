@@ -65,20 +65,8 @@
 		"type" : "exogenous",
 		"symbol" : "\\Psi"
 	},
-	"χu" : {
-		"value" : 1.0,
-		"description" : "Construction Cost in Urban Sector",
-		"type" : "exogenous",
-		"symbol" : "\\chi_u"
-	},
-	"χr" : {
-		"value" : 1.0,
-		"description" : "Construction Cost in Rural Sector",
-		"type" : "exogenous",
-		"symbol" : "\\chi_r"
-	},
 	"τ" : {
-		"value" : 0.5,
+		"value" : 0.9,
 		"description" : "Commuting Costs",
 		"type" : "exogenous",
 		"symbol" : "\\tau(l)"
@@ -102,13 +90,13 @@
 		"symbol" : "\\Theta_u"
 	},
 	"θr" : {
-		"value" : 0.32,
+		"value" : 0.52,
 		"description" : "Rural Productivity",
 		"type" : "exogenous",
 		"symbol" : "\\theta_r"
 	},
 	"θu" : {
-		"value" : 0.32,
+		"value" : 0.52,
 		"description" : "Urban Productivity",
 		"type" : "exogenous",
 		"symbol" : "\\theta_u"
@@ -130,6 +118,24 @@
 		"description" : "Quadratic Coeff of Construction Cost Function",
 		"type" : "exogenous",
 		"symbol" : "c_2"
+	},
+	"ϵ0" : {
+		"value" : 0.5,
+		"description" : "Intercept of H Supply Elasticity Function",
+		"type" : "exogenous",
+		"symbol" : "ϵ_0"
+	},
+	"ϵ1" : {
+		"value" : 1.0,
+		"description" : "Linear Coeff of H Supply Elasticity Function",
+		"type" : "exogenous",
+		"symbol" : "ϵ_1"
+	},
+	"ϵ2" : {
+		"value" : -0.05,
+		"description" : "Quadratic Coeff of H Supply Elasticity Function",
+		"type" : "exogenous",
+		"symbol" : "ϵ_2"
 	},
 	"int_nodes" : {
 		"value" : 60,

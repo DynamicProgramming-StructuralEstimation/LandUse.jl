@@ -12,6 +12,8 @@ function plot_static(m::Model,p::Param)
 	push!(plts,plot(lvec,[cu(i,p,m) for i in lvec], title = "cu(l)",leg = false))
 	push!(plts,plot(lvec,[cr(i,p,m) for i in lvec], title = "cr(l)",leg = false))
 	push!(plts,plot(lvec,[cost(i,m.ϕ,p) for i in lvec], title = "cost(l)",leg = false))
+	push!(plts,plot(lvec,[ϵ(i,m.ϕ,p) for i in lvec], title = "epsilon(l)",leg = false))
+	push!(plts,plot(lvec,[χ(i,m.ϕ,p) for i in lvec], title = "chi(l)",leg = false))
 	plot(plts...)
 end
 

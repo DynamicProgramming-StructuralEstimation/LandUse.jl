@@ -13,13 +13,16 @@ mutable struct Param
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
 	τ     :: Float64 # commuting cost parameter
 	χr    :: Float64 # "easiness" to convert land into housing in rural sector
-	χu    :: Float64 # "easiness" to convert land into housing in urban sector
+	# χu    :: Float64 # "easiness" to convert land into housing in center of urban sector
 	L     :: Float64 # total population (note: total land normalized to 1)
 	T     :: Vector{Float64}
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
 	c0    :: Float64  # construction cost function intercept
 	c1    :: Float64  # construction cost function gradient
 	c2    :: Float64  # construction cost function quadratic term
+	ϵ0    :: Float64  # H supply elasticity function intercept
+	ϵ1    :: Float64  # H supply elasticity function gradient
+	ϵ2    :: Float64  # H supply elasticity function quadratic term
 	Ψ     :: Float64  # urban ammenities rel to rural 
 	int_nodes :: Int  # number of integration nodes
 

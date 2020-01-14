@@ -2,8 +2,10 @@
 Model with general commuting cost.
 """
 mutable struct Model
-	qr      :: Float64   # land price in rural sector
-	qbar    :: Float64   # housing price in rural sector
+	ρr      :: Float64   # land price in rural sector
+	qr      :: Float64     # housing price in rural sector
+	ϵr      :: Float64     # housing supply elasticity in rural sector
+	χr      :: Float64     # housing supply shifter in rural sector
 	Lr      :: Float64   # employment in rural sector
 	Lu      :: Float64   # employment in urban sector
 	wu0     :: Float64   # wage in urban sector (at center)
@@ -25,12 +27,14 @@ mutable struct Model
 	iDensity  :: Float64   # ∫ D(l) dl
 	icu       :: Float64   # ∫ cu(l) D(l) dl
 	iτ        :: Float64   # ∫ τ(l) D(l) dl
-	ir        :: Float64   # ∫ qr(l) D(l) dl
+	ir        :: Float64   # ∫ ρ(l) D(l) dl
 	function Model(p::Param)
 		# creates a model fill with NaN
 		m     = new()
+		m.ρr  = NaN
 		m.qr  = NaN
-		m.qbar  = NaN
+		m.ϵr  = NaN
+		m.χr  = NaN
 		m.Lr  = NaN
 		m.Lu  = NaN
 		m.wu0 = NaN
@@ -56,8 +60,10 @@ end
 
 function show(io::IO, ::MIME"text/plain", m::Model) 
     print(io,"LandUse Model:\n")
-    print(io,"    m.qr   : $(m.qr ) \n")
-    print(io,"    m.qbar : $(m.qbar ) \n")
+    print(io,"    m.ρr   : $(m.ρr ) \n")
+    print(io,"    m.qr : $(m.qr ) \n")
+    print(io,"    m.ϵr : $(m.ϵr ) \n")
+    print(io,"    m.χr : $(m.χr ) \n")
     print(io,"    m.Lr   : $(m.Lr ) \n")
     print(io,"    m.Lu   : $(m.Lu ) \n")
     print(io,"    m.wu0  : $(m.wu0) \n")
@@ -84,7 +90,7 @@ function integrate!(m::Model,p::Param)
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],m.ϕ,p) for i in 1:p.int_nodes)[1]
-	m.ir        = (m.ϕ/2) * sum(m.iweights[i] * qr(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.ir        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	@debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ ir=m.ir phi=m.ϕ
 	if m.iDensity < 0
 		println("D = $([D(m.nodes[i],p,m) for i in 1:p.int_nodes])")
@@ -99,7 +105,7 @@ end
 update the general model from a CD0Model
 """
 function update!(m::Model,m0::CD0Model,p::Param)
-	m.qr   = m0.qr
+	m.ρr   = m0.ρr
 	m.ϕ    = m0.ϕ 
 	m.r    = m0.r 
 	m.Lr   = m0.Lr
@@ -110,8 +116,8 @@ function update!(m::Model,m0::CD0Model,p::Param)
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
-	m.xsr   = xsr(p,m)
-	m.qbar = qbar(p,m)
+	m.xsr  = xsr(p,m)
+	m.qr   = qr(p,m)
 	m.Srh  = Srh(p,m)
 	m.U    = utility(0.0,p,m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
@@ -124,7 +130,7 @@ end
 update the general model from a parameter vector
 """
 function update!(m::Model,p::Param,x::Vector{Float64})
-	m.qr   = x[1]   # land price in rural sector
+	m.ρr   = x[1]   # land price in rural sector
 	m.ϕ    = x[2]   # city size
 	m.r    = x[3]   # land rent
 	m.Lr   = x[4]   # employment in rural sector
@@ -135,14 +141,17 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
-	m.xsr   = xsr(p,m)
+	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
-	m.qbar = qbar(p,m)
+	m.qr   = qr(p,m)
 	m.U    = utility(0.0,p,m)
+	m.ϵr   = ϵ(m.ϕ,m.ϕ,p)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 
 end
 
+
+γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
 "commuting cost"
 τ(x::Float64,ϕ::Float64,p::Param) = x > ϕ ? 0.0 : p.τ * x
@@ -159,14 +168,14 @@ wr(Lu::Float64,ϕ::Float64,p::Param) = wu(Lu,ϕ,ϕ,p)
 "wage at location ``l``"
 w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)
 
-"excess subsistence  urban worker"
+"excess subsistence urban worker"
 xsu(l::Float64,p::Param,m::Model) = w(m.Lu,l,m.ϕ,p) .+ m.r .- m.pr .* p.cbar .+ p.sbar
 
 "excess subsistence rural worker"
 xsr(p::Param,m::Model) = m.r + wr(m.Lu,m.ϕ,p) - m.pr * p.cbar + p.sbar
 
-"Residential Land in Rural sector"
-Srh(p::Param,m::Model) = m.Lr * (p.γ * m.xsr) / ((1.0+p.ϵ) * m.qr)
+"Residential Land in Rural sector. equation (20)"
+Srh(p::Param,m::Model) = m.Lr * (γ(m.ϕ,m.ϕ,p) * m.xsr) / ((1.0+ϵ(m.ϕ,m.ϕ,p)) * m.ρr)
 
 "optimal urban good consumption at location ``l``. Equation (8)"
 cu(l::Float64,p::Param,m::Model) = (1.0 - p.γ)*(1.0 - p.ν)*(w(m.Lu,l,m.ϕ,p) .+ (m.r - m.pr * p.cbar))
@@ -181,28 +190,35 @@ cur(p::Param,m::Model) = cu(m.ϕ,p,m)
 cfun(l::Float64,p::Param) = p.c0 + p.c1 * l + p.c2 * l^2
 cost(l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? cfun(ϕ,p) : cfun(l,p)
 
+"housing supply shifter at ``l``"
+χ(l::Float64,ϕ::Float64,p::Param) = (1.0 / cost(l,ϕ,p))^ϵ(l,ϕ,p)
 
-"house price function at ``l``"
-q(l::Float64,p::Param,m::Model) = m.qbar * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
+"housing supply elasticity at ``l``"
+ϵ(l::Float64,ϕ::Float64,p::Param) = l <= ϕ ? p.ϵ0 + p.ϵ1 * l + p.ϵ2 * l^2 : p.ϵ0 + p.ϵ1 * ϕ + p.ϵ2 * ϕ^2
+
+"house price function at ``l``. equation (12)"
+q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
 
 "land price function at ``l``. equation (15)"
-qr(l::Float64,p::Param,m::Model) = H(l,p,m) .* q(l,p,m) / (1.0 + p.ϵ)
+# ρ(l::Float64,p::Param,m::Model) = H(l,p,m) .* q(l,p,m) / (1.0 + p.ϵ)
+ρ(l::Float64,p::Param,m::Model) = (χ(l,p,m) .* q(l,p,m).^(1.0 + ϵ(l,ϕ,p))) / (1.0 + ϵ(l,ϕ,p))
 
 "rural house price from land price"
-qbar(p::Param,m::Model) = ( (1+p.ϵ) * m.qr * cfun(m.ϕ,p)^p.ϵ )^(1.0/(1+p.ϵ))
+qr(p::Param,m::Model) = ( (1+p.ϵ) * m.ρr * cfun(m.ϕ,p)^p.ϵ ) ^(1.0/(1+p.ϵ))
+
 
 
 "housing demand at location ``l``"
-h(l::Float64,p::Param,m::Model) = (p.γ / m.qbar) * xsu(l,p,m)^((p.γ-1)/p.γ) * m.xsr^(1/p.γ)
+h(l::Float64,p::Param,m::Model) = (p.γ / m.qr) * xsu(l,p,m)^((p.γ-1)/p.γ) * m.xsr^(1/p.γ)
 
 "housing supply at location ``l``"
-H(l::Float64,p::Param,m::Model) = cost(l,m.ϕ,p).^(-p.ϵ) * q(l,p,m).^p.ϵ 
+H(l::Float64,p::Param,m::Model) = χ(l,p,m) * q(l,p,m).^ϵ(l,ϕ,p)
 
 "Population Density at location ``l``"
 D(l::Float64,p::Param,m::Model) = H(l,p,m) / h(l,p,m)
 
 "Amount of Urban Good (numeraire) required to build housing at ``l``"
-cu_input(l::Float64,p::Param,m::Model) = p.ϵ / (1+p.ϵ) .* q(l,p,m) .* H(l,p,m)
+cu_input(l::Float64,p::Param,m::Model) = ϵ(l,ϕ,p) / (1+ϵ(l,ϕ,p)) .* q(l,p,m) .* H(l,p,m)
 
 "Utility function equation (5)"
 utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) * (cu(l,p,m))^((1-p.ν) * (1-p.γ)) * h(l,p,m)^p.γ
@@ -242,13 +258,13 @@ function Eqsys!(F::Vector{Float64},m::Model,p::Param)
 	F[1] = m.wr - p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2  #
 
 	# rural firm q-FOC: equation (3)
-	F[2] = m.qr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2 
+	F[2] = m.ρr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2 
 
 	# city size - Urban population relationship: equation (16)
 	F[3] = m.Lu - m.iDensity
 
 	#  total land rent per capita: equation before (19)
-	F[4] = m.r * p.L - m.ir - m.qr * (1 - m.ϕ)
+	F[4] = m.r * p.L - m.ir - m.ρr * (1 - m.ϕ)
 
 	# land market clearing: after equation (18)  
 	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh 
@@ -258,3 +274,4 @@ function Eqsys!(F::Vector{Float64},m::Model,p::Param)
 	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.iτ - wu0(m.Lu, p)*m.Lu
 	
 end
+

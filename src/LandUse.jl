@@ -33,8 +33,8 @@ module LandUse
 		# use m0 values as starting values
 		m = LandUse.Model(p)
 		LandUse.update!(m,m0,p)
-		# plot_static(m,p)
-		(p,m)
+		plot_static(m,p)
+		# (p,m)
 	end
 
 
