@@ -81,7 +81,7 @@ using Test
 		@test LandUse.h(1.0,p,m) ≈  p.γ * (m.wr + m.r - m.pr * p.cbar) / m.qr
 
 		# equation (17)
-		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r - m.pr * p.cbar))
+		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r - m.pr * p.cbar))
 
 		# do integration
 		# LandUse.integrate!(m,p)
