@@ -106,7 +106,8 @@ using Test
 
 		@test m.Sr ≈ 1.0 - m.ϕ - m.Srh
 		@test m.Lu ≈ m.iDensity
-		@test m.ρr ≈ (LandUse.χ(1,m.ϕ,p)/(1+ϵ(1,m.ϕ,p))) * m.qr^(1+ϵ(1,m.ϕ,p))
+		@test m.ϵr == LandUse.ϵ(1.0,m.ϕ,p)
+		@test m.ρr ≈ (LandUse.χ(1.0,m.ϕ,p)/(1+LandUse.ϵ(1.0,m.ϕ,p))) * m.qr^(1+LandUse.ϵ(1.0,m.ϕ,p))
 		@test m.ρr ≈ (1-p.α) * m.pr * p.θr * (p.α * (m.Lr / m.Sr)^((p.σ-1)/p.σ) + (1-p.α))^(1/(p.σ-1))
 		@test p.L  ≈ m.Lu + m.Lr
 		@test isapprox(LandUse.utility(1.0,p,m), m.U, atol = tol)
