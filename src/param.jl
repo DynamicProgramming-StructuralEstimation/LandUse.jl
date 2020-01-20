@@ -1,6 +1,6 @@
 mutable struct Param
 	γ     :: Float64 # housing weight
-	ϵ     :: Float64 # housing supply elasticity
+	# ϵ     :: Float64 # housing supply elasticity
 	η     :: Float64 # agglomeration forces
 	ν     :: Float64 # weight of rural good consumption on consumption composite
 	cbar  :: Float64 # agr cons subsistence level (0.14 for thailand)

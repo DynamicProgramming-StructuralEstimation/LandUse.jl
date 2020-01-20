@@ -36,7 +36,7 @@ module LandUse
 		m = LandUse.Model(p)
 		LandUse.update!(m,m0,p)
 		F_closure(F,x) = LandUse.solve!(F,x,p,m)
-		r = LandUse.nlsolve(F_closure,[m.qr;m.ϕ;m.r;m.Lr;m.pr;m.Sr],iterations = 1000)
+		r = LandUse.nlsolve(F_closure,[m.ρr;m.ϕ;m.r;m.Lr;m.pr;m.Sr],iterations = 1000)
 		plot_static(m,p)
 		# (p,m)
 	end
