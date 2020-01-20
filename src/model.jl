@@ -62,7 +62,7 @@ mutable struct Model
 end
 
 
-function show(io::IO, ::MIME"text/plain", m::Model) 
+function show(io::IO, ::MIME"text/plain", m::Model)
     print(io,"LandUse Model:\n")
     print(io,"    m.ρr   : $(m.ρr ) \n")
     print(io,"    m.qr : $(m.qr ) \n")
@@ -85,11 +85,11 @@ end
 """
 	integrate!(m::Model,p::Param)
 
-could be made much faster by filling a matrix col-wise with integration nodes and 
+could be made much faster by filling a matrix col-wise with integration nodes and
 doing a matmul on it? have to allocate memory though.
 """
 function integrate!(m::Model,p::Param)
-	
+
 	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
@@ -110,8 +110,8 @@ update the general model from a CD0Model
 """
 function update!(m::Model,m0::CD0Model,p::Param)
 	m.ρr   = m0.ρr
-	m.ϕ    = m0.ϕ 
-	m.r    = m0.r 
+	m.ϕ    = m0.ϕ
+	m.r    = m0.r
 	m.Lr   = m0.Lr
 	m.pr   = m0.pr
 	m.Sr   = m0.Sr
@@ -124,6 +124,9 @@ function update!(m::Model,m0::CD0Model,p::Param)
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
+	while xsr(p,m) < m.wr
+		m.r += 0.05
+	end
 	m.xsr  = xsr(p,m)
 	m.qr   = qr(p,m)
 	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
@@ -165,8 +168,9 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 	m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )
 	m.U    = all( (m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) ) ? utility(0.0,p,m) : NaN
 	if !all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) )
-		@warn "current model produces negative consumption"
+	println("neg cons")
 	end
+	display(m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 
 end
@@ -245,12 +249,21 @@ cu_input(l::Float64,p::Param,m::Model) = ϵ(l,m.ϕ,p) / (1+ϵ(l,m.ϕ,p)) .* q(l,
 utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) * (cu(l,p,m))^((1-p.ν) * (1-p.γ)) * h(l,p,m)^p.γ
 
 """
-	Solves the General Case Model 
+	Solves the General Case Model
 """
 function solve!(F,x,p::Param,m::Model)
-
+println("next iteration")
 	if any(x .< 0)
 		F .= PEN
+		println("penalizing neg inputs")
+	elseif m.xsr < 0
+		# m.r + wr(m.Lu,m.ϕ,p) - m.pr * p.cbar + p.sbar < 0
+		# that means that the price of rural good is chosen too high.
+		# imply that this way overshoots the first two equations
+		# F[1] = -PEN
+		# F[2] = -PEN
+		F .= PEN
+		println("penalizing neg cons")
 	else
 		# @debug "l=0" cr=cr(0.0,p,m)-p.cbar cu=cu(0.0,p,m) h=h(0.0,p,m)
 		# @debug "l=1" cr=cr(1.0,p,m)-p.cbar cu=cu(1.0,p,m) h=h(1.0,p,m)
@@ -264,7 +277,7 @@ function solve!(F,x,p::Param,m::Model)
 			Eqsys!(F,m,p)
 		end
 	end
-	
+
 end
 
 """
@@ -280,7 +293,7 @@ function Eqsys!(F::Vector{Float64},m::Model,p::Param)
 	F[1] = m.wr - p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2  #
 
 	# rural firm q-FOC: equation (3)
-	F[2] = m.ρr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2 
+	F[2] = m.ρr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
 
 	# city size - Urban population relationship: equation (16)
 	F[3] = m.Lu - m.iDensity
@@ -288,12 +301,11 @@ function Eqsys!(F::Vector{Float64},m::Model,p::Param)
 	#  total land rent per capita: equation before (19)
 	F[4] = m.r * p.L - m.ir - m.ρr * (1 - m.ϕ)
 
-	# land market clearing: after equation (18)  
-	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh 
+	# land market clearing: after equation (18)
+	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh
 
 	# urban goods market clearing. equation before (22) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
 	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.iτ - wu0(m.Lu, p)*m.Lu
-	
-end
 
+end

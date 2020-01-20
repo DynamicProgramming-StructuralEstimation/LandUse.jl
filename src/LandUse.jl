@@ -6,7 +6,7 @@ module LandUse
 	using LaTeXStrings
 	using Interact
 
-	const PEN = 10000.0  # penalty for nl solver
+	const PEN = 100.0  # penalty for nl solver
 
 	import Base.show
 
@@ -36,7 +36,13 @@ module LandUse
 		m = LandUse.Model(p)
 		LandUse.update!(m,m0,p)
 		F_closure(F,x) = LandUse.solve!(F,x,p,m)
-		r = LandUse.nlsolve(F_closure,[m.ρr;m.ϕ;m.r;m.Lr;m.pr;m.Sr],iterations = 1000)
+		# r = LandUse.nlsolve(F_closure,[m.ρr;m.ϕ;m.r;m.Lr;m.pr;m.Sr],iterations = 2)
+		r = LandUse.mcpsolve(F_closure,[0.01,0.01,0.01,0.01,0.01,0.01], [1.0,1.0,1.0,1.0,100.0,1.0],[m.ρr;m.ϕ;m.r;m.Lr;m.pr;m.Sr],iterations = 1000)
+		println(r)
+		if !converged(r)
+			@warn("model has not converged!")
+		end
+		# print(r)
 		plot_static(m,p)
 		# (p,m)
 	end
