@@ -17,6 +17,8 @@ mutable struct Model
 	ϕ       :: Float64   # size of the city
 	xsr      :: Float64  # excess subsistence rural worker
 	U        :: Float64  # common utility level
+	cr01     :: Tuple{Float64,Float64}  # consumption at locations 0 and 1. temps to check.
+	cu01     :: Tuple{Float64,Float64} # consumption at locations 0 and 1. temps to check.
 	# integration setup
 	inodes   :: Vector{Float64}  # theoretical integration nodes
 	iweights :: Vector{Float64}  # int weights
@@ -46,6 +48,8 @@ mutable struct Model
 		m.ϕ   = NaN
 		m.xsr  = NaN
 		m.U    = NaN
+		m.cr01    = (NaN,NaN)
+		m.cu01    = (NaN,NaN)
 		m.inodes, m.iweights = gausslegendre(p.int_nodes)
 		m.nodes = zeros(p.int_nodes)
 		icu_input = NaN
@@ -58,7 +62,7 @@ mutable struct Model
 end
 
 
-function show(io::IO, ::MIME"text/plain", m::Model) 
+function show(io::IO, ::MIME"text/plain", m::Model)
     print(io,"LandUse Model:\n")
     print(io,"    m.ρr   : $(m.ρr ) \n")
     print(io,"    m.qr : $(m.qr ) \n")
@@ -81,17 +85,18 @@ end
 """
 	integrate!(m::Model,p::Param)
 
-could be made much faster by filling a matrix col-wise with integration nodes and 
+could be made much faster by filling a matrix col-wise with integration nodes and
 doing a matmul on it? have to allocate memory though.
 """
 function integrate!(m::Model,p::Param)
-	
+
 	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	# m.icr       = (m.ϕ/2) * sum(m.iweights[i] * cr(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],m.ϕ,p) for i in 1:p.int_nodes)[1]
 	m.ir        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	@debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ ir=m.ir phi=m.ϕ
+	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ ir=m.ir phi=m.ϕ
 	if m.iDensity < 0
 		println("D = $([D(m.nodes[i],p,m) for i in 1:p.int_nodes])")
 		println("H = $([H(m.nodes[i],p,m) for i in 1:p.int_nodes])")
@@ -106,8 +111,8 @@ update the general model from a CD0Model
 """
 function update!(m::Model,m0::CD0Model,p::Param)
 	m.ρr   = m0.ρr
-	m.ϕ    = m0.ϕ 
-	m.r    = m0.r 
+	m.ϕ    = m0.ϕ
+	m.r    = m0.r
 	m.Lr   = m0.Lr
 	m.pr   = m0.pr
 	m.Sr   = m0.Sr
@@ -118,6 +123,11 @@ function update!(m::Model,m0::CD0Model,p::Param)
 	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
 	m.xsr  = xsr(p,m)
 	m.qr   = qr(p,m)
+	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
+	m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )
+	if !all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) )
+		@warn "current model produces negative consumption"
+	end
 	m.Srh  = Srh(p,m)
 	m.U    = utility(0.0,p,m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
@@ -144,7 +154,10 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
 	m.qr   = qr(p,m)
-	m.U    = utility(0.0,p,m)
+	# compute consumption at locations 0 and 1 to check both positive in both sectors.
+	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
+	m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )
+	m.U    = all( (m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) ) ? utility(0.0,p,m) : NaN
 	m.ϵr   = ϵ(m.ϕ,m.ϕ,p)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 
@@ -201,10 +214,10 @@ q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
 
 "land price function at ``l``. equation (15)"
 # ρ(l::Float64,p::Param,m::Model) = H(l,p,m) .* q(l,p,m) / (1.0 + p.ϵ)
-ρ(l::Float64,p::Param,m::Model) = (χ(l,p,m) .* q(l,p,m).^(1.0 + ϵ(l,ϕ,p))) / (1.0 + ϵ(l,ϕ,p))
+ρ(l::Float64,p::Param,m::Model) = (χ(l,m.ϕ,p) .* q(l,p,m).^(1.0 + ϵ(l,m.ϕ,p))) / (1.0 + ϵ(l,m.ϕ,p))
 
 "rural house price from land price"
-qr(p::Param,m::Model) = ( (1+p.ϵ) * m.ρr * cfun(m.ϕ,p)^p.ϵ ) ^(1.0/(1+p.ϵ))
+qr(p::Param,m::Model) = ( (1+ϵ(1.0,m.ϕ,p)) * m.ρr * cfun(m.ϕ,p)^ϵ(1.0,m.ϕ,p) ) ^(1.0/(1+ϵ(1.0,m.ϕ,p)))
 
 
 
@@ -212,37 +225,38 @@ qr(p::Param,m::Model) = ( (1+p.ϵ) * m.ρr * cfun(m.ϕ,p)^p.ϵ ) ^(1.0/(1+p.ϵ))
 h(l::Float64,p::Param,m::Model) = (p.γ / m.qr) * xsu(l,p,m)^((p.γ-1)/p.γ) * m.xsr^(1/p.γ)
 
 "housing supply at location ``l``"
-H(l::Float64,p::Param,m::Model) = χ(l,p,m) * q(l,p,m).^ϵ(l,ϕ,p)
+H(l::Float64,p::Param,m::Model) = χ(l,m.ϕ,p) * q(l,p,m).^ϵ(l,m.ϕ,p)
 
 "Population Density at location ``l``"
 D(l::Float64,p::Param,m::Model) = H(l,p,m) / h(l,p,m)
 
 "Amount of Urban Good (numeraire) required to build housing at ``l``"
-cu_input(l::Float64,p::Param,m::Model) = ϵ(l,ϕ,p) / (1+ϵ(l,ϕ,p)) .* q(l,p,m) .* H(l,p,m)
+cu_input(l::Float64,p::Param,m::Model) = ϵ(l,m.ϕ,p) / (1+ϵ(l,m.ϕ,p)) .* q(l,p,m) .* H(l,p,m)
 
 "Utility function equation (5)"
 utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) * (cu(l,p,m))^((1-p.ν) * (1-p.γ)) * h(l,p,m)^p.γ
 
 """
-	Solves the General Case Model 
+	Solves the General Case Model
 """
 function solve!(F,x,p::Param,m::Model)
 
 	if any(x .< 0)
 		F .= PEN
 	else
+		# @debug "l=0" cr=cr(0.0,p,m)-p.cbar cu=cu(0.0,p,m) h=h(0.0,p,m)
+		# @debug "l=1" cr=cr(1.0,p,m)-p.cbar cu=cu(1.0,p,m) h=h(1.0,p,m)
 		update!(m,p,x)
-		if (xsu(0.0,p,m) < 0.0) 
-		# if (xsu(0.0,p,m) < 0.0) || (xsr(p,m) < 0.0)
-			# F .= PEN
-			println("true")
+
+		# if negative consumption in either sector
+		if isnan(m.U)
+			F .= PEN
 		else
 			integrate!(m,p)
 			Eqsys!(F,m,p)
 		end
-		# @debug "StructChange! values:" qr=qr Lr=Lr wu wr Sr r F1=F[1] F2=F[2]
 	end
-	
+
 end
 
 """
@@ -258,7 +272,7 @@ function Eqsys!(F::Vector{Float64},m::Model,p::Param)
 	F[1] = m.wr - p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2  #
 
 	# rural firm q-FOC: equation (3)
-	F[2] = m.ρr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2 
+	F[2] = m.ρr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
 
 	# city size - Urban population relationship: equation (16)
 	F[3] = m.Lu - m.iDensity
@@ -266,12 +280,15 @@ function Eqsys!(F::Vector{Float64},m::Model,p::Param)
 	#  total land rent per capita: equation before (19)
 	F[4] = m.r * p.L - m.ir - m.ρr * (1 - m.ϕ)
 
-	# land market clearing: after equation (18)  
-	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh 
+	# land market clearing: after equation (18)
+	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh
 
 	# urban goods market clearing. equation before (22) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
 	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.iτ - wu0(m.Lu, p)*m.Lu
-	
-end
 
+	# rural goods market clearing
+	# add equation before 25
+	# F[7] = p.r * m.cr -
+
+end
