@@ -66,8 +66,8 @@
 		"symbol" : "\\tau(l)"
 	},
 	"T" : {
-		"value" : [1855,1870,1885,1900,1915,1930,1945,1960,1975,1990,2005,2020,2035,2050],
-		"description" : "Years",
+		"value" : [1855,15,2050],
+		"description" : "Start year, increments, end year",
 		"type" : "exogenous",
 		"symbol" : "\\mathcal{T}"
 	},
@@ -84,13 +84,13 @@
 		"symbol" : "\\Theta_u"
 	},
 	"θr" : {
-		"value" : 0.42,
+		"value" : 0.32,
 		"description" : "Rural Productivity",
 		"type" : "exogenous",
 		"symbol" : "\\theta_r"
 	},
 	"θu" : {
-		"value" : 0.5,
+		"value" : 0.32,
 		"description" : "Urban Productivity",
 		"type" : "exogenous",
 		"symbol" : "\\theta_u"
@@ -113,23 +113,17 @@
 		"type" : "exogenous",
 		"symbol" : "c_2"
 	},
-	"ϵ0" : {
+	"ϵr" : {
 		"value" : 4.0,
-		"description" : "Intercept of H Supply Elasticity Function",
+		"description" : "H Supply Elasticity Function in Rural sector",
 		"type" : "exogenous",
-		"symbol" : "ϵ_0"
+		"symbol" : "ϵ_r"
 	},
-	"ϵ1" : {
-		"value" : 0.0,
-		"description" : "Linear Coeff of H Supply Elasticity Function",
+	"ϵs" : {
+		"value" : 1.0,
+		"description" : "Slope Coeff in Elasticity Function",
 		"type" : "exogenous",
-		"symbol" : "ϵ_1"
-	},
-	"ϵ2" : {
-		"value" : 0.0,
-		"description" : "Quadratic Coeff of H Supply Elasticity Function",
-		"type" : "exogenous",
-		"symbol" : "ϵ_2"
+		"symbol" : "ϵ_s"
 	},
 	"int_nodes" : {
 		"value" : 60,

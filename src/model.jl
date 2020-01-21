@@ -4,7 +4,6 @@ Model with general commuting cost.
 mutable struct Model
 	ρr      :: Float64   # land price in rural sector
 	qr      :: Float64     # housing price in rural sector
-	ϵr      :: Float64     # housing supply elasticity in rural sector
 	χr      :: Float64     # housing supply shifter in rural sector
 	Lr      :: Float64   # employment in rural sector
 	Lu      :: Float64   # employment in urban sector
@@ -66,7 +65,6 @@ function show(io::IO, ::MIME"text/plain", m::Model)
     print(io,"LandUse Model:\n")
     print(io,"    m.ρr   : $(m.ρr ) \n")
     print(io,"    m.qr : $(m.qr ) \n")
-    print(io,"    m.ϵr : $(m.ϵr ) \n")
     print(io,"    m.χr : $(m.χr ) \n")
     print(io,"    m.Lr   : $(m.Lr ) \n")
     print(io,"    m.Lu   : $(m.Lu ) \n")
@@ -117,7 +115,6 @@ function update!(m::Model,m0::CD0Model,p::Param)
 	m.Sr   = m0.Sr
 
 	# update params
-	m.ϵr   = ϵ(1.0,m.ϕ,p)
 
 
 	# update equations
@@ -154,7 +151,7 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 	m.Sr   = x[6]   # amount of land used in rural production
 
 	# update params (in case we get the initial model from somewhere else than a CD0Model)
-	m.ϵr   = ϵ(1.0,m.ϕ,p)
+	# m.ϵr   = ϵ(1.0,m.ϕ,p)
 
 	# update equations
 	m.Lu   = p.L - m.Lr   # employment in urban sector
@@ -175,6 +172,12 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 
 end
 
+
+
+
+
+
+# Component Functions
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
@@ -219,7 +222,7 @@ cost(l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? cfun(ϕ,p) : cfun(l,p)
 χ(l::Float64,ϕ::Float64,p::Param) = (1.0 / cost(l,ϕ,p))^ϵ(l,ϕ,p)
 
 "housing supply elasticity at ``l``"
-ϵ(l::Float64,ϕ::Float64,p::Param) = l <= ϕ ? p.ϵ0 + p.ϵ1 * l + p.ϵ2 * l^2 : p.ϵ0 + p.ϵ1 * ϕ + p.ϵ2 * ϕ^2
+ϵ(l::Float64,ϕ::Float64,p::Param) = p.ϵr * exp(-p.ϵs * max(ϕ-l,0.0))
 
 "house price function at ``l``. equation (12)"
 q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
