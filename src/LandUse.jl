@@ -4,8 +4,9 @@ module LandUse
 	using FastGaussQuadrature
 	using Plots
 	using LaTeXStrings
+	using Interact
 
-	const PEN = 10000.0  # penalty for nl solver
+	const PEN = 100.0  # penalty for nl solver
 
 	import Base.show
 
@@ -13,6 +14,7 @@ module LandUse
 	include("structchange.jl")
 	include("model.jl")
 	include("plotter.jl")
+	include("interact.jl")
 
 	export Param, Model, CD0Model, StructChange!, solve!, update!
 
@@ -23,8 +25,8 @@ module LandUse
 		r = nlsolve(StructChange_closure, [1; 0.5])
 	end
 
-	function model()
-		p = LandUse.Param()
+	function model(;pars=Dict())
+		p = LandUse.Param(par=pars)
 		m0 = LandUse.CD0Model(p)
 		StructChange_closure(F,x) = LandUse.StructChange!(F,x,p,m0)
 		r0 = LandUse.nlsolve(StructChange_closure, [1; 0.5])
@@ -33,6 +35,14 @@ module LandUse
 		# use m0 values as starting values
 		m = LandUse.Model(p)
 		LandUse.update!(m,m0,p)
+		F_closure(F,x) = LandUse.solve!(F,x,p,m)
+		# r = LandUse.nlsolve(F_closure,[m.ρr;m.ϕ;m.r;m.Lr;m.pr;m.Sr],iterations = 2)
+		r = LandUse.mcpsolve(F_closure,[0.01,0.01,0.01,0.01,0.01,0.01], [1.0,1.0,1.0,1.0,100.0,1.0],[m.ρr;m.ϕ;m.r;m.Lr;m.pr;m.Sr],iterations = 1000)
+		println(r)
+		if !converged(r)
+			@warn("model has not converged!")
+		end
+		# print(r)
 		plot_static(m,p)
 		# (p,m)
 	end
@@ -64,10 +74,14 @@ module LandUse
 		LandUse.update!(m,p,r.zero)
 		return m
 
-		# 
+		#
 	end
 
-	
+
+
+
+
+
 
 
 
