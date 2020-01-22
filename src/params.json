@@ -117,19 +117,31 @@
 		"value" : 4.0,
 		"description" : "H Supply Elasticity Function in Rural sector",
 		"type" : "exogenous",
-		"symbol" : "ϵ_r"
+		"symbol" : "\\epsilon_r"
 	},
 	"ϵs" : {
-		"value" : 1.0,
-		"description" : "Slope Coeff in Elasticity Function",
+		"value" : 2.0,
+		"description" : "Current Slope Coeff in Elasticity Function",
 		"type" : "exogenous",
-		"symbol" : "ϵ_s"
+		"symbol" : "\\epsilon_s"
+	},
+	"ϵsmax" : {
+		"value" : 2.0,
+		"description" : "Maximal Slope Coeff in Elasticity Function",
+		"type" : "exogenous",
+		"symbol" : "\\epsilon_s^*"
+	},
+	"ϵnsteps" : {
+		"value" : 10,
+		"description" : "Number of steps in elasticity search",
+		"type" : "exogenous",
+		"symbol" : "n_\\epsilon"
 	},
 	"int_nodes" : {
 		"value" : 60,
 		"description" : "Number of Integration Nodes",
 		"type" : "exogenous",
-		"symbol" : "N_I"
+		"symbol" : "n_I"
 	}
 
 }

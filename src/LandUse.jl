@@ -56,10 +56,15 @@ module LandUse
 		# (p,m)
 	end
 
-	"function to generate starting values for all years"
+	"""
+		get_starts()
+
+	Generate starting values for all years.
+	"""
 	function get_starts()
 		# 1. initialize parameter
 		p = Param()
+		fm = LandUse.FModel(p)  # create a fixed elasticity model
 		startvals = Vector{Float64}[]  # an empty array of vectors
 
 		# 2. For each time period
@@ -74,22 +79,20 @@ module LandUse
 				m0 = LandUse.CD0Model(p)
 				r0 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0), [1; 0.5])
 				LandUse.update!(m0,p,r0.zero...)
-				x00 = [m.ρr; 0.00005; m.r; m.Lr; m.pr; m.Sr]   # set very small city!
+				x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
 
 				# 4. solve general model with fixed elasticity starting from x00
 				# --> closed form solutions for integrals
 				# --> produces starting value x0
-				m1 = LandUse.FModel(p)  # create a fited elasticity model
-				r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m1),x0,iterations = 1000)
+				r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 1000)
 				if converged(r1)
 					push!(startvals, r1.zero)
 				else
 					error("CD0Model not converged")
 				end
 
-				LandUse.update!(m1,m0,p)
 			else  # in other years just start at previous solution
-				r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m1),startvals[it-1],iterations = 1000)
+				r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),startvals[it-1],iterations = 1000)
 				if converged(r1)
 					push!(startvals, r1.zero)
 				else
@@ -98,71 +101,83 @@ module LandUse
 			end
 		end
 		return startvals
-	end
-
-	
-
-
-
-			# 5. solve general model with fixed elasticity from x0
-			# overwrite x0 with results
-			# store this x0 somewhere indexed by the current index for theta, i
-
-		# end i
-
 
 	end
 
-	function main()
 
+	"""
+		adapt_ϵ(x0::Vector{Float64})
+
+	Adaptively increase slope coefficient ``s`` in elasticity of housing supply function [`ϵ`](@ref).
+	Starts from the first period solution of [`FModel`](@ref).
+	"""
+	function adapt_ϵ(x0::Vector{Float64})
+
+		p = Param()
+		m = Model(p)
+
+		startvals = Vector{Float64}[]  # an empty array of vectors
+		push!(startvals, x0)  # put 1860 solution for flat epsilon function
+
+		# range of elasticity slope values
+		ϵs = range(0,stop = p.ϵsmax, length = p.ϵnsteps)
+
+		for (i,ϵ) in enumerate(ϵs)
+			setfield!(p, :ϵs, ϵ)  # set current value for elaticity function slope
+
+			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m),startvals[i],iterations = 1000)
+			if converged(r1)
+				push!(startvals, r1.zero)
+			else
+				error("adaptive search not converged for ϵ = $ϵ")
+			end
+		end
+		return startvals
+	end
+
+	function run()
+
+		x0 = get_starts()   # a T-array of starting vectors
+
+		x1 = adapt_ϵ(x0[1])  # adaptive search for higher epsilon in first period only
+
+		x = get_solutions(x1[end])  # get general model solutions
+
+	end
+
+
+	"""
+		get_solutions()
+
+	Compute general model solutions for all years. Starts from solution
+	obtained for `t=1` and desired slope on elasticity function via [`adapt_ϵ`](@ref)
+	"""
+	function get_solutions(x0::Vector{Float64})
 		# 1. initialize parameter
+		p = LandUse.Param()
+		m = LandUse.Model(p)  # create a general elasticity model
+		sols = Vector{Float64}[]  # an empty array of vectors
+		push!(sols, x0)  # first solution is obtained via `adapt_ϵ`
 
-		# 2. For each value i of θ
+		# 2. For all periods starting at 2
+		for it in 2:length(p.T)
+			LandUse.setperiod!(p, it)   # set period on param to it
 
-			# if first value of θ
-				# 3. solve structural change model without space
-				# --> use solution to that system, but replace ϕ with something very small.
-				# --> starting value x00
-
-				# 4. solve general model with fixed elasticity from x00
-				# --> closed form solutions for integrals
-				# --> starting value x0
-			# end if
-
-			# 5. solve general model with fixed elasticity from x0
-			# overwrite x0 with results
-			# store this x0 somewhere indexed by the current index for theta, i
-
-		# end i
-
-		# 6. For each value i of θ
-
-			# if i == 1
-
-				# adaptive search for increasing slope in epsilon function
-				# desired final slope is ϵtarget
-				# this finds a feasible solution at 1860 values
-
-				# for each ϵ in range(0,stop = ϵtarget, length = 10)
-					# if first value
-						# resolve general model with zero slope in epsilon. starting value x0[1] from above
-						# i.e. you take the values for 1860
-						# store as x 
-					# else (remaining values)
-						# solve general model with current epsilon slope but starting from previous solution in x 
-						# then store solution in x 
-					# end if 
-				# end adaptive loop for ϵ
-
-			# else (later periods)
-
-				# solve general model with final desired slope on epsilon function
-				# each time taking the solution of the previous iteration, x, as the starting value.
-				# save solution in a suitable spot.
-
-		# end i
-
+			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m),
+				                                        sols[it-1],iterations = 1000)
+			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
+			# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01], 
+			# 	                                        [Inf,1.0,Inf,1.0,Inf,1.0],
+			# 	                                        sols[it-1],iterations = 1000)
+			if converged(r1)
+				push!(sols, r1.zero)
+			else
+				error("General Model not converged in period $it")
+			end
+		end
+		return sols
 	end
+
 
 
 	function main2(;pars=Dict())

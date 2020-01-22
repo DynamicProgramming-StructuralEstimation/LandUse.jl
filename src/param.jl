@@ -1,7 +1,9 @@
 mutable struct Param
 	γ     :: Float64 # housing weight
 	ϵr     :: Float64 # housing supply elasticity in rural sector
-	ϵs    :: Float64  # slope of elasticity function
+	ϵs    :: Float64  # current slope of elasticity function
+	ϵsmax :: Float64  # max slope of elasticity function
+	ϵnsteps :: Int  # num steps in elasticity search
 	η     :: Float64 # agglomeration forces
 	ν     :: Float64 # weight of rural good consumption on consumption composite
 	cbar  :: Float64 # agr cons subsistence level (0.14 for thailand)
@@ -58,27 +60,29 @@ end
 
 function show(io::IO, ::MIME"text/plain", p::Param)
     print(io,"LandUse Param:\n")
-	print(io,"      γ    : $(p.γ   )\n")
-	print(io,"      ϵr   : $(p.ϵr  )\n")
-	print(io,"      ϵs   : $(p.ϵs  )\n")
-	print(io,"      η    : $(p.η   )\n")
-	print(io,"      ν    : $(p.ν   )\n")
-	print(io,"      cbar : $(p.cbar)\n")
-	print(io,"      sbar : $(p.sbar)\n")
-	print(io,"      θr   : $(p.θr  )\n")
-	print(io,"      θu   : $(p.θu  )\n")
-	print(io,"      α    : $(p.α   )\n")
-	print(io,"      λ    : $(p.λ   )\n")
-	print(io,"      τ    : $(p.τ   )\n")
-	print(io,"      χr   : $(p.χr  )\n")
-	print(io,"      L    : $(p.L   )\n")
-	print(io,"      T    : $(p.T   )\n")
-	print(io,"      t    : $(p.t   )\n")
-	print(io,"      σ    : $(p.σ   )\n")
-	print(io,"      c0   : $(p.c0  )\n")
-	print(io,"      c1   : $(p.c1  )\n")
-	print(io,"      c2   : $(p.c2  )\n")
-	print(io,"      Ψ    : $(p.Ψ   )\n")
+	print(io,"      γ       : $(p.γ   )\n")
+	print(io,"      ϵr      : $(p.ϵr  )\n")
+	print(io,"      ϵs      : $(p.ϵs  )\n")
+	print(io,"      ϵsmax   : $(p.ϵsmax  )\n")
+	print(io,"      ϵnsteps : $(p.ϵnsteps  )\n")
+	print(io,"      η       : $(p.η   )\n")
+	print(io,"      ν       : $(p.ν   )\n")
+	print(io,"      cbar    : $(p.cbar)\n")
+	print(io,"      sbar    : $(p.sbar)\n")
+	print(io,"      θr      : $(p.θr  )\n")
+	print(io,"      θu      : $(p.θu  )\n")
+	print(io,"      α       : $(p.α   )\n")
+	print(io,"      λ       : $(p.λ   )\n")
+	print(io,"      τ       : $(p.τ   )\n")
+	print(io,"      χr      : $(p.χr  )\n")
+	print(io,"      L       : $(p.L   )\n")
+	print(io,"      T       : $(p.T   )\n")
+	print(io,"      t       : $(p.t   )\n")
+	print(io,"      σ       : $(p.σ   )\n")
+	print(io,"      c0      : $(p.c0  )\n")
+	print(io,"      c1      : $(p.c1  )\n")
+	print(io,"      c2      : $(p.c2  )\n")
+	print(io,"      Ψ       : $(p.Ψ   )\n")
 end
 
 function setperiod!(p::Param,i::Int)
@@ -88,16 +92,24 @@ function setperiod!(p::Param,i::Int)
 end
 
 
-ϵfun(d,s,ϕ,ϵtarget) = ϵtarget * exp(-s * max(ϕ-d,0.0))
+# ϵfun(d,s,ϕ,ϵtarget) = ϵtarget * exp(-s * max(ϕ-d,0.0))
+function ϵfun_tmp(d,s,ϕ,p::Param)
+	setfield!(p, :ϵs, s)
+	ϵ(d,ϕ,p)
+end
+
+
 
 
 function plot_ϵfun(;ϕ = 0.7,ϵtarget = 4)
+	p = Param()
 	xr = range(0.0,stop = 1.0,length=200)
-	sr = 0.0:0.1:1.0
-	y = [ϵfun(d,s,ϕ,ϵtarget) for d in xr, s in sr]
+	sr = 0.0:0.1:p.ϵsmax
+	# y = [(d,s) -> ϵfun(d,ϕ,p) for d in xr, s in sr]
+	y = [ϵfun_tmp(d,s,ϕ,p) for d in xr, s in sr]
 
 	p = plot(xr,y, labels=reshape(["s=$i" for i in sr],1,11),title = L"\epsilon(\phi) \exp(-s (\phi - d))", xlabel = "distance to center", ylabel = "Elasticity")
 	vline!(p,[ϕ], color = :red, label = "")
-	savefig(p, joinpath(@__FILE__,"..","images","epsfun.pdf"))
+	savefig(p, joinpath(@__FILE__,"..","..","images","epsfun.pdf"))
 	p
 end

@@ -34,7 +34,6 @@ mutable struct Model
 		m     = new()
 		m.ρr  = NaN
 		m.qr  = NaN
-		m.ϵr  = NaN
 		m.χr  = NaN
 		m.Lr  = NaN
 		m.Lu  = NaN
@@ -151,7 +150,7 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 	m.Sr   = x[6]   # amount of land used in rural production
 
 	# update params (in case we get the initial model from somewhere else than a CD0Model)
-	# m.ϵr   = ϵ(1.0,m.ϕ,p)
+	# p.ϵr   = ϵ(1.0,m.ϕ,p)
 
 	# update equations
 	m.Lu   = p.L - m.Lr   # employment in urban sector
@@ -167,7 +166,7 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 	if !all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) )
 	println("neg cons")
 	end
-	display(m)
+	# display(m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 
 end
@@ -232,7 +231,7 @@ q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
 ρ(l::Float64,p::Param,m::Model) = (χ(l,m.ϕ,p) .* q(l,p,m).^(1.0 + ϵ(l,m.ϕ,p))) / (1.0 + ϵ(l,m.ϕ,p))
 
 "rural house price from land price"
-qr(p::Param,m::Model) = ( (1+m.ϵr) * m.ρr * cfun(m.ϕ,p)^m.ϵr ) ^(1.0/(1+m.ϵr))
+qr(p::Param,m::Model) = ( (1+p.ϵr) * m.ρr * cfun(m.ϕ,p)^p.ϵr ) ^(1.0/(1+p.ϵr))
 
 
 

@@ -101,6 +101,9 @@ function Eqsys!(F::Vector{Float64},m::CD0Model,p::Param)
 end
 
 
+
+
+
 """
 Model with linear commuting cost and fixed elasticities.
 """
