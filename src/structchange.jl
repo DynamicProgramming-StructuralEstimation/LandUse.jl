@@ -118,7 +118,6 @@ mutable struct FModel
 	r  :: Float64   # per capita land rental income
 	pr :: Float64   # relative price of rural good
 	ϕ  :: Float64   # size of the city
-	ϵr  :: Float64   # housing supply elasticity in rural sector
 	uu :: Float64   # net utility of urban worker
 	ur :: Float64   # net utility of rural worker
 	function FModel(p::Param)
@@ -156,8 +155,7 @@ function update!(m::FModel,p::Param,x::Vector{Float64})
 	m.Sr   = x[6]   # amount of land used in rural production
 
 	# update params
-	m.ϵr   = ϵ(1.0,m.ϕ,p)
-	γ2 = p.γ / (1+m.ϵr)
+	γ2 = p.γ / (1+p.ϵr)
 
 	# update equations
 	m.Lu   = p.L - m.Lr   # employment in urban sector
@@ -173,19 +171,19 @@ end
 	Solves the `FModel`
 """
 function solve!(F,x,p::Param,m::FModel)
-println("next iteration")
-	if any(x .< 0)
-		F .= PEN
-		println("penalizing neg inputs")
-	# elseif m.xsr < 0
-	# 	# m.r + wr(m.Lu,m.ϕ,p) - m.pr * p.cbar + p.sbar < 0
-	# 	# that means that the price of rural good is chosen too high.
-	# 	# imply that this way overshoots the first two equations
-	# 	# F[1] = -PEN
-	# 	# F[2] = -PEN
+# println(x)
+	# if any(x .< 0)
 	# 	F .= PEN
-	# 	println("penalizing neg cons")
-	else
+	# 	println("penalizing neg inputs")
+	# # elseif m.xsr < 0
+	# # 	# m.r + wr(m.Lu,m.ϕ,p) - m.pr * p.cbar + p.sbar < 0
+	# # 	# that means that the price of rural good is chosen too high.
+	# # 	# imply that this way overshoots the first two equations
+	# # 	# F[1] = -PEN
+	# # 	# F[2] = -PEN
+	# # 	F .= PEN
+	# # 	println("penalizing neg cons")
+	# else
 		# @debug "l=0" cr=cr(0.0,p,m)-p.cbar cu=cu(0.0,p,m) h=h(0.0,p,m)
 		# @debug "l=1" cr=cr(1.0,p,m)-p.cbar cu=cu(1.0,p,m) h=h(1.0,p,m)
 		update!(m,p,x)
@@ -196,7 +194,7 @@ println("next iteration")
 		# else
 			Eqsys!(F,m,p)
 		# end
-	end
+	# end
 
 end
 
@@ -209,13 +207,13 @@ compute system of equations for fixed elasticities. uses closed form solutions
 function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	σ1 = (p.σ-1)/p.σ
 	σ2 = 1.0 / (p.σ-1)
-	γ2 = p.γ / (1 + m.ϵr)
+	γ2 = p.γ / (1 + p.ϵr)
 
 	# rural firm w-FOC: equation (2)
 	F[1] = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2 - m.wr
 
 	# rural firm q-FOC: equation (3)
-	F[2] = m.ρr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
+	F[2] = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2 - m.ρr
 
 	# city size - Urban population relationship: analytic integral solution to equation (16)
 	w2 = p.θu * m.Lu^p.η
@@ -243,8 +241,8 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	chi2*(1-p.γ)*(1-p.ν)*m.ρr/((1+γ2)*w2*p.τ)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) +
 	chi2*γ2*m.ρr/((1+γ2)*p.τ*w2)*(((w2+xx)^(1/γ2+1))/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
 	m.ϕ*chi2*m.ρr +
-	m.ϵr *m.ρr*m.Srh +
-	m.ϵr *chi2*γ2*m.ρr/(p.τ*(1+γ2)*w2)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
+	p.ϵr *m.ρr*m.Srh +
+	p.ϵr *chi2*γ2*m.ρr/(p.τ*(1+γ2)*w2)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
 	p.sbar*p.L -
 	p.θu*m.Lu^(1+p.η)
 end

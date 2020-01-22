@@ -60,7 +60,7 @@
 		"symbol" : "\\Psi"
 	},
 	"τ" : {
-		"value" : 0.01,
+		"value" : 7.0,
 		"description" : "Commuting Costs",
 		"type" : "exogenous",
 		"symbol" : "\\tau(l)"
@@ -126,7 +126,7 @@
 		"symbol" : "\\epsilon_s"
 	},
 	"ϵsmax" : {
-		"value" : 2.0,
+		"value" : 1.0,
 		"description" : "Maximal Slope Coeff in Elasticity Function",
 		"type" : "exogenous",
 		"symbol" : "\\epsilon_s^*"

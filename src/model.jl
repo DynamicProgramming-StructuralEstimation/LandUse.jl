@@ -254,31 +254,31 @@ utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) *
 	Solves the General Case Model
 """
 function solve!(F,x,p::Param,m::Model)
-println("next iteration")
-	if any(x .< 0)
-		F .= PEN
-		println("penalizing neg inputs")
-	elseif m.xsr < 0
+# println("next iteration")
+	# if any(x .< 0)
+	# 	F .= PEN
+	# 	println("penalizing neg inputs")
+	# elseif m.xsr < 0
 		# m.r + wr(m.Lu,m.ϕ,p) - m.pr * p.cbar + p.sbar < 0
 		# that means that the price of rural good is chosen too high.
 		# imply that this way overshoots the first two equations
 		# F[1] = -PEN
 		# F[2] = -PEN
-		F .= PEN
-		println("penalizing neg cons")
-	else
+	# 	F .= PEN
+	# 	println("penalizing neg cons")
+	# else
 		# @debug "l=0" cr=cr(0.0,p,m)-p.cbar cu=cu(0.0,p,m) h=h(0.0,p,m)
 		# @debug "l=1" cr=cr(1.0,p,m)-p.cbar cu=cu(1.0,p,m) h=h(1.0,p,m)
 		update!(m,p,x)
 
 		# if negative consumption in either sector
-		if isnan(m.U)
-			F .= PEN
-		else
+		# if isnan(m.U)
+		# 	F .= PEN
+		# else
 			integrate!(m,p)
 			Eqsys!(F,m,p)
-		end
-	end
+		# end
+	# end
 
 end
 

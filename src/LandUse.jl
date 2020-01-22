@@ -84,15 +84,17 @@ module LandUse
 				# 4. solve general model with fixed elasticity starting from x00
 				# --> closed form solutions for integrals
 				# --> produces starting value x0
-				r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 1000)
+				# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 1000, autodiff = :forward)
+				# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 100, method = :trust_region,show_trace = true, extended_trace = true)
+				r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 100)
 				if converged(r1)
 					push!(startvals, r1.zero)
 				else
-					error("CD0Model not converged")
+					error("first FModel not converged")
 				end
 
 			else  # in other years just start at previous solution
-				r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),startvals[it-1],iterations = 1000)
+				r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),startvals[it-1],iterations = 100)
 				if converged(r1)
 					push!(startvals, r1.zero)
 				else
@@ -132,16 +134,16 @@ module LandUse
 				error("adaptive search not converged for ϵ = $ϵ")
 			end
 		end
-		return startvals
+		return (startvals,p)
 	end
 
 	function run()
 
 		x0 = get_starts()   # a T-array of starting vectors
 
-		x1 = adapt_ϵ(x0[1])  # adaptive search for higher epsilon in first period only
+		(x1,p) = adapt_ϵ(x0[1])  # adaptive search for higher epsilon in first period only
 
-		x = get_solutions(x1[end])  # get general model solutions
+		x = get_solutions(x1[end],p)  # get general model solutions
 
 	end
 
@@ -152,9 +154,7 @@ module LandUse
 	Compute general model solutions for all years. Starts from solution
 	obtained for `t=1` and desired slope on elasticity function via [`adapt_ϵ`](@ref)
 	"""
-	function get_solutions(x0::Vector{Float64})
-		# 1. initialize parameter
-		p = LandUse.Param()
+	function get_solutions(x0::Vector{Float64},p::Param)
 		m = LandUse.Model(p)  # create a general elasticity model
 		sols = Vector{Float64}[]  # an empty array of vectors
 		push!(sols, x0)  # first solution is obtained via `adapt_ϵ`
@@ -166,7 +166,7 @@ module LandUse
 			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m),
 				                                        sols[it-1],iterations = 1000)
 			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
-			# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01], 
+			# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01],
 			# 	                                        [Inf,1.0,Inf,1.0,Inf,1.0],
 			# 	                                        sols[it-1],iterations = 1000)
 			if converged(r1)
