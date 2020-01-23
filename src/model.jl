@@ -24,11 +24,12 @@ mutable struct Model
 	nodes   :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ])
 
 	# resulting integrals from [0,ϕ]
-	icu_input :: Float64   # ∫ cu_input(l) D(l) dl
+	icu_input :: Float64   # ∫ cu_input(l) dl
 	iDensity  :: Float64   # ∫ D(l) dl
 	icu       :: Float64   # ∫ cu(l) D(l) dl
 	iτ        :: Float64   # ∫ τ(l) D(l) dl
-	ir        :: Float64   # ∫ ρ(l) D(l) dl
+	ir        :: Float64   # ∫ ρ(l) dl
+	iy        :: Float64   # ∫ w(l) D(l) dl
 	function Model(p::Param)
 		# creates a model fill with NaN
 		m     = new()
@@ -55,6 +56,7 @@ mutable struct Model
 		icu       = NaN
 		iτ        = NaN
 		ir        = NaN
+		iy        = NaN
 		return m
 	end
 end
@@ -89,9 +91,10 @@ function integrate!(m::Model,p::Param)
 
 	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],m.ϕ,p) for i in 1:p.int_nodes)[1]
+	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.ir        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ ir=m.ir phi=m.ϕ
 	if m.iDensity < 0
 		println("D = $([D(m.nodes[i],p,m) for i in 1:p.int_nodes])")
@@ -160,9 +163,9 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
 	m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )
 	m.U    = all( (m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) ) ? utility(0.0,p,m) : NaN
-	if !all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) )
-	println("neg cons")
-	end
+	# if !all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) )
+	# println("neg cons")
+	# end
 	# display(m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 
@@ -249,6 +252,12 @@ cu_input(l::Float64,p::Param,m::Model) = ϵ(l,m.ϕ,p) / (1+ϵ(l,m.ϕ,p)) .* q(l,
 "Utility function equation (5)"
 utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) * (cu(l,p,m))^((1-p.ν) * (1-p.γ)) * h(l,p,m)^p.γ
 
+"aggregate per capita income"
+pcy(m::Model,p::Param) = m.r + wr(m.Lu,m.ϕ,p) * m.Lr / p.L + m.iy / p.L
+
+"Production of Rural Good"
+Yr(m::Model,p::Param) = p.θr * (p.α * m.Lr^((p.σ-1)/p.σ) + (1-p.α) * m.Sr^((p.σ-1)/p.σ) )^(p.σ/(p.σ-1))
+
 """
 	Solves the General Case Model
 """
@@ -274,7 +283,7 @@ function solve!(F,x,p::Param,m::Model)
 		# if isnan(m.U)
 		# 	F .= PEN
 		# else
-			integrate!(m,p)
+			# integrate!(m,p)
 			Eqsys!(F,m,p)
 		# end
 	# end
@@ -296,16 +305,16 @@ function Eqsys!(F::Vector{Float64},m::Model,p::Param)
 	# rural firm q-FOC: equation (3)
 	F[2] = m.ρr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
 
-	# city size - Urban population relationship: equation (16)
+	# city size - Urban population relationship: equation (19)
 	F[3] = m.Lu - m.iDensity
 
-	#  total land rent per capita: equation before (19)
+	#  total land rent per capita: equation (23)
 	F[4] = m.r * p.L - m.ir - m.ρr * (1 - m.ϕ)
 
-	# land market clearing: after equation (18)
+	# land market clearing: after equation (20)
 	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh
 
-	# urban goods market clearing. equation before (22) but not in per capita terms
+	# urban goods market clearing. equation before (25) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
 	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.iτ - wu0(m.Lu, p)*m.Lu
 

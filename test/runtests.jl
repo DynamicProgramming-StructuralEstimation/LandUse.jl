@@ -107,6 +107,16 @@ using LinearAlgebra
 		l = rand()
 		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r - m.pr * p.cbar))
 
+		# test equation (24)
+		@test m.r * p.L ≈ m.ρr + m.wu0 * m.iτ
+
+		# test per capita income formulation - equivalent in both formulations
+		@test LandUse.pcy(m,p) ≈ m.ρr / p.L + m.wu0 * (1.0 - LandUse.τ(m.ϕ,m.ϕ,p) * m.Lr / p.L)
+
+		# test walras' law: also the rural goods market must clear at equilibrium:
+		# equation (25)
+		@test p.ν * (1 - p.γ) * LandUse.pcy(m,p) + m.pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) == m.pr * LandUse.Yr(m,p) / p.L
+
 
     end
 
@@ -114,8 +124,7 @@ using LinearAlgebra
     	x,M,p = LandUse.run()
 
 		tol = 1e-4
-    	# for it in 1:length(p.T)
-    	for it in 1:1
+    	for it in 1:length(p.T)
 			@test M[it].Sr ≈ 1.0 - M[it].ϕ - M[it].Srh
 			@test M[it].Lu ≈ M[it].iDensity
 			@test p.ϵr == LandUse.ϵ(1.0,M[it].ϕ,p)
