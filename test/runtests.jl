@@ -111,6 +111,7 @@ using LinearAlgebra
 		@test m.r * p.L ≈ m.ρr + m.wu0 * m.iτ
 
 		# test per capita income formulation - equivalent in both formulations
+		# pcy(m,p) = m.r + wr(m.Lu,m.ϕ,p) * m.Lr / p.L + m.iy / p.L
 		@test LandUse.pcy(m,p) ≈ m.ρr / p.L + m.wu0 * (1.0 - LandUse.τ(m.ϕ,m.ϕ,p) * m.Lr / p.L)
 
 		# test walras' law: also the rural goods market must clear at equilibrium:
