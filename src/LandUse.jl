@@ -19,10 +19,11 @@ module LandUse
 	export Param, Model, CD0Model, StructChange!, solve!, update!
 
 	function CD()
-		p = Param()
-		m = CD0Model(p)
-		StructChange_closure(F,x) = StructChange!(F,x,p,m)
-		r = nlsolve(StructChange_closure, [1; 0.5])
+		p = LandUse.Param(par=pars)
+		m0 = LandUse.CD0Model(p)
+		CD0_closure(F,x) = LandUse.solve!(F,x,p,m0)
+		r0 = LandUse.nlsolve(CD0_closure, [1; 0.5])
+		return r0
 	end
 
 
@@ -143,7 +144,18 @@ module LandUse
 
 		(x1,p) = adapt_ϵ(x0[1])  # adaptive search for higher epsilon in first period only
 
-		x = get_solutions(x1[end],p)  # get general model solutions
+		x,M = get_solutions(x1[end],p)  # get general model solutions
+
+		(x,M,p) # solutions, models, and parameter
+
+	end
+
+	function matlab_bm()
+		println("starting values at same parameter vector:")
+		display(vcat(LandUse.get_starts()'...))
+
+		println("timing full model run")
+		@time (x,M,p) = run();
 
 	end
 
@@ -155,27 +167,35 @@ module LandUse
 	obtained for `t=1` and desired slope on elasticity function via [`adapt_ϵ`](@ref)
 	"""
 	function get_solutions(x0::Vector{Float64},p::Param)
-		m = LandUse.Model(p)  # create a general elasticity model
+		m = [Model(p) for it in 1:length(p.T)] # create a general elasticity model for each period
+
 		sols = Vector{Float64}[]  # an empty array of vectors
 		push!(sols, x0)  # first solution is obtained via `adapt_ϵ`
 
+		# update t=1 model
+		setperiod!(p, 1)   # set period on param to it=1
+		update!(m[1],p,x0)
+
 		# 2. For all periods starting at 2
 		for it in 2:length(p.T)
-			LandUse.setperiod!(p, it)   # set period on param to it
+			setperiod!(p, it)   # set period on param to it
 
-			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m),
-				                                        sols[it-1],iterations = 1000)
+			r1 = nlsolve((F,x) -> solve!(F,x,p,m[it]),
+				                     sols[it-1],iterations = 1000)
 			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
 			# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01],
 			# 	                                        [Inf,1.0,Inf,1.0,Inf,1.0],
 			# 	                                        sols[it-1],iterations = 1000)
 			if converged(r1)
 				push!(sols, r1.zero)
+				update!(m[it],p,r1.zero)
 			else
 				error("General Model not converged in period $it")
 			end
 		end
-		return sols
+		# final update
+
+		return (sols, m)
 	end
 
 

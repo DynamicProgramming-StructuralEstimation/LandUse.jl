@@ -4,7 +4,7 @@ Model with general commuting cost.
 mutable struct Model
 	ρr      :: Float64   # land price in rural sector
 	qr      :: Float64     # housing price in rural sector
-	χr      :: Float64     # housing supply shifter in rural sector
+	# χr      :: Float64     # housing supply shifter in rural sector
 	Lr      :: Float64   # employment in rural sector
 	Lu      :: Float64   # employment in urban sector
 	wu0     :: Float64   # wage in urban sector (at center)
@@ -34,7 +34,7 @@ mutable struct Model
 		m     = new()
 		m.ρr  = NaN
 		m.qr  = NaN
-		m.χr  = NaN
+		# m.χr  = NaN
 		m.Lr  = NaN
 		m.Lu  = NaN
 		m.wu0 = NaN
@@ -64,7 +64,7 @@ function show(io::IO, ::MIME"text/plain", m::Model)
     print(io,"LandUse Model:\n")
     print(io,"    m.ρr   : $(m.ρr ) \n")
     print(io,"    m.qr : $(m.qr ) \n")
-    print(io,"    m.χr : $(m.χr ) \n")
+    # print(io,"    m.χr : $(m.χr ) \n")
     print(io,"    m.Lr   : $(m.Lr ) \n")
     print(io,"    m.Lu   : $(m.Lu ) \n")
     print(io,"    m.wu0  : $(m.wu0) \n")
@@ -120,9 +120,6 @@ function update!(m::Model,m0::CD0Model,p::Param)
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
-	while xsr(p,m) < m.wr
-		m.r += 0.05
-	end
 	m.xsr  = xsr(p,m)
 	m.qr   = qr(p,m)
 	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
@@ -168,6 +165,8 @@ function update!(m::Model,p::Param,x::Vector{Float64})
 	end
 	# display(m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
+
+	integrate!(m,p)
 
 end
 

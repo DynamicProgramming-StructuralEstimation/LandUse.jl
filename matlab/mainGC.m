@@ -45,10 +45,12 @@ for j=1:J %length(epsilonvec) %Uncomment in order to compare the results for dif
        
        %urbanmodel %"urban economics" model (q1 exogenous, p1 exogenous, S1 exogenous);vars denoted by c
     end  
-
+    display('starting values or each period:')
+    [q10 phi0 r0 L10 p10 S10]
+    
     if GC==1 %%FLEXIBLE MODEL (Fall 2019)
         for i=1:length(thetavec)
-            [i,j]
+            fprintf('period: %d\n',i)
             
             theta2=thetavec(i,j);  %theta2=(1+u*(Lvec(i)^(0.1)-1)); %theta1=(0.2+(1-u)*(thetavec(i)-0.2));%theta2=(0.2+u*(thetavec(i)-0.2));
             theta1=theta2;
@@ -56,15 +58,16 @@ for j=1:J %length(epsilonvec) %Uncomment in order to compare the results for dif
             L=Lvec(i,j);
             
             if i==1
+                fprintf('starting epsilon search\n')
                 eps1vec=linspace(0,15,10); %change of elasticity wrt to distance
                 eps0=epsilonvec(j); %elasticity at the fringe
                 for ii=2
-                    [i,j,ii]
+                    fprintf('epsilon search step %d\n',ii)
                     x0=[q10(i,j),phi0(i,j),r0(i,j),L10(i,j),p10(i,j),S10(i,j)];%initial guess from "simple" model, first value of theta and last value of epsilon
                     [x,Fval,exitflag(i,j)]=fsolve('EqsysGC_f',x0,options,eps0,eps1vec(ii));Fvalmax(i,j)=max(Fval);if exitflag(i,j)~=1 && Fvalmax(i,j)>1e-5;display('exitflag negative');return;end
                 end
                 for ii=3:length(eps1vec)
-                    [i,j,ii]
+                    fprintf('epsilon search step %d\n',ii)
                     [x,Fval,exitflag(i,j)]=fsolve('EqsysGC_f',x,options,eps0,eps1vec(ii));Fvalmax(i,j)=max(Fval);if exitflag(i,j)~=1 && Fvalmax(i,j)>1e-5;display('exitflag negative');return;end
                 end
             else
@@ -82,7 +85,7 @@ for j=1:J %length(epsilonvec) %Uncomment in order to compare the results for dif
         end
     end
 end
-save('allsims')
+% save('allsims')
 toc
 
 %j=1;plots0 %main plots for the "simple" model (Spring 2019)
