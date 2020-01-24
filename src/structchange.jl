@@ -18,6 +18,7 @@ mutable struct CD0Model
 	ϕ  :: Float64   # size of the city
 	uu :: Float64   # net utility of urban worker
 	ur :: Float64   # net utility of rural worker
+	U :: Float64   # Utility
 	function CD0Model(p::Param)
 		m = new()
 		m.ρr = 0.3
@@ -36,6 +37,7 @@ mutable struct CD0Model
 		m.χr  = χ(1.0,m.ϕ,p)
 		m.ϕ    = (m.Lu/χ(0.0,1.0,p))*(p.γ * m.uu / m.ρr )
 		m.Srh  = (m.Lr/m.χr)*(p.γ * m.ur / m.ρr )
+		m.U = NaN
 		return m
 	end
 end
@@ -63,6 +65,14 @@ function update!(m::CD0Model,p::Param,ρr::Float64,Lr::Float64)
 	m.ϕ    = (m.Lu/χ(0.0,1.0,p))*(p.γ * m.uu / m.ρr )
 	m.Srh  = (m.Lr/m.χr)*(p.γ * m.ur / m.ρr )
 
+	# compute utility
+	cr = (1.0 - p.γ) * p.ν * m.uu + m.pr * p.cbar
+	cu = (1.0 - p.γ)*(1.0 - p.ν)*m.uu
+	qr = ( (1+p.ϵr) * m.ρr * 1.0^p.ϵr ) ^(1.0/(1+p.ϵr))
+
+	h = p.γ * (m.uu) / qr
+	m.U = cr - p.cbar > 0.0 ? (cr - p.cbar)^(p.ν * (1-p.γ)) * (cu)^((1-p.ν) * (1-p.γ)) * h^p.γ : NaN
+
 end
 
 """
@@ -77,6 +87,7 @@ function solve!(F,x,p::Param,m::CD0Model)
 
 	ρr   = x[1]   # land price in rural sector
 	Lr   = x[2]   # employment in rural sector
+	uconstraint   = x[3]   # well defined utility
 
 	if (ρr < 0) || (Lr < 0)
 		F[1] = PEN
@@ -98,17 +109,61 @@ compute system of equations for CD0 case.
 function Eqsys!(F::Vector{Float64},m::CD0Model,p::Param)
 	F[1] = (1-p.γ)*(1-p.ν)* m.ur - p.θu*m.Lu
 	F[2] = m.Sr + m.Srh + m.ϕ - (1-p.λ)
+	cr = (1.0 - p.γ) * p.ν * m.uu + m.pr * p.cbar
+	F[3] = cr > p.cbar ? 0.0 : (cr - p.cbar)^2
 end
 
 
+function CD()
+	p = LandUse.Param()
+	m0 = LandUse.CD0Model(p)
+	CD0_closure(F,x) = LandUse.solve!(F,x,p,m0)
+	r0 = LandUse.nlsolve(CD0_closure, [1; 0.5; 0.0])
+	return (m0,p,r0)
+end
+
+
+"""
+	update!(m::GModel,m0::CD0Model, p::Param)
+
+update the general model from a CD0Model
+"""
+function update!(m::GModel,m0::CD0Model,p::Param)
+	m.ρr   = m0.ρr
+	m.ϕ    = m0.ϕ
+	m.r    = m0.r
+	m.Lr   = m0.Lr
+	m.pr   = m0.pr
+	m.Sr   = m0.Sr
+
+	# update params
+
+
+	# update equations
+	m.Lu   = p.L - m.Lr   # employment in urban sector
+	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
+	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
+	m.xsr  = xsr(p,m)
+	m.qr   = qr(p,m)
+	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
+	m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )
+	# if !all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) )
+	# 	@warn "current model produces negative consumption"
+	# end
+	m.Srh  = Srh(p,m)
+	m.U    = all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) ) ? utility(0.0,p,m) : NaN
+	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
+
+end
 
 
 
 """
 Model with linear commuting cost and fixed elasticities.
 """
-mutable struct FModel
+mutable struct FModel <: Model
 	ρr :: Float64   # land price in rural sector
+	qr :: Float64   # house price in rural sector
 	Lr :: Float64   # employment in rural sector
 	Lu :: Float64   # employment in urban sector
 	wu0 :: Float64   # wage in urban sector at 0 distance
@@ -118,12 +173,13 @@ mutable struct FModel
 	r  :: Float64   # per capita land rental income
 	pr :: Float64   # relative price of rural good
 	ϕ  :: Float64   # size of the city
-	uu :: Float64   # net utility of urban worker
-	ur :: Float64   # net utility of rural worker
+	xsu :: Float64   # net utility of urban worker
+	xsr :: Float64   # net utility of rural worker
 	function FModel(p::Param)
 		# creates a model fill with NaN
 		m     = new()
 		m.ρr  = NaN
+		m.qr  = NaN
 		m.Lr  = NaN
 		m.Lu  = NaN
 		m.wu0 = NaN
@@ -135,8 +191,8 @@ mutable struct FModel
 		m.ϕ   = NaN
 		# m.xsr  = NaN
 		# m.U    = NaN
-		m.uu    = NaN
-		m.ur    = NaN
+		m.xsu    = NaN
+		m.xsr    = NaN
 		return m
 	end
 end
@@ -161,9 +217,10 @@ function update!(m::FModel,p::Param,x::Vector{Float64})
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
-	m.ur = m.wr + m.r - m.pr * p.cbar - p.sbar
-	m.uu = m.wu0 + m.r - m.pr * p.cbar - p.sbar
-	m.Srh  = ( γ2 / m.ρr ) * m.ur * m.Lr
+	m.xsr = m.wr + m.r - m.pr * p.cbar - p.sbar
+	m.xsu = m.wu0 + m.r - m.pr * p.cbar - p.sbar
+	m.Srh  = ( γ2 / m.ρr ) * m.xsr * m.Lr
+	m.qr   = qr(p,m)
 
 end
 
@@ -245,4 +302,13 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	p.ϵr *chi2*γ2*m.ρr/(p.τ*(1+γ2)*w2)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
 	p.sbar*p.L -
 	p.θu*m.Lu^(1+p.η)
+
+	cr = (1.0 - p.γ) * p.ν * ur + m.pr * p.cbar
+	# println("cr - p.cbar = $(cr - p.cbar * p.cbar)")
+	# F[7] = minerr < 0.0 ? minerr^2 : 0.0
+	F[7] = cr - p.cbar * p.cbar > 0 ? 0.0 : 2*exp(cr - p.cbar * p.cbar)
+	# F[7] = 0.0
+	# println("penalty = $(F[7])")
+
+	# F[7] = 0.0
 end

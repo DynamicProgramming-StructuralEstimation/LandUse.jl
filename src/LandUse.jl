@@ -11,20 +11,13 @@ module LandUse
 	import Base.show
 
 	include("param.jl")
-	include("structchange.jl")
 	include("model.jl")
+	include("structchange.jl")
 	include("plotter.jl")
 	include("interact.jl")
 
 	export Param, Model, CD0Model, StructChange!, solve!, update!
 
-	function CD()
-		p = LandUse.Param(par=pars)
-		m0 = LandUse.CD0Model(p)
-		CD0_closure(F,x) = LandUse.solve!(F,x,p,m0)
-		r0 = LandUse.nlsolve(CD0_closure, [1; 0.5])
-		return r0
-	end
 
 
 
@@ -78,9 +71,9 @@ module LandUse
 				# --> use solution to that system, but replace ϕ with something very small.
 				# --> produces starting value x00
 				m0 = LandUse.CD0Model(p)
-				r0 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0), [1; 0.5])
-				LandUse.update!(m0,p,r0.zero...)
-				x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
+				r0 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0), [1; 0.5; 0.0])
+				LandUse.update!(m0,p,r0.zero[1],r0.zero[2])
+				x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr; m0.U]   # set very small city!
 
 				# 4. solve general model with fixed elasticity starting from x00
 				# --> closed form solutions for integrals
@@ -117,7 +110,7 @@ module LandUse
 	function adapt_ϵ(x0::Vector{Float64})
 
 		p = Param()
-		m = Model(p)
+		m = GModel(p)
 
 		startvals = Vector{Float64}[]  # an empty array of vectors
 		push!(startvals, x0)  # put 1860 solution for flat epsilon function
@@ -167,7 +160,7 @@ module LandUse
 	obtained for `t=1` and desired slope on elasticity function via [`adapt_ϵ`](@ref)
 	"""
 	function get_solutions(x0::Vector{Float64},p::Param)
-		m = [Model(p) for it in 1:length(p.T)] # create a general elasticity model for each period
+		m = [GModel(p) for it in 1:length(p.T)] # create a general elasticity model for each period
 
 		sols = Vector{Float64}[]  # an empty array of vectors
 		push!(sols, x0)  # first solution is obtained via `adapt_ϵ`
