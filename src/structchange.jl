@@ -268,7 +268,10 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 
 	# rural firm w-FOC: equation (2)
 	F[1] = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2 - m.wr
-
+	# F[1] = ((m.Sr > 0) && (m.Lr > 0)) ? p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2 - m.wr : 2*exp(min(m.Sr,m.Lr))
+	# if !((m.Sr > 0) && (m.Lr > 0))
+	# 	println(min(m.Sr,m.Lr))
+	# end
 	# rural firm q-FOC: equation (3)
 	F[2] = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2 - m.ρr
 

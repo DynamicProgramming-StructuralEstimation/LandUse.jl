@@ -57,6 +57,7 @@ module LandUse
 	"""
 	function get_starts()
 		# 1. initialize parameter
+		# p = Param(par=Dict(:ϵr => 0.0, :ϵs => 0.0))
 		p = Param()
 		fm = LandUse.FModel(p)  # create a fixed elasticity model
 		startvals = Vector{Float64}[]  # an empty array of vectors
@@ -88,10 +89,14 @@ module LandUse
 				end
 
 			else  # in other years just start at previous solution
+				lb = zeros(7)
+				ub = fill(Inf,7)
 				r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),startvals[it-1],iterations = 100)
+				# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,fm),lb,ub, startvals[it-1],iterations = 10000, factor = 0.1)
 				if converged(r1)
 					push!(startvals, r1.zero)
 				else
+					print(r1)
 					error("FModel not converged")
 				end
 			end
