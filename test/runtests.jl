@@ -136,12 +136,12 @@ using LinearAlgebra
 		# equation (25)
 		# @test p.ν * (1 - p.γ) * LandUse.pcy(m,p) + m.pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) ==  m.pr * LandUse.Yr(m,p) / p.L
 		@testset "Walras Law" begin
-			@test p.ν * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + m.pr * p.cbar ==  m.pr * LandUse.Yr(m,p) / p.L
+			tol = 1.0e-2
+			@warn("rural market clears only with precision $tol")
+			@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + m.pr * p.cbar ,  m.pr * LandUse.Yr(m,p) / p.L , atol = tol)
 
 			# try with different formulation of total rural demand:
 			# rural cons in city + rural cons for each rural worker == total rural good production
-			tol = 1.0e-2
-			@warn("rural market clears only with precision $tol")
 			@test isapprox(m.icr + m.Lr * LandUse.cr(m.ϕ,p,m), LandUse.Yr(m,p), atol = tol)
 		end
 
