@@ -98,8 +98,6 @@ using LinearAlgebra
 		m = LandUse.GModel(p)
 		fm = LandUse.FModel(p)
 
-
-
 		r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m),s[1],iterations = 100)
 		rf = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),s[1],iterations = 100)
 		LandUse.update!(m,p,r.zero)
@@ -137,16 +135,20 @@ using LinearAlgebra
 		# test walras' law: also the rural goods market must clear at equilibrium:
 		# equation (25)
 		# @test p.ν * (1 - p.γ) * LandUse.pcy(m,p) + m.pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) ==  m.pr * LandUse.Yr(m,p) / p.L
-		@test p.ν * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + m.pr * p.cbar ==  m.pr * LandUse.Yr(m,p) / p.L
+		@testset "Walras Law" begin
+			@test p.ν * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + m.pr * p.cbar ==  m.pr * LandUse.Yr(m,p) / p.L
 
-		# try with different formulation of total rural demand:
-		# rural cons in city + rural cons for each rural worker == total rural good production
-		tol = 1.0e-2
-		@warn("rural market clears only with precision $tol")
-		@test isapprox(m.icr + m.Lr * LandUse.cr(m.ϕ,p,m), LandUse.Yr(m,p), atol = tol)
+			# try with different formulation of total rural demand:
+			# rural cons in city + rural cons for each rural worker == total rural good production
+			tol = 1.0e-2
+			@warn("rural market clears only with precision $tol")
+			@test isapprox(m.icr + m.Lr * LandUse.cr(m.ϕ,p,m), LandUse.Yr(m,p), atol = tol)
+		end
 
 		# test equation (26) in this special case
-		@test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (1 - (m.iτ / p.L)) * LandUse.Yu(m,p) / p.L
+		@testset "equation (26) special case" begin
+			@test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (1 - (m.iτ / p.L)) * LandUse.Yu(m,p) / p.L
+		end
 
 
     end
