@@ -60,14 +60,14 @@
 		"symbol" : "\\Psi"
 	},
 	"τ" : {
-		"value" : 0.01,
+		"value" : 7.0,
 		"description" : "Commuting Costs",
 		"type" : "exogenous",
 		"symbol" : "\\tau(l)"
 	},
 	"T" : {
-		"value" : [1855,1870,1885,1900,1915,1930,1945,1960,1975,1990,2005,2020,2035,2050],
-		"description" : "Years",
+		"value" : [1855,15,2050],
+		"description" : "Start year, increments, end year",
 		"type" : "exogenous",
 		"symbol" : "\\mathcal{T}"
 	},
@@ -84,13 +84,13 @@
 		"symbol" : "\\Theta_u"
 	},
 	"θr" : {
-		"value" : 0.42,
+		"value" : 0.32,
 		"description" : "Rural Productivity",
 		"type" : "exogenous",
 		"symbol" : "\\theta_r"
 	},
 	"θu" : {
-		"value" : 0.5,
+		"value" : 0.32,
 		"description" : "Urban Productivity",
 		"type" : "exogenous",
 		"symbol" : "\\theta_u"
@@ -102,7 +102,7 @@
 		"symbol" : "c_0"
 	},
 	"c1" : {
-		"value" : -0.0,
+		"value" : 0.0,
 		"description" : "Linear Coeff of Construction Cost Function",
 		"type" : "exogenous",
 		"symbol" : "c_1"
@@ -113,29 +113,35 @@
 		"type" : "exogenous",
 		"symbol" : "c_2"
 	},
-	"ϵ0" : {
+	"ϵr" : {
 		"value" : 4.0,
-		"description" : "Intercept of H Supply Elasticity Function",
+		"description" : "H Supply Elasticity Function in Rural sector",
 		"type" : "exogenous",
-		"symbol" : "ϵ_0"
+		"symbol" : "\\epsilon_r"
 	},
-	"ϵ1" : {
-		"value" : 0.0,
-		"description" : "Linear Coeff of H Supply Elasticity Function",
+	"ϵs" : {
+		"value" : 2.0,
+		"description" : "Current Slope Coeff in Elasticity Function",
 		"type" : "exogenous",
-		"symbol" : "ϵ_1"
+		"symbol" : "\\epsilon_s"
 	},
-	"ϵ2" : {
-		"value" : 0.0,
-		"description" : "Quadratic Coeff of H Supply Elasticity Function",
+	"ϵsmax" : {
+		"value" : 1.0,
+		"description" : "Maximal Slope Coeff in Elasticity Function",
 		"type" : "exogenous",
-		"symbol" : "ϵ_2"
+		"symbol" : "\\epsilon_s^*"
+	},
+	"ϵnsteps" : {
+		"value" : 10,
+		"description" : "Number of steps in elasticity search",
+		"type" : "exogenous",
+		"symbol" : "n_\\epsilon"
 	},
 	"int_nodes" : {
 		"value" : 60,
 		"description" : "Number of Integration Nodes",
 		"type" : "exogenous",
-		"symbol" : "N_I"
+		"symbol" : "n_I"
 	}
 
 }
