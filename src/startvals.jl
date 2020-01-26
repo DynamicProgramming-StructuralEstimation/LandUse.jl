@@ -202,17 +202,19 @@ function get_starts()
 			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 100)
 			if converged(r1)
 				push!(startvals, r1.zero)
+				println("rural market clears with $(Rmk(fm,p))")
 			else
 				error("first FModel not converged")
 			end
 
 		else  # in other years just start at previous solution
-			lb = zeros(7)
-			ub = fill(Inf,7)
+			lb = zeros(6)
+			ub = fill(Inf,6)
 			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),startvals[it-1],iterations = 100)
 			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,fm),lb,ub, startvals[it-1],iterations = 10000, factor = 0.1)
 			if converged(r1)
 				push!(startvals, r1.zero)
+				println("rural market clears with $(Rmk(fm,p))")
 			else
 				print(r1)
 				error("FModel not converged")
