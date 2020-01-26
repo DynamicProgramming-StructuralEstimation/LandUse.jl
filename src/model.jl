@@ -167,7 +167,8 @@ function Eqsys!(F::Vector{Float64},m::GModel,p::Param)
 	# F[7] = maxerr > 0 ? utility(0.0,p,m) - utility(1.0,p,m) : maxerr^2
 	minerr = minimum(m.cr01)
 	# println("minerr = $minerr")
-	F[7] = minerr > 0 ? 0.0 : exp(minerr)
+	# F[7] = minerr > 0 ? 0.0 : exp(minerr)
+	# F[7] = 0.0
 	# println("penalty = $(F[7])")
 
 end
@@ -297,7 +298,7 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	# println("cr - p.cbar = $(cr - p.cbar * p.cbar)")
 	# F[7] = minerr < 0.0 ? minerr^2 : 0.0
 	# F[7] = cr - p.cbar * p.cbar > 0 ? 0.0 : 2*exp(cr - p.cbar * p.cbar)
-	F[7] = 0.0
+	# F[7] = 0.0
 	# println("penalty = $(F[7])")
 
 	# F[7] = 0.0
@@ -351,7 +352,7 @@ Srh(p::Param,m::Model) = m.Lr * (γ(m.ϕ,m.ϕ,p) * m.xsr) / ((1.0+ϵ(m.ϕ,m.ϕ,p
 cu(l::Float64,p::Param,m::Model) = (1.0 - p.γ)*(1.0 - p.ν)*(w(m.Lu,l,m.ϕ,p) .+ (m.r - m.pr * p.cbar))
 
 "optimal rural good consumption at location ``l``. Equation (7) divided by p"
-cr(l::Float64,p::Param,m::Model) = (1.0 - p.γ) * p.ν * (w(m.Lu,l,m.ϕ,p) .+ (m.r - m.pr * p.cbar)) ./ m.pr + p.cbar
+cr(l::Float64,p::Param,m::Model) = (1.0 - p.γ) * p.ν * ((w(m.Lu,l,m.ϕ,p) .+ (m.r - m.pr * p.cbar)) ./ m.pr) + p.cbar
 
 "urban good consumption in rural sector. Equation (8)"
 cur(p::Param,m::Model) = cu(m.ϕ,p,m)
@@ -406,6 +407,9 @@ end
 
 "Production of Urban Good"
 Yu(m::Model,p::Param) = p.θu * m.Lu
+
+"Rural Market Clearing"
+Rmk(m::Model,p::Param) = m.icr + m.Lr * cr(m.ϕ,p,m) - Yr(m,p)
 
 
 

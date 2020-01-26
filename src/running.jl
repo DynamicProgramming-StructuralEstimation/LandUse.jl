@@ -29,6 +29,7 @@ function get_solutions(x0::Vector{Float64},p::Param)
 		if converged(r1)
 			push!(sols, r1.zero)
 			update!(m[it],p,r1.zero)
+			println("rural market clears with $(Rmk(m[it],p))")
 		else
 			error("General Model not converged in period $it")
 		end

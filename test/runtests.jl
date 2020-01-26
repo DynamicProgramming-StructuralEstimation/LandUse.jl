@@ -109,11 +109,12 @@ using LinearAlgebra
 		# is elasticity in fact constant?
 		@test LandUse.ϵ(0.0,m.ϕ,p) == LandUse.ϵ(1.0,m.ϕ,p)
 		@test LandUse.ϵ(m.ϕ,m.ϕ,p) == LandUse.ϵ(1.0,m.ϕ,p)
+		@test LandUse.ϵ(m.ϕ,m.ϕ,p) == p.ϵr
 
 		# consumption functinos
 
-		x_analytic = zeros(7)
-		x_general  = zeros(7)
+		x_analytic = zeros(6)
+		x_general  = zeros(6)
 		LandUse.Eqsys!(x_analytic,fm,p) 
 		LandUse.Eqsys!(x_general,m,p) 
 

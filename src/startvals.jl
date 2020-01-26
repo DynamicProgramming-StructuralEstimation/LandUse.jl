@@ -191,7 +191,8 @@ function get_starts()
 			m0 = LandUse.CD0Model(p)
 			r0 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0), [1; 0.5; 0.0])
 			LandUse.update!(m0,p,r0.zero[1],r0.zero[2])
-			x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr; m0.U]   # set very small city!
+			# x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr; m0.U]   # set very small city!
+			x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
 
 			# 4. solve general model with fixed elasticity starting from x00
 			# --> closed form solutions for integrals
