@@ -293,11 +293,11 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	p.sbar*p.L -
 	p.θu*m.Lu^(1+p.η)
 
-	cr = (1.0 - p.γ) * p.ν * ur + m.pr * p.cbar
+	# cr = (1.0 - p.γ) * p.ν * ur + m.pr * p.cbar
 	# println("cr - p.cbar = $(cr - p.cbar * p.cbar)")
 	# F[7] = minerr < 0.0 ? minerr^2 : 0.0
-	F[7] = cr - p.cbar * p.cbar > 0 ? 0.0 : 2*exp(cr - p.cbar * p.cbar)
-	# F[7] = 0.0
+	# F[7] = cr - p.cbar * p.cbar > 0 ? 0.0 : 2*exp(cr - p.cbar * p.cbar)
+	F[7] = 0.0
 	# println("penalty = $(F[7])")
 
 	# F[7] = 0.0
