@@ -131,7 +131,7 @@ function integrate!(m::GModel,p::Param)
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
-	@assert m.iDensity > 0 "integral of density is negative"
+	# @assert m.iDensity > 0 "integral of density is negative"
 end
 
 """
@@ -160,7 +160,7 @@ function Eqsys!(F::Vector{Float64},m::GModel,p::Param)
 
 	# urban goods market clearing. equation before (25) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
-	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.iτ - wu0(m.Lu, p)*m.Lu
+	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
 
 	# maxerr = minimum(m.cr01)
 	# F[7] = maxerr > 0 ? 0.0 : maxerr^2
@@ -310,7 +310,11 @@ end
 """
 function solve!(F,x,p::Param,m::Model)
 	update!(m,p,x)
-	Eqsys!(F,m,p)
+	try
+		Eqsys!(F,m,p)
+	catch
+		@warn "error in eqsys"
+	end
 end
 
 
@@ -328,13 +332,13 @@ end
 τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
 
 "urban wage at location ``l``"
-wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η * (1.0 .- τ(l,ϕ,p))
+wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) * (1.0 .- τ(l,ϕ,p))
 
 "urban wage at center"
 wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
 
 "rural wage from indifference condition at ϕ. Eq (11)"
-wr(Lu::Float64,ϕ::Float64,p::Param) = wu(Lu,ϕ,ϕ,p)
+wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p)*(1.0 .- τ(ϕ,ϕ,p))
 
 "wage at location ``l``"
 w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)
@@ -346,7 +350,7 @@ xsu(l::Float64,p::Param,m::Model) = w(m.Lu,l,m.ϕ,p) .+ m.r .- m.pr .* p.cbar .+
 xsr(p::Param,m::Model) = m.r + wr(m.Lu,m.ϕ,p) - m.pr * p.cbar + p.sbar
 
 "Residential Land in Rural sector. equation (20)"
-Srh(p::Param,m::Model) = m.Lr * (γ(m.ϕ,m.ϕ,p) * m.xsr) / ((1.0+ϵ(m.ϕ,m.ϕ,p)) * m.ρr)
+Srh(p::Param,m::Model) = m.Lr * (γ(m.ϕ,m.ϕ,p) * m.xsr) / m.ρr
 
 "optimal urban good consumption at location ``l``. Equation (8)"
 cu(l::Float64,p::Param,m::Model) = (1.0 - p.γ)*(1.0 - p.ν)*(w(m.Lu,l,m.ϕ,p) .+ (m.r - m.pr * p.cbar))
@@ -366,6 +370,7 @@ cost(l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? cfun(ϕ,p) : cfun(l,p)
 
 "housing supply elasticity at ``l``"
 ϵ(l::Float64,ϕ::Float64,p::Param) = p.ϵr * exp(-p.ϵs * max(ϕ-l,0.0))
+# ϵ(l::Float64,ϕ::Float64,p::Param) = exp(log(p.ϵr)-p.ϵs*log(max(1 + ϕ - l,0.0)))
 
 "house price function at ``l``. equation (12)"
 q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
@@ -401,7 +406,7 @@ pcy(m::Model,p::Param) = m.r + wr(m.Lu,m.ϕ,p) * m.Lr / p.L + m.iy / p.L
 "Production of Rural Good"
 function Yr(m::Model,p::Param)
 	σ1 = (p.σ - 1) / p.σ
-	σ2 = p.σ / (p.σ - 1) 
+	σ2 = p.σ / (p.σ - 1)
 	p.θr * (p.α * (m.Lr^σ1) + (1-p.α) * (m.Sr^σ1) )^σ2
 end
 
@@ -410,8 +415,3 @@ Yu(m::Model,p::Param) = p.θu * m.Lu
 
 "Rural Market Clearing"
 Rmk(m::Model,p::Param) = m.icr + m.Lr * cr(m.ϕ,p,m) - Yr(m,p)
-
-
-
-
-

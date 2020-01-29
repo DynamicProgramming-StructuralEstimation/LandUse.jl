@@ -120,13 +120,13 @@
 		"symbol" : "\\epsilon_r"
 	},
 	"ϵs" : {
-		"value" : 2.0,
+		"value" : 10.0,
 		"description" : "Current Slope Coeff in Elasticity Function",
 		"type" : "exogenous",
 		"symbol" : "\\epsilon_s"
 	},
 	"ϵsmax" : {
-		"value" : 1.0,
+		"value" : 10.0,
 		"description" : "Maximal Slope Coeff in Elasticity Function",
 		"type" : "exogenous",
 		"symbol" : "\\epsilon_s^*"
@@ -138,7 +138,7 @@
 		"symbol" : "n_\\epsilon"
 	},
 	"int_nodes" : {
-		"value" : 60,
+		"value" : 64,
 		"description" : "Number of Integration Nodes",
 		"type" : "exogenous",
 		"symbol" : "n_I"

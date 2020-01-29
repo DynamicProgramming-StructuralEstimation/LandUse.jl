@@ -166,8 +166,8 @@ Generate starting values for all years from the fixed ϵ model `FModel`.
 In year 1:
 
 1. Solve a model without commuting cost and 2 sectors. Choose land price and number of rural workers.
-2. Construct a `FModel` from this solution. 
-3. Start with a very small city, ϕ = 0.00005, and solve with starting values from 2. 
+2. Construct a `FModel` from this solution.
+3. Start with a very small city, ϕ = 0.00005, and solve with starting values from 2.
 
 In subsequent years, take solution from 3. of previous year as starting value
 
@@ -202,7 +202,7 @@ function get_starts()
 			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 100)
 			if converged(r1)
 				push!(startvals, r1.zero)
-				println("rural market clears with $(Rmk(fm,p))")
+				# println("rural market clears with $(Rmk(fm,p))")
 			else
 				error("first FModel not converged")
 			end
@@ -214,7 +214,7 @@ function get_starts()
 			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,fm),lb,ub, startvals[it-1],iterations = 10000, factor = 0.1)
 			if converged(r1)
 				push!(startvals, r1.zero)
-				println("rural market clears with $(Rmk(fm,p))")
+				# println("rural market clears with $(Rmk(fm,p))")
 			else
 				print(r1)
 				error("FModel not converged")
@@ -241,7 +241,7 @@ function adapt_ϵ(x0::Vector{Float64})
 	push!(startvals, x0)  # put 1860 solution for flat epsilon function
 
 	# range of elasticity slope values
-	ϵs = range(0,stop = p.ϵsmax, length = p.ϵnsteps)
+	ϵs = range(0,stop = p.ϵsmax, length = p.ϵnsteps)[2:end]
 
 	for (i,ϵ) in enumerate(ϵs)
 		setfield!(p, :ϵs, ϵ)  # set current value for elaticity function slope

@@ -7,29 +7,32 @@ Compute general model solutions for all years. Starts from solution
 obtained for `t=1` and desired slope on elasticity function via [`adapt_ϵ`](@ref)
 """
 function get_solutions(x0::Vector{Float64},p::Param)
-	m = [GModel(p) for it in 1:length(p.T)] # create a general elasticity model for each period
-
+	# m = [GModel(p) for it in 1:length(p.T)] # create a general elasticity model for each period
+	m = GModel[]
 	sols = Vector{Float64}[]  # an empty array of vectors
 	push!(sols, x0)  # first solution is obtained via `adapt_ϵ`
 
 	# update t=1 model
-	setperiod!(p, 1)   # set period on param to it=1
-	update!(m[1],p,x0)
+	# setperiod!(p, 1)   # set period on param to it=1
+	# update!(m[1],p,x0)
 
-	# 2. For all periods starting at 2
-	for it in 2:length(p.T)
+	# 2. For all periods
+	for it in 1:length(p.T)
+		println("period $it")
 		setperiod!(p, it)   # set period on param to it
+		m0 = GModel(p)
 
-		r1 = nlsolve((F,x) -> solve!(F,x,p,m[it]),
-			                     sols[it-1],iterations = 1000)
+		r1 = nlsolve((F,x) -> solve!(F,x,p,m0),
+			                     sols[it],iterations = 1000)
 		# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
 		# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01],
 		# 	                                        [Inf,1.0,Inf,1.0,Inf,1.0],
 		# 	                                        sols[it-1],iterations = 1000)
 		if converged(r1)
 			push!(sols, r1.zero)
-			update!(m[it],p,r1.zero)
-			println("rural market clears with $(Rmk(m[it],p))")
+			update!(m0,p,r1.zero)
+			println("rural market clears with $(Rmk(m0,p))")
+			push!(m,m0)
 		else
 			error("General Model not converged in period $it")
 		end
@@ -61,5 +64,3 @@ function matlab_bm()
 	@time (x,M,p) = run();
 
 end
-
-
