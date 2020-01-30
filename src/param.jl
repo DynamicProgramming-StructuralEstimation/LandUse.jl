@@ -26,6 +26,8 @@ mutable struct Param
 	c2    :: Float64  # construction cost function quadratic term
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
+	K :: Int  # number of Regions
+	Sk :: Vector{Float64}  # region k's share of total space
 
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
@@ -54,6 +56,14 @@ mutable struct Param
                 setfield!(this,k,v)
             end
         end
+        if length(this.Sk) != this.K
+        	throw(ArgumentError("your settings for number of regions are inconsistent"))
+        end
+        if (this.K > 1) & (sum(this.Sk) != 1.0)
+        	throw(ArgumentError("Shares of regions space must sum to 1.0"))
+        end
+
+
     	return this
 	end
 end

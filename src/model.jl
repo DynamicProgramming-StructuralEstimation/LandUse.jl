@@ -3,9 +3,13 @@ abstract type Model end
 
 
 """
-Model with general commuting cost.
+Region type 
+    
+Urban expansion dodel with flexible commuting cost and differential supply elasticity. 
+This represents a single region. A region contains one potential urban area, and a rural area.
+A `Region` can be part of a wider `Country`.
 """
-mutable struct GModel <: Model
+mutable struct Region <: Model
 	ρr   :: Float64   # land price in rural sector
 	qr   :: Float64     # housing price in rural sector
 	Lr   :: Float64   # employment in rural sector
@@ -34,7 +38,7 @@ mutable struct GModel <: Model
 	iτ        :: Float64   # ∫ τ(l) D(l) dl
 	iq        :: Float64   # ∫ ρ(l) dl
 	iy        :: Float64   # ∫ w(l) D(l) dl
-	function GModel(p::Param)
+	function Region(p::Param)
 		# creates a model fill with NaN
 		m      = new()
 		m.ρr   = NaN
@@ -84,11 +88,11 @@ end
 
 
 """
-	update!(m::GModel,p::Param,x::Vector{Float64})
+	update!(m::Region,p::Param,x::Vector{Float64})
 
 update the general model from a parameter vector
 """
-function update!(m::GModel,p::Param,x::Vector{Float64})
+function update!(m::Region,p::Param,x::Vector{Float64})
 	m.ρr   = x[1]   # land price in rural sector
 	m.ϕ    = x[2]   # city size
 	m.r    = x[3]   # land rent
@@ -116,12 +120,12 @@ function update!(m::GModel,p::Param,x::Vector{Float64})
 end
 
 """
-	integrate!(m::Model,p::Param)
+	integrate!(m::Region,p::Param)
 
 could be made much faster by filling a matrix col-wise with integration nodes and
 doing a matmul on it? have to allocate memory though.
 """
-function integrate!(m::GModel,p::Param)
+function integrate!(m::Region,p::Param)
 
 	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
@@ -135,11 +139,11 @@ function integrate!(m::GModel,p::Param)
 end
 
 """
-	Eqsys!(F::Vector{Float64},m::Model,p::Param)
+	Eqsys!(F::Vector{Float64},m::Region,p::Param)
 
 compute system of equations for the general (with flexible ϵ).
 """
-function Eqsys!(F::Vector{Float64},m::GModel,p::Param)
+function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 	σ1 = (p.σ-1)/p.σ
 	σ2 = 1.0 / (p.σ-1)
 

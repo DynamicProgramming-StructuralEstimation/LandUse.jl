@@ -124,11 +124,11 @@ end
 
 
 """
-	update!(m::GModel,m0::CD0Model, p::Param)
+	update!(m::Region,m0::CD0Model, p::Param)
 
 update the general model from a CD0Model
 """
-function update!(m::GModel,m0::CD0Model,p::Param)
+function update!(m::Region,m0::CD0Model,p::Param)
 	m.ρr   = m0.ρr
 	m.ϕ    = m0.ϕ
 	m.r    = m0.r
@@ -235,7 +235,7 @@ Starts from the first period solution of [`FModel`](@ref).
 function adapt_ϵ(x0::Vector{Float64})
 
 	p = Param()
-	m = GModel(p)
+	m = Region(p)
 
 	startvals = Vector{Float64}[]  # an empty array of vectors
 	push!(startvals, x0)  # put 1860 solution for flat epsilon function

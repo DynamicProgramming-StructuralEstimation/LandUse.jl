@@ -142,6 +142,18 @@
 		"description" : "Number of Integration Nodes",
 		"type" : "exogenous",
 		"symbol" : "n_I"
+	},
+	"K" : {
+		"value" : 2,
+		"description" : "Number of Regions",
+		"type" : "exogenous",
+		"symbol" : "K"
+	},
+	"Sk" : {
+		"value" : [0.3,0.7],
+		"description" : "Region k's share of Total Space",
+		"type" : "exogenous",
+		"symbol" : "S_k"
 	}
 
 }
