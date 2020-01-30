@@ -18,7 +18,7 @@ function get_solutions(x0::Vector{Float64},p::Param)
 
 	# 2. For all periods
 	for it in 1:length(p.T)
-		println("period $it")
+		# println("period $it")
 		setperiod!(p, it)   # set period on param to it
 		m0 = GModel(p)
 
@@ -31,7 +31,7 @@ function get_solutions(x0::Vector{Float64},p::Param)
 		if converged(r1)
 			push!(sols, r1.zero)
 			update!(m0,p,r1.zero)
-			println("rural market clears with $(Rmk(m0,p))")
+			@assert abs(Rmk(m0,p)) < 1e-8
 			push!(m,m0)
 		else
 			error("General Model not converged in period $it")

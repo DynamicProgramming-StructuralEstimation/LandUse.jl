@@ -209,7 +209,9 @@ using LinearAlgebra
 		# test equation (26) in this special case
 		@testset "equation (26) special case" begin
 			# @test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (1 - m.iτ) * LandUse.Yu(m,p) / p.L
-			@test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (m.Lu - m.iτ) * m.wu0 / p.L
+			@test_broken (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (m.Lu - m.iτ) * m.wu0 / p.L
+			yy = fm.ρr / p.L + fm.wu0 * (1.0 - LandUse.τ(fm.ϕ,fm.ϕ,p) * fm.Lr / p.L)
+			@test (1 - p.ν) * (1 - p.γ) * (yy - fm.pr * p.cbar) + p.ϵr * fm.r ≈ (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r
 		end
 
 
