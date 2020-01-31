@@ -10,6 +10,7 @@ module LandUse
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
+	const LU_CONST = 1.0
 
 	# imports
 	import Base.show

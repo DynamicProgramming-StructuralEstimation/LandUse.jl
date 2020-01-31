@@ -57,6 +57,11 @@
 		@test LandUse.w(m.Lu,0.0,m.ϕ,p) == LandUse.wu0(m.Lu,p)
 		@test LandUse.w(m.Lu,1.0,m.ϕ,p) < LandUse.wu0(m.Lu,p)
 
+		# second version of wage function
+		@test LandUse.w(m.Lu,0.0,m.ϕ,p) == LandUse.w(0.0,m.ϕ,p)
+		@test LandUse.w(m.Lu,1.0,m.ϕ,p) == LandUse.w(1.0,m.ϕ,p)
+		@test LandUse.w(m.Lu,m.ϕ-eps(),m.ϕ,p) == LandUse.w(m.ϕ-eps(),m.ϕ,p)
+
 		# test excess consumption
 		@test LandUse.xsu(0.0,p,m) > LandUse.xsr(p,m)
 		@test LandUse.xsu(m.ϕ,p,m) == LandUse.xsr(p,m)
@@ -76,6 +81,7 @@
 
 		# equation (17)
 		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r - m.pr * p.cbar))
+		@test LandUse.D(l,p,m) ≈ LandUse.D2(l,p,m)
 
 		@test LandUse.Yu(m,p) == p.θu * m.Lu
 	end
@@ -167,6 +173,7 @@
 
 		l = rand()
 		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r - m.pr * p.cbar))
+		@test LandUse.D(l,p,m) ≈ LandUse.D2(l,p,m)
 
 		# equation (23)
 		@test m.r * p.L ≈ m.iq + m.ρr * (1 - m.ϕ)

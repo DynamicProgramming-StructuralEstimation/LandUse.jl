@@ -85,7 +85,7 @@ function show(io::IO, ::MIME"text/plain", m::Model)
     print(io,"    m.U    : $(m.U) \n")
 end
 
-
+pop(m::Model) = m.Lu + m.Lr
 
 """
 	update!(m::Region,p::Param,x::Vector{Float64})
@@ -335,17 +335,32 @@ end
 "commuting cost"
 τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
 
+"inverse of commuting cost function"
+invτ(x::Float64,p::Param) = (x > 1.0) ? 0.0 : (1.0 - x) / p.τ
+
 "urban wage at location ``l``"
 wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) * (1.0 .- τ(l,ϕ,p))
+
+"urban wage at location ``l``"
+wu(l::Float64,ϕ::Float64,p::Param) = wu0(p) * (1.0 .- τ(l,ϕ,p))
 
 "urban wage at center"
 wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
 
+"urban wage at center"
+wu0(p::Param) = p.Ψ * p.θu
+
 "rural wage from indifference condition at ϕ. Eq (11)"
 wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p)*(1.0 .- τ(ϕ,ϕ,p))
 
+"rural wage from indifference condition at ϕ. Eq (11)"
+wr(ϕ::Float64,p::Param) = wu0(p)*(1.0 .- τ(ϕ,ϕ,p))
+
 "wage at location ``l``"
 w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)
+
+"wage at location ``l`` indep of Lu"
+w(l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(ϕ,p) : wu(l,ϕ,p)
 
 "excess subsistence urban worker"
 xsu(l::Float64,p::Param,m::Model) = w(m.Lu,l,m.ϕ,p) .+ m.r .- m.pr .* p.cbar .+ p.sbar
@@ -396,6 +411,12 @@ H(l::Float64,p::Param,m::Model) = χ(l,m.ϕ,p) * q(l,p,m).^ϵ(l,m.ϕ,p)
 
 "Population Density at location ``l``"
 D(l::Float64,p::Param,m::Model) = H(l,p,m) / h(l,p,m)
+
+"Population Density at location ``l``. second version, independent of Lu"
+function D2(l::Float64,p::Param,r::Region)
+	γl = 1.0 / γ(l,r.ϕ,p)
+	r.ρr * (γl * (r.wr + r.r - r.pr*p.cbar)^(-γl) * (w(r.Lu,l,r.ϕ,p) + r.r - r.pr*p.cbar)^(γl - 1))
+end
 
 "Amount of Urban Good (numeraire) required to build housing at ``l``"
 cu_input(l::Float64,p::Param,m::Model) = ϵ(l,m.ϕ,p) / (1+ϵ(l,m.ϕ,p)) .* q(l,p,m) .* H(l,p,m)
