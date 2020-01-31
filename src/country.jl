@@ -93,12 +93,22 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	fi += 1
 	m = C.R
 	F[fi] = urban_prod - sum( m[ik].Lr * cur(p[ik],m[ik]) + m[ik].icu + m[ik].Srh * cu_input(m[ik].ϕ,p[ik],m[ik]) + m[ik].icu_input + m[ik].wu0 * m[ik].iτ for ik in 1:K)
-	println(F)
+
+	# add check of density in each city
+	for ik in 1:K
+		fi += 1
+		F[fi] = C.R[ik].Lu - C.R[ik].iDensity
+	end
+
 end
 
 function solve!(F,x,p::Vector{Param},C::Country)
-	update!(C,p,x)
-	EqSys!(F,C,p)
+	if any(x .< 0)
+		F[:] .= NaN
+	else
+		update!(C,p,x)
+		EqSys!(F,C,p)
+	end
 end
 
 function runk()
@@ -107,6 +117,7 @@ function runk()
 	LandUse.setperiod!(p,1)  # make sure we are in year 1
 	C = LandUse.Country([p;p])
 	x0 = 0.5*ones(2*2 + 4)
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),x0,iterations = 100, show_trace=true)
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),x0,iterations = 100, show_trace=false,extended_trace=true)
+	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
 
 end
