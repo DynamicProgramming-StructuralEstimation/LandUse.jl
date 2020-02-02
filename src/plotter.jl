@@ -25,8 +25,30 @@ function plot_static(m::Model,p::Param)
 	plot(plts...)
 end
 
+function plot_ts(M::Vector{Region},p::Param)
+	df = df(M,p)
+	vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
+	@df plot(df, :year, vars)
+end
 
 
+
+function plot_ρ_ts(M::Vector{Region},p::Param)
+	plts = Any[]
+	push!(plts,plot(p.T,[ M[i].ρr for i in 1:length(p.T)], label="rho"))
+	push!(plts,plot(p.T,[ pcy(M[i],p) for i in 1:length(p.T)], label="y"))
+	push!(plts,plot(p.T,[M[i].ρr / pcy(M[i],p) for i in 1:length(p.T)], label="rho_r/y"))
+	plot(plts...,size=(900,450))
+end
+
+function plot_y_ts(M::Vector{Region},p::Param)
+	x = hcat([ LandUse.pcy(M[i],p) for i in 1:length(p.T)],
+	[ M[i].r for i in 1:length(p.T)],
+	[ M[i].iy / p.L for i in 1:length(p.T)],
+	[ LandUse.wr(M[i].Lu,M[i].ϕ,p) * M[i].Lr / p.L for i in 1:length(p.T)])
+
+	plot(p.T,x,label = ["agg y" "r" "urban y" "rural y"],legend=:topleft)
+end
 
 
 # 2) plotting a time series of models

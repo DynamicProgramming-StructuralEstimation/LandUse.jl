@@ -7,6 +7,8 @@ module LandUse
 	using Plots
 	using LaTeXStrings
 	using Interact
+	using DataFrames
+	using StatsPlots
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
