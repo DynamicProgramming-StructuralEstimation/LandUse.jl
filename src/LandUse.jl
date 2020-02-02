@@ -9,6 +9,7 @@ module LandUse
 	using Interact
 	using DataFrames
 	using StatsPlots
+	using DataFramesMeta
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver

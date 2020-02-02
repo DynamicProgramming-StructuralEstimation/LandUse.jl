@@ -445,7 +445,7 @@ Rmk(m::Model,p::Param) = m.icr + m.Lr * cr(m.ϕ,p,m) - Yr(m,p)
 
 
 "Obtain a Time Series for the Model as a DataFrame"
-function df(M::Vector{Region},p::Param)
+function dataframe(M::Vector{Region},p::Param)
 	df = DataFrame(year = p.T)
 	for fi in setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
 		df[!,fi] = [getfield(M[it],fi) for it in 1:length(p.T)]

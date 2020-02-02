@@ -26,9 +26,32 @@ function plot_static(m::Model,p::Param)
 end
 
 function plot_ts(M::Vector{Region},p::Param)
-	df = df(M,p)
-	vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
-	@df plot(df, :year, vars)
+	df = dataframe(M,p)
+	# vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
+	# @df df plot(:year, cols(2:size(df,2)))
+	s = stack(df, Not(:year))
+	sims = [(:Lr,:Lu,:Sr,:pr,:qr,:r); (:wr, :wu0,:U, :icu , :iy); (:ϕ, :iτ , :ρr ,:Srh)]
+	nms = [(L"L_r",L"L_u",L"S_r",L"p_r",L"q_r",L"r"); (L"w_r", L"w_u",:U, L"\int c_u(l) D(l) dl" , L"\int w(l) D(l) dl"); (L"\phi",L"i\tau",L"\rho_r",L"S_{rh}")]
+	plts = Any[]
+	for i in 1:length(sims)
+		x = @linq s |>
+			where(:variable .∈ Ref(sims[i])) 
+		px = @df x plot(:year, :value, group = :variable, layout = length(sims[i]),title = reshape(collect(nms[i]),1,length(nms[i])),titlefontsize=10,leg=false,linewidth=2)
+		savefig(px,joinpath(@__FILE__,"..","..","images","ts_$i.pdf"))
+		push!(plts, px)
+	end
+
+
+	# # s1 = 
+	# @df s plot(:year,:value, group= :variable, layout = size(df,2)-1)
+
+	# xt = [p.T[1];p.T[7];p.T[14]]
+	# plts = Any[]
+	# for v in setdiff(names(df),[:year,:xsr])
+	# 	push!(plts,plot(df.year, df[!,v],leg = false,title = "$v",
+	# 		guidefontsize=6,titlefontsize=6,xticks = xt))
+	# end
+	# plot(plts...)
 end
 
 
