@@ -428,7 +428,7 @@ utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) *
 
 
 "aggregate per capita income"
-pcy(m::Model,p::Param) = m.r + wr(m.Lu,m.ϕ,p) * m.Lr / p.L + m.iy / p.L
+pcy(m::Model,p::Param) = m.r + m.wr * m.Lr / p.L + m.iy / p.L
 
 "Production of Rural Good"
 function Yr(m::Model,p::Param)
