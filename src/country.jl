@@ -74,9 +74,7 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes   
 		c.R[ik].Lu   = (c.R[ik].ϕ/2) * sum(c.R[ik].iweights[i] * D2(c.R[ik].nodes[i],p[ik],c.R[ik]) for i in 1:p[ik].int_nodes)[1]
 
-		# 3. stick in rural workers and rural land
-		c.R[ik].Lr   = Lr[ik]  
-		c.R[ik].Sr   = Sr[ik]  
+		# 3. update remaining fields
 		c.R[ik].wu0  = wu0(c.R[ik].Lu,p[ik])   # wage rate urban sector at city center (distance = 0)
 		# c.R[ik].wr   = wr(c.R[ik].Lu,c.R[ik].ϕ,p) # TEST
 		c.R[ik].xsr  = xsr(p[ik],c.R[ik])
@@ -102,32 +100,24 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 		F[fi] = C.Sk[ik] - C.R[ik].Sr - C.R[ik].ϕ - C.R[ik].Srh
 	end
 
-	# 3. rural labor/land ratio is constant across K (and equal to region 1)
-	for ik in 2:K
-		fi += 1
-		F[fi] = (C.R[ik].Lr / C.R[ik].Sr) - (C.R[1].Lr / C.R[1].Sr)
-	end
+	# # 3. rural labor/land ratio is constant across K (and equal to region 1)
+	# for ik in 2:K
+	# 	fi += 1
+	# 	F[fi] = (C.R[ik].Lr / C.R[ik].Sr) - (C.R[1].Lr / C.R[1].Sr)
+	# end
 
-	# 4. Aggregate land rents
+	# 3. Aggregate land rents
 	fi += 1
 	# F[fi] = C.r * p[1].L - sum(m.iq + m.ρr * (m.Sk - m.ϕ) for m in C.R)
 	F[fi] = C.r * p[1].L - sum(C.R[ik].iq + C.R[ik].ρr * (C.Sk[ik] - C.R[ik].ϕ) for ik in 1:K)
 
-	# 5. aggregate urban consumption good clears
+	# 4. aggregate urban consumption good clears
 	urban_prod = sum(Yu(C.R[ik],p[ik]) for ik in 1:K)
 	fi += 1
 	m = C.R
 	F[fi] = urban_prod - sum( m[ik].Lr * cur(p[ik],m[ik]) + m[ik].icu + m[ik].Srh * cu_input(m[ik].ϕ,p[ik],m[ik]) + m[ik].icu_input + m[ik].wu0 * m[ik].iτ for ik in 1:K)
 
-	# 2K + 2 equations up to here
-
-	# add check of density in each city
-	# for ik in 1:K
-	# 	fi += 1
-	# 	F[fi] = C.R[ik].Lu - C.R[ik].iDensity
-	# end
-
-	# # now 3K + 2 equations
+	# K + 3 equations up to here
 
 end
 
@@ -147,16 +137,29 @@ function runk()
 	x,M,p = LandUse.run()
 	# 2. run a country with 2 regions, total pop 2 and total area =2. starting from solution in period 1 of 1.
 
-    p = LandUse.Param(par = Dict(:S => 2.0, :L => 2.0, :kshare => [0.5,0.5], :K => 2))  # double space and pop for 2 equally sized regions.
+    p = LandUse.Param(par = Dict(:S => 2.0, :L => 2.0, :kshare => [0.6,0.4], :K => 2))  # double space and pop for 2 equally sized regions.
 	C = LandUse.Country([p;p])  # create that country
 
 	# starting values.
-	x0 = zeros(2*p.K + 4)
-	x0[1] = 
+	# 1. b: ratio of labor to land in region 1
+	# 2. r: land rent
+	# 3. pr: relative price rural good
+	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
+	x0 = zeros(p.K + 3)
+	x0[1] = M[1].Lr / M[1].Sr
+	x0[2] = M[1].r 
+	x0[3] = M[1].pr 
+	x0[4] = M[1].Sr 
+	x0[5] = M[1].Sr 
 
-
-	x0 = 0.5*ones(2*2 + 4)
 	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),x0,iterations = 100, show_trace=false,extended_trace=true)
 	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
+
+	if !converged(r)
+		error("not converged")
+	else
+		update!(C,[p;p],r.zero)
+		return C
+	end
 
 end
