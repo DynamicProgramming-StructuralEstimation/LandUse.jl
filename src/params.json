@@ -1,6 +1,6 @@
 {
 	"S" : {
-		"value" : 5.5,
+		"value" : 2.0,
 		"description" : "Total Space",
 		"type" : "exogenous",
 		"symbol" : "S"

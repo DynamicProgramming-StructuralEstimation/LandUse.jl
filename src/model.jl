@@ -207,6 +207,8 @@ mutable struct FModel <: Model
 	U        :: Float64  # common utility level
 	cr01     :: Tuple{Float64,Float64}  # consumption at locations 0 and 1. temps to check.
 	cu01     :: Tuple{Float64,Float64} # consumption at locations 0 and 1. temps to check.
+	Ftrace :: Matrix{Float64}
+	xtrace :: Matrix{Float64}
 	function FModel(p::Param)
 		# creates a model fill with NaN
 		m     = new()
@@ -224,6 +226,8 @@ mutable struct FModel <: Model
 		# m.xsr  = NaN
 		# m.U    = NaN
 		m.xsr    = NaN
+		m.Ftrace = zeros(6,1)
+		m.xtrace = zeros(6,1)
 		return m
 	end
 end
@@ -307,6 +311,9 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	p.sbar*p.L -
 	p.θu*m.Lu^(1+p.η)
 
+	# record function values
+	m.Ftrace = hcat(m.Ftrace,F)
+
 	# cr = (1.0 - p.γ) * p.ν * ur + m.pr * p.cbar
 	# println("cr - p.cbar = $(cr - p.cbar * p.cbar)")
 	# F[7] = minerr < 0.0 ? minerr^2 : 0.0
@@ -323,6 +330,9 @@ end
 """
 function solve!(F,x,p::Param,m::Model)
 	update!(m,p,x)
+	if isa(m,FModel)
+		m.xtrace = hcat(m.xtrace,x)
+	end
 	try
 		Eqsys!(F,m,p)
 	catch

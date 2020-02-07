@@ -87,7 +87,7 @@ function solve!(F,x,p::Param,m::CD0Model)
 
 	ρr   = x[1]   # land price in rural sector
 	Lr   = x[2]   # employment in rural sector
-	uconstraint   = x[3]   # well defined utility
+	# uconstraint   = x[3]   # well defined utility
 
 	if (ρr < 0) || (Lr < 0)
 		F[1] = PEN
@@ -108,9 +108,9 @@ compute system of equations for CD0 case.
 """
 function Eqsys!(F::Vector{Float64},m::CD0Model,p::Param)
 	F[1] = (1-p.γ)*(1-p.ν)* m.ur - p.θu*m.Lu
-	F[2] = m.Sr + m.Srh + m.ϕ - (1-p.λ)
+	F[2] = m.Sr + m.Srh + m.ϕ - (p.S-p.λ)
 	cr = (1.0 - p.γ) * p.ν * m.uu + m.pr * p.cbar
-	F[3] = cr > p.cbar ? 0.0 : (cr - p.cbar)^2
+	# F[3] = cr > p.cbar ? 0.0 : (cr - p.cbar)^2
 end
 
 
@@ -118,7 +118,8 @@ function CD()
 	p = LandUse.Param()
 	m0 = LandUse.CD0Model(p)
 	CD0_closure(F,x) = LandUse.solve!(F,x,p,m0)
-	r0 = LandUse.nlsolve(CD0_closure, [1; 0.5; 0.0])
+	# r0 = LandUse.nlsolve(CD0_closure, [1; 0.5; 0.0])
+	r0 = LandUse.nlsolve(CD0_closure, [1; 0.5])
 	return (m0,p,r0)
 end
 
@@ -189,21 +190,28 @@ function get_starts()
 			# --> use solution to that system, but replace ϕ with something very small.
 			# --> produces starting value x00
 			m0 = LandUse.CD0Model(p)
-			r0 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0), [1; 0.5; 0.0])
+			r0 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0), [1; 0.5])
+			# r0 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0), [1; 0.5; 0.0])
 			LandUse.update!(m0,p,r0.zero[1],r0.zero[2])
-			# x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr; m0.U]   # set very small city!
-			x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
+			# x00 = [m0.ρr * p.S; p.S * 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr; m0.U]   # set very small city!
+			# x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
+			x00 = [p.S*m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
 
 			# 4. solve general model with fixed elasticity starting from x00
 			# --> closed form solutions for integrals
 			# --> produces starting value x0
 			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 1000, autodiff = :forward)
 			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 100, method = :trust_region,show_trace = true, extended_trace = true)
-			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 100)
+			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 10000)
+			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,fm),zeros(6),fill(Inf,6), x00,iterations = 100)
 			if converged(r1)
 				push!(startvals, r1.zero)
 				# println("rural market clears with $(Rmk(fm,p))")
 			else
+				p1 = plot(fm.Ftrace',ylim = (-5,5),title = "Ftrace")
+				p2 = plot(fm.xtrace',title = "xtrace",label = ["rho" "phi" "r" "Lr" "pr" "Sr"])
+				pl = plot(p1,p2,layout = (1,2))
+				savefig(pl,joinpath(@__DIR__,"..","images","Fmodel_trace.png"))
 				error("first FModel not converged")
 			end
 
