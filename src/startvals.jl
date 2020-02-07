@@ -195,7 +195,15 @@ function get_starts()
 			LandUse.update!(m0,p,r0.zero[1],r0.zero[2])
 			# x00 = [m0.ρr * p.S; p.S * 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr; m0.U]   # set very small city!
 			# x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
-			x00 = [p.S*m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			if p.S == 1.0
+				x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
+			elseif p.S == 2
+				x00 = [m0.ρr*p.S; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			elseif p.S == 3
+				x00 = [p.S^2 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			elseif p.S > 3
+				x00 = [p.S^3 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			end
 
 			# 4. solve general model with fixed elasticity starting from x00
 			# --> closed form solutions for integrals
@@ -203,7 +211,7 @@ function get_starts()
 			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 1000, autodiff = :forward)
 			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 100, method = :trust_region,show_trace = true, extended_trace = true)
 			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 10000)
-			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,fm),zeros(6),fill(Inf,6), x00,iterations = 100)
+			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,fm),vcat(x00[1],0,0.01,0.01,0.01,0.5),vcat(fill(Inf,4),3.0,p.S), x00,iterations = 100)
 			if converged(r1)
 				push!(startvals, r1.zero)
 				# println("rural market clears with $(Rmk(fm,p))")

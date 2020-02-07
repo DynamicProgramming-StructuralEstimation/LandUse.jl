@@ -176,15 +176,15 @@
 		@test LandUse.D(l,p,m) ≈ LandUse.D2(l,p,m)
 
 		# equation (23)
-		@test m.r * p.L ≈ m.iq + m.ρr * (1 - m.ϕ)
+		@test m.r * p.L ≈ m.iq + m.ρr * (p.S - m.ϕ)
 
 		# test equation (24)
-		@test m.r * p.L ≈ m.ρr + m.wu0 * m.iτ
+		@test m.r * p.L ≈ m.ρr + m.wu0 * m.iτ atol= p.S==1 ? 1e-5 : 2e-1
 
 
 		# test per capita income formulation - equivalent in both formulations
 		# pcy(m,p) = m.r + wr(m.Lu,m.ϕ,p) * m.Lr / p.L + m.iy / p.L
-		@test LandUse.pcy(m,p) ≈ m.ρr / p.L + m.wu0 * (1.0 - LandUse.τ(m.ϕ,m.ϕ,p) * m.Lr / p.L)
+		@test LandUse.pcy(m,p) ≈ m.ρr / p.L + m.wu0 * (1.0 - LandUse.τ(m.ϕ,m.ϕ,p) * m.Lr / p.L) atol=0.03
 
 		# test walras' law: also the rural goods market must clear at equilibrium:
 		# equation (25)
@@ -201,12 +201,12 @@
 		end
 
 		@testset "equation (26) special case" begin
-			@test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (1 - m.iτ) * LandUse.Yu(m,p) / m.Lu
+			@test isapprox( (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r , (1 - m.iτ) * LandUse.Yu(m,p) / m.Lu, atol = 0.05)
 			# @test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (m.Lu - m.iτ) * m.wu0 / p.L
 			yy = fm.ρr / p.L + fm.wu0 * (1.0 - LandUse.τ(fm.ϕ,fm.ϕ,p) * fm.Lr / p.L)
 
 			# the LHS seems correct (or at least consistently wrong across formulations :-)
-			@test (1 - p.ν) * (1 - p.γ) * (yy - fm.pr * p.cbar) + p.ϵr * fm.r ≈ (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r
+			@test (1 - p.ν) * (1 - p.γ) * (yy - fm.pr * p.cbar) + p.ϵr * fm.r ≈ (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r atol=0.02
 		end
 
 
@@ -215,7 +215,7 @@
 	@testset "test full solution" begin
 		x,M,p = LandUse.run()
 
-		tol = 1e-3
+		tol =  p.S == 1 ? 1e-3 : 1e-1
 		# rutol = 1.0e-2
 		# @warn("utility at precision $tol, rural cons $rutol")
 		# for it in 1:length(p.T)
@@ -227,7 +227,7 @@
 			@testset "period $it" begin
 				LandUse.setperiod!(p,it)
 
-				@test M[it].Sr ≈ 1.0 - M[it].ϕ - M[it].Srh
+				@test M[it].Sr ≈ p.S - M[it].ϕ - M[it].Srh
 				@test M[it].Lu ≈ M[it].iDensity
 				@test p.ϵr == LandUse.ϵ(1.0,M[it].ϕ,p)
 				@test M[it].ρr ≈ (LandUse.χ(1.0,M[it].ϕ,p)/(1+LandUse.ϵ(1.0,M[it].ϕ,p))) * M[it].qr^(1+LandUse.ϵ(1.0,M[it].ϕ,p))
@@ -235,7 +235,7 @@
 				@test p.L  ≈ M[it].Lu + M[it].Lr
 
 				# equation (23)
-				@test M[it].r * p.L ≈ M[it].iq + M[it].ρr * (1 - M[it].ϕ)
+				@test M[it].r * p.L ≈ M[it].iq + M[it].ρr * (p.S - M[it].ϕ)
 
 				# test equation (24)
 				@test isapprox(M[it].r * p.L , M[it].ρr + M[it].wu0 * M[it].iτ, atol = tol)
@@ -261,12 +261,13 @@
 
 				end
 
-
+				# tight tol on utility
 				l = rand()
+				utol = 1e-9
 				@test LandUse.D(l,p,M[it]) ≈ (LandUse.χ(l,M[it].ϕ,p) * LandUse.q(l,p,M[it])^(1+LandUse.ϵ(l,M[it].ϕ,p))) / (p.γ * (LandUse.w(M[it].Lu,l,M[it].ϕ,p) + M[it].r - M[it].pr * p.cbar))
-				@test isapprox(LandUse.utility(1.0,p,M[it]), M[it].U, atol = tol)
-				@test isapprox(LandUse.utility(0.1,p,M[it]), M[it].U, atol = tol)
-				@test isapprox(LandUse.utility(M[it].ϕ,p,M[it]), M[it].U, atol = tol)
+				@test isapprox(LandUse.utility(1.0,p,M[it]), M[it].U, atol = utol)
+				@test isapprox(LandUse.utility(0.1,p,M[it]), M[it].U, atol = utol)
+				@test isapprox(LandUse.utility(M[it].ϕ,p,M[it]), M[it].U, atol = utol)
 			end
 		end
 	end
