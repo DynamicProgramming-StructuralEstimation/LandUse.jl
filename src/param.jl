@@ -27,15 +27,15 @@ mutable struct Param
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
 	S     :: Float64  # total area
-	K :: Int  # number of Regions
-	Sk :: Vector{Float64}  # region k's share of total space
+	K     :: Int  # number of Regions
+	kshare :: Vector{Float64}  # region k's share of total space
 
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
         j = JSON.parse(f)
         close(f)
         this = new()
-        this.t = 0
+        this.t = 1
 
         for (k,v) in j
             if v["value"] isa Vector{Any}
@@ -130,48 +130,48 @@ end
 
 
 
-"""
-A Country-wide Parameter struct
-"""
-mutable struct CParam
-	L     :: Float64 # total population (note: total land normalized to 1)
-	K     :: Int  # number of Regions
-	Sk    :: Vector{Float64}  # region k's share of total space
+# """
+# A Country-wide Parameter struct
+# """
+# mutable struct CParam
+# 	L     :: Float64 # total population (note: total land normalized to 1)
+# 	K     :: Int  # number of Regions
+# 	Sk    :: Vector{Float64}  # region k's share of total space
 
-	function CParam(;par=Dict())
-        f = open(joinpath(dirname(@__FILE__),"Cparams.json"))
-        j = JSON.parse(f)
-        close(f)
-        this = new()
+# 	function CParam(;par=Dict())
+#         f = open(joinpath(dirname(@__FILE__),"Cparams.json"))
+#         j = JSON.parse(f)
+#         close(f)
+#         this = new()
 
-        for (k,v) in j
-            if v["value"] isa Vector{Any}
-                setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
-            else
-                setfield!(this,Symbol(k),v["value"])
-            end
-        end
+#         for (k,v) in j
+#             if v["value"] isa Vector{Any}
+#                 setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
+#             else
+#                 setfield!(this,Symbol(k),v["value"])
+#             end
+#         end
 
-        if length(par) > 0
-            # override parameters from dict par
-            for (k,v) in par
-                setfield!(this,k,v)
-            end
-        end
-        if length(this.Sk) != this.K
-        	throw(ArgumentError("your settings for number of regions are inconsistent"))
-        end
-        if (this.K > 1) & (sum(this.Sk) != 1.0)
-        	throw(ArgumentError("Shares of regions space must sum to 1.0"))
-        end
-    	return this
-	end
-end
+#         if length(par) > 0
+#             # override parameters from dict par
+#             for (k,v) in par
+#                 setfield!(this,k,v)
+#             end
+#         end
+#         if length(this.Sk) != this.K
+#         	throw(ArgumentError("your settings for number of regions are inconsistent"))
+#         end
+#         if (this.K > 1) & (sum(this.Sk) != 1.0)
+#         	throw(ArgumentError("Shares of regions space must sum to 1.0"))
+#         end
+#     	return this
+# 	end
+# end
 
-function show(io::IO, ::MIME"text/plain", p::CParam)
-    print(io,"LandUse Country Param:\n")
-	print(io,"      L       : $(p.L   )\n")
-	print(io,"      K       : $(p.K   )\n")
-	print(io,"      Sk       : $(p.Sk   )\n")
-end
+# function show(io::IO, ::MIME"text/plain", p::CParam)
+#     print(io,"LandUse Country Param:\n")
+# 	print(io,"      L       : $(p.L   )\n")
+# 	print(io,"      K       : $(p.K   )\n")
+# 	print(io,"      Sk       : $(p.Sk   )\n")
+# end
 

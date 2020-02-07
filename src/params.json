@@ -154,11 +154,11 @@
 		"type" : "exogenous",
 		"symbol" : "K"
 	},
-	"Sk" : {
+	"kshare" : {
 		"value" : [0.5,0.5],
 		"description" : "Region k's share of Total Space",
 		"type" : "exogenous",
-		"symbol" : "S_k"
+		"symbol" : "\\pi_k"
 	}
 
 }

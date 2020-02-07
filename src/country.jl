@@ -125,14 +125,14 @@ end
 
 function runk()
 
-    p = LandUse.Param(par = Dict(:ϵs => 0.0))
-	LandUse.setperiod!(p,1)  # make sure we are in year 1
-	C = LandUse.Country([p;p])
 
 	# 1. run a single region with pop = 1 and area = 1
 	x,M,p = LandUse.run()
 	# 2. run a country with 2 regions, total pop 2 and total area =2. starting from solution in period 1 of 1.
 
+    p = LandUse.Param(par = Dict(:S => 2.0, :L => 2.0, :))
+	LandUse.setperiod!(p,1)  # make sure we are in year 1
+	C = LandUse.Country([p;p])
 
 	# get solution for a single region in period 1 in flat ϵ case:
 	x0 = get_starts()
