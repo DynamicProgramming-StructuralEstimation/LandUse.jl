@@ -6,6 +6,7 @@ mutable struct Country
 	pr :: Float64          # a global price of rural good
 	ρr :: Float64          # a global land price
 	r  :: Float64          # country-wide per capita rental income
+	LS  :: Float64          # Lr/Sr for region 1
 	Sk :: Vector{Float64}  # total space for each region
 
 	function Country(p::Vector{Param})
@@ -14,7 +15,8 @@ mutable struct Country
 		this.pr = NaN
 		this.ρr = NaN
 		this.r  = NaN
-		this.Sk  = p[1].Sk .* p[1].S
+		this.LS  = NaN
+		this.Sk  = p[1].kshare .* p[1].S
 		return this
 	end
 end
@@ -25,26 +27,32 @@ end
 Update a `Country` object with a current vector of choice variables `x` supplied by the solver.
 The ordering in `x` is:
 
-1. ρr: land price in rural sector
-2. wr: rural wage
-3. r: land rent
-4. pr: relative price rural good
-5. - K+4, Lr: rural population in each region
-K+5 - end, Sr: amount of land use in rural production (complement of Srh)
+1. b: ratio of labor to land in region 1
+2. r: land rent
+3. pr: relative price rural good
+4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
 """
 function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 	# update country wide components
-	c.ρr   = x[1]   # land price in rural sector
-	c.wr   = x[2]   # rural wage
-	c.r    = x[3]   # land rent
-	c.pr   = x[4]   # relative price rural good
-
+	c.LS   = x[1]   # constant labor/land share in region 1. i called that b>0 in the doc.
+	c.r    = x[2]   # land rent
+	c.pr   = x[3]   # relative price rural good
+	Srk    = x[4:end]  # Sr for each region k
 
 	K = length(p)
 	@assert K == length(c.R)
 
-	Lr = x[5:(K+4)]  # Lr choices
-	Sr = x[(K+5):end]  # Lr choices
+	p1 = p[1]  # get first region's parameter to save typing
+
+	# global implications
+	σ1 = (p1.σ - 1) / p1.σ
+	σ2 = 1 / (p1.σ - 1)
+	# rural land price
+	c.ρr = (1-p1.α) * c.pr * p1.θr * (p1.α * c.LS^σ1 + (1-p1.α) )^σ2
+	# rural wage
+	c.wr = c.ρr * p1.α / (1-p1.α) * c.LS^(-1/p1.σ)
+
+	# 
 
 	# update each region
 	# 2. update other equations in each region
@@ -54,6 +62,11 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].r  = c.r 
 		c.R[ik].ρr = c.ρr 
 		c.R[ik].wr = c.wr # wage rate rural sector
+
+		# we chose Sr in each region:
+		c.R[ik].Sr = Srk[ik]
+		# now we know Lr for each region:
+		c.R[ik].Lr = c.LS * Srk[ik]
 
 		# 1. set ϕ for each region
 		c.R[ik].ϕ  = invτ(c.wr / p[ik].θu,p[ik])
@@ -106,11 +119,15 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	m = C.R
 	F[fi] = urban_prod - sum( m[ik].Lr * cur(p[ik],m[ik]) + m[ik].icu + m[ik].Srh * cu_input(m[ik].ϕ,p[ik],m[ik]) + m[ik].icu_input + m[ik].wu0 * m[ik].iτ for ik in 1:K)
 
+	# 2K + 2 equations up to here
+
 	# add check of density in each city
-	for ik in 1:K
-		fi += 1
-		F[fi] = C.R[ik].Lu - C.R[ik].iDensity
-	end
+	# for ik in 1:K
+	# 	fi += 1
+	# 	F[fi] = C.R[ik].Lu - C.R[ik].iDensity
+	# end
+
+	# # now 3K + 2 equations
 
 end
 
@@ -130,12 +147,12 @@ function runk()
 	x,M,p = LandUse.run()
 	# 2. run a country with 2 regions, total pop 2 and total area =2. starting from solution in period 1 of 1.
 
-    p = LandUse.Param(par = Dict(:S => 2.0, :L => 2.0, :))
-	LandUse.setperiod!(p,1)  # make sure we are in year 1
-	C = LandUse.Country([p;p])
+    p = LandUse.Param(par = Dict(:S => 2.0, :L => 2.0, :kshare => [0.5,0.5], :K => 2))  # double space and pop for 2 equally sized regions.
+	C = LandUse.Country([p;p])  # create that country
 
-	# get solution for a single region in period 1 in flat ϵ case:
-	x0 = get_starts()
+	# starting values.
+	x0 = zeros(2*p.K + 4)
+	x0[1] = 
 
 
 	x0 = 0.5*ones(2*2 + 4)

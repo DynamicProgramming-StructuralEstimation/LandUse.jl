@@ -57,10 +57,10 @@ mutable struct Param
                 setfield!(this,k,v)
             end
         end
-        if length(this.Sk) != this.K
+        if length(this.kshare) != this.K
         	throw(ArgumentError("your settings for number of regions are inconsistent"))
         end
-        if (this.K > 1) & (sum(this.Sk) != 1.0)
+        if (this.K > 1) & (sum(this.kshare) != 1.0)
         	throw(ArgumentError("Shares of regions space must sum to 1.0"))
         end
         if this.η != 0
