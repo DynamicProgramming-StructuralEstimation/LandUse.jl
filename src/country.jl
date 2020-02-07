@@ -2,12 +2,11 @@
 
 mutable struct Country
 	R  :: Vector{Region}   # a set of regions
-	# p  :: Vector{Param}    # a set of region-specific parameters
 	wr :: Float64          # a global rural wage
 	pr :: Float64          # a global price of rural good
 	ρr :: Float64          # a global land price
 	r  :: Float64          # country-wide per capita rental income
-	Sk :: Vector{Float64}  # share of total space for each region
+	Sk :: Vector{Float64}  # total space for each region
 
 	function Country(p::Vector{Param})
 		this = new()
@@ -15,7 +14,7 @@ mutable struct Country
 		this.pr = NaN
 		this.ρr = NaN
 		this.r  = NaN
-		this.Sk  = p[1].Sk
+		this.Sk  = p[1].Sk .* p[1].S
 		return this
 	end
 end
@@ -90,7 +89,7 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 		F[fi] = C.Sk[ik] - C.R[ik].Sr - C.R[ik].ϕ - C.R[ik].Srh
 	end
 
-	# 3. rural labor/land ratio is constant across K
+	# 3. rural labor/land ratio is constant across K (and equal to region 1)
 	for ik in 2:K
 		fi += 1
 		F[fi] = (C.R[ik].Lr / C.R[ik].Sr) - (C.R[1].Lr / C.R[1].Sr)
@@ -98,7 +97,8 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 
 	# 4. Aggregate land rents
 	fi += 1
-	F[fi] = C.r * p[1].L - sum(m.iq + m.ρr * (1 - m.ϕ) for m in C.R)
+	# F[fi] = C.r * p[1].L - sum(m.iq + m.ρr * (m.Sk - m.ϕ) for m in C.R)
+	F[fi] = C.r * p[1].L - sum(C.R[ik].iq + C.R[ik].ρr * (C.Sk[ik] - C.R[ik].ϕ) for ik in 1:K)
 
 	# 5. aggregate urban consumption good clears
 	urban_prod = sum(Yu(C.R[ik],p[ik]) for ik in 1:K)
