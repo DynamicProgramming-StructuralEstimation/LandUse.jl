@@ -26,6 +26,7 @@ mutable struct Param
 	c2    :: Float64  # construction cost function quadratic term
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
+	S     :: Float64  # total area
 	K :: Int  # number of Regions
 	Sk :: Vector{Float64}  # region k's share of total space
 

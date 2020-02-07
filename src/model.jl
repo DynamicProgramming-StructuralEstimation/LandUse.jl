@@ -68,24 +68,33 @@ mutable struct Region <: Model
 	end
 end
 
-function show(io::IO, ::MIME"text/plain", m::Model)
-    print(io,"LandUse Model:\n")
-    print(io,"    m.ρr   : $(m.ρr ) \n")
-    print(io,"    m.qr   : $(m.qr ) \n")
-    print(io,"    m.Lr   : $(m.Lr ) \n")
-    print(io,"    m.Lu   : $(m.Lu ) \n")
-    print(io,"    m.wu0  : $(m.wu0) \n")
-    print(io,"    m.wr   : $(m.wr ) \n")
-    print(io,"    m.Sr   : $(m.Sr ) \n")
-    print(io,"    m.Srh  : $(m.Srh) \n")
-    print(io,"    m.r    : $(m.r  ) \n")
-    print(io,"    m.pr   : $(m.pr ) \n")
-    print(io,"    m.ϕ    : $(m.ϕ  ) \n")
-    print(io,"    m.xsr  : $(m.xsr) \n")
-    print(io,"    m.U    : $(m.U) \n")
+function show(io::IO, ::MIME"text/plain", m::Region)
+    print(io,"Single Region:\n")
+    print(io,"    pop   : $(pop(m)) \n")
+    print(io,"    Lr   : $(m.Lr ) \n")
+    print(io,"    Lu   : $(m.Lu ) \n")
+    print(io,"    area : $(round(area(m),digits=2)) \n")
+    print(io,"    ϕ    : $(m.ϕ  ) \n")
+    print(io,"    Sr   : $(m.Sr ) \n")
+    print(io,"    Srh  : $(m.Srh) \n")
+    print(io,"    ρr   : $(m.ρr ) \n")
+    print(io,"    qr   : $(m.qr ) \n")
+    print(io,"    wu0  : $(m.wu0) \n")
+    print(io,"    wr   : $(m.wr ) \n")
+    print(io,"    r    : $(m.r  ) \n")
+    print(io,"    pr   : $(m.pr ) \n")
+    print(io,"    xsr  : $(m.xsr) \n")
+    print(io,"    U    : $(m.U) \n")
 end
 
+function show(io::IO, m::Region)
+    # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
+    @printf(io,"Region: ϕ=%1.3f, pop=%1.3f, area=%1.2f",m.ϕ, pop(m), area(m))
+end
+
+
 pop(m::Model) = m.Lu + m.Lr
+area(m::Model) = m.ϕ + m.Sr + m.Srh
 
 """
 	update!(m::Region,p::Param,x::Vector{Float64})
@@ -157,10 +166,10 @@ function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 	F[3] = m.Lu - m.iDensity
 
 	#  total land rent per capita: equation (23)
-	F[4] = m.r * p.L - m.iq - m.ρr * (1 - m.ϕ)
+	F[4] = m.r * p.L - m.iq - m.ρr * (p.S - m.ϕ)
 
 	# land market clearing: after equation (20)
-	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh
+	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
 
 	# urban goods market clearing. equation before (25) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
@@ -284,7 +293,7 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 		   (w2*(1-p.τ * m.ϕ)+m.r-m.pr * p.cbar+p.sbar)) - m.r*p.L
 
 	# land market clearing: after equation (18)
-	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh
+	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
 
 	# urban goods market clearing.
 	chi2 = 1.0

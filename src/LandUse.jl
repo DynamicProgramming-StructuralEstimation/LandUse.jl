@@ -10,10 +10,11 @@ module LandUse
 	using DataFrames
 	using StatsPlots
 	using DataFramesMeta
+	using Printf
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
-	const LU_CONST = 1.0
+	const dbpath = joinpath(ENV["HOME"],"Dropbox","research","LandUse","output","model")
 
 	# imports
 	import Base.show

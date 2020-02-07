@@ -20,7 +20,19 @@ mutable struct Country
 	end
 end
 
+"""
+	update!(c::Country,p::Vector{Param},x::Vector{Float64})
 
+Update a `Country` object with a current vector of choice variables `x` supplied by the solver.
+The ordering in `x` is:
+
+1. ρr: land price in rural sector
+2. wr: rural wage
+3. r: land rent
+4. pr: relative price rural good
+5. - K+4, Lr: rural population in each region
+K+5 - end, Sr: amount of land use in rural production (complement of Srh)
+"""
 function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 	# update country wide components
 	c.ρr   = x[1]   # land price in rural sector
@@ -116,6 +128,11 @@ function runk()
     p = LandUse.Param(par = Dict(:ϵs => 0.0))
 	LandUse.setperiod!(p,1)  # make sure we are in year 1
 	C = LandUse.Country([p;p])
+
+	# get solution for a single region in period 1 in flat ϵ case:
+	x0 = get_starts()
+
+
 	x0 = 0.5*ones(2*2 + 4)
 	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),x0,iterations = 100, show_trace=false,extended_trace=true)
 	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)

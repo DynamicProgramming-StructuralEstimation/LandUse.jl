@@ -37,7 +37,7 @@ function plot_ts(M::Vector{Region},p::Param)
 		x = @linq s |>
 			where(:variable .∈ Ref(sims[i])) 
 		px = @df x plot(:year, :value, group = :variable, layout = length(sims[i]),title = reshape(collect(nms[i]),1,length(nms[i])),titlefontsize=10,leg=false,linewidth=2)
-		savefig(px,joinpath(@__FILE__,"..","..","images","ts_$i.pdf"))
+		savefig(px,joinpath(dbpath,"ts_$i.pdf"))
 		push!(plts, px)
 	end
 
@@ -61,7 +61,9 @@ function plot_ρ_ts(M::Vector{Region},p::Param)
 	push!(plts,plot(p.T,[ M[i].ρr for i in 1:length(p.T)], label="rho_r"))
 	push!(plts,plot(p.T,[ pcy(M[i],p) for i in 1:length(p.T)], label="y"))
 	push!(plts,plot(p.T,[M[i].ρr / pcy(M[i],p) for i in 1:length(p.T)], label="rho_r/y"))
-	plot(plts...,size=(900,450))
+	pl = plot(plts...,size=(900,450))
+	savefig(pl,joinpath(dbpath,"rho_r_y.pdf"))
+	pl
 end
 
 function plot_y_ts(M::Vector{Region},p::Param)
@@ -70,8 +72,17 @@ function plot_y_ts(M::Vector{Region},p::Param)
 	[ M[i].iy / p.L for i in 1:length(p.T)],
 	[ M[i].wr * M[i].Lr / p.L for i in 1:length(p.T)])
 
-	plot(p.T,x,label = ["agg y" "r" "urban y" "rural y"],legend=:topleft)
+	pl = plot(p.T,x,label = ["agg y" "r" "urban y" "rural y"],legend=:topleft)
+	savefig(pl,joinpath(dbpath,"y-components.pdf"))
+	pl
 end
+
+function plot_ts_all(M::Vector{Region},p::Param)
+	plot_ts(M,p);
+	plot_ρ_ts(M,p);
+	plot_y_ts(M,p);
+end
+
 
 
 # 2) plotting a time series of models
