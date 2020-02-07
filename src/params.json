@@ -1,11 +1,11 @@
 {
 	"S" : {
-		"value" : 2.0,
+		"value" : 1.0,
 		"description" : "Total Space",
 		"type" : "exogenous",
 		"symbol" : "S"
 	},"L" : {
-		"value" : 5.0,
+		"value" : 1.0,
 		"description" : "Total Population",
 		"type" : "exogenous",
 		"symbol" : "L"

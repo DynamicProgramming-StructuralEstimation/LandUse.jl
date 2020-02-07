@@ -99,7 +99,7 @@ area(m::Model) = m.ϕ + m.Sr + m.Srh
 """
 	update!(m::Region,p::Param,x::Vector{Float64})
 
-update the general model from a parameter vector
+update a single region a parameter vector at choices `x`.
 """
 function update!(m::Region,p::Param,x::Vector{Float64})
 	m.ρr   = x[1]   # land price in rural sector
