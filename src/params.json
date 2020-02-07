@@ -1,5 +1,10 @@
 {
-	"L" : {
+	"S" : {
+		"value" : 1.0,
+		"description" : "Total Space",
+		"type" : "exogenous",
+		"symbol" : "S"
+	},"L" : {
 		"value" : 1.0,
 		"description" : "Total Population",
 		"type" : "exogenous",
@@ -142,6 +147,18 @@
 		"description" : "Number of Integration Nodes",
 		"type" : "exogenous",
 		"symbol" : "n_I"
+	},
+	"K" : {
+		"value" : 2,
+		"description" : "Number of Regions",
+		"type" : "exogenous",
+		"symbol" : "K"
+	},
+	"Sk" : {
+		"value" : [0.5,0.5],
+		"description" : "Region k's share of Total Space",
+		"type" : "exogenous",
+		"symbol" : "S_k"
 	}
 
 }

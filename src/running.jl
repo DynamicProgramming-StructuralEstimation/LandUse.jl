@@ -7,8 +7,8 @@ Compute general model solutions for all years. Starts from solution
 obtained for `t=1` and desired slope on elasticity function via [`adapt_ϵ`](@ref)
 """
 function get_solutions(x0::Vector{Float64},p::Param)
-	# m = [GModel(p) for it in 1:length(p.T)] # create a general elasticity model for each period
-	m = GModel[]
+	# m = [Region(p) for it in 1:length(p.T)] # create a general elasticity model for each period
+	m = Region[]
 	sols = Vector{Float64}[]  # an empty array of vectors
 	push!(sols, x0)  # first solution is obtained via `adapt_ϵ`
 
@@ -20,7 +20,7 @@ function get_solutions(x0::Vector{Float64},p::Param)
 	for it in 1:length(p.T)
 		# println("period $it")
 		setperiod!(p, it)   # set period on param to it
-		m0 = GModel(p)
+		m0 = Region(p)
 
 		r1 = nlsolve((F,x) -> solve!(F,x,p,m0),
 			                     sols[it],iterations = 1000)
@@ -31,7 +31,7 @@ function get_solutions(x0::Vector{Float64},p::Param)
 		if converged(r1)
 			push!(sols, r1.zero)
 			update!(m0,p,r1.zero)
-			@assert abs(Rmk(m0,p)) < 1e-8
+			@assert abs(Rmk(m0,p)) < 1e-8   # walras' law
 			push!(m,m0)
 		else
 			error("General Model not converged in period $it")

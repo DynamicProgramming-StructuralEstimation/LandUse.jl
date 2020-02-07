@@ -3,9 +3,13 @@ abstract type Model end
 
 
 """
-Model with general commuting cost.
+Region type 
+    
+Urban expansion dodel with flexible commuting cost and differential supply elasticity. 
+This represents a single region. A region contains one potential urban area, and a rural area.
+A `Region` can be part of a wider `Country`.
 """
-mutable struct GModel <: Model
+mutable struct Region <: Model
 	ρr   :: Float64   # land price in rural sector
 	qr   :: Float64     # housing price in rural sector
 	Lr   :: Float64   # employment in rural sector
@@ -34,7 +38,7 @@ mutable struct GModel <: Model
 	iτ        :: Float64   # ∫ τ(l) D(l) dl
 	iq        :: Float64   # ∫ ρ(l) dl
 	iy        :: Float64   # ∫ w(l) D(l) dl
-	function GModel(p::Param)
+	function Region(p::Param)
 		# creates a model fill with NaN
 		m      = new()
 		m.ρr   = NaN
@@ -64,31 +68,40 @@ mutable struct GModel <: Model
 	end
 end
 
-function show(io::IO, ::MIME"text/plain", m::Model)
-    print(io,"LandUse Model:\n")
-    print(io,"    m.ρr   : $(m.ρr ) \n")
-    print(io,"    m.qr   : $(m.qr ) \n")
-    print(io,"    m.Lr   : $(m.Lr ) \n")
-    print(io,"    m.Lu   : $(m.Lu ) \n")
-    print(io,"    m.wu0  : $(m.wu0) \n")
-    print(io,"    m.wr   : $(m.wr ) \n")
-    print(io,"    m.Sr   : $(m.Sr ) \n")
-    print(io,"    m.Srh  : $(m.Srh) \n")
-    print(io,"    m.r    : $(m.r  ) \n")
-    print(io,"    m.pr   : $(m.pr ) \n")
-    print(io,"    m.ϕ    : $(m.ϕ  ) \n")
-    print(io,"    m.xsr  : $(m.xsr) \n")
-    print(io,"    m.U    : $(m.U) \n")
+function show(io::IO, ::MIME"text/plain", m::Region)
+    print(io,"Single Region:\n")
+    print(io,"    pop   : $(pop(m)) \n")
+    print(io,"    Lr   : $(m.Lr ) \n")
+    print(io,"    Lu   : $(m.Lu ) \n")
+    print(io,"    area : $(round(area(m),digits=2)) \n")
+    print(io,"    ϕ    : $(m.ϕ  ) \n")
+    print(io,"    Sr   : $(m.Sr ) \n")
+    print(io,"    Srh  : $(m.Srh) \n")
+    print(io,"    ρr   : $(m.ρr ) \n")
+    print(io,"    qr   : $(m.qr ) \n")
+    print(io,"    wu0  : $(m.wu0) \n")
+    print(io,"    wr   : $(m.wr ) \n")
+    print(io,"    r    : $(m.r  ) \n")
+    print(io,"    pr   : $(m.pr ) \n")
+    print(io,"    xsr  : $(m.xsr) \n")
+    print(io,"    U    : $(m.U) \n")
+end
+
+function show(io::IO, m::Region)
+    # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
+    @printf(io,"Region: ϕ=%1.3f, pop=%1.3f, area=%1.2f",m.ϕ, pop(m), area(m))
 end
 
 
+pop(m::Model) = m.Lu + m.Lr
+area(m::Model) = m.ϕ + m.Sr + m.Srh
 
 """
-	update!(m::GModel,p::Param,x::Vector{Float64})
+	update!(m::Region,p::Param,x::Vector{Float64})
 
 update the general model from a parameter vector
 """
-function update!(m::GModel,p::Param,x::Vector{Float64})
+function update!(m::Region,p::Param,x::Vector{Float64})
 	m.ρr   = x[1]   # land price in rural sector
 	m.ϕ    = x[2]   # city size
 	m.r    = x[3]   # land rent
@@ -116,12 +129,12 @@ function update!(m::GModel,p::Param,x::Vector{Float64})
 end
 
 """
-	integrate!(m::Model,p::Param)
+	integrate!(m::Region,p::Param)
 
 could be made much faster by filling a matrix col-wise with integration nodes and
 doing a matmul on it? have to allocate memory though.
 """
-function integrate!(m::GModel,p::Param)
+function integrate!(m::Region,p::Param)
 
 	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
@@ -135,11 +148,11 @@ function integrate!(m::GModel,p::Param)
 end
 
 """
-	Eqsys!(F::Vector{Float64},m::Model,p::Param)
+	Eqsys!(F::Vector{Float64},m::Region,p::Param)
 
 compute system of equations for the general (with flexible ϵ).
 """
-function Eqsys!(F::Vector{Float64},m::GModel,p::Param)
+function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 	σ1 = (p.σ-1)/p.σ
 	σ2 = 1.0 / (p.σ-1)
 
@@ -153,10 +166,10 @@ function Eqsys!(F::Vector{Float64},m::GModel,p::Param)
 	F[3] = m.Lu - m.iDensity
 
 	#  total land rent per capita: equation (23)
-	F[4] = m.r * p.L - m.iq - m.ρr * (1 - m.ϕ)
+	F[4] = m.r * p.L - m.iq - m.ρr * (p.S - m.ϕ)
 
 	# land market clearing: after equation (20)
-	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh
+	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
 
 	# urban goods market clearing. equation before (25) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
@@ -194,6 +207,8 @@ mutable struct FModel <: Model
 	U        :: Float64  # common utility level
 	cr01     :: Tuple{Float64,Float64}  # consumption at locations 0 and 1. temps to check.
 	cu01     :: Tuple{Float64,Float64} # consumption at locations 0 and 1. temps to check.
+	Ftrace :: Matrix{Float64}
+	xtrace :: Matrix{Float64}
 	function FModel(p::Param)
 		# creates a model fill with NaN
 		m     = new()
@@ -211,6 +226,8 @@ mutable struct FModel <: Model
 		# m.xsr  = NaN
 		# m.U    = NaN
 		m.xsr    = NaN
+		m.Ftrace = zeros(6,1)
+		m.xtrace = zeros(6,1)
 		return m
 	end
 end
@@ -280,7 +297,7 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 		   (w2*(1-p.τ * m.ϕ)+m.r-m.pr * p.cbar+p.sbar)) - m.r*p.L
 
 	# land market clearing: after equation (18)
-	F[5] = 1.0 - p.λ - m.ϕ - m.Sr - m.Srh
+	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
 
 	# urban goods market clearing.
 	chi2 = 1.0
@@ -293,6 +310,9 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	p.ϵr *chi2*γ2*m.ρr/(p.τ*(1+γ2)*w2)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
 	p.sbar*p.L -
 	p.θu*m.Lu^(1+p.η)
+
+	# record function values
+	m.Ftrace = hcat(m.Ftrace,F)
 
 	# cr = (1.0 - p.γ) * p.ν * ur + m.pr * p.cbar
 	# println("cr - p.cbar = $(cr - p.cbar * p.cbar)")
@@ -310,6 +330,9 @@ end
 """
 function solve!(F,x,p::Param,m::Model)
 	update!(m,p,x)
+	if isa(m,FModel)
+		m.xtrace = hcat(m.xtrace,x)
+	end
 	try
 		Eqsys!(F,m,p)
 	catch
@@ -331,17 +354,32 @@ end
 "commuting cost"
 τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
 
+"inverse of commuting cost function"
+invτ(x::Float64,p::Param) = (x > 1.0) ? 0.0 : (1.0 - x) / p.τ
+
 "urban wage at location ``l``"
 wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) * (1.0 .- τ(l,ϕ,p))
+
+"urban wage at location ``l``"
+wu(l::Float64,ϕ::Float64,p::Param) = wu0(p) * (1.0 .- τ(l,ϕ,p))
 
 "urban wage at center"
 wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
 
+"urban wage at center"
+wu0(p::Param) = p.Ψ * p.θu
+
 "rural wage from indifference condition at ϕ. Eq (11)"
 wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p)*(1.0 .- τ(ϕ,ϕ,p))
 
+"rural wage from indifference condition at ϕ. Eq (11)"
+wr(ϕ::Float64,p::Param) = wu0(p)*(1.0 .- τ(ϕ,ϕ,p))
+
 "wage at location ``l``"
 w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)
+
+"wage at location ``l`` indep of Lu"
+w(l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(ϕ,p) : wu(l,ϕ,p)
 
 "excess subsistence urban worker"
 xsu(l::Float64,p::Param,m::Model) = w(m.Lu,l,m.ϕ,p) .+ m.r .- m.pr .* p.cbar .+ p.sbar
@@ -380,7 +418,9 @@ q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
 ρ(l::Float64,p::Param,m::Model) = (χ(l,m.ϕ,p) .* q(l,p,m).^(1.0 + ϵ(l,m.ϕ,p))) / (1.0 + ϵ(l,m.ϕ,p))
 
 "rural house price from land price"
-qr(p::Param,m::Model) = ( (1+p.ϵr) * m.ρr * cfun(m.ϕ,p)^p.ϵr ) ^(1.0/(1+p.ϵr))
+function qr(p::Param,m::Model)
+	( (1+p.ϵr) * m.ρr * cfun(m.ϕ,p)^p.ϵr ) ^(1.0/(1+p.ϵr))
+end
 
 
 
@@ -393,6 +433,12 @@ H(l::Float64,p::Param,m::Model) = χ(l,m.ϕ,p) * q(l,p,m).^ϵ(l,m.ϕ,p)
 "Population Density at location ``l``"
 D(l::Float64,p::Param,m::Model) = H(l,p,m) / h(l,p,m)
 
+"Population Density at location ``l``. second version, independent of Lu"
+function D2(l::Float64,p::Param,r::Region)
+	γl = 1.0 / γ(l,r.ϕ,p)
+	r.ρr * (γl * (r.wr + r.r - r.pr*p.cbar)^(-γl) * (w(r.Lu,l,r.ϕ,p) + r.r - r.pr*p.cbar)^(γl - 1))
+end
+
 "Amount of Urban Good (numeraire) required to build housing at ``l``"
 cu_input(l::Float64,p::Param,m::Model) = ϵ(l,m.ϕ,p) / (1+ϵ(l,m.ϕ,p)) .* q(l,p,m) .* H(l,p,m)
 
@@ -401,7 +447,7 @@ utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) *
 
 
 "aggregate per capita income"
-pcy(m::Model,p::Param) = m.r + wr(m.Lu,m.ϕ,p) * m.Lr / p.L + m.iy / p.L
+pcy(m::Model,p::Param) = m.r + m.wr * m.Lr / p.L + m.iy / p.L
 
 "Production of Rural Good"
 function Yr(m::Model,p::Param)
@@ -415,3 +461,13 @@ Yu(m::Model,p::Param) = p.θu * m.Lu
 
 "Rural Market Clearing"
 Rmk(m::Model,p::Param) = m.icr + m.Lr * cr(m.ϕ,p,m) - Yr(m,p)
+
+
+"Obtain a Time Series for the Model as a DataFrame"
+function dataframe(M::Vector{Region},p::Param)
+	df = DataFrame(year = p.T)
+	for fi in setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
+		df[!,fi] = [getfield(M[it],fi) for it in 1:length(p.T)]
+	end
+	df
+end
