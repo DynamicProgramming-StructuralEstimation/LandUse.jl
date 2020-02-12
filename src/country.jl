@@ -52,15 +52,15 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 	# rural wage
 	c.wr = c.ρr * p1.α / (1-p1.α) * c.LS^(-1/p1.σ)
 
-	# 
+	#
 
 	# update each region
 	# 2. update other equations in each region
 	for ik in 1:K
 		# update country-wide stuff in each region
-		c.R[ik].pr = c.pr 
-		c.R[ik].r  = c.r 
-		c.R[ik].ρr = c.ρr 
+		c.R[ik].pr = c.pr
+		c.R[ik].r  = c.r
+		c.R[ik].ρr = c.ρr
 		c.R[ik].wr = c.wr # wage rate rural sector
 
 		# we chose Sr in each region:
@@ -71,7 +71,7 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		# 1. set ϕ for each region
 		c.R[ik].ϕ  = invτ(c.wr / p[ik].θu,p[ik])
 		# 2. compute city size equation
-		c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes   
+		c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes
 		c.R[ik].Lu   = (c.R[ik].ϕ/2) * sum(c.R[ik].iweights[i] * D2(c.R[ik].nodes[i],p[ik],c.R[ik]) for i in 1:p[ik].int_nodes)[1]
 
 		# 3. update remaining fields
@@ -86,7 +86,7 @@ end
 
 """
 Computes the entries of the residual vector ``u``
-""" 
+"""
 function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 
 	K = length(C.R)  # num of regions
@@ -130,15 +130,17 @@ function solve!(F,x,p::Vector{Param},C::Country)
 	end
 end
 
-function runk()
+function runk(;par = Dict(:S => S, :L => L, :kshare => [0.6,0.4], :K => 2))
 
 
 	# 1. run a single region with pop = 1 and area = 1
-	x,M,p = LandUse.run()
+	x,M,p = LandUse.run(par=par)
 	# 2. run a country with 2 regions, total pop 2 and total area =2. starting from solution in period 1 of 1.
 
-    p = LandUse.Param(par = Dict(:S => 2.0, :L => 2.0, :kshare => [0.6,0.4], :K => 2))  # double space and pop for 2 equally sized regions.
-	C = LandUse.Country([p;p])  # create that country
+    p1 = LandUse.Param(par = Dict(:S => S, :L => L, :kshare => [0.6,0.4], :K => 2))  # double space and pop for 2 equally sized regions.
+    p2 = LandUse.Param(par = Dict(:S => S, :L => L, :kshare => [0.6,0.4], :K => 2, :θu => p1.θu * θfact))
+	pp = [p1;p2]
+	C = LandUse.Country(pp)  # create that country
 
 	# starting values.
 	# 1. b: ratio of labor to land in region 1
@@ -147,18 +149,18 @@ function runk()
 	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
 	x0 = zeros(p.K + 3)
 	x0[1] = M[1].Lr / M[1].Sr
-	x0[2] = M[1].r 
-	x0[3] = M[1].pr 
-	x0[4] = M[1].Sr 
-	x0[5] = M[1].Sr 
+	x0[2] = M[1].r
+	x0[3] = M[1].pr
+	x0[4] = M[1].Sr
+	x0[5] = M[1].Sr
 
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),x0,iterations = 100, show_trace=false,extended_trace=true)
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=false,extended_trace=true)
 	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
 
 	if !converged(r)
 		error("not converged")
 	else
-		update!(C,[p;p],r.zero)
+		LandUse.update!(C,pp,r.zero)
 		return C
 	end
 

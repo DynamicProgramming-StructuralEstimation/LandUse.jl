@@ -3,9 +3,9 @@ abstract type Model end
 
 
 """
-Region type 
-    
-Urban expansion dodel with flexible commuting cost and differential supply elasticity. 
+Region type
+
+Urban expansion dodel with flexible commuting cost and differential supply elasticity.
 This represents a single region. A region contains one potential urban area, and a rural area.
 A `Region` can be part of a wider `Country`.
 """
@@ -226,8 +226,8 @@ mutable struct FModel <: Model
 		# m.xsr  = NaN
 		# m.U    = NaN
 		m.xsr    = NaN
-		m.Ftrace = zeros(6,1)
-		m.xtrace = zeros(6,1)
+		m.Ftrace = zeros(4,1)
+		m.xtrace = zeros(4,1)
 		return m
 	end
 end
@@ -257,6 +257,94 @@ function update!(m::FModel,p::Param,x::Vector{Float64})
 	m.Srh  = ( γ2 / m.ρr ) * m.xsr * m.Lr
 	m.qr   = qr(p,m)
 
+end
+
+"""
+	update2!(m::FModel,p::Param,x::Vector{Float64})
+
+update a `Fmodel` from a choice vector x
+"""
+function update2!(m::FModel,p::Param,x::Vector{Float64})
+	m.r    = x[1]   # land rent
+	m.Lr   = x[2]   # employment in rural sector
+	m.pr   = x[3]   # relative price rural good
+	m.Sr   = x[4]   # amount of land used in rural production
+
+	# update params
+	σ1 = (p.σ-1)/p.σ
+	σ2 = 1.0 / (p.σ-1)
+	γ2 = p.γ / (1 + p.ϵr)
+
+
+	# update equations
+	m.Lu   = p.L - m.Lr   # employment in urban sector
+	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
+	m.wr   = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2
+	m.ρr   = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
+	m.ϕ = invτ(m.wr / p.θu,p)
+
+	m.xsr  = m.wr + m.r - m.pr * p.cbar - p.sbar
+	# m.xsu = m.wu0 + m.r - m.pr * p.cbar - p.sbar
+	m.Srh  = ( γ2 / m.ρr ) * m.xsr * m.Lr
+	m.qr   = qr(p,m)
+
+end
+
+"""
+	Eqsys2!(F::Vector{Float64},m::FModel,p::Param)
+
+compute system of equations for fixed elasticities. uses closed form solutions
+	for integrals.
+"""
+function Eqsys2!(F::Vector{Float64},m::FModel,p::Param)
+	σ1 = (p.σ-1)/p.σ
+	σ2 = 1.0 / (p.σ-1)
+	γ2 = p.γ / (1 + p.ϵr)
+
+	# land market clearing: after equation (18)
+	F[1] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
+
+
+	# city size - Urban population relationship: analytic integral solution to equation (16)
+	w2 = p.θu * m.Lu^p.η
+	τϕ = 1-p.τ * m.ϕ
+	w1 = p.Ψ * w2 * τϕ
+	uu = w2+m.r - m.pr * p.cbar - p.sbar
+	ur = w1+m.r - m.pr * p.cbar - p.sbar
+	xx = m.r - m.pr * p.cbar - p.sbar
+
+
+	F[2] = 1+p.τ * w2 * m.Lu/(m.ρr)-(uu/(w2*(1-p.τ*m.ϕ)+m.r-m.pr*p.cbar+p.sbar))^(1/γ2)
+
+	#  total land rent per capita: closed form solution
+	F[3] = m.ρr * m.Sr + m.ρr * m.Srh +
+	       γ2 * m.ρr/(p.τ*(1+γ2)*w2)*(uu^(1/γ2+1)/((w2*τϕ+m.r-m.pr * p.cbar+p.sbar)^(1/γ2)) -
+		   (w2*(1-p.τ * m.ϕ)+m.r-m.pr * p.cbar+p.sbar)) - m.r*p.L
+
+
+	# urban goods market clearing.
+	chi2 = 1.0
+
+	F[4] = m.Lr * (1-p.γ)*(1-p.ν)* ur +
+	chi2*(1-p.γ)*(1-p.ν)*m.ρr/((1+γ2)*w2*p.τ)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) +
+	chi2*γ2*m.ρr/((1+γ2)*p.τ*w2)*(((w2+xx)^(1/γ2+1))/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
+	m.ϕ*chi2*m.ρr +
+	p.ϵr *m.ρr*m.Srh +
+	p.ϵr *chi2*γ2*m.ρr/(p.τ*(1+γ2)*w2)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
+	p.sbar*p.L -
+	p.θu*m.Lu^(1+p.η)
+
+	# record function values
+	m.Ftrace = hcat(m.Ftrace,F)
+
+	# cr = (1.0 - p.γ) * p.ν * ur + m.pr * p.cbar
+	# println("cr - p.cbar = $(cr - p.cbar * p.cbar)")
+	# F[7] = minerr < 0.0 ? minerr^2 : 0.0
+	# F[7] = cr - p.cbar * p.cbar > 0 ? 0.0 : 2*exp(cr - p.cbar * p.cbar)
+	# F[7] = 0.0
+	# println("penalty = $(F[7])")
+
+	# F[7] = 0.0
 end
 
 
@@ -324,6 +412,24 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	# F[7] = 0.0
 end
 
+
+function solve2!(F,x,p::Param,m::Model)
+	xneg = findall(x .< 0)
+	if
+	if any( x .< 0 )
+		F[:] .= PEN
+	else
+		update2!(m,p,x)
+		if isa(m,FModel)
+			m.xtrace = hcat(m.xtrace,x)
+		end
+		try
+			Eqsys2!(F,m,p)
+		catch
+			@warn "error in eqsys"
+		end
+	end
+end
 
 """
 	Update values and return solved equation system of a `Model`
@@ -417,11 +523,15 @@ q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
 # ρ(l::Float64,p::Param,m::Model) = H(l,p,m) .* q(l,p,m) / (1.0 + p.ϵ)
 ρ(l::Float64,p::Param,m::Model) = (χ(l,m.ϕ,p) .* q(l,p,m).^(1.0 + ϵ(l,m.ϕ,p))) / (1.0 + ϵ(l,m.ϕ,p))
 
+# "rural house price from land price"
+# function qr(p::Param,m::Model)
+# 	( (1+p.ϵr) * m.ρr * cfun(m.ϕ,p)^p.ϵr ) ^(1.0/(1+p.ϵr))
+# end
+
 "rural house price from land price"
 function qr(p::Param,m::Model)
-	( (1+p.ϵr) * m.ρr * cfun(m.ϕ,p)^p.ϵr ) ^(1.0/(1+p.ϵr))
+	( (1+p.ϵr) * m.ρr ) ^(1.0/(1+p.ϵr))
 end
-
 
 
 "housing demand at location ``l``"

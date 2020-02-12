@@ -22,7 +22,7 @@ mutable struct CD0Model
 	function CD0Model(p::Param)
 		m = new()
 		m.ρr = 0.3
-		m.Lr = 0.2
+		m.Lr = 0.8 * p.L
 		m.Lu   = p.L-m.Lr   # employment in urban sector
 		m.wu   = p.θu     # wage rate urban sector with no commuting costs
 		m.wr   = m.wu       # wage rate rural sector: equation (11)
@@ -30,7 +30,7 @@ mutable struct CD0Model
 		# amount of land used for r prod
 		# equation (4) with σ=1
 		m.Sr  = (1-p.α) / p.α * ( (m.wr * m.Lr) / m.ρr )
-		m.r   = 1/p.L*m.ρr*(1-p.λ)  # per capita land rental income
+		m.r   = 1/p.L*m.ρr*(p.S-p.λ)  # per capita land rental income
 		m.pr  = m.wr / (p.α * p.θr) * (m.Lr/m.Sr)^(1-p.α)  # rel price of rural conumption good. FOC of rural firm for Lr.
 		m.ur = m.wr + m.r - m.pr * p.cbar
 		m.uu = m.wu + m.r - m.pr * p.cbar
@@ -57,8 +57,8 @@ function update!(m::CD0Model,p::Param,ρr::Float64,Lr::Float64)
 	# amount of land used for r prod
 	# equation (4) with σ=1
 	m.Sr  = (1-p.α) / p.α * ( (m.wr * m.Lr) / m.ρr )
-	m.r   = 1/p.L*m.ρr*(1-p.λ)  # per capita land rental income
-	m.pr  = m.wr / (p.α * p.θr) * (m.Lr/m.Sr)^(1-p.α)  # rel price of rural conumption good. FOC of rural firm for Lr.
+	m.r   = 1/p.L*m.ρr*(p.S-p.λ)  # per capita land rental income
+	m.pr  = m.wr / (p.α * p.θr) * (m.Lr/m.Sr)^(1-p.α)  # rel price of rural conumption good. FOC of rural firm for Lr with σ=1
 	m.ur = m.wr + m.r - m.pr * p.cbar
 	m.uu = m.wu + m.r - m.pr * p.cbar
 	m.χr = χ(1.0,m.ϕ,p)
@@ -195,22 +195,28 @@ function get_starts(;par = Dict())
 			LandUse.update!(m0,p,r0.zero[1],r0.zero[2])
 			# x00 = [m0.ρr * p.S; p.S * 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr; m0.U]   # set very small city!
 			# x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
-			if p.S == 1.0
-				x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
-			elseif p.S == 2
-				x00 = [m0.ρr*p.S; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
-			elseif p.S == 3
-				x00 = [p.S^2 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
-			elseif p.S > 3
-				x00 = [p.S^3 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
-			end
+			# if p.S == 1.0
+			# 	x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
+			# elseif p.S == 2
+			# 	x00 = [m0.ρr*p.S; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			# elseif p.S == 3
+			# 	x00 = [p.S^2 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			# elseif p.S > 3
+			# 	x00 = [p.S^3 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			# end
+
+
+				x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr - 0.00005]   # set very small city!
+
 
 			# 4. solve general model with fixed elasticity starting from x00
 			# --> closed form solutions for integrals
 			# --> produces starting value x0
 			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 1000, autodiff = :forward)
 			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 100, method = :trust_region,show_trace = true, extended_trace = true)
-			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 10000)
+			x0 = [0.01,0.98,0.01,0.99]
+			r1 = LandUse.nlsolve((F,x) -> LandUse.solve2!(F,x,p,fm),x0,iterations = 10000)
+			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 10000)
 			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,fm),vcat(x00[1],0,0.01,0.01,0.01,0.5),vcat(fill(Inf,4),3.0,p.S), x00,iterations = 100)
 			if converged(r1)
 				push!(startvals, r1.zero)
@@ -270,4 +276,13 @@ function adapt_ϵ(x0::Vector{Float64};par = Dict())
 		end
 	end
 	return (startvals,p)
+end
+
+
+function tfun()
+	x0 = [0.1,0.8,0.2,0.9]
+	p = Param()
+	fm = FModel(p)
+	update2!(fm,p,x0)
+	r1 = LandUse.nlsolve((F,x) -> LandUse.solve2!(F,x,p,fm),x0,iterations = 10000,show_trace = true,extended_trace = true)
 end
