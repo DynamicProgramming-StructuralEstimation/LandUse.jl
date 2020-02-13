@@ -195,15 +195,15 @@ function get_starts(;par = Dict())
 			LandUse.update!(m0,p,r0.zero[1],r0.zero[2])
 			# x00 = [m0.ρr * p.S; p.S * 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr; m0.U]   # set very small city!
 			# x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
-			# if p.S == 1.0
-			# 	x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
-			# elseif p.S == 2
-			# 	x00 = [m0.ρr*p.S; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
-			# elseif p.S == 3
-			# 	x00 = [p.S^2 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
-			# elseif p.S > 3
-			# 	x00 = [p.S^3 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
-			# end
+			if p.S == 1.0
+				x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr]   # set very small city!
+			elseif p.S == 2
+				x00 = [m0.ρr*p.S; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			elseif p.S == 3
+				x00 = [p.S^2 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			elseif p.S > 3
+				x00 = [p.S^3 *m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; p.S - 0.00005]   # set very small city!
+			end
 
 
 				x00 = [m0.ρr; 0.00005; m0.r; m0.Lr; m0.pr; m0.Sr - 0.00005]   # set very small city!
@@ -214,9 +214,9 @@ function get_starts(;par = Dict())
 			# --> produces starting value x0
 			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 1000, autodiff = :forward)
 			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 100, method = :trust_region,show_trace = true, extended_trace = true)
-			x0 = [0.01,0.98,0.01,0.99]
-			r1 = LandUse.nlsolve((F,x) -> LandUse.solve2!(F,x,p,fm),x0,iterations = 10000)
-			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 10000)
+			# x0 = [0.01,0.98,0.01,0.99]
+			# r1 = LandUse.nlsolve((F,x) -> LandUse.solve2!(F,x,p,fm),x0,iterations = 10000)
+			r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,fm),x00,iterations = 10000)
 			# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,fm),vcat(x00[1],0,0.01,0.01,0.01,0.5),vcat(fill(Inf,4),3.0,p.S), x00,iterations = 100)
 			if converged(r1)
 				push!(startvals, r1.zero)

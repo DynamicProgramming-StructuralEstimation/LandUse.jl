@@ -207,8 +207,8 @@ mutable struct FModel <: Model
 	U        :: Float64  # common utility level
 	cr01     :: Tuple{Float64,Float64}  # consumption at locations 0 and 1. temps to check.
 	cu01     :: Tuple{Float64,Float64} # consumption at locations 0 and 1. temps to check.
-	Ftrace :: Matrix{Float64}
-	xtrace :: Matrix{Float64}
+	# Ftrace :: Matrix{Float64}
+	# xtrace :: Matrix{Float64}
 	function FModel(p::Param)
 		# creates a model fill with NaN
 		m     = new()
@@ -226,8 +226,8 @@ mutable struct FModel <: Model
 		# m.xsr  = NaN
 		# m.U    = NaN
 		m.xsr    = NaN
-		m.Ftrace = zeros(4,1)
-		m.xtrace = zeros(4,1)
+		# m.Ftrace = zeros(6,1)
+		# m.xtrace = zeros(6,1)
 		return m
 	end
 end
@@ -335,7 +335,7 @@ function Eqsys2!(F::Vector{Float64},m::FModel,p::Param)
 	p.θu*m.Lu^(1+p.η)
 
 	# record function values
-	m.Ftrace = hcat(m.Ftrace,F)
+	# m.Ftrace = hcat(m.Ftrace,F)
 
 	# cr = (1.0 - p.γ) * p.ν * ur + m.pr * p.cbar
 	# println("cr - p.cbar = $(cr - p.cbar * p.cbar)")
@@ -414,21 +414,73 @@ end
 
 
 function solve2!(F,x,p::Param,m::Model)
-	xneg = findall(x .< 0)
-	if
+	# println(x)
 	if any( x .< 0 )
 		F[:] .= PEN
 	else
 		update2!(m,p,x)
 		if isa(m,FModel)
-			m.xtrace = hcat(m.xtrace,x)
+			# m.xtrace = hcat(m.xtrace,x)
 		end
-		try
+		# try
 			Eqsys2!(F,m,p)
-		catch
-			@warn "error in eqsys"
-		end
+		# catch
+		# 	@warn "error in eqsys"
+		# end
 	end
+end
+
+function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,m::Model,p::Param)
+	if length(grad) > 0
+		# not implemented
+	end
+	solve2!(result,x,p,m)
+end
+
+function nlopt_solve(;par = Dict())
+	p = Param(par=par)
+	fm = FModel(p)
+	opt = Opt(:LN_COBYLA,4)
+	# opt = Opt(:LN_NELDERMEAD,4)
+	opt.lower_bounds = fill(0.001,4)
+	# opt.upper_bounds = [1.0,1.0,1.0,1.0]
+	f0(x::Vector, grad::Vector) = 1.0
+	opt.min_objective = f0  # fix at a constant
+	equality_constraint!(opt,(r,x,g) -> NLopt_wrap(r,x,g,fm,p), fill(1e-5,4))
+	# m.r    = x[1]   # land rent
+	# m.Lr   = x[2]   # employment in rural sector
+	# m.pr   = x[3]   # relative price rural good
+	# m.Sr   = x[4]   # amount of land used in rural production
+	(optf,optx,ret) = optimize(opt, [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S])
+	(optf,optx,ret) = optimize(opt, [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S])
+end
+
+function solve_y(m::Model,p::Param,x::Vector)
+	F = similar(x)
+	solve2!(F,x,p,m)
+	return F
+end
+
+
+function brute(p::Param,m::Model;
+	           d = OrderedDict(:r => [0.001, 0.1], :Lr => [0.01,0.9] .* p.L, :pr => [0.01,0.5], :Sr => [0.1,0.99] .* p.S ),
+			   n = 5)
+	ranges = OrderedDict()
+	for (k,v) in d
+		ranges[k] = range(v[1], stop = v[2], length = n)
+	end
+
+	xvals = collect(Iterators.product(values(ranges)...))
+	yvals = collect(IterTools.imap((x) -> solve_y(m,p,vcat(x...)),xvals))
+	y = findmin(norm.(yvals))
+	xvals[y[2]]   # y[2] is index of best value
+end
+
+function mb()
+	p = Param()
+	m = FModel(p)
+	x0  = brute(p,m)
+	r1 = LandUse.nlsolve((F,x) -> LandUse.solve2!(F,x,p,m),vcat(x0...),iterations = 10000)
 end
 
 """
