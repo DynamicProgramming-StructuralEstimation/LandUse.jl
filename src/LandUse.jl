@@ -11,9 +11,6 @@ module LandUse
 	using StatsPlots
 	using DataFramesMeta
 	using Printf
-	using IterTools
-	using LinearAlgebra
-	using DataStructures
 	using NLopt
 
 	# constants
