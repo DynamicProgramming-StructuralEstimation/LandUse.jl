@@ -107,7 +107,10 @@ function update2!(m::Region,p::Param,x::Vector{Float64})
 	# update equations
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
+	m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
+	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
+	m.ϕ    = invτ(m.wr / p.θu,p)
+
 	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
 	m.qr   = qr(p,m)
@@ -172,6 +175,21 @@ function integrate!(m::Region,p::Param)
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
 	# @assert m.iDensity > 0 "integral of density is negative"
+end
+
+function Eqsys2!(F::Vector{Float64},m::Region,p::Param)
+	# land market clearing: after equation (20)
+	F[1] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
+
+	# city size - Urban population relationship: equation (19)
+	F[2] = m.Lu - m.iDensity
+
+	#  total land rent per capita: equation (23)
+	F[3] = m.r * p.L - m.iq - m.ρr * (p.S - m.ϕ)
+
+	# urban goods market clearing. equation before (25) but not in per capita terms
+	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
+	F[4] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
 end
 
 """

@@ -14,7 +14,7 @@ function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,m::Model,p::Param)
 	solve2!(result,x,p,m)
 end
 
-function nlopt_solve(;p = Param(),x0=nothing)
+function nlopt_solveFM(;p = Param(),x0=nothing)
 	fm = FModel(p)
 	opt = Opt(:LN_COBYLA,4)
 	# opt = Opt(:LN_NELDERMEAD,4)
@@ -35,7 +35,6 @@ function nlopt_solve(;p = Param(),x0=nothing)
 	end
 	(optf,optx,ret) = optimize(opt, x0)
 end
-
 
 
 
@@ -203,10 +202,20 @@ function update!(m::Region,m0::CD0Model,p::Param)
 
 end
 
+"""
+	get_starts(;par = Dict())
 
+Generate starting values for all years from the fixed ϵ model `FModel`.
+
+In year 1:
+
+1. Construct a `FModel` from a starting value `[0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]`
+2. In subsequent years, take solution from 1. of previous year as starting value
+
+"""
 function get_starts2(;par = Dict())
 	p = Param(par=par)
-	fm = LandUse.FModel(p)  # create a fixed elasticity model
+	# fm = LandUse.FModel(p)  # create a fixed elasticity model
 	startvals = Vector{Float64}[]  # an empty array of vectors
 
 	# 2. For each time period
@@ -215,9 +224,9 @@ function get_starts2(;par = Dict())
 
 		# if first year
 		if it == 1
-			x0 = nlopt_solve(p=p)
+			x0 = nlopt_solveFM(p=p)
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :LIMITED)
-				update2!(fm,p,x0[2])
+				# update2!(fm,p,x0[2])
 				push!(startvals, x0[2])
 				# println("rural market clears with $(Rmk(fm,p))")
 			else
@@ -229,9 +238,9 @@ function get_starts2(;par = Dict())
 			end
 
 		else  # in other years just start at previous solution
-			x0 = nlopt_solve(p=p,x0 = startvals[it-1])
+			x0 = nlopt_solveFM(p=p,x0 = startvals[it-1])
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :LIMITED)
-				update2!(fm,p,x0[2])
+				# update2!(fm,p,x0[2])
 				push!(startvals, x0[2])
 				# println("rural market clears with $(Rmk(fm,p))")
 			else
@@ -244,20 +253,7 @@ function get_starts2(;par = Dict())
 end
 
 
-"""
-	get_starts(;par = Dict())
 
-Generate starting values for all years from the fixed ϵ model `FModel`.
-
-In year 1:
-
-1. Solve a model without commuting cost and 2 sectors. Choose land price and number of rural workers.
-2. Construct a `FModel` from this solution.
-3. Start with a very small city, ϕ = 0.00005, and solve with starting values from 2.
-
-In subsequent years, take solution from 3. of previous year as starting value
-
-"""
 function get_starts(;par = Dict())
 	# 1. initialize parameter
 	# p = Param(par=Dict(:ϵr => 0.0, :ϵs => 0.0))
@@ -354,6 +350,30 @@ function adapt_ϵ(x0::Vector{Float64};par = Dict())
 		setfield!(p, :ϵs, ϵ)  # set current value for elaticity function slope
 
 		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m),startvals[i],iterations = 1000)
+		if converged(r1)
+			push!(startvals, r1.zero)
+		else
+			error("adaptive search not converged for ϵ = $ϵ")
+		end
+	end
+	return (startvals,p)
+end
+
+function adapt_ϵ2(x0::Vector{Float64};par = Dict())
+
+	p = Param(par=par)
+	m = Region(p)
+
+	startvals = Vector{Float64}[]  # an empty array of vectors
+	push!(startvals, x0)  # put 1860 solution for flat epsilon function
+
+	# range of elasticity slope values
+	ϵs = range(0,stop = p.ϵsmax, length = p.ϵnsteps)[2:end]
+
+	for (i,ϵ) in enumerate(ϵs)
+		setfield!(p, :ϵs, ϵ)  # set current value for elaticity function slope
+
+		r1 = LandUse.nlsolve((F,x) -> LandUse.solve2!(F,x,p,m),startvals[i],iterations = 1000)
 		if converged(r1)
 			push!(startvals, r1.zero)
 		else
