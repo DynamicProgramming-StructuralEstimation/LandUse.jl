@@ -97,8 +97,12 @@ pop(m::Model) = m.Lu + m.Lr
 area(m::Model) = m.ϕ + m.Sr + m.Srh
 
 
+"""
+	update!(m::Region,p::Param,x::Vector{Float64})
 
-function update2!(m::Region,p::Param,x::Vector{Float64})
+update a single region a parameter vector at choices `x`.
+"""
+function update!(m::Region,p::Param,x::Vector{Float64})
 	m.r    = x[1]   # land rent
 	m.Lr   = x[2]   # employment in rural sector
 	m.pr   = x[3]   # relative price rural good
@@ -126,37 +130,6 @@ function update2!(m::Region,p::Param,x::Vector{Float64})
 	integrate!(m,p)
 end
 
-"""
-	update!(m::Region,p::Param,x::Vector{Float64})
-
-update a single region a parameter vector at choices `x`.
-"""
-function update!(m::Region,p::Param,x::Vector{Float64})
-	m.ρr   = x[1]   # land price in rural sector
-	m.ϕ    = x[2]   # city size
-	m.r    = x[3]   # land rent
-	m.Lr   = x[4]   # employment in rural sector
-	m.pr   = x[5]   # relative price rural good
-	m.Sr   = x[6]   # amount of land used in rural production
-
-	# update equations
-	m.Lu   = p.L - m.Lr   # employment in urban sector
-	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
-	m.xsr  = xsr(p,m)
-	m.Srh  = Srh(p,m)
-	m.qr   = qr(p,m)
-	# compute consumption at locations 0 and 1 to check both positive in both sectors.
-	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
-	m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )
-	m.U    = all( (m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) ) ? utility(0.0,p,m) : NaN
-	# if !all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) )
-	# println("neg cons")
-	# end
-	# display(m)
-	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
-	integrate!(m,p)
-end
 
 """
 	integrate!(m::Region,p::Param)
@@ -177,7 +150,12 @@ function integrate!(m::Region,p::Param)
 	# @assert m.iDensity > 0 "integral of density is negative"
 end
 
-function Eqsys2!(F::Vector{Float64},m::Region,p::Param)
+"""
+	Eqsys!(F::Vector{Float64},m::Region,p::Param)
+
+compute system of equations for the general (with flexible ϵ).
+"""
+function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 	# land market clearing: after equation (20)
 	F[1] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
 
@@ -190,45 +168,6 @@ function Eqsys2!(F::Vector{Float64},m::Region,p::Param)
 	# urban goods market clearing. equation before (25) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
 	F[4] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
-end
-
-"""
-	Eqsys!(F::Vector{Float64},m::Region,p::Param)
-
-compute system of equations for the general (with flexible ϵ).
-"""
-function Eqsys!(F::Vector{Float64},m::Region,p::Param)
-	σ1 = (p.σ-1)/p.σ
-	σ2 = 1.0 / (p.σ-1)
-
-	# rural firm w-FOC: equation (2)
-	F[1] = m.wr - p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2  #
-
-	# rural firm q-FOC: equation (3)
-	F[2] = m.ρr - (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
-
-	# city size - Urban population relationship: equation (19)
-	F[3] = m.Lu - m.iDensity
-
-	#  total land rent per capita: equation (23)
-	F[4] = m.r * p.L - m.iq - m.ρr * (p.S - m.ϕ)
-
-	# land market clearing: after equation (20)
-	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
-
-	# urban goods market clearing. equation before (25) but not in per capita terms
-	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
-	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
-
-	# maxerr = minimum(m.cr01)
-	# F[7] = maxerr > 0 ? 0.0 : maxerr^2
-	# F[7] = maxerr > 0 ? utility(0.0,p,m) - utility(1.0,p,m) : maxerr^2
-	minerr = minimum(m.cr01)
-	# println("minerr = $minerr")
-	# F[7] = minerr > 0 ? 0.0 : exp(minerr)
-	# F[7] = 0.0
-	# println("penalty = $(F[7])")
-
 end
 
 
@@ -283,33 +222,6 @@ end
 update a `Fmodel` from a choice vector x
 """
 function update!(m::FModel,p::Param,x::Vector{Float64})
-	m.ρr   = x[1]   # land price in rural sector
-	m.ϕ    = x[2]   # city size
-	m.r    = x[3]   # land rent
-	m.Lr   = x[4]   # employment in rural sector
-	m.pr   = x[5]   # relative price rural good
-	m.Sr   = x[6]   # amount of land used in rural production
-
-	# update params
-	γ2 = p.γ / (1+p.ϵr)
-
-	# update equations
-	m.Lu   = p.L - m.Lr   # employment in urban sector
-	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
-	m.xsr = m.wr + m.r - m.pr * p.cbar - p.sbar
-	# m.xsu = m.wu0 + m.r - m.pr * p.cbar - p.sbar
-	m.Srh  = ( γ2 / m.ρr ) * m.xsr * m.Lr
-	m.qr   = qr(p,m)
-
-end
-
-"""
-	update2!(m::FModel,p::Param,x::Vector{Float64})
-
-update a `Fmodel` from a choice vector x
-"""
-function update2!(m::FModel,p::Param,x::Vector{Float64})
 	m.r    = x[1]   # land rent
 	m.Lr   = x[2]   # employment in rural sector
 	m.pr   = x[3]   # relative price rural good
@@ -338,12 +250,12 @@ function update2!(m::FModel,p::Param,x::Vector{Float64})
 end
 
 """
-	Eqsys2!(F::Vector{Float64},m::FModel,p::Param)
+	Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 
 compute system of equations for fixed elasticities. uses closed form solutions
 	for integrals.
 """
-function Eqsys2!(F::Vector{Float64},m::FModel,p::Param)
+function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	σ1 = (p.σ-1)/p.σ
 	σ2 = 1.0 / (p.σ-1)
 	γ2 = p.γ / (1 + p.ϵr)
@@ -394,104 +306,20 @@ function Eqsys2!(F::Vector{Float64},m::FModel,p::Param)
 	# F[7] = 0.0
 end
 
-
-"""
-	Eqsys!(F::Vector{Float64},m::FModel,p::Param)
-
-compute system of equations for fixed elasticities. uses closed form solutions
-	for integrals.
-"""
-function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
-	σ1 = (p.σ-1)/p.σ
-	σ2 = 1.0 / (p.σ-1)
-	γ2 = p.γ / (1 + p.ϵr)
-
-	# rural firm w-FOC: equation (2)
-	F[1] = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2 - m.wr
-	# F[1] = ((m.Sr > 0) && (m.Lr > 0)) ? p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2 - m.wr : 2*exp(min(m.Sr,m.Lr))
-	# if !((m.Sr > 0) && (m.Lr > 0))
-	# 	println(min(m.Sr,m.Lr))
-	# end
-	# rural firm q-FOC: equation (3)
-	F[2] = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2 - m.ρr
-
-	# city size - Urban population relationship: analytic integral solution to equation (16)
-	w2 = p.θu * m.Lu^p.η
-	τϕ = 1-p.τ * m.ϕ
-	w1 = p.Ψ * w2 * τϕ
-	uu = w2+m.r - m.pr * p.cbar - p.sbar
-	ur = w1+m.r - m.pr * p.cbar - p.sbar
-	xx = m.r - m.pr * p.cbar - p.sbar
-
-
-	F[3] = 1+p.τ * w2 * m.Lu/(m.ρr)-(uu/(w2*(1-p.τ*m.ϕ)+m.r-m.pr*p.cbar+p.sbar))^(1/γ2)
-
-	#  total land rent per capita: closed form solution
-	F[4] = m.ρr * m.Sr + m.ρr * m.Srh +
-	       γ2 * m.ρr/(p.τ*(1+γ2)*w2)*(uu^(1/γ2+1)/((w2*τϕ+m.r-m.pr * p.cbar+p.sbar)^(1/γ2)) -
-		   (w2*(1-p.τ * m.ϕ)+m.r-m.pr * p.cbar+p.sbar)) - m.r*p.L
-
-	# land market clearing: after equation (18)
-	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
-
-	# urban goods market clearing.
-	chi2 = 1.0
-
-	F[6] = m.Lr * (1-p.γ)*(1-p.ν)* ur +
-	chi2*(1-p.γ)*(1-p.ν)*m.ρr/((1+γ2)*w2*p.τ)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) +
-	chi2*γ2*m.ρr/((1+γ2)*p.τ*w2)*(((w2+xx)^(1/γ2+1))/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
-	m.ϕ*chi2*m.ρr +
-	p.ϵr *m.ρr*m.Srh +
-	p.ϵr *chi2*γ2*m.ρr/(p.τ*(1+γ2)*w2)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
-	p.sbar*p.L -
-	p.θu*m.Lu^(1+p.η)
-
-	# record function values
-	# m.Ftrace = hcat(m.Ftrace,F)
-
-	# cr = (1.0 - p.γ) * p.ν * ur + m.pr * p.cbar
-	# println("cr - p.cbar = $(cr - p.cbar * p.cbar)")
-	# F[7] = minerr < 0.0 ? minerr^2 : 0.0
-	# F[7] = cr - p.cbar * p.cbar > 0 ? 0.0 : 2*exp(cr - p.cbar * p.cbar)
-	# F[7] = 0.0
-	# println("penalty = $(F[7])")
-
-	# F[7] = 0.0
-end
-
-
-function solve2!(F,x,p::Param,m::Model)
+function solve!(F,x,p::Param,m::Model)
 	# println(x)
 	if any( x .< 0 )
 		F[:] .= PEN
 	else
-		update2!(m,p,x)
+		update!(m,p,x)
 		if isa(m,FModel)
 			# m.xtrace = hcat(m.xtrace,x)
 		end
 		# try
-			Eqsys2!(F,m,p)
+			Eqsys!(F,m,p)
 		# catch
 		# 	@warn "error in eqsys"
 		# end
-	end
-end
-
-
-
-
-"""
-	Update values and return solved equation system of a `Model`
-"""
-function solve!(F,x,p::Param,m::Model)
-	update!(m,p,x)
-	if isa(m,FModel)
-		# m.xtrace = hcat(m.xtrace,x)
-	end
-	try
-		Eqsys!(F,m,p)
-	catch
-		@warn "error in eqsys"
 	end
 end
 
