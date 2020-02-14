@@ -6,7 +6,7 @@ module LandUse
 	using FastGaussQuadrature
 	using Plots
 	using LaTeXStrings
-	using Interact
+	# using Interact
 	using DataFrames
 	using StatsPlots
 	using DataFramesMeta
@@ -27,6 +27,6 @@ module LandUse
 	include("startvals.jl")
 	include("running.jl")
 	include("plotter.jl")
-	include("interact.jl")
+	# include("interact.jl")
 
 end # module

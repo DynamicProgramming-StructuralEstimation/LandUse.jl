@@ -96,6 +96,33 @@ end
 pop(m::Model) = m.Lu + m.Lr
 area(m::Model) = m.ϕ + m.Sr + m.Srh
 
+
+
+function update2!(m::Region,p::Param,x::Vector{Float64})
+	m.r    = x[1]   # land rent
+	m.Lr   = x[2]   # employment in rural sector
+	m.pr   = x[3]   # relative price rural good
+	m.Sr   = x[4]   # amount of land used in rural production
+
+	# update equations
+	m.Lu   = p.L - m.Lr   # employment in urban sector
+	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
+	m.wr   = wr(m.Lu,m.ϕ,p) # wage rate rural sector
+	m.xsr  = xsr(p,m)
+	m.Srh  = Srh(p,m)
+	m.qr   = qr(p,m)
+	# compute consumption at locations 0 and 1 to check both positive in both sectors.
+	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
+	m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )
+	m.U    = all( (m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) ) ? utility(0.0,p,m) : NaN
+	# if !all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) )
+	# println("neg cons")
+	# end
+	# display(m)
+	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
+	integrate!(m,p)
+end
+
 """
 	update!(m::Region,p::Param,x::Vector{Float64})
 
@@ -279,8 +306,10 @@ function update2!(m::FModel,p::Param,x::Vector{Float64})
 	# update equations
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2
-	m.ρr   = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
+	m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
+	# m.wr   = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2
+	# m.ρr   = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
+	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	m.ϕ = invτ(m.wr / p.θu,p)
 
 	m.xsr  = m.wr + m.r - m.pr * p.cbar - p.sbar
@@ -479,6 +508,13 @@ wu0(p::Param) = p.Ψ * p.θu
 
 "rural wage from indifference condition at ϕ. Eq (11)"
 wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p)*(1.0 .- τ(ϕ,ϕ,p))
+
+"FOC of rural firm wrt labor Lr"
+foc_Lr(L_over_S::Float64,pr::Float64, p::Param) = p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0/ L_over_S )^((p.σ-1)/p.σ))^(1.0 / (p.σ-1))
+
+"FOC of rural firm wrt land Sr"
+foc_Sr(L_over_S::Float64,pr::Float64, p::Param) = (1-p.α)* pr * p.θr * (p.α * (L_over_S)^((p.σ-1)/p.σ) + (1-p.α))^(1.0 / (p.σ-1))
+
 
 "rural wage from indifference condition at ϕ. Eq (11)"
 wr(ϕ::Float64,p::Param) = wu0(p)*(1.0 .- τ(ϕ,ϕ,p))
