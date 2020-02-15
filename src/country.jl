@@ -130,15 +130,15 @@ function solve!(F,x,p::Vector{Param},C::Country)
 	end
 end
 
-function runk(;par = Dict(:S => S, :L => L, :kshare => [0.6,0.4], :K => 2))
+function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
 
 
 	# 1. run a single region with pop = 1 and area = 1
 	x,M,p = LandUse.run(par=par)
 	# 2. run a country with 2 regions, total pop 2 and total area =2. starting from solution in period 1 of 1.
 
-    p1 = LandUse.Param(par = Dict(:S => S, :L => L, :kshare => [0.6,0.4], :K => 2))  # double space and pop for 2 equally sized regions.
-    p2 = LandUse.Param(par = Dict(:S => S, :L => L, :kshare => [0.6,0.4], :K => 2, :θu => p1.θu * θfact))
+    p1 = LandUse.Param(par = par)  # double space and pop for 2 equally sized regions.
+    p2 = LandUse.Param(par = par)
 	pp = [p1;p2]
 	C = LandUse.Country(pp)  # create that country
 
