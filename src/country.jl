@@ -48,9 +48,9 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 	σ1 = (p1.σ - 1) / p1.σ
 	σ2 = 1 / (p1.σ - 1)
 	# rural land price
-	c.ρr = (1-p1.α) * c.pr * p1.θr * (p1.α * c.LS^σ1 + (1-p1.α) )^σ2
+	c.ρr = foc_Sr( c.LS , c.pr, p1)
 	# rural wage
-	c.wr = c.ρr * p1.α / (1-p1.α) * c.LS^(-1/p1.σ)
+	c.wr = foc_Lr( c.LS , c.pr, p1)
 
 	#
 

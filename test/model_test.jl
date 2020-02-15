@@ -1,31 +1,4 @@
 @testset "Single Region" begin
-	m0,p,r0 = LandUse.CD()
-	@testset "Region constructor updating" begin
-		LandUse.update!(m0,p,r0.zero[1],r0.zero[2])
-
-		m = LandUse.Region(p)
-		@test isnan(m.Lu )
-		@test isnan(m.wu0)
-		@test isnan(m.wr )
-		@test isnan(m.Srh)
-		@test isnan(m.xsr )
-
-		LandUse.update!(m,m0,p)
-
-		@test m.ρr == m0.ρr   # land price in rural sector
-		@test m.ϕ  == m0.ϕ    # city size
-		@test m.r  == m0.r    # land rent
-		@test m.Lr == m0.Lr   # employment in rural sector
-		@test m.pr == m0.pr   # relative price rural good
-		@test m.Sr == m0.Sr   # amount of land used in rural production
-
-		@test m.Lu   == p.L - m.Lr   # employment in urban sector
-		@test m.wu0  == LandUse.wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-		@test m.wr   == LandUse.wr(m.Lu,m.ϕ,p) # wage rate rural sector
-		@test m.Srh  == LandUse.Srh(p,m)
-		@test m.xsr   == LandUse.xsr(p,m)
-	end
-
 	@testset "components in flat model checks" begin
 
 		p = LandUse.Param(par = Dict(:ϵs => 0.0))   # flat epsilon slope, so closed form solutions apply
