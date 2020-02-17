@@ -96,7 +96,7 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	K = length(C.R)  # num of regions
 	fi = 1  # running index
 	# 1. agg labor market clearing
-	F[fi] = p[1].L - sum(pop(i) for i in C.R)
+	F[fi] = C.L - sum(pop(i) for i in C.R)
 
 	# 2. land market clearing in each region K
 	for ik in 1:K
@@ -113,7 +113,7 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	# 3. Aggregate land rents
 	fi += 1
 	# F[fi] = C.r * p[1].L - sum(m.iq + m.ρr * (m.Sk - m.ϕ) for m in C.R)
-	F[fi] = C.r * p[1].L - sum(C.R[ik].iq + C.R[ik].ρr * (C.Sk[ik] - C.R[ik].ϕ) for ik in 1:K)
+	F[fi] = C.r * C.L - sum(C.R[ik].iq + C.R[ik].ρr * (C.Sk[ik] - C.R[ik].ϕ) for ik in 1:K)
 
 	# 4. aggregate urban consumption good clears
 	urban_prod = sum(Yu(C.R[ik],p[ik]) for ik in 1:K)
@@ -134,9 +134,11 @@ function solve!(F,x,p::Vector{Param},C::Country)
 	end
 end
 
-function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
+function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
+				par = Dict())
 
-	pp = [LandUse.Param(par = par) for ik in 1:par[:K]]
+	cp = LandUse.CParam(par = cpar)
+	pp = convert(cp,par = par)
 
 	# 1. run single region model for each region
 	Mk = [LandUse.run(par = Dict(:S => par[:S] * par[:kshare]))]

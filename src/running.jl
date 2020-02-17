@@ -43,11 +43,11 @@ function get_solutions(x0::Vector{Float64},p::Param)
 end
 
 
-function run(;par = Dict())
+function run(p::Param)
 
-	x0 = get_starts(par=par)   # a T-array of starting vectors
+	x0 = get_starts(p)   # a T-array of starting vectors
 
-	(x1,p) = adapt_ϵ(x0[1],par=par)  # adaptive search for higher epsilon in first period only
+	(x1,p) = adapt_ϵ(p,x0[1])  # adaptive search for higher epsilon in first period only
 
 	x,M = get_solutions(x1[end],p)  # get general model solutions
 

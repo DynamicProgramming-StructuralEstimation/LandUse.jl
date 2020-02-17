@@ -17,7 +17,7 @@ mutable struct Param
 	τ     :: Float64 # commuting cost parameter
 	χr    :: Float64 # "easiness" to convert land into housing in rural sector
 	# χu    :: Float64 # "easiness" to convert land into housing in center of urban sector
-	L     :: Float64 # total population (note: total land normalized to 1)
+	L     :: Float64 # total population
 	T     :: StepRange{Int64,Int64}
 	t     :: Int64
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
@@ -26,9 +26,7 @@ mutable struct Param
 	c2    :: Float64  # construction cost function quadratic term
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
-	S     :: Float64  # total area
-	K     :: Int  # number of Regions
-	kshare :: Vector{Float64}  # region k's share of total space
+	S     :: Float64  # area of region
 
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
@@ -36,6 +34,8 @@ mutable struct Param
         close(f)
         this = new()
         this.t = 1
+		this.S = 1.0  # set default values for space and population
+		this.L = 1.0
 
         for (k,v) in j
 			if v["type"] == "region"
@@ -87,6 +87,7 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      τ       : $(p.τ   )\n")
 	print(io,"      χr      : $(p.χr  )\n")
 	print(io,"      L       : $(p.L   )\n")
+	print(io,"      S       : $(p.S   )\n")
 	print(io,"      T       : $(p.T   )\n")
 	print(io,"      t       : $(p.t   )\n")
 	print(io,"      σ       : $(p.σ   )\n")
@@ -176,4 +177,14 @@ function show(io::IO, ::MIME"text/plain", p::CParam)
 	print(io,"      S       : $(p.S   )\n")
 	print(io,"      K       : $(p.K   )\n")
 	print(io,"      kshare  : $(p.kshare   )\n")
+end
+
+"convert a country param to one param for each region"
+function convert(c::CParam; par = Dict())
+	p = [Param(par = par) for ik in 1:c.K]
+	for ik in 1:c.K
+		p[ik].L = c.kshare[ik] * c.L  # by default allocate this share of people to k
+		p[ik].S = c.kshare[ik] * c.S  # true by definition
+	end
+	return p
 end

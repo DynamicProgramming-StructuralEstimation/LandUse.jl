@@ -18,7 +18,7 @@ module LandUse
 	const dbpath = joinpath(ENV["HOME"],"Dropbox","research","LandUse","output","model")
 
 	# imports
-	import Base.show
+	import Base.show, Base.convert
 
 	# our code
 	include("param.jl")

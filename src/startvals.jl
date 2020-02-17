@@ -44,7 +44,7 @@ end
 
 
 """
-	get_starts(;par = Dict())
+	get_starts(p::Param)
 
 Generate starting values for all years from the fixed ϵ model `FModel`.
 
@@ -54,8 +54,7 @@ In year 1:
 2. In subsequent years, take solution from 1. of previous year as starting value
 
 """
-function get_starts(;par = Dict())
-	p = Param(par=par)
+function get_starts(p::Param)
 	# fm = LandUse.FModel(p)  # create a fixed elasticity model
 	startvals = Vector{Float64}[]  # an empty array of vectors
 
@@ -96,14 +95,13 @@ end
 
 
 """
-	adapt_ϵ(x0::Vector{Float64};par = Dict())
+	adapt_ϵ(p::Param,x0::Vector{Float64})
 
 Adaptively increase slope coefficient ``s`` in elasticity of housing supply function [`ϵ`](@ref).
 Starts from the first period solution of [`FModel`](@ref).
 """
-function adapt_ϵ(x0::Vector{Float64};par = Dict())
+function adapt_ϵ(p::Param,x0::Vector{Float64})
 
-	p = Param(par=par)
 	m = Region(p)
 
 	startvals = Vector{Float64}[]  # an empty array of vectors
