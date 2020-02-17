@@ -77,13 +77,13 @@
 		"symbol" : "\\mathcal{T}"
 	},
 	"Θr" : {
-		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5],
+		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.55, 1.35, 2.3, 3, 4.5, 5, 5.5],
 		"description" : "Set of Rural Productivities",
 		"type" : "exogenous",
 		"symbol" : "\\Theta_r"
 	},
 	"Θu" : {
-		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5],
+		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.55, 1.35, 2.3, 3, 4.5, 5, 5.5],
 		"description" : "Set of Urban Productivities",
 		"type" : "exogenous",
 		"symbol" : "\\Theta_u"

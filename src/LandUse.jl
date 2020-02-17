@@ -29,4 +29,6 @@ module LandUse
 	include("plotter.jl")
 	# include("interact.jl")
 
+    count = 0
+
 end # module

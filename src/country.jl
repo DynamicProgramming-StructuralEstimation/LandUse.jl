@@ -8,6 +8,8 @@ mutable struct Country
 	r  :: Float64          # country-wide per capita rental income
 	LS  :: Float64          # Lr/Sr for region 1
 	Sk :: Vector{Float64}  # total space for each region
+	Xtrace ::Matrix{Float64}
+	Ftrace ::Matrix{Float64}
 
 	function Country(p::Vector{Param})
 		this = new()
@@ -17,6 +19,8 @@ mutable struct Country
 		this.r  = NaN
 		this.LS  = NaN
 		this.Sk  = p[1].kshare .* p[1].S
+		this.Xtrace = zeros(3 + length(p),1)
+		this.Ftrace = zeros(3 + length(p),1)
 		return this
 	end
 end
@@ -118,10 +122,18 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	F[fi] = urban_prod - sum( m[ik].Lr * cur(p[ik],m[ik]) + m[ik].icu + m[ik].Srh * cu_input(m[ik].ϕ,p[ik],m[ik]) + m[ik].icu_input + m[ik].wu0 * m[ik].iτ for ik in 1:K)
 
 	# K + 3 equations up to here
+	C.Ftrace = hcat(C.Ftrace,F)
 
 end
 
 function solve!(F,x,p::Vector{Param},C::Country)
+	# println("current x = $x")
+		C.Xtrace = hcat(C.Xtrace,x)
+	# push!(C.Xtrace,x)
+	# println("last element in xtrace = $(C.Xtrace[end])")
+	global count += 1
+	# println("iteration $count")
+	# println(x)
 	if any(x .< 0)
 		F[:] .= NaN
 	else
@@ -170,18 +182,28 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
 		LandUse.update!(C[1],pp,r.zero)
 		push!(sols, r.zero)
 	end
-	# for it in 2:length(pp[1].T)
-	for it in 2:7
+	for it in 2:length(pp[1].T)
+	# for it in 2:7
+		global count = 0
 		setperiod!(pp, it)   # set all params to it
 		C0 = LandUse.Country(pp)
-		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),sols[it-1],iterations = 1000, show_trace=false,extended_trace=true)
+		println("starting value $it = $(sols[it-1])")
+		# if it == 8
+		# 	sols[it-1][1] += sols[it-1][1]*0.01
+		# 	sols[it-1][2] -= sols[it-1][2]*0.01
+		# end
+
+		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),sols[it-1],iterations = 100, show_trace=false,extended_trace=true)
 		if converged(r1)
 			push!(sols, r1.zero)
 			update!(C0,pp,r1.zero)
 			# @assert abs(Rmk(C0.R[1],pp[1])) < 1e-4   # walras' law
 			push!(C,C0)
+			traceplot(C0,it)
+
+			println("solution $it = $(r1.zero)")
 		else
-			println(r1)
+			traceplot(C0,it)
 			error("General Model not converged in period $it")
 		end
 	end
