@@ -135,33 +135,61 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
 
 	# 1. run a single region with pop = 1 and area = 1
 	x,M,p = LandUse.run(par=par)
+	K = p.K
 	# 2. run a country with 2 regions, total pop 2 and total area =2. starting from solution in period 1 of 1.
 
-    p1 = LandUse.Param(par = par)  # double space and pop for 2 equally sized regions.
-    p2 = LandUse.Param(par = par)
-	pp = [p1;p2]
-	C = LandUse.Country(pp)  # create that country
+    # p1 = LandUse.Param(par = par)  # double space and pop for 2 equally sized regions.
+    # p2 = LandUse.Param(par = par)
+	pp = [LandUse.Param(par = par) for ik in 1:K]
+	C = Country[]
+	sols = Vector{Float64}[]  # an empty array of vectors
+
+	push!(C,LandUse.Country(pp))
 
 	# starting values.
 	# 1. b: ratio of labor to land in region 1
 	# 2. r: land rent
 	# 3. pr: relative price rural good
 	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
-	x0 = zeros(p.K + 3)
+	x0 = zeros(K + 3)
 	x0[1] = M[1].Lr / M[1].Sr
 	x0[2] = M[1].r
 	x0[3] = M[1].pr
-	x0[4] = M[1].Sr
-	x0[5] = M[1].Sr
+	for ik in 1:K
+		x0[3 + ik] = M[1].Sr
+	end
 
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=false,extended_trace=true)
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C[1]),x0,iterations = 100, show_trace=false,extended_trace=true)
 	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
+
+
 
 	if !converged(r)
 		error("not converged")
 	else
-		LandUse.update!(C,pp,r.zero)
-		return C
+		LandUse.update!(C[1],pp,r.zero)
+		push!(sols, r.zero)
 	end
+	# for it in 2:length(pp[1].T)
+	for it in 2:7
+		setperiod!(pp, it)   # set all params to it
+		C0 = LandUse.Country(pp)
+		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),sols[it-1],iterations = 1000, show_trace=false,extended_trace=true)
+		if converged(r1)
+			push!(sols, r1.zero)
+			update!(C0,pp,r1.zero)
+			# @assert abs(Rmk(C0.R[1],pp[1])) < 1e-4   # walras' law
+			push!(C,C0)
+		else
+			println(r1)
+			error("General Model not converged in period $it")
+		end
+	end
+	sols, C
 
+end
+
+function run7()
+	par = Dict(:S => 1.0, :L => 2.0, :kshare => [0.6,0.1,0.1,0.1,0.1], :K => 5)
+	x,C = LandUse.runk(par = par)
 end

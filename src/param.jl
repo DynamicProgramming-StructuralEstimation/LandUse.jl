@@ -39,7 +39,7 @@ mutable struct Param
 
         for (k,v) in j
             if v["value"] isa Vector{Any}
-                if k == "T" 
+                if k == "T"
                 	vv = v["value"]
 	                setfield!(this,Symbol(k),vv[1]:vv[2]:vv[3])
 	            else
@@ -60,7 +60,7 @@ mutable struct Param
         if length(this.kshare) != this.K
         	throw(ArgumentError("your settings for number of regions are inconsistent"))
         end
-        if (this.K > 1) & (sum(this.kshare) != 1.0)
+        if (this.K > 1) & !(sum(this.kshare) ≈ 1.0)
         	throw(ArgumentError("Shares of regions space must sum to 1.0"))
         end
         if this.η != 0
@@ -103,6 +103,12 @@ function setperiod!(p::Param,i::Int)
 	setfield!(p, :θr, p.Θr[i])
 	setfield!(p, :θu, p.Θu[i])
 	setfield!(p,  :t , p.T[i])
+end
+
+function setperiod!(p::Vector{Param},i::Int)
+	for ip in eachindex(p)
+		setperiod!(p[ip],i)
+	end
 end
 
 
@@ -174,4 +180,3 @@ end
 # 	print(io,"      K       : $(p.K   )\n")
 # 	print(io,"      Sk       : $(p.Sk   )\n")
 # end
-
