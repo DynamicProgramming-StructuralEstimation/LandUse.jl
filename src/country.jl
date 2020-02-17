@@ -182,33 +182,37 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
 		LandUse.update!(C[1],pp,r.zero)
 		push!(sols, r.zero)
 	end
+	Δθ = diff(pp[1].θu)
 	for it in 2:length(pp[1].T)
 	# for it in 2:7
-		global count = 0
 		setperiod!(pp, it)   # set all params to it
-		C0 = LandUse.Country(pp)
-		println("starting value $it = $(sols[it-1])")
-		# if it == 8
-		# 	sols[it-1][1] += sols[it-1][1]*0.01
-		# 	sols[it-1][2] -= sols[it-1][2]*0.01
-		# end
-
-		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),sols[it-1],iterations = 100, show_trace=false,extended_trace=true)
-		if converged(r1)
-			push!(sols, r1.zero)
-			update!(C0,pp,r1.zero)
-			# @assert abs(Rmk(C0.R[1],pp[1])) < 1e-4   # walras' law
+		if Δθ[it-1] > 0.9
+			# adaptive step
+			C0,x = adapt_country(sols[it-1],pp,Δθ[it-1])
+			push!(sols,x)
 			push!(C,C0)
-			traceplot(C0,it)
-
-			println("solution $it = $(r1.zero)")
 		else
-			traceplot(C0,it)
-			error("General Model not converged in period $it")
+			# direct
+			C0,x = step_country(sols[it-1],pp)
+			push!(sols,x)
+			push!(C,C0)
 		end
 	end
 	sols, C
 
+end
+
+function step_country(x0::Vector{Float64},pp::Vector{Param})
+	C0 = LandUse.Country(pp)
+
+	r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100, show_trace=false,extended_trace=true)
+	if converged(r1)
+		update!(C0,pp,r1.zero)
+		return C0,r1.zero
+	else
+		traceplot(C0,it)
+		error("Country not converged")
+	end
 end
 
 function run7()
