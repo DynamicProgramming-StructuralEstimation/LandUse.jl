@@ -2,7 +2,7 @@
 
 # 1) plot methods for a single model instance
 # visualize spatial setup
-# moving cost function, construction cost function, density, cu, cr,h consumption, 
+# moving cost function, construction cost function, density, cu, cr,h consumption,
 
 function plot_static(m::Model,p::Param)
 	lvec = collect(range(0.,1.0,length=100))
@@ -35,14 +35,14 @@ function plot_ts(M::Vector{Region},p::Param)
 	plts = Any[]
 	for i in 1:length(sims)
 		x = @linq s |>
-			where(:variable .∈ Ref(sims[i])) 
+			where(:variable .∈ Ref(sims[i]))
 		px = @df x plot(:year, :value, group = :variable, layout = length(sims[i]),title = reshape(collect(nms[i]),1,length(nms[i])),titlefontsize=10,leg=false,linewidth=2)
 		savefig(px,joinpath(dbpath,"ts_$i.pdf"))
 		push!(plts, px)
 	end
 
 
-	# # s1 = 
+	# # s1 =
 	# @df s plot(:year,:value, group= :variable, layout = size(df,2)-1)
 
 	# xt = [p.T[1];p.T[7];p.T[14]]
@@ -92,4 +92,21 @@ end
 # Lr, Lu
 # land rent
 # density in center and at fringe
-# 
+#
+
+
+
+# p1 = plot(fm.Ftrace',ylim = (-5,5),title = "Ftrace")
+# p2 = plot(fm.xtrace',title = "xtrace",label = ["rho" "phi" "r" "Lr" "pr" "Sr"])
+# pl = plot(p1,p2,layout = (1,2))
+# savefig(pl,joinpath(@__DIR__,"..","images","Fmodel_trace.png"))
+
+function traceplot()
+	ft = hcat(Ftrace...)'
+	xt = hcat(Xtrace...)'
+	K = length(Ftrace[1])
+	p1 = plot(ft,ylim = (-5,5),title = "Ftrace")
+	p2 = plot(xt,title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K)))
+	plot(p1,p2,layout = (1,2))
+	# savefig(pl,joinpath(@__DIR__,"..","images","Fmodel_trace.png"))
+end

@@ -29,4 +29,9 @@ module LandUse
 	include("plotter.jl")
 	# include("interact.jl")
 
+	global Xtrace = Vector{Float64}[]
+	global Ftrace = Vector{Float64}[]
+
+
+
 end # module

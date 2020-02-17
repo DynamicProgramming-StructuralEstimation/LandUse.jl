@@ -122,12 +122,15 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	F[fi] = urban_prod - sum( m[ik].Lr * cur(p[ik],m[ik]) + m[ik].icu + m[ik].Srh * cu_input(m[ik].ϕ,p[ik],m[ik]) + m[ik].icu_input + m[ik].wu0 * m[ik].iτ for ik in 1:K)
 
 	# K + 3 equations up to here
+	push!(Ftrace,F)
 
 end
 
 function solve!(F,x,p::Vector{Param},C::Country)
+	push!(Xtrace,x)
+	# println(x)
 	if any(x .< 0)
-		F[:] .= x.^2
+		F[:] .= 10.0 .+ x.^2
 	else
 		update!(C,p,x)
 		EqSys!(F,C,p)
@@ -191,11 +194,11 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 	x0[2] = Mk[1].r
 	x0[3] = Mk[1].pr
 	for ik in 1:K
-		x0[3 + ik] = Mk[ik].Sr
+		x0[3 + ik] = Mk[1].Sr
 	end
 
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=true)
-	# r = LandUse.nlopt_solveC(pp,C,x0)
+	# r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=false)
+	r = LandUse.nlopt_solveC(pp,C,x0)
 	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
 
 	# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
@@ -208,6 +211,14 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 	# end
 	#
 	# return C,pp
-	r
+	# if converged(r)
+	# 	# push!(sols, r1.zero)
+	# 	update!(C,pp,r.zero)
+	# 	# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
+	# 	# push!(m,m0)
+	# else
+	# 	error("Country not converged")
+	# end
+	C
 
 end
