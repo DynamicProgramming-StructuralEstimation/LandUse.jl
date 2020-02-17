@@ -127,48 +127,87 @@ end
 
 function solve!(F,x,p::Vector{Param},C::Country)
 	if any(x .< 0)
-		F[:] .= NaN
+		F[:] .= x.^2
 	else
 		update!(C,p,x)
 		EqSys!(F,C,p)
 	end
 end
 
+function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,C::Country,p::Vector{Param})
+	if length(grad) > 0
+		# not implemented
+	end
+	solve!(result,x,p,C)
+end
+
+function nlopt_solveC(p::Vector{Param},C::Country,x0::Vector{Float64})
+	K = length(C.R)
+	nx = 3 + K
+	opt = Opt(:LN_COBYLA,nx)
+	# opt = Opt(:LN_BOBYQA,nx)
+	# opt = Opt(:AUGLAG_EQ,nx)
+	# opt = Opt(:GN_ISRES,nx)
+	opt.lower_bounds = fill(0.001,nx)
+	# opt.upper_bounds = fill(100.0,nx)
+	# opt.upper_bounds = [1.0,1.0,1.0,1.0]
+	f0(x::Vector, grad::Vector) = 1.0
+	opt.min_objective = f0  # fix at a constant function
+	equality_constraint!(opt,(r,x,g) -> NLopt_wrap(r,x,g,C,p), fill(1e-9,nx))
+	# m.r    = x[1]   # land rent
+	# m.Lr   = x[2]   # employment in rural sector
+	# m.pr   = x[3]   # relative price rural good
+	# m.Sr   = x[4]   # amount of land used in rural production
+	# (optf,optx,ret) = optimize(opt, [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S])
+	# if isnothing(x0)
+	# 	x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]   # an almost arbitrary point in the interior domain.
+	# else
+		@assert length(x0) == ndims(opt)
+	# end
+	(optf,optx,ret) = optimize(opt, x0)
+end
+
 function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 				par = Dict())
 
+
 	cp = LandUse.CParam(par = cpar)
-	pp = convert(cp,par = par)
+	K = cp.K
+	pp = convert(cp,par = par)  # create Lk and Sk for each region
 
 	# 1. run single region model for each region
-	Mk = [LandUse.run(par = Dict(:S => par[:S] * par[:kshare]))]
-	x,M,p = LandUse.run(par=par)
-	# 2. run a country with 2 regions, total pop 2 and total area =2. starting from solution in period 1 of 1.
+	Mk = [LandUse.run(pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
 
-
-	C = LandUse.Country(pp)  # create that country
+	# 2. all regions in one country now. starting values for Sr from Mk.
+	C = LandUse.Country(cp,pp)  # create that country
 
 	# starting values.
 	# 1. b: ratio of labor to land in region 1
 	# 2. r: land rent
 	# 3. pr: relative price rural good
 	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
-	x0 = zeros(p.K + 3)
-	x0[1] = M[1].Lr / M[1].Sr
-	x0[2] = M[1].r
-	x0[3] = M[1].pr
-	for ik in 1:p.K
-		x0[3 + ik] = M[1].Sr
+	x0 = zeros(K + 3)
+	x0[1] = Mk[1].Lr / Mk[1].Sr  # take first countrys Lr/Sr ratio
+	x0[2] = Mk[1].r
+	x0[3] = Mk[1].pr
+	for ik in 1:K
+		x0[3 + ik] = Mk[1].Sr
 	end
 
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=true,extended_trace=false)
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=true)
+	# r = LandUse.nlopt_solveC(pp,C,x0)
 	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
 
-	if !converged(r)
-		error("not converged")
-	else
-		LandUse.update!(C,pp,r.zero)
-		return C
-	end
+	# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
+	# 	LandUse.update!(C,pp,r[2])
+	# 	println("eq system:")
+	# 	LandUse.EqSys!(x0,C,pp)
+	# 	println(x0)
+	# else
+	# 	error("not converged")
+	# end
+	#
+	# return C,pp
+	r
 
 end

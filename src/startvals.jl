@@ -67,7 +67,7 @@ function get_starts(p::Param)
 		# if first year
 		if it == 1
 			x0 = nlopt_solveFM(p=p)
-			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :LIMITED)
+			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
 				push!(startvals, x0[2])
 				# println("rural market clears with $(Rmk(fm,p))")
@@ -81,7 +81,7 @@ function get_starts(p::Param)
 
 		else  # in other years just start at previous solution
 			x0 = nlopt_solveFM(p=p,x0 = startvals[it-1])
-			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :LIMITED)
+			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
 				push!(startvals, x0[2])
 				# println("rural market clears with $(Rmk(fm,p))")
