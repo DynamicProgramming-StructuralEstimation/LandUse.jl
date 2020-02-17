@@ -191,7 +191,7 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 	x0[2] = Mk[1].r
 	x0[3] = Mk[1].pr
 	for ik in 1:K
-		x0[3 + ik] = Mk[1].Sr
+		x0[3 + ik] = Mk[ik].Sr
 	end
 
 	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=true)
