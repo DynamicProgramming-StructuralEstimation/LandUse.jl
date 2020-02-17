@@ -21,7 +21,7 @@ function nlopt_solveFM(;p = Param(),x0=nothing)
 	opt.lower_bounds = fill(0.001,4)
 	# opt.upper_bounds = [1.0,1.0,1.0,1.0]
 	f0(x::Vector, grad::Vector) = 1.0
-	opt.min_objective = f0  # fix at a constant
+	opt.min_objective = f0  # fix at a constant function
 	equality_constraint!(opt,(r,x,g) -> NLopt_wrap(r,x,g,fm,p), fill(1e-9,4))
 	# m.r    = x[1]   # land rent
 	# m.Lr   = x[2]   # employment in rural sector
@@ -29,7 +29,7 @@ function nlopt_solveFM(;p = Param(),x0=nothing)
 	# m.Sr   = x[4]   # amount of land used in rural production
 	# (optf,optx,ret) = optimize(opt, [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S])
 	if isnothing(x0)
-		x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]
+		x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]   # an almost arbitrary point in the interior domain.
 	else
 		@assert length(x0) == ndims(opt)
 	end

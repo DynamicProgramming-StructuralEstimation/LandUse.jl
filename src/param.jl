@@ -38,30 +38,27 @@ mutable struct Param
         this.t = 1
 
         for (k,v) in j
-            if v["value"] isa Vector{Any}
-                if k == "T" 
-                	vv = v["value"]
-	                setfield!(this,Symbol(k),vv[1]:vv[2]:vv[3])
+			if v["type"] == "region"
+	            if v["value"] isa Vector{Any}
+	                if k == "T"
+	                	vv = v["value"]
+		                setfield!(this,Symbol(k),vv[1]:vv[2]:vv[3])
+		            else
+		                setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
+		            end
 	            else
-	                setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
+	                setfield!(this,Symbol(k),v["value"])
 	            end
-
-            else
-                setfield!(this,Symbol(k),v["value"])
-            end
+			end
         end
 
         if length(par) > 0
             # override parameters from dict par
             for (k,v) in par
-                setfield!(this,k,v)
+				if hasfield(Param,k)
+                	setfield!(this,k,v)
+				end
             end
-        end
-        if length(this.kshare) != this.K
-        	throw(ArgumentError("your settings for number of regions are inconsistent"))
-        end
-        if (this.K > 1) & (sum(this.kshare) != 1.0)
-        	throw(ArgumentError("Shares of regions space must sum to 1.0"))
         end
         if this.η != 0
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
@@ -130,48 +127,53 @@ end
 
 
 
-# """
-# A Country-wide Parameter struct
-# """
-# mutable struct CParam
-# 	L     :: Float64 # total population (note: total land normalized to 1)
-# 	K     :: Int  # number of Regions
-# 	Sk    :: Vector{Float64}  # region k's share of total space
+"""
+A Country-wide Parameter struct
+"""
+mutable struct CParam
+	L     :: Float64 # total population
+	S     :: Float64 # total space
+	K     :: Int  # number of Regions
+	kshare    :: Vector{Float64}  # region k's share of total space
 
-# 	function CParam(;par=Dict())
-#         f = open(joinpath(dirname(@__FILE__),"Cparams.json"))
-#         j = JSON.parse(f)
-#         close(f)
-#         this = new()
+	function CParam(;par=Dict())
+        f = open(joinpath(dirname(@__FILE__),"params.json"))
+        j = JSON.parse(f)
+        close(f)
+        this = new()
 
-#         for (k,v) in j
-#             if v["value"] isa Vector{Any}
-#                 setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
-#             else
-#                 setfield!(this,Symbol(k),v["value"])
-#             end
-#         end
+        for (k,v) in j
+			if v["type"] == "country"
+	            if v["value"] isa Vector{Any}
+	                setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
+	            else
+	                setfield!(this,Symbol(k),v["value"])
+	            end
+			end
+        end
 
-#         if length(par) > 0
-#             # override parameters from dict par
-#             for (k,v) in par
-#                 setfield!(this,k,v)
-#             end
-#         end
-#         if length(this.Sk) != this.K
-#         	throw(ArgumentError("your settings for number of regions are inconsistent"))
-#         end
-#         if (this.K > 1) & (sum(this.Sk) != 1.0)
-#         	throw(ArgumentError("Shares of regions space must sum to 1.0"))
-#         end
-#     	return this
-# 	end
-# end
+        if length(par) > 0
+            # override parameters from dict par
+            for (k,v) in par
+				if hasfield(CParam, k)
+                	setfield!(this,k,v)
+				end
+            end
+        end
+        if length(this.kshare) != this.K
+        	throw(ArgumentError("your settings for number of regions are inconsistent"))
+        end
+        if (this.K > 1) & !(sum(this.kshare) ≈ 1.0)
+        	throw(ArgumentError("Shares of regions space must sum to 1.0"))
+        end
+    	return this
+	end
+end
 
-# function show(io::IO, ::MIME"text/plain", p::CParam)
-#     print(io,"LandUse Country Param:\n")
-# 	print(io,"      L       : $(p.L   )\n")
-# 	print(io,"      K       : $(p.K   )\n")
-# 	print(io,"      Sk       : $(p.Sk   )\n")
-# end
-
+function show(io::IO, ::MIME"text/plain", p::CParam)
+    print(io,"LandUse Country Param:\n")
+	print(io,"      L       : $(p.L   )\n")
+	print(io,"      S       : $(p.S   )\n")
+	print(io,"      K       : $(p.K   )\n")
+	print(io,"      kshare  : $(p.kshare   )\n")
+end

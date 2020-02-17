@@ -2,162 +2,162 @@
 	"S" : {
 		"value" : 1.0,
 		"description" : "Total Space",
-		"type" : "exogenous",
+		"type" : "country",
 		"symbol" : "S"
 	},"L" : {
 		"value" : 1.0,
 		"description" : "Total Population",
-		"type" : "exogenous",
+		"type" : "country",
 		"symbol" : "L"
 	},
 	"γ" : {
 		"value" : 0.25,
 		"description" : "Utility Weight of Housing",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\gamma"
 	},
 	"σ" : {
 		"value" : 0.99,
 		"description" : "Land-Labor Elasticity of Substitution",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\sigma"
 	},
 	"η" : {
 		"value" : 0.0,
 		"description" : "Agglomeration Forces",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\eta"
 	},
 	"ν" : {
 		"value" : 0.015,
 		"description" : "Preference Weight for Rural Consumption Good",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\nu"
 	},
 	"cbar" : {
 		"value" : 0.2,
 		"description" : "Rural Consumption Subsistence Level",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
 		"value" : 0.0,
 		"description" : "Negative Urban Subsistence Level",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\underline{s}"
 	},
 	"α" : {
 		"value" : 0.75,
 		"description" : "Labor Weight in Rural Production",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\alpha"
 	},
 	"λ" : {
 		"value" : 0.0,
 		"description" : "Useless Land",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\lambda"
 	},
 	"Ψ" : {
 		"value" : 1.0,
 		"description" : "Urban Amenities relative to Rural",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\Psi"
 	},
 	"τ" : {
 		"value" : 7.0,
 		"description" : "Commuting Costs",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\tau(l)"
 	},
 	"T" : {
 		"value" : [1855,15,2050],
 		"description" : "Start year, increments, end year",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\mathcal{T}"
 	},
 	"Θr" : {
 		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5],
 		"description" : "Set of Rural Productivities",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\Theta_r"
 	},
 	"Θu" : {
 		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5],
 		"description" : "Set of Urban Productivities",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\Theta_u"
 	},
 	"θr" : {
 		"value" : 0.32,
 		"description" : "Rural Productivity",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\theta_r"
 	},
 	"θu" : {
 		"value" : 0.32,
 		"description" : "Urban Productivity",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\theta_u"
 	},
 	"c0" : {
 		"value" : 1.0,
 		"description" : "Intercept of Construction Cost Function",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "c_0"
 	},
 	"c1" : {
 		"value" : 0.0,
 		"description" : "Linear Coeff of Construction Cost Function",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "c_1"
 	},
 	"c2" : {
 		"value" : 0.0,
 		"description" : "Quadratic Coeff of Construction Cost Function",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "c_2"
 	},
 	"ϵr" : {
 		"value" : 4.0,
 		"description" : "H Supply Elasticity Function in Rural sector",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\epsilon_r"
 	},
 	"ϵs" : {
 		"value" : 10.0,
 		"description" : "Current Slope Coeff in Elasticity Function",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\epsilon_s"
 	},
 	"ϵsmax" : {
 		"value" : 10.0,
 		"description" : "Maximal Slope Coeff in Elasticity Function",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "\\epsilon_s^*"
 	},
 	"ϵnsteps" : {
 		"value" : 10,
 		"description" : "Number of steps in elasticity search",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "n_\\epsilon"
 	},
 	"int_nodes" : {
 		"value" : 64,
 		"description" : "Number of Integration Nodes",
-		"type" : "exogenous",
+		"type" : "region",
 		"symbol" : "n_I"
 	},
 	"K" : {
 		"value" : 2,
 		"description" : "Number of Regions",
-		"type" : "exogenous",
+		"type" : "country",
 		"symbol" : "K"
 	},
 	"kshare" : {
 		"value" : [0.5,0.5],
 		"description" : "Region k's share of Total Space",
-		"type" : "exogenous",
+		"type" : "country",
 		"symbol" : "\\pi_k"
 	}
 

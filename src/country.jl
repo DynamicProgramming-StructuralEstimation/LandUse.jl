@@ -8,15 +8,19 @@ mutable struct Country
 	r  :: Float64          # country-wide per capita rental income
 	LS  :: Float64          # Lr/Sr for region 1
 	Sk :: Vector{Float64}  # total space for each region
+	L  :: Float64  # total population
+	S  :: Float64 # total space
 
-	function Country(p::Vector{Param})
+	function Country(cp::CParam,p::Vector{Param})
 		this = new()
 		this.R = [Region(pp) for pp in p]
 		this.pr = NaN
 		this.ρr = NaN
 		this.r  = NaN
 		this.LS  = NaN
-		this.Sk  = p[1].kshare .* p[1].S
+		this.L  = cp.L
+		this.S  = cp.S
+		this.Sk  = cp.kshare .* cp.S
 		return this
 	end
 end
@@ -63,7 +67,7 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].ρr = c.ρr
 		c.R[ik].wr = c.wr # wage rate rural sector
 
-		# we chose Sr in each region:
+		# we know Sr in each region:
 		c.R[ik].Sr = Srk[ik]
 		# now we know Lr for each region:
 		c.R[ik].Lr = c.LS * Srk[ik]
@@ -132,14 +136,14 @@ end
 
 function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
 
+	pp = [LandUse.Param(par = par) for ik in 1:par[:K]]
 
-	# 1. run a single region with pop = 1 and area = 1
+	# 1. run single region model for each region
+	Mk = [LandUse.run(par = Dict(:S => par[:S] * par[:kshare]))]
 	x,M,p = LandUse.run(par=par)
 	# 2. run a country with 2 regions, total pop 2 and total area =2. starting from solution in period 1 of 1.
 
-    p1 = LandUse.Param(par = par)  # double space and pop for 2 equally sized regions.
-    p2 = LandUse.Param(par = par)
-	pp = [p1;p2]
+
 	C = LandUse.Country(pp)  # create that country
 
 	# starting values.
@@ -151,10 +155,11 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
 	x0[1] = M[1].Lr / M[1].Sr
 	x0[2] = M[1].r
 	x0[3] = M[1].pr
-	x0[4] = M[1].Sr
-	x0[5] = M[1].Sr
+	for ik in 1:p.K
+		x0[3 + ik] = M[1].Sr
+	end
 
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=false,extended_trace=true)
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=true,extended_trace=false)
 	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
 
 	if !converged(r)
