@@ -170,9 +170,23 @@ function nlopt_solveC(p::Vector{Param},C::Country,x0::Vector{Float64})
 	(optf,optx,ret) = optimize(opt, x0)
 end
 
+
+function country_starts(M,K)
+       x0 = zeros(K + 3)
+       x0[1] = M.Lr / M.Sr
+       x0[2] = M.r
+       x0[3] = M.pr
+       for ik in 1:K
+               x0[3 + ik] = M.Sr
+       end
+       x0
+end
+
 function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 				par = Dict())
 
+	C = Country[]
+   	sols = Vector{Float64}[]  # an empty array of vectors
 
 	cp = LandUse.CParam(par = cpar)
 	K = cp.K
@@ -182,42 +196,26 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 	Mk = [LandUse.run(pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
 
 	# reset time
-	setperiod!(pp,1)
+	it = 1
+	setperiod!(pp,it)
 
 	# 2. all regions in one country now. starting values for Sr from Mk.
-	C = LandUse.Country(cp,pp)  # create that country
+	push!(C,LandUse.Country(cp,pp))  # create that country
 
 	# starting values.
 	# 1. b: ratio of labor to land in region 1
 	# 2. r: land rent
 	# 3. pr: relative price rural good
 	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
-	x0 = zeros(K + 3)
-	x0[1] = Mk[1].Lr / Mk[1].Sr  # take first countrys Lr/Sr ratio
-	x0[2] = Mk[1].r
-	x0[3] = Mk[1].pr
-	for ik in 1:K
-		x0[3 + ik] = Mk[1].Sr
-	end
+	x0 = country_starts(Mk[1],K)
 
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=false)
-	# r = LandUse.nlopt_solveC(pp,C,x0)
-	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
 
-	# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
-	# 	LandUse.update!(C,pp,r[2])
-	# 	println("eq system:")
-	# 	LandUse.EqSys!(x0,C,pp)
-	# 	println(x0)
-	# else
-	# 	error("not converged")
-	# end
-	#
-	# return C,pp
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C[it]),x0,iterations = 100, show_trace=false)
+
 	if converged(r)
-		# push!(sols, r1.zero)
-		update!(C,pp,r.zero)
-		traceplot()
+		push!(sols, r.zero)
+		update!(C[it],pp,r.zero)
+		traceplot(it)
 		global Xtrace = Vector{Float64}[]
 		global Ftrace = Vector{Float64}[]
 		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
@@ -226,6 +224,99 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 		println(r)
 		error("Country not converged")
 	end
-	C,r.zero
+	for it in 2:length(pp[1].T)
+   # for it in 2:5
+   # for it in 2:7
+		setperiod!(pp, it)   # set all params to it
+           # if (Δθ[it-1] > maxstep) & (it > 5)
+           #       # adaptive step
+                   # x1 = extrap_x0(hcat(sols...),pp[1])
+                   # x1 = hcat(Array(x1[it]), sols[it-1]) * [0.3, 0.7]
+                   # println("starting at $x1")
+                   # # println("starting at $(Array(x1[it]))")
+                   #
+                   # C0,x = step_country(x1,pp,it)
+                   # # C0,x = step_country(Array(x1[it]),pp,it)
+                   # push!(sols,x)
+                   # push!(C,C0)
 
+           #       println(it)
+           #       C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
+           #       push!(sols,x)
+           #       push!(C,C0)
+           # else
+                   # direct
+                   # x0 = country_starts(M[it],K)
+                   # println("starting at $x0")
+                   # C0,x = step_country(x0,pp,it)
+
+       	C0,x = step_country(sols[it-1],pp,cp,it)
+       	println("$it stopped at $x")
+
+       	push!(sols,x)
+       	push!(C,C0)
+   end
+   sols, C
 end
+
+
+function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it)
+	C0 = LandUse.Country(cp,pp)
+
+	# NLopt implementation
+	# r = LandUse.nlopt_solveC(pp,C0,x0)
+	# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
+	#       LandUse.update!(C0,pp,r[2])
+	#       println("eq system:")
+	#       LandUse.EqSys!(x0,C0,pp)
+	#       println(x0)
+	       #        return C0, r[2]
+	# else
+	#       error("not converged")
+	# end
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100, show_trace=false,extended_trace=true)
+	if converged(r)
+		# push!(sols, r1.zero)
+		update!(C0,pp,r.zero)
+		traceplot(it)
+		# reset traces
+		global Xtrace = Vector{Float64}[]
+		global Ftrace = Vector{Float64}[]
+		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
+		# push!(m,m0)
+		return C0, r.zero
+	else
+		traceplot(it)
+		error("Country not converged in period $it")
+	end
+end
+
+# function adapt_θ(x0::Vector{Float64},p::Vector{Param},step::Float64,it::Int;maxstep = 0.04)
+#
+#        # how many steps to take
+#        s = Int(fld(step,maxstep)) + 1
+#
+#        # range of values to achieve next step
+#        θs = range(p[1].θu - step, stop = p[1].θu, length = s+1)[2:end]   # first one is done already
+#        sols = Vector{Float64}[]
+#        cs = Country[]
+#        push!(sols,x0)
+#
+#        for (i,θ) in enumerate(θs)
+#                @debug "θ adapting" step=i θ=θ
+#                LandUse.setfields!(p, :θu, θ)   # sets on each member of p
+#                LandUse.setfields!(p, :θr, θ)
+#                c,x = step_country(sols[i],p,it)
+#                push!(sols,x)
+#                push!(cs,c)
+#        x0 = zeros(K + 3)
+#        x0[1] = Mk[1].Lr / Mk[1].Sr  # take first countrys Lr/Sr ratio
+#        x0[2] = Mk[1].r
+#        x0[3] = Mk[1].pr
+#        for ik in 1:K
+#                x0[3 + ik] = Mk[1].Sr
+#         end
+#
+#        return (cs[end],sols[end])    # return final step
+#
+# end
