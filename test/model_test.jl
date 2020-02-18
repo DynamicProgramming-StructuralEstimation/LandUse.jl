@@ -2,7 +2,7 @@
 	@testset "components in flat model checks" begin
 
 		p = LandUse.Param(par = Dict(:ϵs => 0.0))   # flat epsilon slope, so closed form solutions apply
-	    s = LandUse.get_starts()
+	    s = LandUse.get_starts(p)
 
 		# use m0 values as starting values
 		m = LandUse.Region(p)
@@ -62,7 +62,7 @@
 	@testset "components in general model checks" begin
 
 		p = LandUse.Param(par = Dict(:ϵs => 10.0))
-		s = LandUse.get_starts()
+		s = LandUse.get_starts(p)
 
 		# use m0 values as starting values
 		m = LandUse.Region(p)
@@ -115,8 +115,9 @@
 	end
 
 	@testset "test flat elasticity ϵs = 0" begin
-	    s = LandUse.get_starts()
+
 		p = LandUse.Param(par = Dict(:ϵs => 0.0))   # flat epsilon slope, so closed form solutions apply
+		s = LandUse.get_starts(p)
 		LandUse.setperiod!(p,1)  # make sure we are in year 1
 		m = LandUse.Region(p)
 		fm = LandUse.FModel(p)
@@ -186,7 +187,9 @@
 	end
 
 	@testset "test full solution" begin
-		x,M,p = LandUse.run()
+		p = LandUse.Param()   # flat epsilon slope, so closed form solutions apply
+
+		x,M,p = LandUse.run(p)
 
 		tol =  p.S == 1 ? 1e-3 : 1e-1
 		# rutol = 1.0e-2

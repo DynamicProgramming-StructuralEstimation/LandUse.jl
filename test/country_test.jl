@@ -1,14 +1,15 @@
 
 @testset "A Country" begin
     p = LandUse.Param()
-    @test_throws ArgumentError LandUse.Param(par = Dict(:K => 3, :kshare => rand(2)))
-    @test_throws ArgumentError LandUse.Param(par = Dict(:kshare => [0.2,0.4]))
+    cp = LandUse.CParam()
+    @test_throws ArgumentError LandUse.CParam(par = Dict(:K => 3, :kshare => rand(2)))
+    @test_throws ArgumentError LandUse.CParam(par = Dict(:kshare => [0.2,0.4]))
 
-	C = LandUse.Country([p;p])
-	@test length(C.R) == p.K
+	C = LandUse.Country(cp,[p;p])
+	@test length(C.R) == cp.K
 	@test isa(C.R[1], LandUse.Region)
 
-	x,M,p = LandUse.run()  # get single region solutions
+	x,M,p = LandUse.run(p)  # get single region solutions
 
 	@testset "test vs single region" begin
 
