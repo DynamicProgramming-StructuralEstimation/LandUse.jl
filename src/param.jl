@@ -183,10 +183,10 @@ end
 function convert(c::CParam; par = Dict())
 	p = [Param(par = par) for ik in 1:c.K]
 	for ik in 1:c.K
-		p[ik].L = c.kshare[ik] * c.L  # by default allocate this share of people to k
-		p[ik].S = c.kshare[ik] * c.S  # true by definition
-		# p[ik].L = c.L  # by default allocate this share of people to k
-		# p[ik].S =  c.S  # true by definition
+		# p[ik].L = c.kshare[ik] * c.L  # by default allocate this share of people to k
+		# p[ik].S = c.kshare[ik] * c.S  # true by definition
+		p[ik].L = c.L  # by default allocate this share of people to k
+		p[ik].S =  c.S  # true by definition
 
 	end
 	return p

@@ -197,8 +197,8 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 		x0[3 + ik] = Mk[1].Sr
 	end
 
-	# r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=false)
-	r = LandUse.nlopt_solveC(pp,C,x0)
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C),x0,iterations = 100, show_trace=false)
+	# r = LandUse.nlopt_solveC(pp,C,x0)
 	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
 
 	# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
@@ -211,14 +211,15 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 	# end
 	#
 	# return C,pp
-	# if converged(r)
-	# 	# push!(sols, r1.zero)
-	# 	update!(C,pp,r.zero)
-	# 	# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
-	# 	# push!(m,m0)
-	# else
-	# 	error("Country not converged")
-	# end
-	C
+	if converged(r)
+		# push!(sols, r1.zero)
+		update!(C,pp,r.zero)
+		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
+		# push!(m,m0)
+	else
+		println(r)
+		error("Country not converged")
+	end
+	C,r.zero
 
 end
