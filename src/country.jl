@@ -159,7 +159,7 @@ function country_starts(M,K)
 	x0
 end
 
-function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),maxstep = 0.0001)
+function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),maxstep = 0.01)
 
 
 	# 1. run a single region with pop = 1 and area = 1
@@ -198,26 +198,47 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),m
 	# for it in 2:5
 	# for it in 2:7
 		setperiod!(pp, it)   # set all params to it
-		# if (Δθ[it-1] > maxstep) & (it > 5)
+		if (Δθ[it-1] > maxstep) & (it > 5)
 		# 	# adaptive step
-		# 	C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
+			# x1 = extrap_x0(hcat(sols...),pp[1])
+			# x1 = hcat(Array(x1[it]), sols[it-1]) * [0.3, 0.7]
+			# println("starting at $x1")
+			# # println("starting at $(Array(x1[it]))")
+			#
+			# C0,x = step_country(x1,pp,it)
+			# # C0,x = step_country(Array(x1[it]),pp,it)
+			# push!(sols,x)
+			# push!(C,C0)
+
+
+			C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
 		# 	push!(sols,x)
 		# 	push!(C,C0)
-		# else
+		else
 			# direct
-			x0 = country_starts(M[it],K)
-			println("starting at $x0")
-			C0,x = step_country(x0,pp,it)
-			println("stopped at $x")
+			# x0 = country_starts(M[it],K)
+			# println("starting at $x0")
+			# C0,x = step_country(x0,pp,it)
 
-			# C0,x = step_country(sols[it-1],pp,it)
+			C0,x = step_country(sols[it-1],pp,it)
+			println("$it stopped at $x")
+
 			push!(sols,x)
 			push!(C,C0)
-		# end
+		end
 	end
 	sols, C
 
 end
+
+function extrap_x0(x::Matrix{Float64},p::Param)
+	x1 = reinterpret(SVector{5,Float64}, x)[:]
+	n,k = size(x)
+	itp = extrapolate(interpolate(x1, Interpolations.BSpline(Linear())), Line())
+	itp
+end
+
+
 
 function adapt_θ(x0::Vector{Float64},p::Vector{Param},step::Float64,it::Int;maxstep = 0.04)
 
@@ -232,8 +253,8 @@ function adapt_θ(x0::Vector{Float64},p::Vector{Param},step::Float64,it::Int;max
 
 	for (i,θ) in enumerate(θs)
 		@debug "θ adapting" step=i θ=θ
-		setfields!(p, :θu, θ)   # sets on each member of p
-		setfields!(p, :θr, θ)
+		LandUse.setfields!(p, :θu, θ)   # sets on each member of p
+		LandUse.setfields!(p, :θr, θ)
 		c,x = step_country(sols[i],p,it)
 		push!(sols,x)
 		push!(cs,c)

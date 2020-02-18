@@ -12,6 +12,9 @@ module LandUse
 	using DataFramesMeta
 	using Printf
 	using NLopt
+	using StaticArrays
+	using Interpolations
+	using Statistics
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
