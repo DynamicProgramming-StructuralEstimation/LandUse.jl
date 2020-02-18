@@ -107,6 +107,6 @@ function traceplot()
 	K = length(Ftrace[1])
 	p1 = plot(ft,ylim = (-5,5),title = "Ftrace")
 	p2 = plot(xt,title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K)))
-	plot(p1,p2,layout = (1,2))
-	# savefig(pl,joinpath(@__DIR__,"..","images","Fmodel_trace.png"))
+	pl = plot(p1,p2,layout = (1,2))
+	savefig(pl,joinpath(@__DIR__,"..","images","country_trace.pdf"))
 end

@@ -122,19 +122,19 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	F[fi] = urban_prod - sum( m[ik].Lr * cur(p[ik],m[ik]) + m[ik].icu + m[ik].Srh * cu_input(m[ik].ϕ,p[ik],m[ik]) + m[ik].icu_input + m[ik].wu0 * m[ik].iτ for ik in 1:K)
 
 	# K + 3 equations up to here
-	push!(Ftrace,F)
+	push!(Ftrace,copy(F))
 
 end
 
 function solve!(F,x,p::Vector{Param},C::Country)
-	push!(Xtrace,x)
+	push!(Xtrace,copy(x))
 	# println(x)
-	if any(x .< 0)
-		F[:] .= 10.0 .+ x.^2
-	else
+	# if any(x .< 0)
+	# 	F[:] .= 10.0 .+ x.^2
+	# else
 		update!(C,p,x)
 		EqSys!(F,C,p)
-	end
+	# end
 end
 
 function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,C::Country,p::Vector{Param})
@@ -217,6 +217,9 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 	if converged(r)
 		# push!(sols, r1.zero)
 		update!(C,pp,r.zero)
+		traceplot()
+		global Xtrace = Vector{Float64}[]
+		global Ftrace = Vector{Float64}[]
 		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
 		# push!(m,m0)
 	else

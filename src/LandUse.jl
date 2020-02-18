@@ -20,6 +20,10 @@ module LandUse
 	# imports
 	import Base.show, Base.convert
 
+	# globals
+	Xtrace = Vector{Float64}[]
+	Ftrace = Vector{Float64}[]
+
 	# our code
 	include("param.jl")
 	include("model.jl")
@@ -29,8 +33,7 @@ module LandUse
 	include("plotter.jl")
 	# include("interact.jl")
 
-	global Xtrace = Vector{Float64}[]
-	global Ftrace = Vector{Float64}[]
+
 
 
 
