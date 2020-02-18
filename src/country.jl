@@ -232,7 +232,7 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),m
 	# for it in 2:5
 	# for it in 2:7
 		setperiod!(pp, it)   # set all params to it
-		if (Δθ[it-1] > maxstep) & (it > 5)
+		# if (Δθ[it-1] > maxstep) & (it > 5)
 		# 	# adaptive step
 			# x1 = extrap_x0(hcat(sols...),pp[1])
 			# x1 = hcat(Array(x1[it]), sols[it-1]) * [0.3, 0.7]
@@ -244,11 +244,11 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),m
 			# push!(sols,x)
 			# push!(C,C0)
 
-			println(it)
-			C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
-			push!(sols,x)
-			push!(C,C0)
-		else
+		# 	println(it)
+		# 	C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
+		# 	push!(sols,x)
+		# 	push!(C,C0)
+		# else
 			# direct
 			# x0 = country_starts(M[it],K)
 			# println("starting at $x0")
@@ -259,7 +259,7 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),m
 
 			push!(sols,x)
 			push!(C,C0)
-		end
+		# end
 	end
 	sols, C
 
@@ -301,28 +301,25 @@ end
 function step_country(x0::Vector{Float64},pp::Vector{Param},it)
 	C0 = LandUse.Country(pp)
 
-       r = LandUse.nlopt_solveC(pp,C0,x0)
-       # r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C[1]),x0,iterations = 100, show_trace=false,extended_trace=true)
-        # r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
-
-       if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
-             LandUse.update!(C0,pp,r[2])
-             println("eq system:")
-             LandUse.EqSys!(x0,C0,pp)
-             println(x0)
-			 return C0, r[2]
-       else
-             error("not converged")
-       end
-	# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100, show_trace=false,extended_trace=true)
-	# if converged(r1)
-	# 	update!(C0,pp,r1.zero)
-	# 	traceplot(C0,it)
-	# 	return C0,r1.zero
-	# else
-	# 	traceplot(C0,it)
-	# 	error("Country not converged in period $it")
-	# end
+       # r = LandUse.nlopt_solveC(pp,C0,x0)
+       # if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
+       #       LandUse.update!(C0,pp,r[2])
+       #       println("eq system:")
+       #       LandUse.EqSys!(x0,C0,pp)
+       #       println(x0)
+		# 	 return C0, r[2]
+       # else
+       #       error("not converged")
+       # end
+	r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100, show_trace=false,extended_trace=true)
+	if converged(r1)
+		update!(C0,pp,r1.zero)
+		traceplot(C0,it)
+		return C0,r1.zero
+	else
+		traceplot(C0,it)
+		error("Country not converged in period $it")
+	end
 end
 
 function run7()
