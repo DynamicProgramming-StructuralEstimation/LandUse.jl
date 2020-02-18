@@ -228,57 +228,46 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
    # for it in 2:5
    # for it in 2:7
 		setperiod!(pp, it)   # set all params to it
-           # if (Δθ[it-1] > maxstep) & (it > 5)
-           #       # adaptive step
-                   # x1 = extrap_x0(hcat(sols...),pp[1])
-                   # x1 = hcat(Array(x1[it]), sols[it-1]) * [0.3, 0.7]
-                   # println("starting at $x1")
-                   # # println("starting at $(Array(x1[it]))")
-                   #
-                   # C0,x = step_country(x1,pp,it)
-                   # # C0,x = step_country(Array(x1[it]),pp,it)
-                   # push!(sols,x)
-                   # push!(C,C0)
-
-           #       println(it)
-           #       C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
-           #       push!(sols,x)
-           #       push!(C,C0)
-           # else
-                   # direct
-                   # x0 = country_starts(M[it],K)
-                   # println("starting at $x0")
-                   # C0,x = step_country(x0,pp,it)
-
-       	C0,x = step_country(sols[it-1],pp,cp,it)
-       	println("$it stopped at $x")
-
+       	C0,x = adapt_ϵ(cp,pp,sols[it-1],pp,cp)
        	push!(sols,x)
        	push!(C,C0)
    end
    sols, C
 end
 
+# for each period, start all countries at eps = 0 and
+# step wise increase the slope until maxeps
+function adapt_ϵ(cp::CParam,p::Vector{Param},x0::Vector{Float64})
+	# setperiod!(p,1)  # start in year one again
+	m = Region(p)
 
-function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it)
+	sols = Vector{Float64}[]  # an empty array of vectors
+	C = Country[]  # an empty array of vectors
+	push!(sols, x0)  # put 1860 solution for flat epsilon function
+
+	# range of elasticity slope values
+	ϵs = range(0,stop = p[1].ϵsmax, length = p[1].ϵnsteps)[2:end]
+
+	for (i,ϵ) in enumerate(ϵs)
+		setfields!(p, :ϵs, ϵ)  # set current value for elaticity function slope on all params
+		c,x = step_country(sols[i],p,cp,0,traceplot=false)  # 0 is a dummy arg
+		push!(sols,x)
+		push!(C,c)
+	end
+	return sols[end], C[end]
+end
+
+
+function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; traceplot = true)
 	C0 = LandUse.Country(cp,pp)
 
-	# NLopt implementation
-	# r = LandUse.nlopt_solveC(pp,C0,x0)
-	# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
-	#       LandUse.update!(C0,pp,r[2])
-	#       println("eq system:")
-	#       LandUse.EqSys!(x0,C0,pp)
-	#       println(x0)
-	       #        return C0, r[2]
-	# else
-	#       error("not converged")
-	# end
 	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100, show_trace=false,extended_trace=true)
 	if converged(r)
 		# push!(sols, r1.zero)
 		update!(C0,pp,r.zero)
-		traceplot(it)
+		if traceplot
+			traceplot(it)
+		end
 		# reset traces
 		global Xtrace = Vector{Float64}[]
 		global Ftrace = Vector{Float64}[]
@@ -286,7 +275,9 @@ function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it)
 		# push!(m,m0)
 		return C0, r.zero
 	else
-		traceplot(it)
+		if traceplot
+			traceplot(it)
+		end
 		error("Country not converged in period $it")
 	end
 end
@@ -319,4 +310,20 @@ end
 #
 #        return (cs[end],sols[end])    # return final step
 #
+# end
+
+
+
+
+# archive
+# NLopt implementation
+# r = LandUse.nlopt_solveC(pp,C0,x0)
+# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
+#       LandUse.update!(C0,pp,r[2])
+#       println("eq system:")
+#       LandUse.EqSys!(x0,C0,pp)
+#       println(x0)
+	   #        return C0, r[2]
+# else
+#       error("not converged")
 # end

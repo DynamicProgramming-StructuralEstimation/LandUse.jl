@@ -103,7 +103,7 @@ Adaptively increase slope coefficient ``s`` in elasticity of housing supply func
 Starts from the first period solution of [`FModel`](@ref).
 """
 function adapt_ϵ(p::Param,x0::Vector{Float64})
-	setperiod!(p,1)  # start in year one again
+	# setperiod!(p,1)  # start in year one again
 	m = Region(p)
 
 	startvals = Vector{Float64}[]  # an empty array of vectors

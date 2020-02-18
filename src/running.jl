@@ -50,6 +50,7 @@ function run(p::Param)
 
 	# (x1,p) = adapt_ϵ(x0[1],par=par)
 
+	setperiod!(p,1)  # go back to period 1
 	(x1,p) = adapt_ϵ(p,x0[1])  # adaptive search for higher epsilon in first period only
 
 	x,M = get_solutions(x1[end],p)  # get general model solutions
