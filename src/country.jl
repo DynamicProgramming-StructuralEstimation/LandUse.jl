@@ -142,6 +142,40 @@ function solve!(F,x,p::Vector{Param},C::Country)
 	end
 end
 
+function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,C::Country,p::Vector{Param})
+	if length(grad) > 0
+		# not implemented
+	end
+	solve!(result,x,p,C)
+end
+
+function nlopt_solveC(p::Vector{Param},C::Country,x0::Vector{Float64})
+	K = length(C.R)
+	nx = 3 + K
+	opt = Opt(:LN_COBYLA,nx)
+	# opt = Opt(:LN_BOBYQA,nx)
+	# opt = Opt(:AUGLAG_EQ,nx)
+	# opt = Opt(:GN_ISRES,nx)
+	opt.lower_bounds = fill(0.001,nx)
+	# opt.upper_bounds = fill(100.0,nx)
+	# opt.upper_bounds = [1.0,1.0,1.0,1.0]
+	f0(x::Vector, grad::Vector) = 1.0
+	opt.min_objective = f0  # fix at a constant function
+	equality_constraint!(opt,(r,x,g) -> NLopt_wrap(r,x,g,C,p), fill(1e-9,nx))
+	# m.r    = x[1]   # land rent
+	# m.Lr   = x[2]   # employment in rural sector
+	# m.pr   = x[3]   # relative price rural good
+	# m.Sr   = x[4]   # amount of land used in rural production
+	# (optf,optx,ret) = optimize(opt, [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S])
+	# if isnothing(x0)
+	# 	x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]   # an almost arbitrary point in the interior domain.
+	# else
+		@assert length(x0) == ndims(opt)
+	# end
+	(optf,optx,ret) = optimize(opt, x0)
+end
+
+
 
 # starting values.
 # 1. b: ratio of labor to land in region 1
@@ -210,10 +244,10 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),m
 			# push!(sols,x)
 			# push!(C,C0)
 
-
+			println(it)
 			C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
-		# 	push!(sols,x)
-		# 	push!(C,C0)
+			push!(sols,x)
+			push!(C,C0)
 		else
 			# direct
 			# x0 = country_starts(M[it],K)
@@ -267,15 +301,28 @@ end
 function step_country(x0::Vector{Float64},pp::Vector{Param},it)
 	C0 = LandUse.Country(pp)
 
-	r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100, show_trace=false,extended_trace=true)
-	if converged(r1)
-		update!(C0,pp,r1.zero)
-		traceplot(C0,it)
-		return C0,r1.zero
-	else
-		traceplot(C0,it)
-		error("Country not converged in period $it")
-	end
+       r = LandUse.nlopt_solveC(pp,C0,x0)
+       # r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C[1]),x0,iterations = 100, show_trace=false,extended_trace=true)
+        # r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
+
+       if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
+             LandUse.update!(C0,pp,r[2])
+             println("eq system:")
+             LandUse.EqSys!(x0,C0,pp)
+             println(x0)
+			 return C0, r[2]
+       else
+             error("not converged")
+       end
+	# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100, show_trace=false,extended_trace=true)
+	# if converged(r1)
+	# 	update!(C0,pp,r1.zero)
+	# 	traceplot(C0,it)
+	# 	return C0,r1.zero
+	# else
+	# 	traceplot(C0,it)
+	# 	error("Country not converged in period $it")
+	# end
 end
 
 function run7()

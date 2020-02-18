@@ -125,13 +125,13 @@
 		"symbol" : "\\epsilon_r"
 	},
 	"ϵs" : {
-		"value" : 10.0,
+		"value" : 0.0,
 		"description" : "Current Slope Coeff in Elasticity Function",
 		"type" : "exogenous",
 		"symbol" : "\\epsilon_s"
 	},
 	"ϵsmax" : {
-		"value" : 10.0,
+		"value" : 0.0,
 		"description" : "Maximal Slope Coeff in Elasticity Function",
 		"type" : "exogenous",
 		"symbol" : "\\epsilon_s^*"
