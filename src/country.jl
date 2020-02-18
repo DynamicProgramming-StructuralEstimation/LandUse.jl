@@ -142,7 +142,24 @@ function solve!(F,x,p::Vector{Param},C::Country)
 	end
 end
 
-function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),maxstep = 0.01)
+
+# starting values.
+# 1. b: ratio of labor to land in region 1
+# 2. r: land rent
+# 3. pr: relative price rural good
+# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
+function country_starts(M,K)
+	x0 = zeros(K + 3)
+	x0[1] = M.Lr / M.Sr
+	x0[2] = M.r
+	x0[3] = M.pr
+	for ik in 1:K
+		x0[3 + ik] = M.Sr
+	end
+	x0
+end
+
+function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),maxstep = 0.0001)
 
 
 	# 1. run a single region with pop = 1 and area = 1
@@ -163,13 +180,7 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),m
 	# 2. r: land rent
 	# 3. pr: relative price rural good
 	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
-	x0 = zeros(K + 3)
-	x0[1] = M[1].Lr / M[1].Sr
-	x0[2] = M[1].r
-	x0[3] = M[1].pr
-	for ik in 1:K
-		x0[3 + ik] = M[1].Sr
-	end
+	x0 = country_starts(M[1],K)   # starting values from a single region country in period t
 
 	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C[1]),x0,iterations = 100, show_trace=false,extended_trace=true)
 	# r = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,[p;p],C),zeros(length(x0)),fill(Inf,length(x0)),x0,iterations = 100, show_trace=true,reformulation = :minmax)
@@ -184,19 +195,25 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),m
 	end
 	Δθ = diff(pp[1].Θu)   # notice that is the set of all θus (it's a capital Θ !)
 	for it in 2:length(pp[1].T)
+	# for it in 2:5
 	# for it in 2:7
 		setperiod!(pp, it)   # set all params to it
-		if Δθ[it-1] > maxstep
-			# adaptive step
-			C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
-			push!(sols,x)
-			push!(C,C0)
-		else
+		# if (Δθ[it-1] > maxstep) & (it > 5)
+		# 	# adaptive step
+		# 	C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
+		# 	push!(sols,x)
+		# 	push!(C,C0)
+		# else
 			# direct
-			C0,x = step_country(sols[it-1],pp,it)
+			x0 = country_starts(M[it],K)
+			println("starting at $x0")
+			C0,x = step_country(x0,pp,it)
+			println("stopped at $x")
+
+			# C0,x = step_country(sols[it-1],pp,it)
 			push!(sols,x)
 			push!(C,C0)
-		end
+		# end
 	end
 	sols, C
 
