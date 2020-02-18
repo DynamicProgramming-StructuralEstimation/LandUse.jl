@@ -111,6 +111,12 @@ function setperiod!(p::Vector{Param},i::Int)
 	end
 end
 
+function setfields!(p::Vector{Param},name::Symbol, x)
+	for ip in eachindex(p)
+		setfield!(p[ip],name,x)
+	end
+end
+
 
 # ϵfun(d,s,ϕ,ϵtarget) = ϵtarget * exp(-s * max(ϕ-d,0.0))
 function ϵfun_tmp(d,s,ϕ,p::Param)

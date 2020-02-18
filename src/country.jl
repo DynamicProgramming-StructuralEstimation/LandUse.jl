@@ -142,7 +142,7 @@ function solve!(F,x,p::Vector{Param},C::Country)
 	end
 end
 
-function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
+function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),maxstep = 0.01)
 
 
 	# 1. run a single region with pop = 1 and area = 1
@@ -182,18 +182,18 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
 		LandUse.update!(C[1],pp,r.zero)
 		push!(sols, r.zero)
 	end
-	Δθ = diff(pp[1].θu)
+	Δθ = diff(pp[1].Θu)   # notice that is the set of all θus (it's a capital Θ !)
 	for it in 2:length(pp[1].T)
 	# for it in 2:7
 		setperiod!(pp, it)   # set all params to it
-		if Δθ[it-1] > 0.9
+		if Δθ[it-1] > maxstep
 			# adaptive step
-			C0,x = adapt_country(sols[it-1],pp,Δθ[it-1])
+			C0,x = adapt_θ(sols[it-1],pp,Δθ[it-1],it,maxstep=maxstep)
 			push!(sols,x)
 			push!(C,C0)
 		else
 			# direct
-			C0,x = step_country(sols[it-1],pp)
+			C0,x = step_country(sols[it-1],pp,it)
 			push!(sols,x)
 			push!(C,C0)
 		end
@@ -202,20 +202,49 @@ function runk(;par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2))
 
 end
 
-function step_country(x0::Vector{Float64},pp::Vector{Param})
+function adapt_θ(x0::Vector{Float64},p::Vector{Param},step::Float64,it::Int;maxstep = 0.04)
+
+	# how many steps to take
+	s = Int(fld(step,maxstep)) + 1
+
+	# range of values to achieve next step
+	θs = range(p[1].θu - step, stop = p[1].θu, length = s+1)[2:end]   # first one is done already
+	sols = Vector{Float64}[]
+	cs = Country[]
+	push!(sols,x0)
+
+	for (i,θ) in enumerate(θs)
+		@debug "θ adapting" step=i θ=θ
+		setfields!(p, :θu, θ)   # sets on each member of p
+		setfields!(p, :θr, θ)
+		c,x = step_country(sols[i],p,it)
+		push!(sols,x)
+		push!(cs,c)
+	end
+
+	return (cs[end],sols[end])    # return final step
+
+end
+
+function step_country(x0::Vector{Float64},pp::Vector{Param},it)
 	C0 = LandUse.Country(pp)
 
 	r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100, show_trace=false,extended_trace=true)
 	if converged(r1)
 		update!(C0,pp,r1.zero)
+		traceplot(C0,it)
 		return C0,r1.zero
 	else
 		traceplot(C0,it)
-		error("Country not converged")
+		error("Country not converged in period $it")
 	end
 end
 
 function run7()
 	par = Dict(:S => 1.0, :L => 2.0, :kshare => [0.6,0.1,0.1,0.1,0.1], :K => 5)
+	x,C = LandUse.runk(par = par)
+end
+function run4()
+	par = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.3,0.1,0.1], :K => 4)
 	x,C = LandUse.runk(par = par)
 end
