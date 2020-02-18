@@ -181,6 +181,9 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 	# 1. run single region model for each region
 	Mk = [LandUse.run(pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
 
+	# reset time
+	setperiod!(pp,1)
+
 	# 2. all regions in one country now. starting values for Sr from Mk.
 	C = LandUse.Country(cp,pp)  # create that country
 
