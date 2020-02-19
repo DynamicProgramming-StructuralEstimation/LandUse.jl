@@ -182,8 +182,8 @@ function country_starts(M,K)
        x0
 end
 
-function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
-				par = Dict())
+function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [1.0], :K => 1),
+				par = Dict(), maxstep=0.09)
 
 	global Xtrace = Vector{Float64}[]
 	global Ftrace = Vector{Float64}[]
@@ -231,11 +231,11 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.4], :K => 2),
 		display(hcat(sols...)')
 
 		setperiod!(pp, it)   # set all params to it
-		if it > 5
-			C0,x = adapt_ϵ(cp,pp,sols[it-1],it,do_traceplot=true)
-		else
+		# if it > 5
+			# C0,x = adapt_θ(cp,pp,sols[it-1],it,do_traceplot=true)
+		# else
 			C0,x = step_country(sols[it-1],pp,cp,it,do_traceplot=true)
-		end
+		# end
        	push!(sols,x)
        	push!(C,C0)
    end
@@ -253,7 +253,7 @@ function adapt_ϵ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_tr
 	ϵs = range(0,stop = p[1].ϵsmax, length = p[1].ϵnsteps)[2:end]
 
 	for (i,ϵ) in enumerate(ϵs)
-		# @debug "adapt to ϵ=$ϵ in $it"
+		# @debug "adapting to ϵ=$ϵ in $it"
 		setfields!(p, :ϵs, ϵ)  # set current value for elaticity function slope on all params
 		c,x = step_country(sols[i],p,cp,it,do_traceplot=do_traceplot)
 		push!(sols,x)
@@ -262,11 +262,38 @@ function adapt_ϵ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_tr
 	return C[end], sols[end]
 end
 
+function adapt_θ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_traceplot = true,maxstep = 0.01)
+
+	# how many steps to take
+	step = p[1].Θu[it] - p[1].Θu[it-1]
+	s = Int(fld(step,maxstep)) + 1
+
+	# range of values to achieve next step
+	θs = range(p[1].θu - step, stop = p[1].θu, length = s+1)[2:end]   # first one is done already
+	sols = Vector{Float64}[]
+	cs = Country[]
+	push!(sols,x0)
+
+	for (i,θ) in enumerate(θs)
+		@debug "θ adapting" step=i θ=θ
+		LandUse.setfields!(p, :θu, θ)   # sets on each member of p
+		LandUse.setfields!(p, :θr, θ)
+		C0,x = adapt_ϵ(cp,p,sols[i],it,do_traceplot=true)
+		push!(sols,x)
+		push!(cs,C0)
+   	end
+
+	return (cs[end],sols[end])    # return final step
+
+end
+
 
 function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; do_traceplot = true)
 	C0 = LandUse.Country(cp,pp)
 
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100, show_trace=false,extended_trace=true)
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100,
+							show_trace=false,
+							extended_trace=true)
 	if converged(r)
 		# push!(sols, r1.zero)
 		update!(C0,pp,r.zero)
@@ -287,38 +314,6 @@ function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; 
 		error("Country not converged in period $it")
 	end
 end
-
-# function adapt_θ(x0::Vector{Float64},p::Vector{Param},step::Float64,it::Int;maxstep = 0.04)
-#
-#        # how many steps to take
-#        s = Int(fld(step,maxstep)) + 1
-#
-#        # range of values to achieve next step
-#        θs = range(p[1].θu - step, stop = p[1].θu, length = s+1)[2:end]   # first one is done already
-#        sols = Vector{Float64}[]
-#        cs = Country[]
-#        push!(sols,x0)
-#
-#        for (i,θ) in enumerate(θs)
-#                @debug "θ adapting" step=i θ=θ
-#                LandUse.setfields!(p, :θu, θ)   # sets on each member of p
-#                LandUse.setfields!(p, :θr, θ)
-#                c,x = step_country(sols[i],p,it)
-#                push!(sols,x)
-#                push!(cs,c)
-#        x0 = zeros(K + 3)
-#        x0[1] = Mk[1].Lr / Mk[1].Sr  # take first countrys Lr/Sr ratio
-#        x0[2] = Mk[1].r
-#        x0[3] = Mk[1].pr
-#        for ik in 1:K
-#                x0[3 + ik] = Mk[1].Sr
-#         end
-#
-#        return (cs[end],sols[end])    # return final step
-#
-# end
-
-
 
 
 # archive

@@ -125,19 +125,19 @@
 		"symbol" : "\\epsilon_r"
 	},
 	"ϵs" : {
-		"value" : 4.0,
+		"value" : 8.0,
 		"description" : "Current Slope Coeff in Elasticity Function",
 		"type" : "region",
 		"symbol" : "\\epsilon_s"
 	},
 	"ϵsmax" : {
-		"value" : 4.0,
+		"value" : 8.0,
 		"description" : "Maximal Slope Coeff in Elasticity Function",
 		"type" : "region",
 		"symbol" : "\\epsilon_s^*"
 	},
 	"ϵnsteps" : {
-		"value" : 50,
+		"value" : 10,
 		"description" : "Number of steps in elasticity search",
 		"type" : "region",
 		"symbol" : "n_\\epsilon"
