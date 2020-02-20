@@ -12,6 +12,7 @@ module LandUse
 	using DataFramesMeta
 	using Printf
 	using NLopt
+	using LineSearches
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver

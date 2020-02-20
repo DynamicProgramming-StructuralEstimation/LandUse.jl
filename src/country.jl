@@ -129,12 +129,12 @@ end
 function solve!(F,x,p::Vector{Param},C::Country)
 	push!(Xtrace,copy(x))
 	# println(x)
-	# if any(x .< 0)
-	# 	F[:] .= 10.0 .+ x.^2
-	# else
+	if any(x .< 0)
+		F[:] .= 10.0 .+ x.^2
+	else
 		update!(C,p,x)
 		EqSys!(F,C,p)
-	# end
+	end
 end
 
 function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,C::Country,p::Vector{Param})
@@ -182,7 +182,7 @@ function country_starts(M,K)
        x0
 end
 
-function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [1.0], :K => 1),
+function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
 				par = Dict(), maxstep=0.09)
 
 	global Xtrace = Vector{Float64}[]
@@ -211,7 +211,8 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [1.0], :K => 1),
 	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
 	x0 = country_starts(Mk[1],K)
 
-
+	scale_factors = ones(length(pp[1].T))
+	scale_factors[7:end] .= 0.5
 	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C[it]),x0,iterations = 100, show_trace=false)
 
 	if converged(r)
@@ -226,16 +227,18 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [1.0], :K => 1),
 		println(r)
 		error("Country not converged")
 	end
+
+
 	for it in 2:length(pp[1].T)
 		println(it)
 		display(hcat(sols...)')
 
 		setperiod!(pp, it)   # set all params to it
-		# if it > 5
-			# C0,x = adapt_θ(cp,pp,sols[it-1],it,do_traceplot=true)
-		# else
-			C0,x = step_country(sols[it-1],pp,cp,it,do_traceplot=true)
-		# end
+		if it > 12
+			C0,x = adapt_θ(cp,pp,sols[it-1],it,do_traceplot=true)
+		else
+			C0,x = step_country(sols[it-1],pp,cp,it,do_traceplot=true,nlsolve_fac = scale_factors[it])
+		end
        	push!(sols,x)
        	push!(C,C0)
    end
@@ -262,7 +265,7 @@ function adapt_ϵ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_tr
 	return C[end], sols[end]
 end
 
-function adapt_θ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_traceplot = true,maxstep = 0.01)
+function adapt_θ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_traceplot = true,maxstep = 0.1)
 
 	# how many steps to take
 	step = p[1].Θu[it] - p[1].Θu[it-1]
@@ -288,12 +291,16 @@ function adapt_θ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_tr
 end
 
 
-function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; do_traceplot = true)
+function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; do_traceplot = true,nlsolve_fac = 1.0)
 	C0 = LandUse.Country(cp,pp)
 
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 100,
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 1000,
 							show_trace=false,
-							extended_trace=true)
+							extended_trace=true,
+							factor = nlsolve_fac,
+							autoscale = true,
+							method = :newton,
+							linesearch = LineSearches.BackTracking(order = 3))
 	if converged(r)
 		# push!(sols, r1.zero)
 		update!(C0,pp,r.zero)

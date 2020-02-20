@@ -104,9 +104,19 @@ end
 function traceplot(it)
 	ft = hcat(Ftrace...)'
 	xt = hcat(Xtrace...)'
-	K = length(Ftrace[1])
-	p1 = plot(ft,title = "Ftrace $it")
-	p2 = plot(xt,title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K)))
+	K = length(Ftrace[1]) - 3  # K+3 equations
+	nrows = min(size(xt)[1],70)
+	p1 = plot(ft[1:nrows,:],title = "Ftrace $it",
+	         label = hcat(["Labor"],reshape(["Land_$i" for i in 1:K],1,K),["rents"],["Urban Good"]),
+			 xlabel = "iteration",
+			 ylim = (-0.5,0.5))
+	p2 = plot(xt[1:nrows,:],title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K)),xlabel = "iteration")
 	pl = plot(p1,p2,layout = (1,2))
 	savefig(pl,joinpath(@__DIR__,"..","images","country_trace$it.pdf"))
+end
+
+
+function plotsol(x)
+	K = length(x[1])
+	plot(hcat(x...)',lab = hcat(["L/S" "r" "pr" ],reshape(["SR_$i" for i in 1:K],1,K)),title="solution paths")
 end
