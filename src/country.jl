@@ -281,7 +281,8 @@ function adapt_θ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_tr
 		@debug "θ adapting" step=i θ=θ
 		LandUse.setfields!(p, :θu, θ)   # sets on each member of p
 		LandUse.setfields!(p, :θr, θ)
-		C0,x = adapt_ϵ(cp,p,sols[i],it,do_traceplot=true)
+		# C0,x = adapt_ϵ(cp,p,sols[i],it,do_traceplot=true)
+		C0,x = step_country(sols[i],p,cp,it,do_traceplot=do_traceplot)
 		push!(sols,x)
 		push!(cs,C0)
    	end
@@ -300,7 +301,7 @@ function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; 
 							factor = nlsolve_fac,
 							autoscale = true,
 							method = :newton,
-							linesearch = LineSearches.BackTracking(order = 3))
+							linesearch = LineSearches.BackTracking(order=3))
 	if converged(r)
 		# push!(sols, r1.zero)
 		update!(C0,pp,r.zero)
@@ -312,6 +313,9 @@ function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; 
 		global Ftrace = Vector{Float64}[]
 		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
 		# push!(m,m0)
+		println("final eq sys:")
+		# EqSys!(x0,C0,pp)
+		println(r)
 		return C0, r.zero
 	else
 		if do_traceplot
