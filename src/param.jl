@@ -8,10 +8,11 @@ mutable struct Param
 	ν     :: Float64 # weight of rural good consumption on consumption composite
 	cbar  :: Float64 # agr cons subsistence level (0.14 for thailand)
 	sbar  :: Float64 # neg urba subsistence level
-	Θr    :: Vector{Float64} # set of rural sector TFP
-	Θu    :: Vector{Float64} # set of urban sector TFP
+	θrs    :: Vector{Float64} # set of rural sector TFP
+	θus    :: Vector{Float64} # set of urban sector TFP
 	θr    :: Float64 # rural sector TFP
 	θu    :: Float64 # urban sector TFP
+	θprop :: Float64 # proportionality factor from aggregate productivity in case of multi-region model
 	α     :: Float64 # labor weight on farm sector production function
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
 	τ     :: Float64 # commuting cost parameter
@@ -36,6 +37,7 @@ mutable struct Param
         this.t = 1
 		this.S = 1.0  # set default values for space and population
 		this.L = 1.0
+		this.θprop = 1.0
 
         for (k,v) in j
 			if v["type"] == "region"
@@ -98,9 +100,9 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 end
 
 function setperiod!(p::Param,i::Int)
-	setfield!(p, :θr, p.Θr[i])
-	setfield!(p, :θu, p.Θu[i])
-	setfield!(p,  :t , p.T[i])
+	setfield!(p, :θr, p.θrs[i] * p.θprop)
+	setfield!(p, :θu, p.θus[i] * p.θprop)
+	setfield!(p,  :t , p.T[i] )
 end
 
 function setperiod!(p::Vector{Param},i::Int)
@@ -147,6 +149,10 @@ mutable struct CParam
 	S     :: Float64 # total space
 	K     :: Int  # number of Regions
 	kshare    :: Vector{Float64}  # region k's share of total space
+	# Θr    :: Vector{Float64} # set of rural sector TFP
+	# Θu    :: Vector{Float64} # set of urban sector TFP
+	θprop    :: Vector{Float64}  # proportional offset of region k's productivity from aggregate process
+
 
 	function CParam(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
@@ -188,17 +194,28 @@ function show(io::IO, ::MIME"text/plain", p::CParam)
 	print(io,"      S       : $(p.S   )\n")
 	print(io,"      K       : $(p.K   )\n")
 	print(io,"      kshare  : $(p.kshare   )\n")
+	print(io,"      θprop   : $(p.θprop   )\n")
 end
 
 "convert a country param to one param for each region"
 function convert(c::CParam; par = Dict())
-	p = [Param(par = par) for ik in 1:c.K]
+	if length(par) > 0
+		p = [Param(par = par[ik]) for ik in 1:c.K]
+	else
+		p = [Param(par = par) for ik in 1:c.K]
+	end
+	# do adjustment of parameters one by one
 	for ik in 1:c.K
 		# p[ik].L = c.kshare[ik] * c.L  # by default allocate this share of people to k
 		# p[ik].S = c.kshare[ik] * c.S  # true by definition
+		# these entries are only used to compute a one-region country (i.e. first step to get starting values)
+		# we allocated total space and population to each country.
 		p[ik].L = c.L  # by default allocate this share of people to k
 		p[ik].S =  c.S  # true by definition
 
+		# transform aggregate productivity series into region equivalentes
+		# simple here: just offset by constant factor
+		p[ik].θprop = c.θprop[ik]
 	end
 	return p
 end

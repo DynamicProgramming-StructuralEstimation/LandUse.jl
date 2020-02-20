@@ -2,6 +2,7 @@
 
 mutable struct Country
 	R  :: Vector{Region}   # a set of regions
+	K  :: Int              # number of regions
 	wr :: Float64          # a global rural wage
 	pr :: Float64          # a global price of rural good
 	ρr :: Float64          # a global land price
@@ -14,6 +15,7 @@ mutable struct Country
 	function Country(cp::CParam,p::Vector{Param})
 		this = new()
 		this.R = [Region(pp) for pp in p]
+		this.K = length(this.R)
 		this.pr = NaN
 		this.ρr = NaN
 		this.r  = NaN
@@ -24,6 +26,10 @@ mutable struct Country
 		return this
 	end
 end
+
+"Country Rural Market Clearing"
+Rmk(C::Country,p::Vector{Param}) = sum(C.R[ik].icr + C.R[ik].Lr * cr(C.R[ik].ϕ,p[ik],C.R[ik]) for ik in 1:C.K) -
+                                   sum(Yr(C.R[ik],p[ik]) for ik in 1:C.K)
 
 """
 	update!(c::Country,p::Vector{Param},x::Vector{Float64})
@@ -204,7 +210,7 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
 
 	cp = LandUse.CParam(par = cpar)
 	K = cp.K
-	pp = convert(cp,par = par)  # create Lk and Sk for each region
+	pp = convert(cp,par = par)  # create Lk and Sk for each region. if par is not zero, then first level index is region.
 
 	# 1. run single region model for each region
 	Mk = [LandUse.run(pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
@@ -241,7 +247,7 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
 		traceplot(it)
 		global Xtrace = Vector{Float64}[]
 		global Ftrace = Vector{Float64}[]
-		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
+		@assert abs(Rmk(C[it],pp)) < 1e-7   # walras' law
 		# push!(m,m0)
 	else
 		println(r)
