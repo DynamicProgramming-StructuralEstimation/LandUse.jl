@@ -247,10 +247,11 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
 		traceplot(it)
 		global Xtrace = Vector{Float64}[]
 		global Ftrace = Vector{Float64}[]
-		@assert abs(Rmk(C[it],pp)) < 1e-7   # walras' law
+		# @assert abs(Rmk(C[it],pp)) < 1e-6   # walras' law
 		# push!(m,m0)
 	else
 		println(r)
+		traceplot(it)
 		error("Country not converged")
 	end
 

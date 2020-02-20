@@ -89,7 +89,7 @@ end
 
 function show(io::IO, m::Region)
     # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
-    @printf(io,"Region: ϕ=%1.3f, pop=%1.3f, area=%1.2f",m.ϕ, pop(m), area(m))
+    @printf(io,"Region: ϕ=%1.3f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",m.ϕ, area(m), m.Lu, m.Lr,pop(m))
 end
 
 
