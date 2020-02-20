@@ -34,16 +34,19 @@ The ordering in `x` is:
 1. b: ratio of labor to land in region 1
 2. r: land rent
 3. pr: relative price rural good
-4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
+4. 4 : (K+3), Sr: amount of land use in rural production (complement of Srh)
+5. (K+4) : (2K+3), Lu: urban pop in each k
 """
 function update!(c::Country,p::Vector{Param},x::Vector{Float64})
+	K = length(p)
+
 	# update country wide components
 	c.LS   = x[1]   # constant labor/land share in region 1. i called that b>0 in the doc.
 	c.r    = x[2]   # land rent
 	c.pr   = x[3]   # relative price rural good
-	Srk    = x[4:end]  # Sr for each region k
+	Srk    = x[4:(K+3)]  # Sr for each region k
+	Lu     = x[(K+4):end]  # Lu for each region k
 
-	K = length(p)
 	@assert K == length(c.R)
 
 	p1 = p[1]  # get first region's parameter to save typing
@@ -71,12 +74,15 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].Sr = Srk[ik]
 		# now we know Lr for each region:
 		c.R[ik].Lr = c.LS * Srk[ik]
+		# and Lu for each region:
+		c.R[ik].Lu = Lu[ik]
+
 
 		# 1. set ϕ for each region
 		c.R[ik].ϕ  = invτ(c.wr / p[ik].θu,p[ik])
 		# 2. compute city size equation
-		c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes
-		c.R[ik].Lu   = (c.R[ik].ϕ/2) * sum(c.R[ik].iweights[i] * D2(c.R[ik].nodes[i],p[ik],c.R[ik]) for i in 1:p[ik].int_nodes)[1]
+		# c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes
+		# c.R[ik].Lu   = (c.R[ik].ϕ/2) * sum(c.R[ik].iweights[i] * D2(c.R[ik].nodes[i],p[ik],c.R[ik]) for i in 1:p[ik].int_nodes)[1]
 
 		# 3. update remaining fields
 		c.R[ik].wu0  = wu0(c.R[ik].Lu,p[ik])   # wage rate urban sector at city center (distance = 0)
@@ -122,6 +128,12 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	F[fi] = urban_prod - sum( m[ik].Lr * cur(p[ik],m[ik]) + m[ik].icu + m[ik].Srh * cu_input(m[ik].ϕ,p[ik],m[ik]) + m[ik].icu_input + m[ik].wu0 * m[ik].iτ for ik in 1:K)
 
 	# K + 3 equations up to here
+
+	# city size - Urban population relationship: equation (19)
+	for ik in 1:K
+		fi += 1
+		F[fi] = m[ik].Lu - m[ik].iDensity
+	end
 	push!(Ftrace,copy(F))
 
 end
@@ -209,10 +221,18 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
 	# 2. r: land rent
 	# 3. pr: relative price rural good
 	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
-	x0 = country_starts(Mk[1],K)
+	# x0 = country_starts(Mk[1],K)
+	x0 = zeros(2K + 3)
+	x0[1] = Mk[1].Lr / Mk[1].Sr
+	x0[2] = Mk[1].r
+	x0[3] = Mk[1].pr
+	for ik in 1:K
+		x0[3 + ik] = Mk[ik].Sr
+		x0[K + 3 + ik] = cp.kshare[it] * cp.L
+	end
 
 	scale_factors = ones(length(pp[1].T))
-	scale_factors[7:end] .= 0.5
+	# scale_factors[7:end] .= 0.5
 	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C[it]),x0,iterations = 100, show_trace=false)
 
 	if converged(r)
@@ -230,15 +250,15 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
 
 
 	for it in 2:length(pp[1].T)
-		println(it)
-		display(hcat(sols...)')
+		# println(it)
+		# display(hcat(sols...)')
 
 		setperiod!(pp, it)   # set all params to it
-		if it > 12
-			C0,x = adapt_θ(cp,pp,sols[it-1],it,do_traceplot=true)
-		else
+		# if it > 12
+		# 	C0,x = adapt_θ(cp,pp,sols[it-1],it,do_traceplot=true)
+		# else
 			C0,x = step_country(sols[it-1],pp,cp,it,do_traceplot=true,nlsolve_fac = scale_factors[it])
-		end
+		# end
        	push!(sols,x)
        	push!(C,C0)
    end
@@ -299,9 +319,9 @@ function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; 
 							show_trace=false,
 							extended_trace=true,
 							factor = nlsolve_fac,
-							autoscale = true,
-							method = :newton,
-							linesearch = LineSearches.BackTracking(order=3))
+							autoscale = true)
+							# method = :newton,
+							# linesearch = LineSearches.BackTracking(order=3))
 	if converged(r)
 		# push!(sols, r1.zero)
 		update!(C0,pp,r.zero)
@@ -313,9 +333,9 @@ function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; 
 		global Ftrace = Vector{Float64}[]
 		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
 		# push!(m,m0)
-		println("final eq sys:")
+		# println("final eq sys:")
 		# EqSys!(x0,C0,pp)
-		println(r)
+		# println(r)
 		return C0, r.zero
 	else
 		if do_traceplot
