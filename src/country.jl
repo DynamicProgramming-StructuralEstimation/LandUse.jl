@@ -11,6 +11,7 @@ mutable struct Country
 	Sk :: Vector{Float64}  # total space for each region
 	L  :: Float64  # total population
 	S  :: Float64 # total space
+	T     :: StepRange{Int64,Int64}
 
 	function Country(cp::CParam,p::Vector{Param})
 		this = new()
@@ -23,6 +24,7 @@ mutable struct Country
 		this.L  = cp.L
 		this.S  = cp.S
 		this.Sk  = cp.kshare .* cp.S
+		this.T = p[1].T
 		return this
 	end
 end
@@ -30,6 +32,31 @@ end
 "Country Rural Market Clearing"
 Rmk(C::Country,p::Vector{Param}) = sum(C.R[ik].icr + C.R[ik].Lr * cr(C.R[ik].ϕ,p[ik],C.R[ik]) for ik in 1:C.K) -
                                    sum(Yr(C.R[ik],p[ik]) for ik in 1:C.K)
+
+
+"Obtain a Time Series from an array of Country as a DataFrame"
+function dataframe(C::Vector{Country})
+	K = length(C[1].R)
+	cols = setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
+	# region 1
+	ir = 1
+	df = DataFrame(year = C[1].T, region = ir)
+	for fi in cols
+		df[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
+	end
+	# other regions
+	if K > 1
+		for ir in 2:K
+			df2 = DataFrame(year = C[1].T, region = ir)
+			for fi in cols
+				df2[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
+			end
+			append!(df,df2)
+		end
+	end
+	df
+end
+
 
 """
 	update!(c::Country,p::Vector{Param},x::Vector{Float64})
@@ -87,7 +114,7 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		# 1. set ϕ for each region
 		c.R[ik].ϕ  = invτ(c.wr / p[ik].θu,p[ik])
 		# 2. compute city size equation
-		# c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes
+		c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes
 		# c.R[ik].Lu   = (c.R[ik].ϕ/2) * sum(c.R[ik].iweights[i] * D2(c.R[ik].nodes[i],p[ik],c.R[ik]) for i in 1:p[ik].int_nodes)[1]
 
 		# 3. update remaining fields
@@ -269,7 +296,7 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
        	push!(sols,x)
        	push!(C,C0)
    end
-   sols, C
+   sols, C, cpar, pp
 end
 
 # for each period, start all countries at eps = 0 and

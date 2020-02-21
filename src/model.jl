@@ -147,7 +147,13 @@ function integrate!(m::Region,p::Param)
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
-	# @assert m.iDensity > 0 "integral of density is negative"
+	@assert m.icu_input > 0
+	@assert m.iDensity > 0
+	@assert m.icu      > 0
+	@assert m.icr      > 0
+	@assert m.iτ       > 0
+	@assert m.iq       > 0
+	@assert m.iy       > 0
 end
 
 """
@@ -457,7 +463,7 @@ Yu(m::Model,p::Param) = p.θu * m.Lu
 Rmk(m::Model,p::Param) = m.icr + m.Lr * cr(m.ϕ,p,m) - Yr(m,p)
 
 
-"Obtain a Time Series for the Model as a DataFrame"
+"Obtain a Time Series for a single region as a DataFrame"
 function dataframe(M::Vector{Region},p::Param)
 	df = DataFrame(year = p.T)
 	for fi in setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
