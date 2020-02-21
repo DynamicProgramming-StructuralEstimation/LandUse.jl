@@ -123,6 +123,9 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].xsr  = xsr(p[ik],c.R[ik])
 		c.R[ik].Srh  = Srh(p[ik],c.R[ik])
 		c.R[ik].qr   = qr(p[ik],c.R[ik])
+		cr01 = (cr(0.0,p[ik],c.R[ik])-p[ik].cbar, cr(1.0,p[ik],c.R[ik])-p[ik].cbar)
+		cu01 = (cu(0.0,p[ik],c.R[ik])       , cu(1.0,p[ik],c.R[ik])       )
+		c.R[ik].U    = all( (cr01 .>= 0.0) .* (cu01 .>= 0.0) ) ? utility(0.0,p[ik],c.R[ik]) : NaN
 		integrate!(c.R[ik],p[ik])
 	end
 end
@@ -296,7 +299,7 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
        	push!(sols,x)
        	push!(C,C0)
    end
-   sols, C, cpar, pp
+   sols, C, cp, pp
 end
 
 # for each period, start all countries at eps = 0 and
