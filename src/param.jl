@@ -8,16 +8,17 @@ mutable struct Param
 	ν     :: Float64 # weight of rural good consumption on consumption composite
 	cbar  :: Float64 # agr cons subsistence level (0.14 for thailand)
 	sbar  :: Float64 # neg urba subsistence level
-	Θr    :: Vector{Float64} # set of rural sector TFP
-	Θu    :: Vector{Float64} # set of urban sector TFP
+	θrs    :: Vector{Float64} # set of rural sector TFP
+	θus    :: Vector{Float64} # set of urban sector TFP
 	θr    :: Float64 # rural sector TFP
 	θu    :: Float64 # urban sector TFP
+	θprop :: Float64 # proportionality factor from aggregate productivity in case of multi-region model
 	α     :: Float64 # labor weight on farm sector production function
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
 	τ     :: Float64 # commuting cost parameter
 	χr    :: Float64 # "easiness" to convert land into housing in rural sector
 	# χu    :: Float64 # "easiness" to convert land into housing in center of urban sector
-	L     :: Float64 # total population (note: total land normalized to 1)
+	L     :: Float64 # total population
 	T     :: StepRange{Int64,Int64}
 	t     :: Int64
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
@@ -26,42 +27,40 @@ mutable struct Param
 	c2    :: Float64  # construction cost function quadratic term
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
-	S     :: Float64  # total area
-	K :: Int  # number of Regions
-	Sk :: Vector{Float64}  # region k's share of total space
+	S     :: Float64  # area of region
 
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
         j = JSON.parse(f)
         close(f)
         this = new()
-        this.t = 0
+        this.t = 1
+		this.S = 1.0  # set default values for space and population
+		this.L = 1.0
+		this.θprop = 1.0
 
         for (k,v) in j
-            if v["value"] isa Vector{Any}
-                if k == "T" 
-                	vv = v["value"]
-	                setfield!(this,Symbol(k),vv[1]:vv[2]:vv[3])
+			if v["type"] == "region"
+	            if v["value"] isa Vector{Any}
+	                if k == "T"
+	                	vv = v["value"]
+		                setfield!(this,Symbol(k),vv[1]:vv[2]:vv[3])
+		            else
+		                setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
+		            end
 	            else
-	                setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
+	                setfield!(this,Symbol(k),v["value"])
 	            end
-
-            else
-                setfield!(this,Symbol(k),v["value"])
-            end
+			end
         end
 
         if length(par) > 0
             # override parameters from dict par
             for (k,v) in par
-                setfield!(this,k,v)
+				if hasfield(Param,k)
+                	setfield!(this,k,v)
+				end
             end
-        end
-        if length(this.Sk) != this.K
-        	throw(ArgumentError("your settings for number of regions are inconsistent"))
-        end
-        if (this.K > 1) & (sum(this.Sk) != 1.0)
-        	throw(ArgumentError("Shares of regions space must sum to 1.0"))
         end
         if this.η != 0
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
@@ -90,6 +89,7 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      τ       : $(p.τ   )\n")
 	print(io,"      χr      : $(p.χr  )\n")
 	print(io,"      L       : $(p.L   )\n")
+	print(io,"      S       : $(p.S   )\n")
 	print(io,"      T       : $(p.T   )\n")
 	print(io,"      t       : $(p.t   )\n")
 	print(io,"      σ       : $(p.σ   )\n")
@@ -100,11 +100,22 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 end
 
 function setperiod!(p::Param,i::Int)
-	setfield!(p, :θr, p.Θr[i])
-	setfield!(p, :θu, p.Θu[i])
-	setfield!(p,  :t , p.T[i])
+	setfield!(p, :θr, p.θrs[i])
+	setfield!(p, :θu, p.θus[i] * p.θprop)
+	setfield!(p,  :t , p.T[i] )
 end
 
+function setperiod!(p::Vector{Param},i::Int)
+	for ip in eachindex(p)
+		setperiod!(p[ip],i)
+	end
+end
+
+function setfields!(p::Vector{Param},name::Symbol,x)
+	for ip in eachindex(p)
+		setfield!(p[ip],name,x)
+	end
+end
 
 # ϵfun(d,s,ϕ,ϵtarget) = ϵtarget * exp(-s * max(ϕ-d,0.0))
 function ϵfun_tmp(d,s,ϕ,p::Param)
@@ -134,34 +145,43 @@ end
 A Country-wide Parameter struct
 """
 mutable struct CParam
-	L     :: Float64 # total population (note: total land normalized to 1)
+	L     :: Float64 # total population
+	S     :: Float64 # total space
 	K     :: Int  # number of Regions
-	Sk    :: Vector{Float64}  # region k's share of total space
+	kshare    :: Vector{Float64}  # region k's share of total space
+	# Θr    :: Vector{Float64} # set of rural sector TFP
+	# Θu    :: Vector{Float64} # set of urban sector TFP
+	θprop    :: Vector{Float64}  # proportional offset of region k's productivity from aggregate process
+
 
 	function CParam(;par=Dict())
-        f = open(joinpath(dirname(@__FILE__),"Cparams.json"))
+        f = open(joinpath(dirname(@__FILE__),"params.json"))
         j = JSON.parse(f)
         close(f)
         this = new()
 
         for (k,v) in j
-            if v["value"] isa Vector{Any}
-                setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
-            else
-                setfield!(this,Symbol(k),v["value"])
-            end
+			if v["type"] == "country"
+	            if v["value"] isa Vector{Any}
+	                setfield!(this,Symbol(k),convert(Vector{Float64},v["value"]))
+	            else
+	                setfield!(this,Symbol(k),v["value"])
+	            end
+			end
         end
 
         if length(par) > 0
             # override parameters from dict par
             for (k,v) in par
-                setfield!(this,k,v)
+				if hasfield(CParam, k)
+                	setfield!(this,k,v)
+				end
             end
         end
-        if length(this.Sk) != this.K
+        if length(this.kshare) != this.K
         	throw(ArgumentError("your settings for number of regions are inconsistent"))
         end
-        if (this.K > 1) & (sum(this.Sk) != 1.0)
+        if (this.K > 1) & !(sum(this.kshare) ≈ 1.0)
         	throw(ArgumentError("Shares of regions space must sum to 1.0"))
         end
     	return this
@@ -171,7 +191,31 @@ end
 function show(io::IO, ::MIME"text/plain", p::CParam)
     print(io,"LandUse Country Param:\n")
 	print(io,"      L       : $(p.L   )\n")
+	print(io,"      S       : $(p.S   )\n")
 	print(io,"      K       : $(p.K   )\n")
-	print(io,"      Sk       : $(p.Sk   )\n")
+	print(io,"      kshare  : $(p.kshare   )\n")
+	print(io,"      θprop   : $(p.θprop   )\n")
 end
 
+"convert a country param to one param for each region"
+function convert(c::CParam; par = Dict())
+	if length(par) > 0
+		p = [Param(par = par[ik]) for ik in 1:c.K]
+	else
+		p = [Param(par = par) for ik in 1:c.K]
+	end
+	# do adjustment of parameters one by one
+	for ik in 1:c.K
+		# p[ik].L = c.kshare[ik] * c.L  # by default allocate this share of people to k
+		# p[ik].S = c.kshare[ik] * c.S  # true by definition
+		# these entries are only used to compute a one-region country (i.e. first step to get starting values)
+		# we allocated total space and population to each country.
+		p[ik].L = c.L  # by default allocate this share of people to k
+		p[ik].S =  c.S  # true by definition
+
+		# transform aggregate productivity series into region equivalentes
+		# simple here: just offset by constant factor
+		p[ik].θprop = c.θprop[ik]
+	end
+	return p
+end

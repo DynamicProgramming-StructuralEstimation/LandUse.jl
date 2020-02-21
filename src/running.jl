@@ -22,7 +22,7 @@ function get_solutions(x0::Vector{Float64},p::Param)
 		setperiod!(p, it)   # set period on param to it
 		m0 = Region(p)
 
-		r1 = nlsolve((F,x) -> solve!(F,x,p,m0),
+		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
 			                     sols[it],iterations = 1000)
 		# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
 		# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01],
@@ -31,7 +31,7 @@ function get_solutions(x0::Vector{Float64},p::Param)
 		if converged(r1)
 			push!(sols, r1.zero)
 			update!(m0,p,r1.zero)
-			@assert abs(Rmk(m0,p)) < 1e-8   # walras' law
+			@assert abs(Rmk(m0,p)) < 1e-7   # walras' law
 			push!(m,m0)
 		else
 			error("General Model not converged in period $it")
@@ -43,12 +43,15 @@ function get_solutions(x0::Vector{Float64},p::Param)
 end
 
 
+# function run(;par = Dict())
+function run(p::Param)
+	# x0 = get_starts(par=par)
+	x0 = get_starts(p)   # a T-array of starting vectors
 
-function run()
+	# (x1,p) = adapt_ϵ(x0[1],par=par)
 
-	x0 = get_starts()   # a T-array of starting vectors
-
-	(x1,p) = adapt_ϵ(x0[1])  # adaptive search for higher epsilon in first period only
+	setperiod!(p,1)  # go back to period 1
+	(x1,p) = adapt_ϵ(p,x0[1])  # adaptive search for higher epsilon in first period only
 
 	x,M = get_solutions(x1[end],p)  # get general model solutions
 

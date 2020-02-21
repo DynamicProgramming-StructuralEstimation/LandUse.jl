@@ -1,35 +1,8 @@
 @testset "Single Region" begin
-	m0,p,r0 = LandUse.CD()
-	@testset "Region constructor updating" begin
-		LandUse.update!(m0,p,r0.zero[1],r0.zero[2])
-
-		m = LandUse.Region(p)
-		@test isnan(m.Lu )
-		@test isnan(m.wu0)
-		@test isnan(m.wr )
-		@test isnan(m.Srh)
-		@test isnan(m.xsr )
-
-		LandUse.update!(m,m0,p)
-
-		@test m.ρr == m0.ρr   # land price in rural sector
-		@test m.ϕ  == m0.ϕ    # city size
-		@test m.r  == m0.r    # land rent
-		@test m.Lr == m0.Lr   # employment in rural sector
-		@test m.pr == m0.pr   # relative price rural good
-		@test m.Sr == m0.Sr   # amount of land used in rural production
-
-		@test m.Lu   == p.L - m.Lr   # employment in urban sector
-		@test m.wu0  == LandUse.wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-		@test m.wr   == LandUse.wr(m.Lu,m.ϕ,p) # wage rate rural sector
-		@test m.Srh  == LandUse.Srh(p,m)
-		@test m.xsr   == LandUse.xsr(p,m)
-	end
-
 	@testset "components in flat model checks" begin
 
 		p = LandUse.Param(par = Dict(:ϵs => 0.0))   # flat epsilon slope, so closed form solutions apply
-	    s = LandUse.get_starts()
+	    s = LandUse.get_starts(p)
 
 		# use m0 values as starting values
 		m = LandUse.Region(p)
@@ -89,7 +62,7 @@
 	@testset "components in general model checks" begin
 
 		p = LandUse.Param(par = Dict(:ϵs => 10.0))
-		s = LandUse.get_starts()
+		s = LandUse.get_starts(p)
 
 		# use m0 values as starting values
 		m = LandUse.Region(p)
@@ -142,8 +115,9 @@
 	end
 
 	@testset "test flat elasticity ϵs = 0" begin
-	    s = LandUse.get_starts()
+
 		p = LandUse.Param(par = Dict(:ϵs => 0.0))   # flat epsilon slope, so closed form solutions apply
+		s = LandUse.get_starts(p)
 		LandUse.setperiod!(p,1)  # make sure we are in year 1
 		m = LandUse.Region(p)
 		fm = LandUse.FModel(p)
@@ -213,7 +187,9 @@
 	end
 
 	@testset "test full solution" begin
-		x,M,p = LandUse.run()
+		p = LandUse.Param()   # flat epsilon slope, so closed form solutions apply
+
+		x,M,p = LandUse.run(p)
 
 		tol =  p.S == 1 ? 1e-3 : 1e-1
 		# rutol = 1.0e-2
