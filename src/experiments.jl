@@ -16,12 +16,12 @@ function issue9()
     anim = Animation()
     for (jt,it) in enumerate(C[1].T)
         ϕs = [C[jt].R[ik].ϕ for ik in 1:K]; Lus = [C[jt].R[ik].Lu for ik in 1:K]
-        pl = plot(ϕs, Lus, title = "$it",xlab = L"\phi", ylab = L"L_u",
+        pl = plot(ϕs, Lus, title = "$it",
                   leg = false,
                   l = (:black,2),
                   m = (:circle, 5, :red),
-                  xlims = (0,0.05),
-                  ylims = (0,0.3))
+                  xaxis = (L"\phi", (0.001,0.045)),
+                  yaxis = (L"L_u", (0.01,0.3)))
         frame(anim)
     end
     g = gif(anim, joinpath(dbpath,"phi-vs-Lu.gif"),fps=0.5)
