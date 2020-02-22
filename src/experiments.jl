@@ -89,3 +89,28 @@ function issue10()
     g = gif(anim, joinpath(dbpath,"phi-vs-Lu-eps$ϵ.gif"),fps=0.5)
 
 end
+
+"""
+measure increase in land value at fringe. by default starts in 1960 and measures
+increase up to 2020.
+
+https://github.com/floswald/LandUse.jl/issues/11
+"""
+function issue11(;istart = 8, istop = 12, discount::Float64 = 0.03)
+    (x,M,p) = run(Param())  # run standard single region
+
+    # get location of fringe in start
+    ϕstart = M[istart].ϕ
+    ϕstop = M[istop].ϕ
+
+    # land value in year `stop` at that distance
+    setperiod!(p,istop)
+    ρstart = ρ(ϕstart,p,M[istop])
+    ρrstop = M[istop].ρr  # ρ at fringe in year stop
+
+    # difference discounted back to 1990
+    dd = (ρstart - ρrstop) / ((1 + discount)^5)^(istop-istart)
+    out = dd / M[istart].ρr
+    println("land value at fringe increased by $(round(out,digits = 2)) percent \n from $(p.T[istart]) to $(p.T[istop]), discounted at $(100*discount) percent p.a.")
+    out
+end

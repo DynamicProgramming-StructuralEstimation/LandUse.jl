@@ -67,3 +67,13 @@ function matlab_bm()
 	@time (x,M,p) = run();
 
 end
+
+function make_space_gif()
+	x,C,cpar,par = LandUse.runk()
+	anim_space(C,par)
+end
+
+function make_ts_space_gif()
+	x,C,cpar,par = LandUse.runk()
+	plot_ts_xsect(C,par,1)
+end
