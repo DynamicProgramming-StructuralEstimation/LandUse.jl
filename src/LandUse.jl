@@ -32,6 +32,7 @@ module LandUse
 	include("startvals.jl")
 	include("running.jl")
 	include("plotter.jl")
+	include("experiments.jl")
 	# include("interact.jl")
 
 
