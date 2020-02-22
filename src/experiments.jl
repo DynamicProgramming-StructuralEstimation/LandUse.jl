@@ -110,7 +110,25 @@ function issue11(;istart = 8, istop = 12, discount::Float64 = 0.03)
 
     # difference discounted back to 1990
     dd = (ρstart - ρrstop) / ((1 + discount)^5)^(istop-istart)
-    out = dd / M[istart].ρr
-    println("land value at fringe increased by $(round(out,digits = 2)) percent \n from $(p.T[istart]) to $(p.T[istop]), discounted at $(100*discount) percent p.a.")
-    out
+    out1 = dd / M[istart].ρr
+    println("land value at fringe increased by $(round(out1,digits = 2)) percent \n from $(p.T[istart]) to $(p.T[istop]), discounted at $(100*discount) percent p.a.")
+
+    # with flat epsilon
+    (x,M,p) = run(Param(par = Dict(:ϵsmax => 0.0)))
+
+    # get location of fringe in start
+    ϕstart = M[istart].ϕ
+    ϕstop = M[istop].ϕ
+
+    # land value in year `stop` at that distance
+    setperiod!(p,istop)
+    ρstart = ρ(ϕstart,p,M[istop])
+    ρrstop = M[istop].ρr  # ρ at fringe in year stop
+
+    # difference discounted back to 1990
+    dd = (ρstart - ρrstop) / ((1 + discount)^5)^(istop-istart)
+    out2 = dd / M[istart].ρr
+    println("with ϵ flat:")
+    println("land value at fringe increased by $(round(out2,digits = 2)) percent \n from $(p.T[istart]) to $(p.T[istop]), discounted at $(100*discount) percent p.a.")
+    out1,out2
 end
