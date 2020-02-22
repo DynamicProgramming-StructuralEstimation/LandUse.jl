@@ -1,33 +1,5 @@
 
 
-# 1) plot methods for a single model instance
-# visualize spatial setup
-# moving cost function, construction cost function, density, cu, cr,h consumption,
-
-# function plot_static(m::Region,p::Param)
-# 	lvec = collect(range(0.,1.0,length=100))
-# 	gr()
-# 	xt = [0.0; 0.5;1.0]
-# 	plts = Any[]
-# 	push!(plts,plot(lvec,[τ(i,m.ϕ,p) for i in lvec], title = "tau",leg = false, xticks = xt,titlefontsize=10,tickfont=font(6)))
-# 	push!(plts,plot(lvec,[w(m.Lu,i,m.ϕ,p) for i in lvec], title = "w(l)",leg = false, xticks = xt,titlefontsize=10,tickfont=font(6)))
-# 	push!(plts,plot(lvec,[cu(i,p,m) for i in lvec], title = "cu(l)",leg = false, xticks = xt,titlefontsize=10,xguidefontsize=6))
-# 	# push!(plts,plot(lvec,[cr(i,p,m) for i in lvec], title = "cr(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[cost(i,m.ϕ,p) for i in lvec], title = "cost(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[q(i,p,m) for i in lvec], title = "q(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[ρ(i,p,m) for i in lvec], title = "rho(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[h(i,p,m) for i in lvec], title = "h(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[H(i,p,m) for i in lvec], title = "H(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[D(i,p,m) for i in lvec], title = "D(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[utility(i,p,m) for i in lvec], title = "U(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[ϵ(i,m.ϕ,p) for i in lvec], title = "epsilon(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[χ(i,m.ϕ,p) for i in lvec], title = "chi(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	plot(plts...)
-# end
-
-
-
-
 function plot_ts(M::Vector{Region},p::Param)
 	df = dataframe(M,p)
 	# vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
@@ -45,16 +17,6 @@ function plot_ts(M::Vector{Region},p::Param)
 	end
 	return plts
 
-
-	# # s1 =
-	# @df s plot(:year,:value, group= :variable, layout = size(df,2)-1)
-
-	# xt = [p.T[1];p.T[7];p.T[14]]
-	# plts = Any[]
-	# for v in setdiff(names(df),[:year,:xsr])
-	# 	push!(plts,plot(df.year, df[!,v],leg = false,title = "$v",
-	# 		guidefontsize=6,titlefontsize=6,xticks = xt))
-	# end
 end
 
 
@@ -89,20 +51,6 @@ end
 
 
 # 2) plotting a time series of models
-# for each model instance at time t, plot against t:
-# fringe
-# qr
-# Lr, Lu
-# land rent
-# density in center and at fringe
-#
-
-
-
-# p1 = plot(fm.Ftrace',ylim = (-5,5),title = "Ftrace")
-# p2 = plot(fm.xtrace',title = "xtrace",label = ["rho" "phi" "r" "Lr" "pr" "Sr"])
-# pl = plot(p1,p2,layout = (1,2))
-# savefig(pl,joinpath(@__DIR__,"..","images","Fmodel_trace.png"))
 
 function traceplot(it)
 	ft = hcat(Ftrace...)'
@@ -156,36 +104,35 @@ function plot_ts(C::Vector{Country})
 	plts
 end
 
-
-"sinle cross sections for single region"
-function plot_cross(m::Region,p::Param,it::Int; fixy = false)
+"single spatial cross sections region"
+function plot_space(m::Region,p::Param,it::Int; fixy = false)
 
 	lvec = collect(range(0.,area(m),length=100))  # space for region ik
 	setperiod!(p,it)  # set time on parameter!
 	plts = Any[]
 	if fixy
-		push!(plts, plot(lvec, [ϵ(i,m.ϕ,p) for i in lvec],label = L"\epsilon(l)", ylims = (2,4.1), linewidth = 2))
-		push!(plts, plot(lvec, [D(i,p,m) for i in lvec],label = L"D(l)", ylims = (-3,60), linewidth = 2))
-		push!(plts, plot(lvec, [H(i,p,m) for i in lvec],label = L"H(l)", ylims = (-0.1,15), linewidth = 2))
-		push!(plts, plot(lvec, [ρ(i,p,m) for i in lvec],label = L"\rho(l)", ylims = (-0.1,5), linewidth = 2))
-		push!(plts, plot(lvec, [w(m.Lu,i,m.ϕ,p) for i in lvec],label = L"w(l)", ylims = (-0.1,5.5), linewidth = 2))
-		push!(plts, plot(lvec, [h(i,p,m) for i in lvec],label = L"h(l)", ylims = (-0.1,1.5), linewidth = 2))
+		push!(plts, plot(lvec, [ϵ(i,m.ϕ,p) for i in lvec],title = L"\epsilon(l)", ylims = (2,4.1), linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [D(i,p,m) for i in lvec],title = L"D(l)", ylims = (-3,60), linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [H(i,p,m) for i in lvec],title = L"H(l)", ylims = (-0.1,15), linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [ρ(i,p,m) for i in lvec],title = L"\rho(l)", ylims = (-0.1,5), linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [w(m.Lu,i,m.ϕ,p) for i in lvec],title = L"w(l)", ylims = (-0.1,5.5), linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [h(i,p,m) for i in lvec],title = L"h(l)", ylims = (-0.1,1.5), linewidth = 2, leg = false))
 	else
-		push!(plts, plot(lvec, [ϵ(i,m.ϕ,p) for i in lvec],label = L"\epsilon(l)",linewidth = 2))
-		push!(plts, plot(lvec, [D(i,p,m) for i in lvec],label = L"D(l)",linewidth = 2))
-		push!(plts, plot(lvec, [H(i,p,m) for i in lvec],label = L"H(l)",linewidth = 2))
-		push!(plts, plot(lvec, [ρ(i,p,m) for i in lvec],label = L"\rho(l)",linewidth = 2))
-		push!(plts, plot(lvec, [w(m.Lu,i,m.ϕ,p) for i in lvec],label = L"w(l)",linewidth = 2))
-		push!(plts, plot(lvec, [h(i,p,m) for i in lvec],label = L"h(l)",linewidth = 2))
+		push!(plts, plot(lvec, [ϵ(i,m.ϕ,p) for i in lvec],title = L"\epsilon(l)",linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [D(i,p,m) for i in lvec],title = L"D(l)",linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [H(i,p,m) for i in lvec],title = L"H(l)",linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [ρ(i,p,m) for i in lvec],title = L"\rho(l)",linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [w(m.Lu,i,m.ϕ,p) for i in lvec],title = L"w(l)",linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [h(i,p,m) for i in lvec],title = L"h(l)",linewidth = 2, leg = false))
 	end
 
-	ti = plot(title = "Cross-Section in $(p.T[it])", grid = false, showaxis = false, bottom_margin = -50Plots.px)
-	pl = plot(ti,plot(plts...,layout = (2,3)), layout = @layout([A{0.05h}; B]))
+	ti = plot(title = "Spatial Cross-Section in $(p.T[it])", grid = false, showaxis = false, bottom_margin = -30Plots.px)
+	pl = plot(ti,plot(plts...,layout = (2,3), link = :x), layout = @layout([A{0.05h}; B]))
 	pl
 end
 
-"plot repeated cross sections for each region"
-function anim_cross(C::Vector{Country},pp::Vector{Param})
+"plot repeated spatial cross sections for each region"
+function anim_space(C::Vector{Country},pp::Vector{Param})
 	K = length(C[1].R)
 
 	anims = Plots.Animation[]
@@ -197,7 +144,7 @@ function anim_cross(C::Vector{Country},pp::Vector{Param})
 
 		for (jt,it) in enumerate(C[1].T)
 			reg = C[jt].R[ik]
-			pl0 = plot_cross(reg,p,jt,fixy = true)
+			pl0 = plot_space(reg,p,jt,fixy = true)
 			frame(anim,pl0)
 		end
 		gif(anim, joinpath(dbpath,"x-section-$ik.gif"),fps=0.5)
@@ -249,25 +196,85 @@ function tplot()
 	a
 end
 
-#
-# 	lvec = collect(range(0.,1.0,length=100))
-# 	gr()
-# 	xt = [0.0; 0.5;1.0]
-# 	plts = Any[]
-# 	push!(plts,plot(lvec,[τ(i,m.ϕ,p) for i in lvec], title = "tau",leg = false, xticks = xt,titlefontsize=10,tickfont=font(6)))
-# 	push!(plts,plot(lvec,[w(m.Lu,i,m.ϕ,p) for i in lvec], title = "w(l)",leg = false, xticks = xt,titlefontsize=10,tickfont=font(6)))
-# 	push!(plts,plot(lvec,[cu(i,p,m) for i in lvec], title = "cu(l)",leg = false, xticks = xt,titlefontsize=10,xguidefontsize=6))
-# 	# push!(plts,plot(lvec,[cr(i,p,m) for i in lvec], title = "cr(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[cost(i,m.ϕ,p) for i in lvec], title = "cost(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[q(i,p,m) for i in lvec], title = "q(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[ρ(i,p,m) for i in lvec], title = "rho(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[h(i,p,m) for i in lvec], title = "h(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[H(i,p,m) for i in lvec], title = "H(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[D(i,p,m) for i in lvec], title = "D(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[utility(i,p,m) for i in lvec], title = "U(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[ϵ(i,m.ϕ,p) for i in lvec], title = "epsilon(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	push!(plts,plot(lvec,[χ(i,m.ϕ,p) for i in lvec], title = "chi(l)",leg = false, xticks = xt,titlefontsize=10,guidefontsize=6))
-# 	plot(plts...)
-#
-#
-# end
+function single_TS(s::DataFrame, ik::Int ; year = nothing, xlim = nothing,ylim = nothing)
+	sims = [[:Lr,:Lu], [:Sr, :ϕ, :Srh], [:qr, :r], [:wr , :wu0]]
+	titles = ["Labor"; "Land"; "Rents"; "Wages"]
+	nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
+
+	plt = Any[]
+	if isnothing(year)
+		for i in 1:length(sims)
+			x = @linq s |>
+				where((:variable .∈ Ref(sims[i])) .& (:region .== ik))
+			px = @df x plot(:year, :value, group = :variable,
+							title = titles[i],
+							titlefontsize=10,
+							label=nms[i],
+							legend = :topleft,
+							linewidth=2,marker = (:circle,3))
+			push!(plt, px)
+		end
+		ti = plot(title = "Time Series Region $ik", grid = false, showaxis = false, bottom_margin = -30Plots.px)
+		pl = plot(ti,plot(plt...,layout = (2,2), link = :x), layout = @layout([A{0.05h}; B]))
+		# return extrema of each subplot
+		xlims = [plt[i].subplots[1][:xaxis][:extrema] for i in 1:length(plt)]
+		ylims = [plt[i].subplots[1][:yaxis][:extrema] for i in 1:length(plt)]
+		xlims = [[xlims[i].emin,xlims[i].emax] for i in 1:length(plt)]
+		ylims = [[ylims[i].emin,ylims[i].emax] for i in 1:length(plt)]
+		xlims = [(xlims[i][1] .- 0.05*diff(xlims[i])[1],xlims[i][2] .+ 0.05*diff(xlims[i])[1]) for i in 1:length(plt)]
+		ylims = [(ylims[i][1] .- 0.05*diff(ylims[i])[1],ylims[i][2] .+ 0.05*diff(ylims[i])[1]) for i in 1:length(plt)]
+		return pl,xlims,ylims
+	else
+		@assert isa(xlim, AbstractArray) && isa(ylim, AbstractArray)
+		for i in 1:length(sims)
+			x = @linq s |>
+				where((:variable .∈ Ref(sims[i])) .& (:region .== ik) .& (:year .<= year))
+			px = @df x plot(:year, :value, group = :variable,
+							title = titles[i],
+							titlefontsize=10,
+							label=nms[i],
+							xlims = xlim[i],
+							ylims = ylim[i],
+							legend = :topleft,
+							linewidth=2,marker = (:circle,3))
+			push!(plt, px)
+		end
+		ti = plot(title = "Time Series Region $ik in $year", grid = false, showaxis = false, bottom_margin = -30Plots.px)
+		pl = plot(ti,plot(plt...,layout = (2,2), link = :x), layout = @layout([A{0.05h}; B]))
+
+		return pl
+	end
+
+end
+
+
+function plot_ts_xsect(C::Vector{Country},pp::Vector{Param},ik::Int)
+
+	# prepare a TS
+	df = dataframe(C)
+	s = stack(df, Not([:year, :region]))
+	ts0,xlims,ylims = single_TS(s,ik)  # to get extrema on each subplot right
+
+
+
+	# loop over time
+	anim = Animation()
+	for (jt,it) in enumerate(C[1].T)
+
+		# make a TS up to period jt: keeping extrema fixed, however, so the plot "grows" nicely
+		ts = single_TS(s,ik, year = it, xlim = xlims, ylim = ylims )
+
+		# make a x-section
+		xs = plot_space(C[jt].R[ik],pp[ik],jt, fixy = true)
+
+		# combine both
+		o = plot(ts, xs, layout = (1,2), size = (1200,500))
+
+		# push onto an anim
+		frame(anim)
+
+	end
+	g = gif(anim, joinpath(dbpath,"TS-xsection-$ik.gif"),fps=0.5)
+	# gif(anim, joinpath(dbpath,"TS-xsection-$ik.gif"),fps=0.5, variable_palette = true)
+	return anim
+end
