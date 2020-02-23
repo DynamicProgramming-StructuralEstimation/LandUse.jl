@@ -100,7 +100,7 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 end
 
 function setperiod!(p::Param,i::Int)
-	setfield!(p, :θr, p.θrs[i])
+	setfield!(p, :θr, p.θrs[i])   # this has to be the same across regions!
 	setfield!(p, :θu, p.θus[i] * p.θprop)
 	setfield!(p,  :t , p.T[i] )
 end
