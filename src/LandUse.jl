@@ -13,10 +13,13 @@ module LandUse
 	using Printf
 	using NLopt
 	using LineSearches
+	using Formatting
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
 	const dbpath = joinpath(ENV["HOME"],"Dropbox","research","LandUse","output","model")
+	const dbplots = joinpath(dbpath,"plots")
+	const dbtables = joinpath(dbpath,"tables")
 
 	# imports
 	import Base.show, Base.convert

@@ -13,18 +13,25 @@ function issue9()
 
     K = C[1].K
 
-    anim = Animation()
-    for (jt,it) in enumerate(C[1].T)
-        ϕs = [C[jt].R[ik].ϕ for ik in 1:K]; Lus = [C[jt].R[ik].Lu for ik in 1:K]
-        pl = plot(ϕs, Lus, title = "$it",
-                  leg = false,
-                  l = (:black,2),
-                  m = (:circle, 5, :red),
-                  xaxis = (L"\phi", (0.001,0.045)),
-                  yaxis = (L"L_u", (0.01,0.3)))
-        frame(anim)
+    open(joinpath(dbtables,"phi-vs-Lu.txt"),"w") do io
+        @printf(io,"Year   k    θu      Lu       ϕ\n")
+        @printf(io,"----------------------------------\n")
+
+        anim = Animation()
+        for (jt,it) in enumerate(C[1].T)
+            ϕs = [C[jt].R[ik].ϕ for ik in 1:K]; Lus = [C[jt].R[ik].Lu for ik in 1:K]
+            for ik in 1:K @printf(io,"%d   %d    %1.2f    %1.3f    %1.3f\n",it,ik,pp[ik].θus[jt]*pp[ik].θprop,Lus[ik],ϕs[ik]) end
+
+            pl = plot(ϕs, Lus, title = "$it",
+                      leg = false,
+                      l = (:black,2),
+                      m = (:circle, 5, :red),
+                      xaxis = (L"\phi", (0.001,0.045)),
+                      yaxis = (L"L_u", (0.01,0.3)))
+            frame(anim)
+        end
+        g = gif(anim, joinpath(dbplots,"phi-vs-Lu.gif"),fps=0.5)
     end
-    g = gif(anim, joinpath(dbpath,"phi-vs-Lu.gif"),fps=0.5)
 
 end
 
@@ -43,50 +50,58 @@ function issue10()
     ϵ1 = 5.0
     ϵ2 = 1.0
     ϵ3 = 0.0
+    ϵs = [p0[1].ϵs,ϵ1,ϵ2,ϵ3]
 
     # version with lower eps slope
     sols,C2,cp,pp = LandUse.runk(cpar = cpar,
-                                 par = Dict(ik => Dict(:ϵsmax => ϵ1) for ik in 1:K))
+                                 par = Dict(ik => Dict(:ϵsmax => ϵs[2]) for ik in 1:K))
 
     # version with lower eps slope
     sols,C3,cp,pp = LandUse.runk(cpar = cpar,
-                                 par = Dict(ik => Dict(:ϵsmax => ϵ2) for ik in 1:K))
+                                 par = Dict(ik => Dict(:ϵsmax => ϵs[3]) for ik in 1:K))
 
     # version with lower eps slope
     sols,C4,cp,pp = LandUse.runk(cpar = cpar,
-                              par = Dict(ik => Dict(:ϵsmax => ϵ3) for ik in 1:K))
+                              par = Dict(ik => Dict(:ϵsmax => ϵs[4]) for ik in 1:K))
 
 
+    fmt = FormatExpr("{1:d}    {2:d}   {3:>4.1f}    {4:>1.2f}    {5:>1.2f}    {6:>1.2f}")
+    open(joinpath(dbtables,"phi-vs-Lu-eps.txt"),"w") do io
+        print(io,"Year    k   ϵs      θu      Lu      ϕ\n")
+        print(io,"----------------------------------------\n")
 
-    anim = Animation()
-    for (jt,it) in enumerate(C[1].T)
-        ϕs = [C[jt].R[ik].ϕ for ik in 1:K]; Lus = [C[jt].R[ik].Lu for ik in 1:K]
-        ϕs2 = [C2[jt].R[ik].ϕ for ik in 1:K]; Lus2 = [C2[jt].R[ik].Lu for ik in 1:K]
-        ϕs3 = [C3[jt].R[ik].ϕ for ik in 1:K]; Lus3 = [C3[jt].R[ik].Lu for ik in 1:K]
-        ϕs4 = [C4[jt].R[ik].ϕ for ik in 1:K]; Lus4 = [C4[jt].R[ik].Lu for ik in 1:K]
-        pl = plot(ϕs, Lus, title = "$it",
-                  label = latexstring("\\epsilon = $(p0[1].ϵs)"),
-                  legend = :bottomright,
-                  l = (:black,2),
-                  m = (:circle, 5, :red),
-                  xaxis = (L"\phi", (0.001,0.045)),
-                  yaxis = (L"L_u", (0.01,0.33)))
-        plot!(pl, ϕs2, Lus2,
-                  label = latexstring("\\epsilon = $(ϵ1)"),
-                  l = (:green,2),
-                  m = (:circle, 5, :red))
-        plot!(pl, ϕs3, Lus3,
-                 label = latexstring("\\epsilon = $(ϵ2)"),
-                 l = (:blue,2),
-                 m = (:circle, 5, :red))
-        plot!(pl, ϕs4, Lus4,
-               label = latexstring("\\epsilon = $(ϵ3)"),
-               l = (:orange,2),
-               m = (:circle, 5, :red))
+        anim = Animation()
+        for (jt,it) in enumerate(C[1].T)
+            ϕs = [C[jt].R[ik].ϕ for ik in 1:K]; Lus = [C[jt].R[ik].Lu for ik in 1:K]
+            ϕs2 = [C2[jt].R[ik].ϕ for ik in 1:K]; Lus2 = [C2[jt].R[ik].Lu for ik in 1:K]
+            ϕs3 = [C3[jt].R[ik].ϕ for ik in 1:K]; Lus3 = [C3[jt].R[ik].Lu for ik in 1:K]
+            ϕs4 = [C4[jt].R[ik].ϕ for ik in 1:K]; Lus4 = [C4[jt].R[ik].Lu for ik in 1:K]
+            pl = plot(ϕs, Lus, title = "$it",
+                      label = latexstring("\\epsilon = $(ϵs[1])"),
+                      legend = :bottomright,
+                      l = (:black,2),
+                      m = (:circle, 5, :red),
+                      xaxis = (L"\phi", (0.001,0.045)),
+                      yaxis = (L"L_u", (0.01,0.33)))
+            plot!(pl, ϕs2, Lus2,
+                      label = latexstring("\\epsilon = $(ϵs[2])"),
+                      l = (:green,2),
+                      m = (:circle, 5, :red))
+            plot!(pl, ϕs3, Lus3,
+                     label = latexstring("\\epsilon = $(ϵs[3])"),
+                     l = (:blue,2),
+                     m = (:circle, 5, :red))
+            plot!(pl, ϕs4, Lus4,
+                   label = latexstring("\\epsilon = $(ϵs[4])"),
+                   l = (:orange,2),
+                   m = (:circle, 5, :red))
 
-        frame(anim)
+            frame(anim)
+            for ik in 1:K printfmtln(io,fmt,it,ik,ϵs[ik],pp[ik].θus[jt]*pp[ik].θprop,Lus[ik],ϕs[ik]) end
+
+        end
+        g = gif(anim, joinpath(dbplots,"phi-vs-Lu-eps.gif"),fps=0.5)
     end
-    g = gif(anim, joinpath(dbpath,"phi-vs-Lu-eps$ϵ.gif"),fps=0.5)
 
 end
 
