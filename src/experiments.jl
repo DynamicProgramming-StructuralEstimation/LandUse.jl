@@ -162,3 +162,14 @@ function issue11(;istart = 8, istop = 12, discount::Float64 = 0.03)
     println("land value at fringe increased by $(round(out2,digits = 2)) percent \n from $(p.T[istart]) to $(p.T[istop]), discounted at $(100*discount) percent p.a.")
     out1,out2
 end
+
+
+
+function issue11()
+    cpar = Dict(:S => 1.0, :L => 1.0,
+                :K => 4,
+                :θuinit => 0.32 .* [1.0,0.98,0.96,0.95],
+                :kshare => [0.25 for i in 1:4])
+    sols,C,cpar,pp = LandUse.runk(cpar = cpar)
+
+end
