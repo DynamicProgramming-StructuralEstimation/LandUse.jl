@@ -8,12 +8,12 @@ mutable struct Param
 	ν     :: Float64 # weight of rural good consumption on consumption composite
 	cbar  :: Float64 # agr cons subsistence level (0.14 for thailand)
 	sbar  :: Float64 # neg urba subsistence level
-	θrs    :: Vector{Float64} # set of rural sector TFP
-	θus_region    :: Vector{Float64} # set of urban sector TFP
-	θr    :: Float64 # rural sector TFP
-	θu    :: Float64 # urban sector TFP
-	θuinit    :: Float64 # initial urban productivity
-	θg    :: Vector{Float64}  # aggregate growth of urban producitivity
+	θug   :: Vector{Float64}  # aggregate growth of urban producitivity
+	θrg   :: Vector{Float64}  # aggregate growth of urban producitivity
+	θu0   :: Float64 # initial urban productivity
+	θr0   :: Float64 # initial rural productivity
+	θr    :: Float64 # current period rural sector TFP
+	θu    :: Float64 # current period urban sector TFP
 	α     :: Float64 # labor weight on farm sector production function
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
 	τ     :: Float64 # commuting cost parameter
@@ -35,11 +35,8 @@ mutable struct Param
         j = JSON.parse(f)
         close(f)
         this = new()
-        this.t = 1
-		this.S = 1.0  # set default values for space and population
-		this.L = 1.0
-		# this.θprop = 1.0
 
+		# read data from json file
         for (k,v) in j
 			if v["type"] == "region"
 	            if v["value"] isa Vector{Any}
@@ -55,18 +52,24 @@ mutable struct Param
 			end
         end
 
+		# set some defaults
+		this.t = 1
+		this.S = 1.0  # set default values for space and population
+		this.L = 1.0
+		this.θug = LandUse.originalθ[2:end] ./ LandUse.originalθ[1:end-1]  # take default values of growth
+		this.θrg = copy(this.θug)
+		this.θu = this.θu0
+		this.θr = this.θr0
 
+		# override parameters from dict par, if any
         if length(par) > 0
-            # override parameters from dict par
             for (k,v) in par
 				if hasfield(Param,k)
                 	setfield!(this,k,v)
 				end
             end
         end
-		# compute growth rate
-		setfield!(this,:θg, zeros(length(this.θus_region)-1))
-		this.θg = this.θus_region[2:end] ./ this.θus_region[1:(end-1)]
+
         if this.η != 0
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
         end
@@ -114,6 +117,16 @@ end
 # 	end
 # end
 
+# set period specific values
+function setperiod!(p::Param,i::Int)
+	setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
+	setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.
+	setfield!(p,  :t , p.T[i] )
+end
+
+growθ(θ0,g::Vector{Float64}) = θ0 * prod(g)
+
+
 function setperiod!(p::Vector{Param},i::Int)
 	for ip in eachindex(p)
 		setperiod!(p[ip],i)
@@ -159,10 +172,7 @@ mutable struct CParam
 	S     :: Float64 # total space
 	K     :: Int  # number of Regions
 	kshare    :: Vector{Float64}  # region k's share of total space
-	# Θr    :: Vector{Float64} # set of rural sector TFP
-	θus    :: Vector{Float64} # set of urban sector TFP
-	θuinit  :: Vector{Float64}  # initial distribution of TFP
-	θg      :: Vector{Float64}  #
+	θg      :: Vector{Float64}  # vector of multiplicative offsets of aggregage growth rates.
 
 
 	function CParam(;par=Dict())
@@ -195,9 +205,9 @@ mutable struct CParam
         if (this.K > 1) & !(sum(this.kshare) ≈ 1.0)
         	throw(ArgumentError("Shares of regions space must sum to 1.0"))
         end
-		# compute growth rate
-		setfield!(this,:θg, zeros(length(this.θus)-1))
-		this.θg = this.θus[2:end] ./ this.θus[1:(end-1)]
+		if (length(this.θg) != this.K)
+			throw(ArgumentError("length of θg inconsistent with K"))
+		end
     	return this
 	end
 end
@@ -228,41 +238,8 @@ function convert(c::CParam; par = Dict())
 		p[ik].S =  c.S  # true by definition
 
 		# transform aggregate productivity series into region equivalentes
-		# simple here: just offset by constant factor
-		p[ik].θuinit = c.θuinit[ik]
+		p[ik].θug .*= c.θg[ik]
+		p[ik].θrg .*= c.θg[ik]
 	end
 	return p
-end
-
-
-# for a single region
-function setperiod!(p::Param,i::Int)
-	setfield!(p, :θr, p.θrs[i])   # this has to be the same across regions!
-	setfield!(p, :θu, i == 1 ? p.θuinit : theta_rec(p,i))
-	# setfield!(p, :θu, p.θus[i] * p.θprop)
-	setfield!(p,  :t , p.T[i] )
-end
-
-
-
-# for each region within a country
-function setperiod!(p::Param,cp::CParam,i::Int)
-	setfield!(p, :θr, p.θrs[i])   # this has to be the same across regions!
-	setfield!(p, :θu, i == 1 ? p.θuinit : theta_rec(cp,p,i))
-	# setfield!(p, :θu, p.θus[i] * p.θprop)
-	setfield!(p,  :t , p.T[i] )
-end
-
-
-function setperiod!(p::Vector{Param},cp::CParam,i::Int)
-	for ip in eachindex(p)
-		setperiod!(p[ip],cp,i)
-	end
-end
-
-function theta_rec(cp::CParam,p::Param,i::Int)
-	p.θuinit * prod([ cp.θg[t] for t in 1:(i-1) ])
-end
-function theta_rec(p::Param,i::Int)
-	p.θuinit * prod([ p.θg[t] for t in 1:(i-1)])
 end

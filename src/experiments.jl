@@ -168,8 +168,24 @@ end
 function issue11()
     cpar = Dict(:S => 1.0, :L => 1.0,
                 :K => 4,
-                :θuinit => 0.32 .* [1.0,0.98,0.96,0.95],
+                :θg => 0.32 .* [1.0,0.98,0.96,0.95],
                 :kshare => [0.25 for i in 1:4])
     sols,C,cpar,pp = LandUse.runk(cpar = cpar)
+
+end
+
+"""
+https://github.com/floswald/LandUse.jl/issues/15
+"""
+function issue15()
+    cpar = Dict(:S => 1.0, :L => 1.0,
+                :K => 4,
+                :θg => [1.1,1.0,0.98,0.96],
+                :kshare => [0.25 for i in 1:4])
+    sols,C,cpar,pp = LandUse.runk(cpar = cpar)
+end
+
+function issue13()
+
 
 end

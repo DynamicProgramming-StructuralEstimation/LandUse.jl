@@ -76,39 +76,15 @@
 		"type" : "region",
 		"symbol" : "\\mathcal{T}"
 	},
-	"θrs" : {
-		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5],
-		"description" : "Set of Rural Productivities",
-		"type" : "region",
-		"symbol" : "\\Theta_r"
-	},
-	"θus_region" : {
-		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5],
-		"description" : "Set of Urban Productivities",
-		"type" : "region",
-		"symbol" : "\\Theta_u"
-	},
-	"θus" : {
-		"value" : [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5],
-		"description" : "Set of Urban Productivities",
-		"type" : "country",
-		"symbol" : "\\Theta_u"
-	},
-	"θr" : {
+	"θu0" : {
 		"value" : 0.32,
-		"description" : "Rural Productivity",
-		"type" : "region",
-		"symbol" : "\\theta_r"
-	},
-	"θu" : {
-		"value" : 0.32,
-		"description" : "Urban Productivity",
+		"description" : "Initial Urban Productivity",
 		"type" : "region",
 		"symbol" : "\\theta_u"
 	},
-	"θuinit" : {
+	"θr0" : {
 		"value" : 0.32,
-		"description" : "Initial Urban Productivity",
+		"description" : "Initial Rural Productivity",
 		"type" : "region",
 		"symbol" : "\\theta_u"
 	},
@@ -172,9 +148,9 @@
 		"type" : "country",
 		"symbol" : "\\pi_k"
 	},
-	"θuinit" : {
+	"θg" : {
 		"value" : [1.0,1.0],
-		"description" : "Initial distribution of TFP by region",
+		"description" : "multiplicative change in growth by region",
 		"type" : "country",
 		"symbol" : "\\xi_k"
 	}

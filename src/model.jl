@@ -23,6 +23,8 @@ mutable struct Region <: Model
 	ϕ    :: Float64   # size of the city
 	xsr  :: Float64  # excess subsistence rural worker
 	U    :: Float64  # common utility level
+	θu   :: Float64  # current productivity
+	θr   :: Float64  # current productivity
 	cr01 :: Tuple{Float64,Float64}  # consumption at locations 0 and 1. temps to check.
 	cu01 :: Tuple{Float64,Float64} # consumption at locations 0 and 1. temps to check.
 	# integration setup
@@ -53,6 +55,8 @@ mutable struct Region <: Model
 		m.pr   = NaN
 		m.ϕ    = NaN
 		m.xsr  = NaN
+		m.θu   = p.θu
+		m.θr   = p.θr
 		m.U    = NaN
 		m.cr01 = (NaN,NaN)
 		m.cu01 = (NaN,NaN)
@@ -74,6 +78,8 @@ function show(io::IO, ::MIME"text/plain", m::Region)
     print(io,"    Lr   : $(m.Lr ) \n")
     print(io,"    Lu   : $(m.Lu ) \n")
     print(io,"    area : $(round(area(m),digits=2)) \n")
+    print(io,"    θu    : $(m.θu  ) \n")
+    print(io,"    θr    : $(m.θr  ) \n")
     print(io,"    ϕ    : $(m.ϕ  ) \n")
     print(io,"    Sr   : $(m.Sr ) \n")
     print(io,"    Srh  : $(m.Srh) \n")
@@ -89,7 +95,7 @@ end
 
 function show(io::IO, m::Region)
     # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
-    @printf(io,"Region: ϕ=%1.3f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",m.ϕ, area(m), m.Lu, m.Lr,pop(m))
+    @printf(io,"Region: θu=%1.3f, θr=%1.3f, ϕ=%1.3f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m))
 end
 
 
@@ -147,13 +153,13 @@ function integrate!(m::Region,p::Param)
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
-	@assert m.icu_input > 0
-	@assert m.iDensity > 0
-	@assert m.icu      > 0
-	@assert m.icr      > 0
-	@assert m.iτ       > 0
-	@assert m.iq       > 0
-	@assert m.iy       > 0
+	# @assert m.icu_input > 0
+	# @assert m.iDensity > 0
+	# @assert m.icu      > 0
+	# @assert m.icr      > 0
+	# @assert m.iτ       > 0
+	# @assert m.iq       > 0
+	# @assert m.iy       > 0
 end
 
 """
