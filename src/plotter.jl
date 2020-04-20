@@ -1,5 +1,5 @@
 
-"make one time series per region"
+"make separate time series plot for each region"
 function plot_ts(C::Vector{Country})
 	df = dataframe(C)
 	K = length(C[1].R)
@@ -29,6 +29,37 @@ function plot_ts(C::Vector{Country})
 	end
 	plts
 end
+
+"time series showing all regions together"
+function plot_ts_all(C::Vector{Country})
+	df = dataframe(C)
+	K = length(C[1].R)
+	# vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
+	# @df df plot(:year, cols(2:size(df,2)))
+	s = stack(df, Not([:year, :region]))
+	# sims = [(:Lr,:Lu); (:Sr, :ϕ, :Srh); (:qr, :r); (:wr , :wu0)]
+	sims = [[:Lu], [:ϕ], [:r], [:Srh]]
+	titles = ["Urban Labor"; "Urban Size"; "Land Rents"; "Rural Housing (Srh)"]
+	nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
+
+	plts = Any[]
+	for i in 1:length(sims)
+			x = @linq s |>
+				where((:variable .== sims[i]))
+			px = @df x plot(:year, :value, group = :region,
+							title = titles[i],
+							titlefontsize=10,
+							# label=nms[i],
+							legend = :topleft,
+							linewidth=2,marker = (:circle,3))
+			push!(plts, px)
+
+	end
+	plot(plts...,layout = (2,2))
+
+
+end
+
 
 "single spatial cross sections region"
 function plot_space(m::Region,p::Param,it::Int; fixy = false)
@@ -80,6 +111,119 @@ function anim_space(C::Vector{Country},pp::Vector{Param})
 		push!(anims,anim)
 	end
 	anims
+end
+
+
+"single spatial cross sections region"
+function plot_rho_space(m::Region,p::Param,it::Int; fixy = false)
+
+	lvec = collect(range(0.,area(m),length=100))  # space for region ik
+	setperiod!(p,it)  # set time on parameter!
+	plts = Any[]
+	if fixy
+		push!(plts, plot(lvec, [ϵ(i,m.ϕ,p) for i in lvec],title = L"\epsilon(l)", ylims = (2,4.1), linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [D(i,p,m) for i in lvec],title = L"D(l)", ylims = (-3,60), linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [H(i,p,m) for i in lvec],title = L"H(l)", ylims = (-0.1,15), linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [ρ(i,p,m) for i in lvec],title = L"\rho(l)", ylims = (-0.1,10), linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [w(m.Lu,i,m.ϕ,p) for i in lvec],title = L"w(l)", ylims = (-0.1,5.5), linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [h(i,p,m) for i in lvec],title = L"h(l)", ylims = (-0.1,1.5), linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [q(i,p,m) for i in lvec],title = L"q(l)", ylims = (0.5,5.5), linewidth = 2, leg = false))
+	else
+		push!(plts, plot(lvec, [ϵ(i,m.ϕ,p) for i in lvec],title = L"\epsilon(l)",linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [D(i,p,m) for i in lvec],title = L"D(l)",linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [H(i,p,m) for i in lvec],title = L"H(l)",linewidth = 2, leg = false))
+		push!(plts, plot(lvec, [ρ(i,p,m) for i in lvec],title = L"\rho(l)",linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [w(m.Lu,i,m.ϕ,p) for i in lvec],title = L"w(l)",linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [h(i,p,m) for i in lvec],title = L"h(l)",linewidth = 2, leg = false))
+		# push!(plts, plot(lvec, [q(i,p,m) for i in lvec],title = L"q(l)", linewidth = 2, leg = false))
+
+	end
+
+	ti = plot(title = "X-Section", grid = false, showaxis = false, bottom_margin = -30Plots.px)
+	pl = plot(ti,plot(plts...,layout = (2,1), link = :x), layout = @layout([A{0.05h}; B]))
+	pl
+end
+
+function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing)
+
+	# sims = [[:Lr,:Lu], [:Sr, :ϕ, :Srh], [:qr, :r], [:wr , :wu0]]
+	sims = [[:Lr,:Lu], [:ϕ], [:qr, :r], [:wr , :wu0]]
+	titles = ["Labor"; "Land"; "Rents"; "Wages"]
+	# nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
+	nms = [[L"L_r" L"L_u"], L"\phi" , [L"q" L"r"], [L"w_r" L"w_u"]]
+
+	plt = Any[]
+	if isnothing(year)
+		for i in 1:length(sims)
+			x = @linq s |>
+				where((:variable .∈ Ref(sims[i])))
+			px = @df x plot(:year, :value, group = :variable,
+							title = titles[i],
+							titlefontsize=10,
+							label=nms[i],
+							legend = :bottomright,
+							linewidth=2,marker = (:circle,3))
+			push!(plt, px)
+		end
+		ti = plot(title = "Time Series", grid = false, showaxis = false, bottom_margin = -30Plots.px)
+		pl = plot(ti,plot(plt...,layout = (2,2), link = :x), layout = @layout([A{0.05h}; B]))
+		# return extrema of each subplot
+		xlims = [plt[i].subplots[1][:xaxis][:extrema] for i in 1:length(plt)]
+		ylims = [plt[i].subplots[1][:yaxis][:extrema] for i in 1:length(plt)]
+		xlims = [[xlims[i].emin,xlims[i].emax] for i in 1:length(plt)]
+		ylims = [[ylims[i].emin,ylims[i].emax] for i in 1:length(plt)]
+		xlims = [(xlims[i][1] .- 0.05*diff(xlims[i])[1],xlims[i][2] .+ 0.05*diff(xlims[i])[1]) for i in 1:length(plt)]
+		ylims = [(ylims[i][1] .- 0.05*diff(ylims[i])[1],ylims[i][2] .+ 0.05*diff(ylims[i])[1]) for i in 1:length(plt)]
+		return pl,xlims,ylims
+	else
+		@assert isa(xlim, AbstractArray) && isa(ylim, AbstractArray)
+		for i in 1:length(sims)
+			x = @linq s |>
+				where((:variable .∈ Ref(sims[i])) .& (:year .<= year))
+			px = @df x plot(:year, :value, group = :variable,
+							title = titles[i],
+							titlefontsize=10,
+							label=nms[i],
+							xlims = xlim[i],
+							ylims = ylim[i],
+							legend = :bottomright,
+							linewidth=2,marker = (:circle,3))
+			push!(plt, px)
+		end
+		ti = plot(title = "Time Series until $year", grid = false, showaxis = false, bottom_margin = -30Plots.px)
+		pl = plot(ti,plot(plt...,layout = (2,2), link = :x), layout = @layout([A{0.05h}; B]))
+
+		return pl
+	end
+
+end
+
+function doit()
+	p = Param()
+	x,M,p = run(p)
+	plot_ts_xsect(M,p,1)
+end
+
+function plot_ts_xsect(M::Vector{Region},p::Param,it::Int)
+	df = dataframe(M,p)
+	s = stack(df, Not([:year]))
+	# prepare a TS
+
+	ts0,xlims,ylims = TS_impl(s)
+
+	yr = p.T[it]
+
+	# make a TS up to period jt: keeping extrema fixed, however, so the plot "grows" nicely
+	ts = TS_impl(s, year = yr, xlim = xlims, ylim = ylims )
+
+	# make a x-section
+	xs = plot_rho_space(M[it],p,it, fixy = true)
+
+	# combine both
+	# o = plot(ts, xs, layout = (1,2), size = (1300,500))
+	o = plot(ts, xs, layout = @layout([A{0.75w} B]))
+	o
+
 end
 
 
@@ -168,6 +312,27 @@ function plot_ts_xsect(C::Vector{Country},pp::Vector{Param},ik::Int)
 	g = gif(anim, joinpath(dbpath,"TS-xsection-$ik.gif"),fps=0.5)
 	# gif(anim, joinpath(dbpath,"TS-xsection-$ik.gif"),fps=0.5, variable_palette = true)
 	return anim
+end
+
+
+function plot_ts_impl(mm::Vector{Country},pp::Vector{Param},ik::Int,it::Int)
+
+	df = dataframe(mm)
+	s = stack(df, Not([:year, :region]))
+	ts0,xlims,ylims = LandUse.single_TS(s,ik)  # to get extrema on each subplot right
+
+	single_TS(s,ik, year = it, xlim = xlims, ylim = ylims )
+
+end
+
+function plot_dyn(mm::Vector{Model},p::Param,it::Int)
+	plot(plot_dyn_impl(mm,p,it)..., layout = (2,3), link = :x)
+end
+
+function plot_dynxs(mm::Vector{Model},p::Param,it::Int)
+	dyns = plot_dyn_impl(mm,p,it)
+	xs = plot_xs_impl(mm[it],p)
+	plot([dyns;xs]..., size = (800,400), layout = @layout [grid(2,3){0.8w} grid(2,1){0.2w}])
 end
 
 

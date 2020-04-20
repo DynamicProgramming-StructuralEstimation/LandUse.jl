@@ -240,7 +240,7 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
 
 	cp = LandUse.CParam(par = cpar)
 	K = cp.K
-	pp = convert(cp,par = par)  # create Lk and Sk for each region. if par is not zero, then first level index is region.
+	pp = convert(cp,par = par)  # create Lk and Sk for each region. if par is not zero, then first level index (Int) is region.
 
 	# 1. run single region model for each region
 	Mk = [LandUse.run(pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
