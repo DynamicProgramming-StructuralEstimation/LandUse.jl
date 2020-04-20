@@ -6,9 +6,9 @@ function i1()
 
 	ti = 1:14
 	epsimax = 3:10.0
-	gfac = 1.03:0.05:1.5
+	gfac = 1.03:0.01:1.5
 
-	@manipulate for growthtype = Dict("orig" => 1, "linear" => 2),
+	@manipulate for growthtype = Dict("orig" => 1, "slope" => 2),
 		            time in ti,
 					growth in gfac,
 					epsim in slider(epsimax, value = 10.0, label = "ϵ-slope")
@@ -18,7 +18,24 @@ function i1()
 											 :θrg => [growth for i in 1:14],
 						                     :ϵsmax => epsim))
 					    x,M,p = LandUse.run(p0)
+						LandUse.setperiod!(p0,1)
+						θ1 = p0.θu
+						LandUse.setperiod!(p0,14)
+						θ14 = p0.θu
+						vbox(vskip(1em),
+						vskip(1em),
 						LandUse.plot_ts_xsect(M,p0,time)
+						)
+
+					# elseif growthtype == 3
+					# 	gg = (LandUse.originalθ[end] - LandUse.originalθ[1]) / 13
+					# 	g0 = LandUse.originalθ[1] .+ gg .* [i for i in 0:13]
+					# 	g = g0[2:end] ./ g0[1:end-1]
+					# 	p0 = LandUse.Param(par = Dict(:θug => [growth for i in 1:14],
+					# 						 :θrg => [growth for i in 1:14],
+					# 	                     :ϵsmax => epsim))
+					#     x,M,p = LandUse.run(p0)
+					# 	LandUse.plot_ts_xsect(M,p0,time)
 					else
 						p0 = LandUse.Param(par = Dict(:ϵsmax => epsim))
 						x,M,p = LandUse.run(p0)

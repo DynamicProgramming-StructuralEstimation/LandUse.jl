@@ -144,7 +144,7 @@ function plot_rho_space(m::Region,p::Param,it::Int; fixy = false)
 	pl
 end
 
-function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing)
+function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tstring = nothing)
 
 	# sims = [[:Lr,:Lu], [:Sr, :ϕ, :Srh], [:qr, :r], [:wr , :wu0]]
 	sims = [[:Lr,:Lu], [:ϕ], [:qr, :r], [:wr , :wu0]]
@@ -190,7 +190,12 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing)
 							linewidth=2,marker = (:circle,3))
 			push!(plt, px)
 		end
-		ti = plot(title = "Time Series until $year", grid = false, showaxis = false, bottom_margin = -30Plots.px)
+		if isnothing(tstring)
+			ti = "Time Series until $year"
+		else
+			ti = tstring
+		end
+		ti = plot(title = ti, grid = false, showaxis = false, bottom_margin = -30Plots.px)
 		pl = plot(ti,plot(plt...,layout = (2,2), link = :x), layout = @layout([A{0.05h}; B]))
 
 		return pl
@@ -213,8 +218,13 @@ function plot_ts_xsect(M::Vector{Region},p::Param,it::Int)
 
 	yr = p.T[it]
 
+	LandUse.setperiod!(p,1)
+	θ1 = p.θu
+	LandUse.setperiod!(p,14)
+	θ14 = p.θu
+
 	# make a TS up to period jt: keeping extrema fixed, however, so the plot "grows" nicely
-	ts = TS_impl(s, year = yr, xlim = xlims, ylim = ylims )
+	ts = TS_impl(s, year = yr, xlim = xlims, ylim = ylims , tstring = "first and last period prod: [$θ1,$(round(θ14,digits = 2))]")
 
 	# make a x-section
 	xs = plot_rho_space(M[it],p,it, fixy = true)
