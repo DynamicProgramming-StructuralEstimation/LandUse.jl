@@ -410,13 +410,11 @@ cost(l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? cfun(ϕ,p) : cfun(l,p)
 
 "housing supply elasticity at ``l``"
 ϵ(l::Float64,ϕ::Float64,p::Param) = p.ϵr * exp(-p.ϵs * max(ϕ-l,0.0))
-# ϵ(l::Float64,ϕ::Float64,p::Param) = exp(log(p.ϵr)-p.ϵs*log(max(1 + ϕ - l,0.0)))
 
 "house price function at ``l``. equation (12)"
 q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
 
 "land price function at ``l``. equation (15)"
-# ρ(l::Float64,p::Param,m::Model) = H(l,p,m) .* q(l,p,m) / (1.0 + p.ϵ)
 ρ(l::Float64,p::Param,m::Model) = (χ(l,m.ϕ,p) .* q(l,p,m).^(1.0 + ϵ(l,m.ϕ,p))) / (1.0 + ϵ(l,m.ϕ,p))
 
 # "rural house price from land price"
