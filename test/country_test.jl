@@ -92,7 +92,7 @@
 	end
 
 	@testset "2 different prod and area" begin
-		cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.7,0.3], :K => 2, :θprop => [1.0,0.99])
+		cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.7,0.3], :K => 2, :θg => [1.0,0.99])
 		sols,C,cpar,pp = LandUse.runk(cpar = cpar)
 		for it in 1:length(C[1].T)
 			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) ≈ cpar.L
@@ -107,7 +107,7 @@
 		end
 	end
 	@testset "3 different prod and area" begin
-		cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.2,0.2], :K => 3, :θprop => [1.0,0.997,0.995])
+		cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.2,0.2], :K => 3, :θg => [1.0,1.01,1.02])
 		sols,C,cpar,pp = LandUse.runk(cpar = cpar)
 		for it in 1:length(C[1].T)
 			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) + LandUse.pop(C[it].R[3]) ≈ cpar.L

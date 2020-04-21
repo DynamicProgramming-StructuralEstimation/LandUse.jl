@@ -165,7 +165,7 @@ end
 
 
 
-function issue11()
+function issue12()
     cpar = Dict(:S => 1.0, :L => 1.0,
                 :K => 4,
                 :θg => 0.32 .* [1.0,0.98,0.96,0.95],
