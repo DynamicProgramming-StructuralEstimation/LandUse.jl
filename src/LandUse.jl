@@ -14,6 +14,7 @@ module LandUse
 	using NLopt
 	using LineSearches
 	using Formatting
+	using Roots
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver

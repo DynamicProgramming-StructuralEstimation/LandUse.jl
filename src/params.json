@@ -154,5 +154,11 @@
 		"type" : "country",
 		"symbol" : "\\xi_k"
 	}
-
+	,
+	"ρrbar" : {
+		"value" : 0.059,
+		"description" : "fixed land value for urban model",
+		"type" : "region",
+		"symbol" : "\\bar{\\rho_r}"
+	}
 }

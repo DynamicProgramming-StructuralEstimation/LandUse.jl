@@ -29,6 +29,7 @@ mutable struct Param
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
 	S     :: Float64  # area of region
+	ρrbar :: Float64  # fixed rural land value for urban model
 
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
