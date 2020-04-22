@@ -150,7 +150,7 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 	sims = [[:Lr,:Lu], [:ϕ], [:qr, :r], [:wr , :wu0]]
 	titles = ["Labor"; "Land"; "Rents"; "Wages"]
 	# nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
-	nms = [[L"L_r" L"L_u"], L"\phi" , [L"q" L"r"], [L"w_r" L"w_u"]]
+	nms = [[L"L_r" L"L_u"], L"\phi" , [L"q_r" L"r"], [L"w_r" L"w_u = \theta_u"]]
 
 	plt = Any[]
 	if isnothing(year)
@@ -180,13 +180,14 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 		for i in 1:length(sims)
 			x = @linq s |>
 				where((:variable .∈ Ref(sims[i])) .& (:year .<= year))
+			legpos = (sims[i][1] == :Lr) ? :bottomright : :topleft
 			px = @df x plot(:year, :value, group = :variable,
 							title = titles[i],
 							titlefontsize=10,
 							label=nms[i],
 							xlims = xlim[i],
 							ylims = ylim[i],
-							legend = :bottomright,
+							legend = legpos,
 							linewidth=2,marker = (:circle,3))
 			push!(plt, px)
 		end

@@ -119,6 +119,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
 	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
+	# m.ρr   = 0.059
 	m.ϕ    = invτ(m.wr / p.θu,p)
 
 	m.xsr  = xsr(p,m)
@@ -170,6 +171,7 @@ compute system of equations for the general (with flexible ϵ).
 function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 	# land market clearing: after equation (20)
 	F[1] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
+	# F[1] = m.ρr - 0.059
 
 	# city size - Urban population relationship: equation (19)
 	F[2] = m.Lu - m.iDensity

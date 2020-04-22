@@ -31,6 +31,7 @@ function get_solutions(x0::Vector{Float64},p::Param)
 		if converged(r1)
 			push!(sols, r1.zero)
 			update!(m0,p,r1.zero)
+			# println("rmk = $(abs(Rmk(m0,p)))")
 			@assert abs(Rmk(m0,p)) < 1e-7   # walras' law
 			push!(m,m0)
 		else
