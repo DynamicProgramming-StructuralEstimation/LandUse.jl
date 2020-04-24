@@ -185,6 +185,20 @@ function issue15()
     sols,C,cpar,pp = LandUse.runk(cpar = cpar)
 end
 
+function fixed_ρ()
+    p0=LandUse.Param(par = Dict(:ϵsmax =>0.0))
+    LandUse.fixed_rho(p0, fi = "fixed-rho")
+    p0=LandUse.Param(par = Dict(:θug => [1.2 for i in 1:14],
+                  :θrg => [1.2 for i in 1:14],
+                   :ϵsmax =>0.0))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-constg")
+    p0=LandUse.Param(par = Dict(:θug => [1.2 for i in 1:14],
+                  :θrg => [1.15 for i in 1:14],
+                   :ϵsmax =>0.0))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-highu-g")
+
+end
+
 function fixed_rho(p::Param; fi = nothing)
     pyplot()
 
