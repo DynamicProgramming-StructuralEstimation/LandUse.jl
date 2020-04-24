@@ -147,10 +147,12 @@ end
 function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tstring = nothing)
 
 	# sims = [[:Lr,:Lu], [:Sr, :ϕ, :Srh], [:qr, :r], [:wr , :wu0]]
-	sims = [[:Lr,:Lu], [:ϕ], [:qr, :r], [:wr , :wu0]]
-	titles = ["Labor"; "Land"; "Rents"; "Wages"]
+	# sims = [[:Lr,:Lu], [:ϕ], [:r], [:wr , :wu0]]
+	sims = [[:Lr,:Lu], [:ϕ], [:r], [:q0, :ρ0] , [:qr, :ρr], [:wr , :wu0]]
+	titles = ["Labor"; "Land"; "Rents"; "Land prices"; "House prices"; "wages"]
 	# nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
-	nms = [[L"L_r" L"L_u"], L"\phi" , [L"q_r" L"r"], [L"w_r" L"w_u = \theta_u"]]
+	nms = [[L"L_r" L"L_u"], L"\phi" , L"r", [L"q_0" L"\rho_0"], [L"q_r" L"\rho_r"], [L"w_r" L"w_u = \theta_u"]]
+	# nms = [[L"L_r" L"L_u"], L"\phi" , L"r", [L"q_0" L"q_r"]]
 
 	plt = Any[]
 	if isnothing(year)
@@ -165,8 +167,9 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 							linewidth=2,marker = (:circle,3))
 			push!(plt, px)
 		end
-		ti = plot(title = "Time Series", grid = false, showaxis = false, bottom_margin = -30Plots.px)
-		pl = plot(ti,plot(plt...,layout = (2,2), link = :x), layout = @layout([A{0.05h}; B]))
+		# ti = plot(title = "Time Series", grid = false, showaxis = false, bottom_margin = -30Plots.px)
+		# pl = plot(ti,plot(plt...,layout = (2,3), link = :x), layout = @layout([A{0.05h}; B]))
+		pl = plot(plt...,layout = (2,3), link = :x)
 		# return extrema of each subplot
 		xlims = [plt[i].subplots[1][:xaxis][:extrema] for i in 1:length(plt)]
 		ylims = [plt[i].subplots[1][:yaxis][:extrema] for i in 1:length(plt)]
@@ -196,8 +199,9 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 		else
 			ti = tstring
 		end
-		ti = plot(title = ti, grid = false, showaxis = false, bottom_margin = -30Plots.px)
-		pl = plot(ti,plot(plt...,layout = (2,2), link = :x), layout = @layout([A{0.05h}; B]))
+		# ti = plot(title = ti, grid = false, showaxis = false, bottom_margin = -30Plots.px)
+		# pl = plot(ti,plot(plt...,layout = (2,3), link = :x), layout = @layout([A{0.05h}; B]))
+		pl = plot(plt...,layout = (2,3), link = :x)
 
 		return pl
 	end
@@ -208,6 +212,39 @@ function doit()
 	p = Param()
 	x,M,p = run(p)
 	plot_ts_xsect(M,p,1)
+end
+
+function plot_ts(M::Vector{Region},p::Param,it::Int)
+	df = dataframe(M,p)
+	s = stack(df, Not([:year]))
+	# prepare a TS
+
+	ts0,xlims,ylims = TS_impl(s)
+
+	yr = p.T[it]
+
+	LandUse.setperiod!(p,1)
+	θ1 = p.θu
+	LandUse.setperiod!(p,14)
+	θ14 = p.θu
+
+	# make a TS up to period jt: keeping extrema fixed, however, so the plot "grows" nicely
+	pl = TS_impl(s, year = yr, xlim = xlims, ylim = ylims , tstring = "first and last period prod: [$θ1,$(round(θ14,digits = 2))]")
+	plot(pl)
+end
+
+function plot_ts(M::Vector{Region},p::Param)
+	df = dataframe(M,p)
+	s = stack(df, Not([:year]))
+	# prepare a TS
+	LandUse.setperiod!(p,1)
+	θ1 = p.θu
+	LandUse.setperiod!(p,14)
+	θ14 = p.θu
+
+	# make a TS up to period jt: keeping extrema fixed, however, so the plot "grows" nicely
+	ts0,xlims,ylims = TS_impl(s,tstring = "first and last period prod: [$θ1,$(round(θ14,digits = 2))]")
+	ts0
 end
 
 function plot_ts_xsect(M::Vector{Region},p::Param,it::Int)
@@ -243,9 +280,11 @@ end
 
 
 function single_TS(s::DataFrame, ik::Int ; year = nothing, xlim = nothing,ylim = nothing)
-	sims = [[:Lr,:Lu], [:Sr, :ϕ, :Srh], [:qr, :r], [:wr , :wu0]]
+	# sims = [[:Lr,:Lu], [:Sr, :ϕ, :Srh], [:qr, :r], [:wr , :wu0]]
+	sims = [[:Lr,:Lu], [:Sr, :ϕ, :Srh], [:r], [:wr , :wu0]]
 	titles = ["Labor"; "Land"; "Rents"; "Wages"]
-	nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
+	# nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
+	nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"r"], [L"w_r" L"w_u"]]
 
 	plt = Any[]
 	if isnothing(year)
@@ -372,7 +411,7 @@ end
 
 
 # nicolas question about rho vs y
-function plot_ts(M::Vector{Region},p::Param)
+function plot_ts0(M::Vector{Region},p::Param)
 	df = dataframe(M,p)
 	# vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
 	# @df df plot(:year, cols(2:size(df,2)))

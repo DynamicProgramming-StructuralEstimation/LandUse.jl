@@ -31,7 +31,7 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 		if converged(r1)
 			push!(sols, r1.zero)
 			update!(m0,p,r1.zero)
-			println("rmk = $(abs(Rmk(m0,p)))")
+			# println("rmk = $(abs(Rmk(m0,p)))")
 			# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
 			push!(m,m0)
 		else
@@ -50,20 +50,20 @@ function run(T::Type,p::Param)
 	# x0 = get_starts(par=par)
 	x0 = get_starts(p)   # a T-array of starting vectors
 
-	if T == Urban
-		x0[1] = x0[1][1:3]
-	end
+	# if T == Urban
+	# 	x0[1] = x0[1][1:3]
+	# end
 
 	# (x1,p) = adapt_ϵ(x0[1],par=par)
-	println("x0 = $(x0[1])")
+	# println("x0 = $(x0[1])")
 
 	setperiod!(p,1)  # go back to period 1
 	(x1,p) = adapt_ϵ(T(p),p,x0[1])  # adaptive search for higher epsilon in first period only
 
-	if T == Urban
-		x1[end] = x1[end][1:3]
-	end
-	println("x1 = $(x1[end])")
+	# if T == Urban
+	# 	x1[end] = x1[end][1:3]
+	# end
+	# println("x1 = $(x1[end])")
 
 	x,M = get_solutions(T,x1[end],p)  # get general model solutions
 

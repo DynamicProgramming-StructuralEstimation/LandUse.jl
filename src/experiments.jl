@@ -185,7 +185,49 @@ function issue15()
     sols,C,cpar,pp = LandUse.runk(cpar = cpar)
 end
 
-function issue13()
+function fixed_rho(p::Param; fi = nothing)
+    pyplot()
 
+    x,Mr,p = run(Region,p)
+    p.ρrbar = Mr[1].ρr
+    x,Mu,p = run(Urban,p)
 
+    dr = dataframe(Mr,p)
+    du = dataframe(Mu,p)
+    dr.model = ["baseline" for i in 1:nrow(dr)]
+    du.model = ["urban" for i in 1:nrow(du)]
+
+    # nms = [:year,:model,:area,:Lu,:ϕ, :ρr]
+    # nms = [:year,:model,:area, :ρ0 ,:ϕ, :ρr]
+    sims = [:Lu, :ϕ, :r, :q0, :ρ0 ,:qr, :ρr, :wr , :wu0]
+    tis = [L"L_u", L"\phi", "r", L"q_0", L"\rho_0" ,L"q_r", L"\rho_r", :wr , :wu0]
+    nms = [:year , :model , sims...]
+
+    drs = stack(select(dr, nms, Not([:year,:model])))
+    dus = stack(select(du, nms, Not([:year,:model])))
+    dd = [drs; dus]
+
+    pnms = sims
+    plt = Any[]
+    # tis = [:area :Lu :phi :rho_r]
+    # tis = [:area :ρ0 :phi :rho_r]
+    for i in 1:length(pnms)
+        x = @linq dd |>
+            where(:variable .== pnms[i])
+        px = @df x plot(:year, :value, group = :model,
+                        title = tis[i],
+                        titlefontsize=12,
+                        label = i == 1 ? ["baseline" "urban"] : "",
+                        # legend = :topleft,
+                        linewidth=2,marker = (:circle,4))
+        push!(plt, px)
+    end
+    pl = plot(plt...)
+    if isnothing(fi)
+        fin = "fixed-rho.pdf"
+    else
+        fin = "$fi.pdf"
+    end
+    savefig(pl,joinpath(dbplots,fin))
+    pl
 end

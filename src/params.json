@@ -156,7 +156,7 @@
 	}
 	,
 	"ρrbar" : {
-		"value" : 0.059,
+		"value" : 0.035,
 		"description" : "fixed land value for urban model",
 		"type" : "region",
 		"symbol" : "\\bar{\\rho_r}"
