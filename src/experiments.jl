@@ -167,11 +167,25 @@ end
 
 function issue12()
     cpar = Dict(:S => 1.0, :L => 1.0,
-                :K => 4,
-                :θg => 0.32 .* [1.0,0.98,0.96,0.95],
-                :kshare => [0.25 for i in 1:4])
-    sols,C,cpar,pp = LandUse.runk(cpar = cpar)
+                :K => 3,
+                :θg => [1.0,1.01,1.02],
+                :kshare => [1/3 for i in 1:3])
+    ppar = Dict(i => Dict(:ϵsmax => 0.0) for i in 1:3)
+    sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
+    pl = LandUse.plot_ts_all(C)
+    savefig(pl,joinpath(dbplots,"multi-3-TS.pdf"))
 
+    d = dataframe(C)
+    d.lϕ = log.(d.ϕ)
+    d.lu = log.(d.Lu)
+    dd = select(d, :year, :region, :lϕ, :lu)
+    pl2 = @df dd plot(:lϕ,:lu,group = :region,
+                    xlab = L"\log \phi",
+                    ylab = L"\log L_u",
+                    marker = (:circle, 4),
+                    legend = :topleft)
+    savefig(pl2,joinpath(dbplots,"multi-3-phi-Lu.pdf"))
+    sols,C,cpar,pp,pl,pl2
 end
 
 """
@@ -196,6 +210,25 @@ function fixed_ρ()
                   :θrg => [1.15 for i in 1:14],
                    :ϵsmax =>0.0))
     LandUse.fixed_rho(p0, fi = "fixed-rho-highu-g")
+    p0=LandUse.Param(par = Dict(:θug => [1.15 for i in 1:14],
+                  :θrg => [1.2 for i in 1:14],
+                   :ϵsmax =>0.0))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-highr-g")
+
+    p0=LandUse.Param(par = Dict(:ϵsmax =>0.0,:σ => 0.4))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-lowsig")
+    p0=LandUse.Param(par = Dict(:θug => [1.2 for i in 1:14],
+                  :θrg => [1.2 for i in 1:14],
+                   :ϵsmax =>0.0,:σ => 0.4))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-constg-lowsig")
+    p0=LandUse.Param(par = Dict(:θug => [1.2 for i in 1:14],
+                  :θrg => [1.15 for i in 1:14],
+                   :ϵsmax =>0.0,:σ => 0.4))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-highu-g-lowsig")
+    p0=LandUse.Param(par = Dict(:θug => [1.15 for i in 1:14],
+                  :θrg => [1.2 for i in 1:14],
+                   :ϵsmax =>0.0,:σ => 0.4))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-highr-g-lowsig")
 
 end
 
@@ -214,7 +247,8 @@ function fixed_rho(p::Param; fi = nothing)
     # nms = [:year,:model,:area,:Lu,:ϕ, :ρr]
     # nms = [:year,:model,:area, :ρ0 ,:ϕ, :ρr]
     sims = [:Lu, :ϕ, :r, :q0, :ρ0 ,:qr, :ρr, :wr , :wu0]
-    tis = [L"L_u", L"\phi", "r", L"q_0", L"\rho_0" ,L"q_r", L"\rho_r", :wr , :wu0]
+    lat1 = latexstring("\$L_u\$; \$\\sigma\$=$(p.σ)")
+    tis = [lat1, L"\phi", "r", L"q_0", L"\rho_0" ,L"q_r", L"\rho_r", "wr, gr=$(p.θrg[1])" ,"wu0, gu=$(p.θug[1])"]
     nms = [:year , :model , sims...]
 
     drs = stack(select(dr, nms, Not([:year,:model])))

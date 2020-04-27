@@ -9,7 +9,7 @@
 	@test length(C.R) == cp.K
 	@test isa(C.R[1], LandUse.Region)
 
-	x,M,p = LandUse.run(p)  # get single region solutions
+	x,M,p = LandUse.run(LandUse.Region,p)  # get single region solutions
 
 	@testset "test vs single region" begin
 

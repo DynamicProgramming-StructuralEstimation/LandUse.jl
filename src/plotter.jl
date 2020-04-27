@@ -38,8 +38,8 @@ function plot_ts_all(C::Vector{Country})
 	# @df df plot(:year, cols(2:size(df,2)))
 	s = stack(df, Not([:year, :region]))
 	# sims = [(:Lr,:Lu); (:Sr, :ϕ, :Srh); (:qr, :r); (:wr , :wu0)]
-	sims = [[:Lu], [:ϕ], [:r], [:Srh]]
-	titles = ["Urban Labor"; "Urban Size"; "Land Rents"; "Rural Housing (Srh)"]
+	sims = [[:Lu], [:ϕ], [:ρ0], [:Srh]]
+	titles = ["Urban Labor"; "Urban Size"; "Central Land values"; "Rural Housing (Srh)"]
 	nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
 
 	plts = Any[]
@@ -51,7 +51,8 @@ function plot_ts_all(C::Vector{Country})
 							titlefontsize=10,
 							# label=nms[i],
 							legend = :topleft,
-							linewidth=2,marker = (:circle,3))
+							linewidth=2,marker = (:circle,3),
+							legendfontsize = 5)
 			push!(plts, px)
 
 	end

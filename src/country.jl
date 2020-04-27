@@ -123,6 +123,8 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].xsr  = xsr(p[ik],c.R[ik])
 		c.R[ik].Srh  = Srh(p[ik],c.R[ik])
 		c.R[ik].qr   = qr(p[ik],c.R[ik])
+		c.R[ik].q0   = q(0.0,p[ik],c.R[ik])
+		c.R[ik].ρ0   = ρ(0.0,p[ik],c.R[ik])
 		cr01 = (cr(0.0,p[ik],c.R[ik])-p[ik].cbar, cr(1.0,p[ik],c.R[ik])-p[ik].cbar)
 		cu01 = (cu(0.0,p[ik],c.R[ik])       , cu(1.0,p[ik],c.R[ik])       )
 		c.R[ik].U    = all( (cr01 .>= 0.0) .* (cu01 .>= 0.0) ) ? utility(0.0,p[ik],c.R[ik]) : NaN
@@ -243,7 +245,7 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
 	pp = convert(cp,par = par)  # create Lk and Sk for each region. if par is not zero, then first level index (Int) is region.
 
 	# 1. run single region model for each region
-	Mk = [LandUse.run(pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
+	Mk = [LandUse.run(LandUse.Region,pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
 
 	# reset time t first period
 	it = 1
@@ -356,7 +358,7 @@ function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; 
 							show_trace=false,
 							extended_trace=true,
 							factor = nlsolve_fac,
-							autoscale = true)
+							autoscale = true,ftol = 0.000004)
 							# method = :newton,
 							# linesearch = LineSearches.BackTracking(order=3))
 	if converged(r)
