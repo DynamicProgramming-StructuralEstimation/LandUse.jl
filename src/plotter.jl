@@ -38,9 +38,9 @@ function plot_ts_all(C::Vector{Country})
 	# @df df plot(:year, cols(2:size(df,2)))
 	s = stack(df, Not([:year, :region]))
 	# sims = [(:Lr,:Lu); (:Sr, :ϕ, :Srh); (:qr, :r); (:wr , :wu0)]
-	sims = [[:Lu], [:ϕ], [:ρ0], [:Srh]]
-	titles = ["Urban Labor"; "Urban Size"; "Central Land values"; "Rural Housing (Srh)"]
-	nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
+	# sims = [[:Lu], [:ϕ], [:pop], [:ρ0], [:q0], [:Srh]]
+	sims = [:Lu, :ϕ, :pop, :ρ0, :q0, :Srh]
+	titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Central Land values"; "Central House prices"; "Rural Housing (Srh)"]
 
 	plts = Any[]
 	for i in 1:length(sims)
@@ -49,14 +49,13 @@ function plot_ts_all(C::Vector{Country})
 			px = @df x plot(:year, :value, group = :region,
 							title = titles[i],
 							titlefontsize=10,
-							# label=nms[i],
 							legend = :topleft,
 							linewidth=2,marker = (:circle,3),
 							legendfontsize = 5)
 			push!(plts, px)
 
 	end
-	plot(plts...,layout = (2,2))
+	plot(plts...,layout = (2,3))
 
 
 end
@@ -216,7 +215,7 @@ function doit()
 end
 
 function plot_ts(M::Vector{Region},p::Param,it::Int)
-	df = dataframe(M,p)
+	df = dataframe(M,p.T)
 	s = stack(df, Not([:year]))
 	# prepare a TS
 
@@ -235,7 +234,7 @@ function plot_ts(M::Vector{Region},p::Param,it::Int)
 end
 
 function plot_ts(M::Vector{Region},p::Param)
-	df = dataframe(M,p)
+	df = dataframe(M,p.T)
 	s = stack(df, Not([:year]))
 	# prepare a TS
 	LandUse.setperiod!(p,1)
@@ -249,7 +248,7 @@ function plot_ts(M::Vector{Region},p::Param)
 end
 
 function plot_ts_xsect(M::Vector{Region},p::Param,it::Int)
-	df = dataframe(M,p)
+	df = dataframe(M,p.T)
 	s = stack(df, Not([:year]))
 	# prepare a TS
 
@@ -413,7 +412,7 @@ end
 
 # nicolas question about rho vs y
 function plot_ts0(M::Vector{Region},p::Param)
-	df = dataframe(M,p)
+	df = dataframe(M,p.T)
 	# vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
 	# @df df plot(:year, cols(2:size(df,2)))
 	s = stack(df, Not(:year))

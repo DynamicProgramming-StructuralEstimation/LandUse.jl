@@ -37,20 +37,27 @@ Rmk(C::Country,p::Vector{Param}) = sum(C.R[ik].icr + C.R[ik].Lr * cr(C.R[ik].ϕ,
 "Obtain a Time Series from an array of Country as a DataFrame"
 function dataframe(C::Vector{Country})
 	K = length(C[1].R)
-	cols = setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
+	# cols = setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
 	# region 1
+	tt = C[1].T
 	ir = 1
-	df = DataFrame(year = C[1].T, region = ir)
-	for fi in cols
-		df[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
-	end
+	df = dataframe([C[it].R[1] for it in 1:length(tt)],tt)
+	# df = DataFrame(year = C[1].T, region = ir)
+	df.region = [ir for i in 1:length(tt)]
+	# for fi in cols
+	# 	df[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
+	# end
 	# other regions
 	if K > 1
 		for ir in 2:K
-			df2 = DataFrame(year = C[1].T, region = ir)
-			for fi in cols
-				df2[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
-			end
+			df2 = dataframe([C[it].R[ir] for it in 1:length(tt)],tt)
+			df2.region = [ir for i in 1:length(tt)]
+
+
+			# df2 = DataFrame(year = C[1].T, region = ir)
+			# for fi in cols
+			# 	df2[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
+			# end
 			append!(df,df2)
 		end
 	end

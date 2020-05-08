@@ -658,13 +658,13 @@ Rmk(m::Model,p::Param) = m.icr + m.Lr * cr(m.ϕ,p,m) - Yr(m,p)
 
 
 "Obtain a Time Series for a single region as a DataFrame"
-function dataframe(M::Vector{T},p::Param) where T <: Model
-	df = DataFrame(year = p.T)
+function dataframe(M::Vector{T},tt::StepRange) where T <: Model
+	df = DataFrame(year = tt)
 	for fi in setdiff(fieldnames(eltype(M)),(:cr01,:cu01,:inodes,:iweights,:nodes))
-		df[!,fi] = [getfield(M[it],fi) for it in 1:length(p.T)]
+		df[!,fi] = [getfield(M[it],fi) for it in 1:length(tt)]
 	end
-	df.area = [area(M[it]) for it in 1:length(p.T)]
-	df.pop  = [pop(M[it]) for it in 1:length(p.T)]
+	df.area = [area(M[it]) for it in 1:length(tt)]
+	df.pop  = [pop(M[it]) for it in 1:length(tt)]
 
 	df
 end

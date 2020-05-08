@@ -168,9 +168,9 @@ end
 function issue12()
     cpar = Dict(:S => 1.0, :L => 1.0,
                 :K => 3,
-                :θg => [1.0,1.01,1.02],
                 :kshare => [1/3 for i in 1:3])
-    ppar = Dict(i => Dict(:ϵsmax => 0.0) for i in 1:3)
+    gf = [1.0,1.01,1.02]
+    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θut => [gf[i] for ti in 1:14]) for i in 1:3)
     sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
     pl = LandUse.plot_ts_all(C)
     savefig(pl,joinpath(dbplots,"multi-3-TS.pdf"))
@@ -179,11 +179,11 @@ function issue12()
     d.lϕ = log.(d.ϕ)
     d.lu = log.(d.Lu)
     dd = select(d, :year, :region, :lϕ, :lu)
-    pl2 = @df dd plot(:lϕ,:lu,group = :region,
+    pl2 = @df dd plot(:lϕ,:lu,group = :year,
                     xlab = L"\log \phi",
                     ylab = L"\log L_u",
                     marker = (:circle, 4),
-                    legend = :topleft)
+                    legend = :bottomright)
     savefig(pl2,joinpath(dbplots,"multi-3-phi-Lu.pdf"))
     sols,C,cpar,pp,pl,pl2
 end

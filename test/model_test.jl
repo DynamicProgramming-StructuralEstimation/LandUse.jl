@@ -193,7 +193,7 @@
 
 		x,M,p = LandUse.run(LandUse.Region,p)
 
-		tol =  p.S == 1 ? 1e-3 : 1e-1
+		tol =  p.S == 1 ? 0.02 : 0.02
 		# rutol = 1.0e-2
 		# @warn("utility at precision $tol, rural cons $rutol")
 		# for it in 1:length(p.T)
