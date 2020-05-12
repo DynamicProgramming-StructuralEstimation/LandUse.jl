@@ -37,20 +37,27 @@ Rmk(C::Country,p::Vector{Param}) = sum(C.R[ik].icr + C.R[ik].Lr * cr(C.R[ik].ϕ,
 "Obtain a Time Series from an array of Country as a DataFrame"
 function dataframe(C::Vector{Country})
 	K = length(C[1].R)
-	cols = setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
+	# cols = setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
 	# region 1
+	tt = C[1].T
 	ir = 1
-	df = DataFrame(year = C[1].T, region = ir)
-	for fi in cols
-		df[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
-	end
+	df = dataframe([C[it].R[1] for it in 1:length(tt)],tt)
+	# df = DataFrame(year = C[1].T, region = ir)
+	df.region = [ir for i in 1:length(tt)]
+	# for fi in cols
+	# 	df[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
+	# end
 	# other regions
 	if K > 1
 		for ir in 2:K
-			df2 = DataFrame(year = C[1].T, region = ir)
-			for fi in cols
-				df2[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
-			end
+			df2 = dataframe([C[it].R[ir] for it in 1:length(tt)],tt)
+			df2.region = [ir for i in 1:length(tt)]
+
+
+			# df2 = DataFrame(year = C[1].T, region = ir)
+			# for fi in cols
+			# 	df2[!,fi] = [getfield(C[it].R[ir],fi) for it in 1:length(C[1].T)]
+			# end
 			append!(df,df2)
 		end
 	end
@@ -123,6 +130,10 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].xsr  = xsr(p[ik],c.R[ik])
 		c.R[ik].Srh  = Srh(p[ik],c.R[ik])
 		c.R[ik].qr   = qr(p[ik],c.R[ik])
+		c.R[ik].q0   = q(0.0,p[ik],c.R[ik])
+		c.R[ik].ρ0   = ρ(0.0,p[ik],c.R[ik])
+		c.R[ik].Hr   = H(c.R[ik].ϕ,p[ik],c.R[ik])
+		c.R[ik].hr   = h(c.R[ik].ϕ,p[ik],c.R[ik])
 		cr01 = (cr(0.0,p[ik],c.R[ik])-p[ik].cbar, cr(1.0,p[ik],c.R[ik])-p[ik].cbar)
 		cu01 = (cu(0.0,p[ik],c.R[ik])       , cu(1.0,p[ik],c.R[ik])       )
 		c.R[ik].U    = all( (cr01 .>= 0.0) .* (cu01 .>= 0.0) ) ? utility(0.0,p[ik],c.R[ik]) : NaN
@@ -243,7 +254,7 @@ function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
 	pp = convert(cp,par = par)  # create Lk and Sk for each region. if par is not zero, then first level index (Int) is region.
 
 	# 1. run single region model for each region
-	Mk = [LandUse.run(pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
+	Mk = [LandUse.run(LandUse.Region,pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
 
 	# reset time t first period
 	it = 1
@@ -356,7 +367,7 @@ function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; 
 							show_trace=false,
 							extended_trace=true,
 							factor = nlsolve_fac,
-							autoscale = true)
+							autoscale = true,ftol = 0.000004)
 							# method = :newton,
 							# linesearch = LineSearches.BackTracking(order=3))
 	if converged(r)

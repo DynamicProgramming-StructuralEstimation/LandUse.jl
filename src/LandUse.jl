@@ -6,7 +6,7 @@ module LandUse
 	using FastGaussQuadrature
 	using Plots
 	using LaTeXStrings
-	# using Interact
+	using Interact
 	using DataFrames
 	using StatsPlots
 	using DataFramesMeta
@@ -14,6 +14,9 @@ module LandUse
 	using NLopt
 	using LineSearches
 	using Formatting
+	using Roots
+	using ColorSchemes
+
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
@@ -37,7 +40,7 @@ module LandUse
 	include("running.jl")
 	include("plotter.jl")
 	include("experiments.jl")
-	# include("interact.jl")
+	include("interact.jl")
 
 
 

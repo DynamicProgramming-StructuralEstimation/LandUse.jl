@@ -112,6 +112,8 @@
 		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r - m.pr * p.cbar))
 
 		@test LandUse.Yu(m,p) == p.θu * m.Lu
+		@test LandUse.D(l,p,m) ≈ LandUse.D2(l,p,m)
+
 	end
 
 	@testset "test flat elasticity ϵs = 0" begin
@@ -189,9 +191,9 @@
 	@testset "test full solution" begin
 		p = LandUse.Param()   # flat epsilon slope, so closed form solutions apply
 
-		x,M,p = LandUse.run(p)
+		x,M,p = LandUse.run(LandUse.Region,p)
 
-		tol =  p.S == 1 ? 1e-3 : 1e-1
+		tol =  p.S == 1 ? 0.02 : 0.02
 		# rutol = 1.0e-2
 		# @warn("utility at precision $tol, rural cons $rutol")
 		# for it in 1:length(p.T)

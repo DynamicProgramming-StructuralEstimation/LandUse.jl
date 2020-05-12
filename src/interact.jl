@@ -1,31 +1,91 @@
 
 
-using Interact
+
+function i0()
+	epsimax = 0.0:10.0
+	gfac = 1.00:0.05:2.0
+	sigmas = 0.1:0.1:0.99
+
+	@manipulate for growthtype = Dict("orig" => 1,"u-r const" => 4),
+					ugrowth in slider(gfac,value = 1.01, label = "u-growthrate"),
+					rgrowth in slider(gfac,value = 1.01, label = "r-growthrate"),
+					epsim in slider(epsimax, value = 1.0, label = "ϵr"),
+					sigma in slider(sigmas, value = 0.9, label = "sigma")
+
+					if growthtype == 1
+						p0 = LandUse.Param(par = Dict(:ϵr => epsim,:ϵsmax => 0.0,:σ => sigma ))
+						x,M,p = LandUse.run(LandUse.Region,p0)
+						LandUse.plot_ts(M,p0)
+
+					elseif growthtype == 2
+						println("does not work")
+						# p0 = LandUse.Param(par = Dict(:θug => [ugrowth for i in 1:14],
+						# 					 :ϵsmax => epsim,
+						# 					 :σ => sigma ))
+						# x,M,p = LandUse.run(LandUse.Region,p0)
+						# LandUse.plot_ts(M,p0)
+					#
+					elseif growthtype == 3
+						println("does not work")
+					# 		p0 = LandUse.Param(par = Dict(:θrg => [rgrowth for i in 1:14],
+					# 							 :ϵsmax => epsim,
+					# 							 :σ => sigma ))
+					# 		x,M,p = LandUse.run(LandUse.Region,p0)
+					# 		LandUse.plot_ts(M,p0,time)
+					#
+					elseif growthtype == 4
+						p0 = LandUse.Param(par = Dict(:θut => [ugrowth for i in 1:14],
+											 :θrt => [rgrowth for i in 1:14],
+						                     :ϵr => epsim,:ϵsmax => 0.0,
+											 :σ => sigma ))
+					    x,M,p = LandUse.run(LandUse.Region,p0)
+						LandUse.plot_ts(M,p0)
+					end
+	end
+end
+
 
 function i1()
 
 	ti = 1:14
-	epsimax = 3:10.0
-	gfac = 1.03:0.01:1.5
+	epsimax = 0.0:10.0
+	gfac = 1.00:0.05:1.25
+	sigmas = 0.1:0.1:0.99
 
-	@manipulate for growthtype = Dict("orig" => 1, "slope" => 2),
-		            time in ti,
-					growth in gfac,
-					epsim in slider(epsimax, value = 10.0, label = "ϵ-slope")
+	@manipulate for growthtype = Dict("orig" => 1, "orig-u" => 2, "orig-r" => 3, "u-r const" => 4),
+		            time in slider(ti, value = 14, label = "time"),
+					ugrowth in slider(gfac,value = 1.24, label = "u-growthrate"),
+					rgrowth in slider(gfac,value = 1.24, label = "r-growthrate"),
+					epsim in slider(epsimax, value = 0.0, label = "ϵ-slope"),
+					sigma in slider(sigmas, value = 0.9, label = "sigma")
 
-					if growthtype == 2
-						p0 = LandUse.Param(par = Dict(:θug => [growth for i in 1:14],
-											 :θrg => [growth for i in 1:14],
-						                     :ϵsmax => epsim))
-					    x,M,p = LandUse.run(p0)
-						LandUse.setperiod!(p0,1)
-						θ1 = p0.θu
-						LandUse.setperiod!(p0,14)
-						θ14 = p0.θu
-						vbox(vskip(1em),
-						vskip(1em),
-						LandUse.plot_ts_xsect(M,p0,time)
-						)
+					if growthtype == 1
+						p0 = LandUse.Param(par = Dict(:ϵsmax => epsim,:σ => sigma ))
+						x,M,p = LandUse.run(LandUse.Region,p0)
+						LandUse.plot_ts(M,p0,time)
+
+					elseif growthtype == 2
+						p0 = LandUse.Param(par = Dict(:θut => [ugrowth for i in 1:14],
+											 :ϵsmax => epsim,
+											 :σ => sigma ))
+						x,M,p = LandUse.run(LandUse.Region,p0)
+						LandUse.plot_ts(M,p0,time)
+					#
+					# elseif growthtype == 3
+					# 		p0 = LandUse.Param(par = Dict(:θrg => [rgrowth for i in 1:14],
+					# 							 :ϵsmax => epsim,
+					# 							 :σ => sigma ))
+					# 		x,M,p = LandUse.run(LandUse.Region,p0)
+					# 		LandUse.plot_ts(M,p0,time)
+					#
+					# elseif growthtype == 4
+					# 	p0 = LandUse.Param(par = Dict(:θug => [ugrowth for i in 1:14],
+					# 						 :θrg => [rgrowth for i in 1:14],
+					# 	                     :ϵsmax => epsim,
+					# 						 :σ => sigma ))
+					#     x,M,p = LandUse.run(LandUse.Region,p0)
+					# 	LandUse.plot_ts(M,p0,time)
+
 
 					# elseif growthtype == 3
 					# 	gg = (LandUse.originalθ[end] - LandUse.originalθ[1]) / 13
@@ -36,35 +96,33 @@ function i1()
 					# 	                     :ϵsmax => epsim))
 					#     x,M,p = LandUse.run(p0)
 					# 	LandUse.plot_ts_xsect(M,p0,time)
-					else
-						p0 = LandUse.Param(par = Dict(:ϵsmax => epsim))
-						x,M,p = LandUse.run(p0)
-						LandUse.plot_ts_xsect(M,p0,time)
-					end
 
+					end
 	end
+end
+
+function interact1()
+	K = 2
+	es = 1.0:0.5:10.0
+	g2 = 1.0:0.01:1.06
+
+    # mp = @manipulate for θr in slider(θrs, label = "θr"), θu in slider(θus, label = "θu")
+    mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
+		                 g in slider(g2, label = "growth2", value = 1.01)
+		x = LandUse.issue12_1(e; gf = [1.0,g])
+		x[5]
+    end
 end
 
 function interact2()
 	K = 2
-	gs = 1.0:0.01:1.5
-	ks = 0.0:0.1:1.0
+	es = 1.0:0.5:10.0
+	g2 = 1.0:0.01:1.06
 
     # mp = @manipulate for θr in slider(θrs, label = "θr"), θu in slider(θus, label = "θu")
-    mp = @manipulate for g in slider(gs, label = "growth2", value =1.0 ),
-		                 k in slider(ks, label = "k-share2", value = 0.5)
-		cpar = Dict(:S => 1.0, :L => 1.0,
-					:K => 2,
-					:θg => [1.0,g],
-					:kshare => [(1-k), k])
-		sols,C,cpar,pp = LandUse.runk(cpar = cpar)
-		try
-			LandUse.plot_ts_all(C)
-		catch
-			println("infeasible")
-		end
-		# catch
-		# 	println("infeasible")
-		# end
+    mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
+		                 g in slider(g2, label = "growth2", value = 1.01)
+		x = LandUse.issue12_1(e; gf = [1.0,g])
+		x[5]
     end
 end

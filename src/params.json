@@ -76,17 +76,29 @@
 		"type" : "region",
 		"symbol" : "\\mathcal{T}"
 	},
-	"θu0" : {
-		"value" : 0.32,
-		"description" : "Initial Urban Productivity",
+	"θagg" : {
+		"value" : [0.32],
+		"description" : "Aggregate Series of Productivity",
 		"type" : "region",
-		"symbol" : "\\theta_u"
+		"symbol" : "\\theta_t"
 	},
-	"θr0" : {
-		"value" : 0.32,
-		"description" : "Initial Rural Productivity",
+	"θagg_g" : {
+		"value" : 1.2,
+		"description" : "Constant Growth of Aggregate Productivity",
 		"type" : "region",
-		"symbol" : "\\theta_u"
+		"symbol" : "g"
+	},
+	"θut" : {
+		"value" : [1.0],
+		"description" : "idiosyncratic urban Productivity by period",
+		"type" : "region",
+		"symbol" : "\\theta_{u,i,t}"
+	},
+	"θrt" : {
+		"value" : [1.0],
+		"description" : "idiosyncratic rural Productivity by period",
+		"type" : "region",
+		"symbol" : "\\theta_{r,i,t}"
 	},
 	"c0" : {
 		"value" : 1.0,
@@ -148,11 +160,10 @@
 		"type" : "country",
 		"symbol" : "\\pi_k"
 	},
-	"θg" : {
-		"value" : [1.0,1.0],
-		"description" : "multiplicative change in growth by region",
-		"type" : "country",
-		"symbol" : "\\xi_k"
+	"ρrbar" : {
+		"value" : 0.035,
+		"description" : "fixed land value for urban model",
+		"type" : "region",
+		"symbol" : "\\bar{\\rho_r}"
 	}
-
 }

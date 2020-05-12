@@ -165,14 +165,119 @@ end
 
 
 
-function issue11()
+function issue12(; gf = [1.0,1.02,1.04])
     cpar = Dict(:S => 1.0, :L => 1.0,
-                :K => 4,
-                :θg => 0.32 .* [1.0,0.98,0.96,0.95],
-                :kshare => [0.25 for i in 1:4])
-    sols,C,cpar,pp = LandUse.runk(cpar = cpar)
+                :K => 3,
+                :kshare => [1/3 for i in 1:3])
+
+    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θut => [gf[i] for ti in 1:14],:ϵr => 2.0) for i in 1:3)
+    sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
+    pl = LandUse.plot_ts_all(C)
+    savefig(pl,joinpath(dbplots,"multi-3-TS.pdf"))
+
+    d = dataframe(C)
+    d.lϕ = log.(d.ϕ)
+    d.lu = log.(d.Lu)
+    dd = select(d, :year, :region, :lϕ, :lu)
+    pl2 = @df dd plot(:lϕ,:lu,group = :year,
+                    xlab = L"\log \phi",
+                    ylab = L"\log L_u",
+                    marker = (:circle, 4),
+                    legend = :bottomright)
+    savefig(pl2,joinpath(dbplots,"multi-3-phi-Lu.pdf"))
+    sols,C,cpar,pp,pl,pl2
+end
+
+function issue12_1(ϵ; gf = [1.0,1.06])
+    cpar = Dict(:S => 1.0, :L => 1.0,
+                :K => 2,
+                :kshare => [1/2 for i in 1:2])
+
+    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θut => [gf[i] for ti in 1:14], :ϵr => ϵ) for i in 1:2)
+    sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
+    pl = LandUse.plot_ts_all(C)
+    savefig(pl,joinpath(dbplots,"multi-2-TS.pdf"))
+
+    d = dataframe(C)
+    d.lϕ = log.(d.ϕ)
+    d.lu = log.(d.Lu)
+    dd = select(d, :year, :region, :lϕ, :lu)
+    pl2 = @df dd plot(:lϕ,:lu,group = :year,
+                    xlab = L"\log \phi",
+                    ylab = L"\log L_u",
+                    marker = (:circle, 4),
+                    legend = :bottomright)
+    savefig(pl2,joinpath(dbplots,"multi-2-phi-Lu.pdf"))
+    sols,C,cpar,pp,pl,pl2
+end
+
+"""
+https://github.com/floswald/LandUse.jl/issues/21
+"""
+function issue_21(n=8)
+
+    es = range(0.5,8,length = n)
+    e = es[1]
+    x,M,p = run(Region,Param(par = Dict(:ϵsmax => 0.0, :ϵr => e)))
+    # d = select(dataframe(M,p.T),:year,:Hr,:H0,:hr,:h0,:ρr,:qr,:ρ0,:q0, :ϕ, :Sr, :Srh)
+    d = dataframe(M,p.T)
+    d[!,:ϵr] .= e
+
+    for (i,e) in enumerate(es[2:end])
+        # println("e = $e")
+        x,M,p = run(Region,Param(par = Dict(:ϵsmax => 0.0, :ϵr => e)))
+        d0 = dataframe(M,p.T)
+        d0[!,:ϵr] .= e
+        append!(d,d0)
+    end
+
+    ds = stack(d,Not([:year,:ϵr]))
+    # sims = [[:ϕ],[:q0, :ρ0] , [:qr, :ρr], [:Hr , :hr],[:H0 , :h0],[:Sr , :Srh]]
+    sims = [:ϕ,:Sr,:Srh,:d0,
+            :dr,:q0 ,:qr,:ρ0 ,
+            :ρr, :H0,:Hr,:h0,
+            :hr , :Lu, :Lr, :r]
+    titles = ["phi"; "Sr"; "Srh"; "Central Density";
+               "Fringe Density";"Central price q0"; "Fringe prices qr"; "Central land rho 0";
+              "Fringe land rho r"; "Central H supply"; "Fringe H supply"; "Central H demand";
+              "Fringe H demand"; "Lu"; "Lr"; "r"]
+
+    plt = Any[]
+    colors = setup_color(n)
+    # colors = colormap("blues",n)
+    for i in 1:length(sims)
+        x = @linq ds |>
+            where((:variable .== sims[i]))
+            # where((:variable .∈ Ref(sims[i])))
+        px = @df x plot(:year, :value, group = :ϵr,
+                        title = titles[i],
+                        titlefontsize=10,
+                        color = colors',
+                        # label=nms[i],
+                        legend = false,
+                        linewidth=2,marker = (:circle,3))
+        push!(plt, px)
+    end
+    # plot(plt...,layout = (2,3))
+    # ds
+
+    plt_l = scatter(zeros(n), 1e-32 .* ones(n), zcolor = es,
+            color = :inferno, colorbar = true, colorbar_title = L"\epsilon_r", legend = false,
+            grid = false, axis = false, markerstrokealpha = 0, markersize = 0.1)
+    psize=(1200,700)
+    l = @layout [ [a b c d
+                  e f g h
+                  i j k m
+                  q r s t] u{0.05w}]
+    p = plot(plt..., plt_l, size=psize, layout = l)
+    savefig(p,joinpath(dbplots,"varyepsr.pdf"))
+    p
+
+    # @df plot(:year,)
+
 
 end
+
 
 """
 https://github.com/floswald/LandUse.jl/issues/15
@@ -185,7 +290,83 @@ function issue15()
     sols,C,cpar,pp = LandUse.runk(cpar = cpar)
 end
 
-function issue13()
+function fixed_ρ()
+    p0=LandUse.Param(par = Dict(:ϵsmax =>0.0))
+    LandUse.fixed_rho(p0, fi = "fixed-rho")
+    p0=LandUse.Param(par = Dict(:θug => [1.2 for i in 1:14],
+                  :θrg => [1.2 for i in 1:14],
+                   :ϵsmax =>0.0))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-constg")
+    p0=LandUse.Param(par = Dict(:θug => [1.2 for i in 1:14],
+                  :θrg => [1.15 for i in 1:14],
+                   :ϵsmax =>0.0))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-highu-g")
+    p0=LandUse.Param(par = Dict(:θug => [1.15 for i in 1:14],
+                  :θrg => [1.2 for i in 1:14],
+                   :ϵsmax =>0.0))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-highr-g")
 
+    p0=LandUse.Param(par = Dict(:ϵsmax =>0.0,:σ => 0.4))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-lowsig")
+    p0=LandUse.Param(par = Dict(:θug => [1.2 for i in 1:14],
+                  :θrg => [1.2 for i in 1:14],
+                   :ϵsmax =>0.0,:σ => 0.4))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-constg-lowsig")
+    p0=LandUse.Param(par = Dict(:θug => [1.2 for i in 1:14],
+                  :θrg => [1.15 for i in 1:14],
+                   :ϵsmax =>0.0,:σ => 0.4))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-highu-g-lowsig")
+    p0=LandUse.Param(par = Dict(:θug => [1.15 for i in 1:14],
+                  :θrg => [1.2 for i in 1:14],
+                   :ϵsmax =>0.0,:σ => 0.4))
+    LandUse.fixed_rho(p0, fi = "fixed-rho-highr-g-lowsig")
 
+end
+
+function fixed_rho(p::Param; fi = nothing)
+    pyplot()
+
+    x,Mr,p = run(Region,p)
+    p.ρrbar = Mr[1].ρr
+    x,Mu,p = run(Urban,p)
+
+    dr = dataframe(Mr,p)
+    du = dataframe(Mu,p)
+    dr.model = ["baseline" for i in 1:nrow(dr)]
+    du.model = ["urban" for i in 1:nrow(du)]
+
+    # nms = [:year,:model,:area,:Lu,:ϕ, :ρr]
+    # nms = [:year,:model,:area, :ρ0 ,:ϕ, :ρr]
+    sims = [:Lu, :ϕ, :r, :q0, :ρ0 ,:qr, :ρr, :wr , :wu0]
+    lat1 = latexstring("\$L_u\$; \$\\sigma\$=$(p.σ)")
+    tis = [lat1, L"\phi", "r", L"q_0", L"\rho_0" ,L"q_r", L"\rho_r", "wr, gr=$(p.θrg[1])" ,"wu0, gu=$(p.θug[1])"]
+    nms = [:year , :model , sims...]
+
+    drs = stack(select(dr, nms, Not([:year,:model])))
+    dus = stack(select(du, nms, Not([:year,:model])))
+    dd = [drs; dus]
+
+    pnms = sims
+    plt = Any[]
+    # tis = [:area :Lu :phi :rho_r]
+    # tis = [:area :ρ0 :phi :rho_r]
+    for i in 1:length(pnms)
+        x = @linq dd |>
+            where(:variable .== pnms[i])
+        px = @df x plot(:year, :value, group = :model,
+                        title = tis[i],
+                        titlefontsize=12,
+                        label = i == 1 ? ["baseline" "urban"] : "",
+                        # legend = :topleft,
+                        linewidth=2,marker = (:circle,4))
+        push!(plt, px)
+    end
+    pl = plot(plt...)
+    if isnothing(fi)
+        fin = "fixed-rho.pdf"
+    else
+        fin = "$fi.pdf"
+    end
+    savefig(pl,joinpath(dbplots,fin))
+    pl
 end

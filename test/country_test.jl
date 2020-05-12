@@ -9,7 +9,7 @@
 	@test length(C.R) == cp.K
 	@test isa(C.R[1], LandUse.Region)
 
-	x,M,p = LandUse.run(p)  # get single region solutions
+	x,M,p = LandUse.run(LandUse.Region,p)  # get single region solutions
 
 	@testset "test vs single region" begin
 
@@ -46,12 +46,12 @@
 		sols,C,cpar,pp = LandUse.runk()
 
 		for it in 1:length(C[1].T)
-			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) ≈ cpar.L
-			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) ≈ cpar.S
-			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh
-			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh
-			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr
-			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr
+			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) ≈ cpar.L atol=0.0001
+			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) ≈ cpar.S atol=0.0001
+			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh atol=0.0001
+			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh atol=0.0001
+			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr atol=0.0001
+			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr atol=0.0001
 
 			# utility equal across countries
 			@test C[it].R[1].U == C[it].R[2].U
@@ -62,12 +62,12 @@
 		cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.3,0.7], :K => 2)
 		sols,C,cpar,pp = LandUse.runk(cpar = cpar)
 		for it in 1:length(C[1].T)
-			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) ≈ cpar.L
-			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) ≈ cpar.S
-			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh
-			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh
-			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr
-			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr
+			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) ≈ cpar.L atol=0.00001
+			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) ≈ cpar.S atol=0.00001
+			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh atol=0.00001
+			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh atol=0.00001
+			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr atol=0.00001
+			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr atol=0.00001
 
 			# utility equal across countries
 			@test C[it].R[1].U ≈ C[it].R[2].U
@@ -79,12 +79,12 @@
 		cpar = Dict(:S => 1.0, :L => 1.0, :K => 2, :θprop => [1.0,0.99])
 		sols,C,cpar,pp = LandUse.runk(cpar = cpar)
 		for it in 1:length(C[1].T)
-			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) ≈ cpar.L
-			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) ≈ cpar.S
-			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh
-			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh
-			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr
-			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr
+			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) ≈ cpar.L atol=0.00001
+			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) ≈ cpar.S atol=0.00001
+			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh atol=0.00001
+			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh atol=0.00001
+			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr atol=0.00001
+			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr atol=0.00001
 
 			# utility equal across countries
 			@test C[it].R[1].U ≈ C[it].R[2].U
@@ -92,32 +92,32 @@
 	end
 
 	@testset "2 different prod and area" begin
-		cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.7,0.3], :K => 2, :θprop => [1.0,0.99])
+		cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.7,0.3], :K => 2, :θg => [1.0,0.99])
 		sols,C,cpar,pp = LandUse.runk(cpar = cpar)
 		for it in 1:length(C[1].T)
-			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) ≈ cpar.L
-			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) ≈ cpar.S
-			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh
-			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh
-			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr
-			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr
+			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) ≈ cpar.L atol=0.0001
+			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) ≈ cpar.S atol=0.0001
+			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh atol=0.0001
+			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh atol=0.0001
+			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr atol=0.0001
+			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr atol=0.0001
 
 			# utility equal across countries
 			@test C[it].R[1].U ≈ C[it].R[2].U
 		end
 	end
 	@testset "3 different prod and area" begin
-		cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.2,0.2], :K => 3, :θprop => [1.0,0.997,0.995])
+		cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.6,0.2,0.2], :K => 3, :θg => [1.0,1.01,1.02])
 		sols,C,cpar,pp = LandUse.runk(cpar = cpar)
 		for it in 1:length(C[1].T)
-			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) + LandUse.pop(C[it].R[3]) ≈ cpar.L
-			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) + LandUse.area(C[it].R[3]) ≈ cpar.S
-			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh
-			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh
-			@test LandUse.area(C[it].R[3]) ≈ C[it].R[3].ϕ + C[it].R[3].Sr + C[it].R[3].Srh
-			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr
-			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr
-			@test LandUse.pop(C[it].R[3]) ≈ C[it].R[3].Lu + C[it].R[3].Lr
+			@test LandUse.pop(C[it].R[1]) + LandUse.pop(C[it].R[2]) + LandUse.pop(C[it].R[3]) ≈ cpar.L atol=0.00001
+			@test LandUse.area(C[it].R[1]) + LandUse.area(C[it].R[2]) + LandUse.area(C[it].R[3]) ≈ cpar.S atol=0.00001
+			@test LandUse.area(C[it].R[1]) ≈ C[it].R[1].ϕ + C[it].R[1].Sr + C[it].R[1].Srh atol=0.00001
+			@test LandUse.area(C[it].R[2]) ≈ C[it].R[2].ϕ + C[it].R[2].Sr + C[it].R[2].Srh atol=0.00001
+			@test LandUse.area(C[it].R[3]) ≈ C[it].R[3].ϕ + C[it].R[3].Sr + C[it].R[3].Srh atol=0.00001
+			@test LandUse.pop(C[it].R[1]) ≈ C[it].R[1].Lu + C[it].R[1].Lr atol=0.00001
+			@test LandUse.pop(C[it].R[2]) ≈ C[it].R[2].Lu + C[it].R[2].Lr atol=0.00001
+			@test LandUse.pop(C[it].R[3]) ≈ C[it].R[3].Lu + C[it].R[3].Lr atol=0.00001
 
 			# utility equal across countries
 			@test C[it].R[1].U ≈ C[it].R[2].U
