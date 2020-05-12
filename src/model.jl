@@ -22,6 +22,12 @@ mutable struct Region <: Model
 	Srh  :: Float64   # Amount of land used for rural housing
 	r    :: Float64   # per capita land rental income
 	pr   :: Float64   # relative price of rural good
+	H0   :: Float64   # housing supply at center
+	Hr   :: Float64   # housing supply at fringe
+	h0   :: Float64   # housing demand at center
+	hr   :: Float64   # housing demand at fringe
+	d0   :: Float64   # density at center
+	dr   :: Float64   # density at fringe
 	ϕ    :: Float64   # size of the city
 	xsr  :: Float64  # excess subsistence rural worker
 	U    :: Float64  # common utility level
@@ -57,6 +63,12 @@ mutable struct Region <: Model
 		m.Srh  = NaN
 		m.r    = NaN
 		m.pr   = NaN
+		m.Hr   = NaN
+		m.H0   = NaN
+		m.hr   = NaN
+		m.h0   = NaN
+		m.dr   = NaN
+		m.d0   = NaN
 		m.ϕ    = NaN
 		m.xsr  = NaN
 		m.θu   = p.θu
@@ -133,6 +145,12 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.qr   = qr(p,m)
 	m.q0   = q(0.0,p,m)
 	m.ρ0   = ρ(0.0,p,m)
+	m.Hr   = H(m.ϕ,p,m)
+	m.hr   = h(m.ϕ,p,m)
+	m.H0   = H(0.0,p,m)
+	m.h0   = h(0.0,p,m)
+	m.d0   = D(0.0,p,m)
+	m.dr   = D(m.ϕ,p,m)
 	# compute consumption at locations 0 and 1 to check both positive in both sectors.
 	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
 	m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )

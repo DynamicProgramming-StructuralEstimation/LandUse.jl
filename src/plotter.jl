@@ -1,4 +1,14 @@
 
+function setup_color(l::Int)
+    # setup the colors
+    grad   = ColorSchemes.inferno
+    colors = [grad[k] for k in range(0,stop=1,length=l)]
+    # colors = repeat(colors, 1, length(colors))
+    return colors
+end
+
+
+
 "make separate time series plot for each region"
 function plot_ts(C::Vector{Country})
 	df = dataframe(C)
@@ -39,8 +49,8 @@ function plot_ts_all(C::Vector{Country})
 	s = stack(df, Not([:year, :region]))
 	# sims = [(:Lr,:Lu); (:Sr, :ϕ, :Srh); (:qr, :r); (:wr , :wu0)]
 	# sims = [[:Lu], [:ϕ], [:pop], [:ρ0], [:q0], [:Srh]]
-	sims = [:Lu, :ϕ, :pop, :ρ0, :q0, :Srh]
-	titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Central Land values"; "Central House prices"; "Rural Housing (Srh)"]
+	sims = [:Lu, :ϕ, :pop, :ρ0, :q0, :Srh, :Sr, :Hr]
+	titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Central Land values"; "Central House prices"; "Rural Housing (Srh)"; "Rural Land (Sr)"; "r Housing supply"]
 
 	plts = Any[]
 	for i in 1:length(sims)
@@ -55,7 +65,8 @@ function plot_ts_all(C::Vector{Country})
 			push!(plts, px)
 
 	end
-	plot(plts...,layout = (2,3))
+	# push!(plts,plot())  # fill up with empty
+	plot(plts...,layout = (2,4))
 
 
 end
@@ -148,10 +159,10 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 
 	# sims = [[:Lr,:Lu], [:Sr, :ϕ, :Srh], [:qr, :r], [:wr , :wu0]]
 	# sims = [[:Lr,:Lu], [:ϕ], [:r], [:wr , :wu0]]
-	sims = [[:Lr,:Lu], [:ϕ], [:r], [:q0, :ρ0] , [:qr, :ρr], [:wr , :wu0]]
-	titles = ["Labor"; "Land"; "Rents"; "Land prices"; "House prices"; "wages"]
+	sims = [[:Lr,:Lu], [:ϕ], [:r], [:q0, :ρ0] , [:qr, :ρr], [:wr , :wu0],[:Hr , :hr]]
+	titles = ["Labor"; "Land"; "Rents"; "Central prices"; "Fringe prices"; "wages"; "Housing at phi"]
 	# nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
-	nms = [[L"L_r" L"L_u"], L"\phi" , L"r", [L"q_0" L"\rho_0"], [L"q_r" L"\rho_r"], [L"w_r" L"w_u = \theta_u"]]
+	nms = [[L"L_r" L"L_u"], L"\phi" , L"r", [L"q_0" L"\rho_0"], [L"q_r" L"\rho_r"], [L"w_r" L"w_u = \theta_u"], ["Supply" "Demand"]]
 	# nms = [[L"L_r" L"L_u"], L"\phi" , L"r", [L"q_0" L"q_r"]]
 
 	plt = Any[]
@@ -167,9 +178,11 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 							linewidth=2,marker = (:circle,3))
 			push!(plt, px)
 		end
+		push!(plt,plot())
+		push!(plt,plot())
 		# ti = plot(title = "Time Series", grid = false, showaxis = false, bottom_margin = -30Plots.px)
 		# pl = plot(ti,plot(plt...,layout = (2,3), link = :x), layout = @layout([A{0.05h}; B]))
-		pl = plot(plt...,layout = (2,3), link = :x)
+		pl = plot(plt...,layout = (3,3), link = :x)
 		# return extrema of each subplot
 		xlims = [plt[i].subplots[1][:xaxis][:extrema] for i in 1:length(plt)]
 		ylims = [plt[i].subplots[1][:yaxis][:extrema] for i in 1:length(plt)]

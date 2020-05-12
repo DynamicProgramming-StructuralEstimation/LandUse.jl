@@ -132,6 +132,8 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].qr   = qr(p[ik],c.R[ik])
 		c.R[ik].q0   = q(0.0,p[ik],c.R[ik])
 		c.R[ik].ρ0   = ρ(0.0,p[ik],c.R[ik])
+		c.R[ik].Hr   = H(c.R[ik].ϕ,p[ik],c.R[ik])
+		c.R[ik].hr   = h(c.R[ik].ϕ,p[ik],c.R[ik])
 		cr01 = (cr(0.0,p[ik],c.R[ik])-p[ik].cbar, cr(1.0,p[ik],c.R[ik])-p[ik].cbar)
 		cu01 = (cu(0.0,p[ik],c.R[ik])       , cu(1.0,p[ik],c.R[ik])       )
 		c.R[ik].U    = all( (cr01 .>= 0.0) .* (cu01 .>= 0.0) ) ? utility(0.0,p[ik],c.R[ik]) : NaN

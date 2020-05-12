@@ -188,12 +188,12 @@ function issue12(; gf = [1.0,1.02,1.04])
     sols,C,cpar,pp,pl,pl2
 end
 
-function issue12_1(; gf = [1.0,1.06])
+function issue12_1(ϵ; gf = [1.0,1.06])
     cpar = Dict(:S => 1.0, :L => 1.0,
                 :K => 2,
                 :kshare => [1/2 for i in 1:2])
 
-    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θut => [gf[i] for ti in 1:14], :ϵr => 2.0) for i in 1:2)
+    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θut => [gf[i] for ti in 1:14], :ϵr => ϵ) for i in 1:2)
     sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
     pl = LandUse.plot_ts_all(C)
     savefig(pl,joinpath(dbplots,"multi-2-TS.pdf"))
@@ -210,6 +210,74 @@ function issue12_1(; gf = [1.0,1.06])
     savefig(pl2,joinpath(dbplots,"multi-2-phi-Lu.pdf"))
     sols,C,cpar,pp,pl,pl2
 end
+
+"""
+https://github.com/floswald/LandUse.jl/issues/21
+"""
+function issue_21(n=8)
+
+    es = range(0.5,8,length = n)
+    e = es[1]
+    x,M,p = run(Region,Param(par = Dict(:ϵsmax => 0.0, :ϵr => e)))
+    # d = select(dataframe(M,p.T),:year,:Hr,:H0,:hr,:h0,:ρr,:qr,:ρ0,:q0, :ϕ, :Sr, :Srh)
+    d = dataframe(M,p.T)
+    d[!,:ϵr] .= e
+
+    for (i,e) in enumerate(es[2:end])
+        # println("e = $e")
+        x,M,p = run(Region,Param(par = Dict(:ϵsmax => 0.0, :ϵr => e)))
+        d0 = dataframe(M,p.T)
+        d0[!,:ϵr] .= e
+        append!(d,d0)
+    end
+
+    ds = stack(d,Not([:year,:ϵr]))
+    # sims = [[:ϕ],[:q0, :ρ0] , [:qr, :ρr], [:Hr , :hr],[:H0 , :h0],[:Sr , :Srh]]
+    sims = [:ϕ,:Sr,:Srh,:d0,
+            :dr,:q0 ,:qr,:ρ0 ,
+            :ρr, :H0,:Hr,:h0,
+            :hr , :Lu, :Lr, :r]
+    titles = ["phi"; "Sr"; "Srh"; "Central Density";
+               "Fringe Density";"Central price q0"; "Fringe prices qr"; "Central land rho 0";
+              "Fringe land rho r"; "Central H supply"; "Fringe H supply"; "Central H demand";
+              "Fringe H demand"; "Lu"; "Lr"; "r"]
+
+    plt = Any[]
+    colors = setup_color(n)
+    # colors = colormap("blues",n)
+    for i in 1:length(sims)
+        x = @linq ds |>
+            where((:variable .== sims[i]))
+            # where((:variable .∈ Ref(sims[i])))
+        px = @df x plot(:year, :value, group = :ϵr,
+                        title = titles[i],
+                        titlefontsize=10,
+                        color = colors',
+                        # label=nms[i],
+                        legend = false,
+                        linewidth=2,marker = (:circle,3))
+        push!(plt, px)
+    end
+    # plot(plt...,layout = (2,3))
+    # ds
+
+    plt_l = scatter(zeros(n), 1e-32 .* ones(n), zcolor = es,
+            color = :inferno, colorbar = true, colorbar_title = L"\epsilon_r", legend = false,
+            grid = false, axis = false, markerstrokealpha = 0, markersize = 0.1)
+    psize=(1200,700)
+    l = @layout [ [a b c d
+                  e f g h
+                  i j k m
+                  q r s t] u{0.05w}]
+    p = plot(plt..., plt_l, size=psize, layout = l)
+    savefig(p,joinpath(dbplots,"varyepsr.pdf"))
+    p
+
+    # @df plot(:year,)
+
+
+end
+
 
 """
 https://github.com/floswald/LandUse.jl/issues/15
