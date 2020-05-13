@@ -462,7 +462,7 @@ function update!(m::FModel,p::Param,x::Vector{Float64})
 	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	m.ϕ = invτ(m.wr / p.θu,p)
 
-	m.xsr  = m.wr + m.r - m.pr * p.cbar - p.sbar
+	m.xsr  = m.wr + m.r - m.pr * p.cbar + p.sbar
 	# m.xsu = m.wu0 + m.r - m.pr * p.cbar - p.sbar
 	m.Srh  = ( γ2 / m.ρr ) * m.xsr * m.Lr
 	m.qr   = qr(p,m)
@@ -488,9 +488,9 @@ function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
 	w2 = p.θu * m.Lu^p.η
 	τϕ = 1-p.τ * m.ϕ
 	w1 = p.Ψ * w2 * τϕ
-	uu = w2+m.r - m.pr * p.cbar - p.sbar
-	ur = w1+m.r - m.pr * p.cbar - p.sbar
-	xx = m.r - m.pr * p.cbar - p.sbar
+	uu = w2+m.r - m.pr * p.cbar + p.sbar
+	ur = w1+m.r - m.pr * p.cbar + p.sbar
+	xx = m.r - m.pr * p.cbar + p.sbar
 
 
 	F[2] = 1+p.τ * w2 * m.Lu/(m.ρr)-(uu/(w2*(1-p.τ*m.ϕ)+m.r-m.pr*p.cbar+p.sbar))^(1/γ2)
@@ -601,10 +601,10 @@ xsr(p::Param,m::Model) = m.r + wr(m.Lu,m.ϕ,p) - m.pr * p.cbar + p.sbar
 Srh(p::Param,m::Model) = m.Lr * (γ(m.ϕ,m.ϕ,p) * m.xsr) / m.ρr
 
 "optimal urban good consumption at location ``l``. Equation (8)"
-cu(l::Float64,p::Param,m::Model) = (1.0 - p.γ)*(1.0 - p.ν)*(w(m.Lu,l,m.ϕ,p) .+ (m.r - m.pr * p.cbar))
+cu(l::Float64,p::Param,m::Model) = (1.0 - p.γ)*(1.0 - p.ν)*(w(m.Lu,l,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
 
 "optimal rural good consumption at location ``l``. Equation (7) divided by p"
-cr(l::Float64,p::Param,m::Model) = (1.0 - p.γ) * p.ν * ((w(m.Lu,l,m.ϕ,p) .+ (m.r - m.pr * p.cbar)) ./ m.pr) + p.cbar
+cr(l::Float64,p::Param,m::Model) = (1.0 - p.γ) * p.ν * ((w(m.Lu,l,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr) + p.cbar
 
 "urban good consumption in rural sector. Equation (8)"
 cur(p::Param,m::Model) = cu(m.ϕ,p,m)
@@ -648,14 +648,14 @@ D(l::Float64,p::Param,m::Model) = H(l,p,m) / h(l,p,m)
 "Population Density at location ``l``. second version, independent of Lu"
 function D2(l::Float64,p::Param,r::Region)
 	γl = 1.0 / γ(l,r.ϕ,p)
-	r.ρr * (γl * (r.wr + r.r - r.pr*p.cbar)^(-γl) * (w(r.Lu,l,r.ϕ,p) + r.r - r.pr*p.cbar)^(γl - 1))
+	r.ρr * (γl * (r.wr + r.r + p.sbar - r.pr*p.cbar)^(-γl) * (w(r.Lu,l,r.ϕ,p) + r.r + p.sbar - r.pr*p.cbar)^(γl - 1))
 end
 
 "Amount of Urban Good (numeraire) required to build housing at ``l``"
 cu_input(l::Float64,p::Param,m::Model) = ϵ(l,m.ϕ,p) / (1+ϵ(l,m.ϕ,p)) .* q(l,p,m) .* H(l,p,m)
 
 "Utility function equation (5)"
-utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) * (cu(l,p,m))^((1-p.ν) * (1-p.γ)) * h(l,p,m)^p.γ
+utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) * (cu(l,p,m) + p.sbar)^((1-p.ν) * (1-p.γ)) * h(l,p,m)^p.γ
 
 
 "aggregate per capita income"

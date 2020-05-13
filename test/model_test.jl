@@ -35,7 +35,15 @@
 		@test LandUse.w(m.Lu,1.0,m.ϕ,p) == LandUse.w(1.0,m.ϕ,p)
 		@test LandUse.w(m.Lu,m.ϕ-eps(),m.ϕ,p) == LandUse.w(m.ϕ-eps(),m.ϕ,p)
 
+		# test optimal consumption rules
+		@test LandUse.cu(0.0,p,m) == (1.0 - p.γ)*(1.0 - p.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
+		@test LandUse.cu(0.9,p,m) == (1.0 - p.γ)*(1.0 - p.ν)*(LandUse.w(m.Lu,0.9,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
+		@test LandUse.cr(0.0,p,m) == p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
+		@test LandUse.cr(0.9,p,m) == p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,0.9,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
+
 		# test excess consumption
+		@test LandUse.xsr(p,m) == m.wr + m.r + p.sbar - m.pr * p.cbar
+		@test LandUse.xsu(0.0,p,m) == LandUse.w(0.0,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar
 		@test LandUse.xsu(0.0,p,m) > LandUse.xsr(p,m)
 		@test LandUse.xsu(m.ϕ,p,m) == LandUse.xsr(p,m)
 		@test LandUse.xsu(1.0,p,m) == LandUse.xsr(p,m)
@@ -49,11 +57,11 @@
 		# test housing consumption
 		@test LandUse.h(0.0,p,m) <   LandUse.h(m.ϕ,p,m)
 		@test LandUse.h(1.0,p,m) ==  LandUse.h(m.ϕ,p,m)
-		@test LandUse.h(1.0,p,m) ≈  p.γ * (m.wr + m.r - m.pr * p.cbar) / m.qr
-		@test LandUse.Srh(p,m) ≈ m.Lr * LandUse.γ(m.ϕ,m.ϕ,p) * (m.wr + m.r - m.pr * p.cbar) / m.ρr
+		@test LandUse.h(1.0,p,m) ≈  p.γ * (m.wr + m.r + p.sbar - m.pr * p.cbar) / m.qr
+		@test LandUse.Srh(p,m) ≈ m.Lr * LandUse.γ(m.ϕ,m.ϕ,p) * (m.wr + m.r + p.sbar - m.pr * p.cbar) / m.ρr
 
 		# equation (17)
-		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r - m.pr * p.cbar))
+		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar))
 		@test LandUse.D(l,p,m) ≈ LandUse.D2(l,p,m)
 
 		@test LandUse.Yu(m,p) == p.θu * m.Lu
@@ -90,7 +98,16 @@
 		@test LandUse.w(m.Lu,0.0,m.ϕ,p) == LandUse.wu0(m.Lu,p)
 		@test LandUse.w(m.Lu,1.0,m.ϕ,p) < LandUse.wu0(m.Lu,p)
 
+		# test optimal consumption rules
+		@test LandUse.cu(0.0,p,m) == (1.0 - p.γ)*(1.0 - p.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
+		@test LandUse.cu(0.9,p,m) == (1.0 - p.γ)*(1.0 - p.ν)*(LandUse.w(m.Lu,0.9,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
+		@test LandUse.cr(0.0,p,m) == p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
+		@test LandUse.cr(0.9,p,m) == p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,0.9,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
+
+
 		# test excess consumption
+		@test LandUse.xsr(p,m) == m.wr + m.r + p.sbar - m.pr * p.cbar
+		@test LandUse.xsu(0.0,p,m) == LandUse.w(0.0,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar
 		@test LandUse.xsu(0.0,p,m) > LandUse.xsr(p,m)
 		@test LandUse.xsu(m.ϕ,p,m) == LandUse.xsr(p,m)
 		@test LandUse.xsu(1.0,p,m) == LandUse.xsr(p,m)
@@ -104,12 +121,12 @@
 		# test housing consumption
 		@test LandUse.h(0.0,p,m) <   LandUse.h(m.ϕ,p,m)
 		@test LandUse.h(1.0,p,m) ==  LandUse.h(m.ϕ,p,m)
-		@test LandUse.h(1.0,p,m) ≈  p.γ * (m.wr + m.r - m.pr * p.cbar) / m.qr
-		@test LandUse.h(0.0,p,m) ≈  p.γ * (m.wu0 + m.r - m.pr * p.cbar) / LandUse.q(0.0,p,m)
-		@test LandUse.Srh(p,m) ≈ m.Lr * LandUse.γ(m.ϕ,m.ϕ,p) * (m.wr + m.r - m.pr * p.cbar) / m.ρr
+		@test LandUse.h(1.0,p,m) ≈  p.γ * (m.wr + m.r + p.sbar - m.pr * p.cbar) / m.qr
+		@test LandUse.h(0.0,p,m) ≈  p.γ * (m.wu0 + m.r + p.sbar - m.pr * p.cbar) / LandUse.q(0.0,p,m)
+		@test LandUse.Srh(p,m) ≈ m.Lr * LandUse.γ(m.ϕ,m.ϕ,p) * (m.wr + m.r + p.sbar - m.pr * p.cbar) / m.ρr
 
 		# equation (17)
-		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r - m.pr * p.cbar))
+		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar))
 
 		@test LandUse.Yu(m,p) == p.θu * m.Lu
 		@test LandUse.D(l,p,m) ≈ LandUse.D2(l,p,m)
@@ -148,7 +165,7 @@
 		@test norm(x_analytic .- x_general) < 1.e-11
 
 		l = rand()
-		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r - m.pr * p.cbar))
+		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar))
 		@test LandUse.D(l,p,m) ≈ LandUse.D2(l,p,m)
 
 		# equation (23)
@@ -166,9 +183,9 @@
 		# equation (25)
 		# @test p.ν * (1 - p.γ) * LandUse.pcy(m,p) + m.pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) ==  m.pr * LandUse.Yr(m,p) / p.L
 		@testset "Walras Law" begin
-			@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + m.pr * p.cbar ,  m.pr * LandUse.Yr(m,p) / p.L )
+			@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(m,p) + p.sbar - m.pr * p.cbar) + m.pr * p.cbar ,  m.pr * LandUse.Yr(m,p) / p.L )
 
-			@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + m.pr * p.cbar - m.pr * LandUse.Yr(m,p) / p.L , LandUse.Rmk(m,p), atol = 1e-10)
+			@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(m,p) + p.sbar - m.pr * p.cbar) + m.pr * p.cbar - m.pr * LandUse.Yr(m,p) / p.L , LandUse.Rmk(m,p), atol = 1e-10)
 			@test isapprox(LandUse.Rmk(m,p) , 0.0, atol = 1e-13)
 
 			# try with different formulation of total rural demand:
@@ -177,12 +194,12 @@
 		end
 
 		@testset "equation (26) special case" begin
-			@test isapprox( (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r , (1 - m.iτ) * LandUse.Yu(m,p) / m.Lu, atol = 0.05)
+			@test isapprox( (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) - p.sbar + p.ϵr * m.r , (1 - m.iτ) * LandUse.Yu(m,p) / m.Lu, atol = 0.05)
 			# @test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (m.Lu - m.iτ) * m.wu0 / p.L
 			yy = fm.ρr / p.L + fm.wu0 * (1.0 - LandUse.τ(fm.ϕ,fm.ϕ,p) * fm.Lr / p.L)
 
 			# the LHS seems correct (or at least consistently wrong across formulations :-)
-			@test (1 - p.ν) * (1 - p.γ) * (yy - fm.pr * p.cbar) + p.ϵr * fm.r ≈ (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r atol=0.02
+			@test (1 - p.ν) * (1 - p.γ) * (yy + p.sbar - fm.pr * p.cbar) + p.ϵr * fm.r ≈ (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) + p.sbar - m.pr * p.cbar) + p.ϵr * m.r atol=0.02
 		end
 
 
@@ -228,9 +245,9 @@
 				# test walras' law: also the rural goods market must clear at equilibrium:
 				# equation (25)
 				@testset "Walras' Law" begin
-					@test p.ν * (1 - p.γ) * LandUse.pcy(M[it],p) + M[it].pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) ≈  M[it].pr * LandUse.Yr(M[it],p) / p.L
+					@test p.ν * (1 - p.γ) * (LandUse.pcy(M[it],p) + p.sbar) + M[it].pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) ≈  M[it].pr * LandUse.Yr(M[it],p) / p.L atol=tol
 					# @test isapprox( p.ν * (1 - p.γ) * (LandUse.pcy(M[it],p) - M[it].pr * p.cbar) + M[it].pr * p.cbar , M[it].pr * LandUse.Yr(M[it],p) /	 p.L, atol = rutol)
-					@test isapprox(p.ν * (1 - p.γ) * LandUse.pcy(M[it],p) + M[it].pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) - M[it].pr * LandUse.Yr(M[it],p) / p.L  , 0.0, atol = tol)
+					@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(M[it],p) + p.sbar) + M[it].pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) - M[it].pr * LandUse.Yr(M[it],p) / p.L  , 0.0, atol = tol)
 					@test isapprox(LandUse.Rmk(M[it],p), 0.0,  atol = tol)
 
 					# try with different formulation of total rural demand:
@@ -242,7 +259,7 @@
 				# tight tol on utility
 				l = rand()
 				utol = 1e-9
-				@test LandUse.D(l,p,M[it]) ≈ (LandUse.χ(l,M[it].ϕ,p) * LandUse.q(l,p,M[it])^(1+LandUse.ϵ(l,M[it].ϕ,p))) / (p.γ * (LandUse.w(M[it].Lu,l,M[it].ϕ,p) + M[it].r - M[it].pr * p.cbar))
+				@test LandUse.D(l,p,M[it]) ≈ (LandUse.χ(l,M[it].ϕ,p) * LandUse.q(l,p,M[it])^(1+LandUse.ϵ(l,M[it].ϕ,p))) / (p.γ * (LandUse.w(M[it].Lu,l,M[it].ϕ,p) + M[it].r + p.sbar - M[it].pr * p.cbar))
 				@test isapprox(LandUse.utility(1.0,p,M[it]), M[it].U, atol = utol)
 				@test isapprox(LandUse.utility(0.1,p,M[it]), M[it].U, atol = utol)
 				@test isapprox(LandUse.utility(M[it].ϕ,p,M[it]), M[it].U, atol = utol)

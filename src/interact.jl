@@ -5,15 +5,17 @@ function i0()
 	epsimax = 0.0:10.0
 	gfac = 1.00:0.05:2.0
 	sigmas = 0.1:0.1:0.99
+	sbs = 0.0:0.1:0.5
 
 	@manipulate for growthtype = Dict("orig" => 1,"u-r const" => 4),
 					ugrowth in slider(gfac,value = 1.01, label = "u-growthrate"),
 					rgrowth in slider(gfac,value = 1.01, label = "r-growthrate"),
 					epsim in slider(epsimax, value = 1.0, label = "ϵr"),
-					sigma in slider(sigmas, value = 0.9, label = "sigma")
+					sigma in slider(sigmas, value = 0.9, label = "sigma"),
+					sb in slider(sbs, label = "sbar")
 
 					if growthtype == 1
-						p0 = LandUse.Param(par = Dict(:ϵr => epsim,:ϵsmax => 0.0,:σ => sigma ))
+						p0 = LandUse.Param(par = Dict(:ϵr => epsim,:ϵsmax => 0.0,:σ => sigma , :sbar => sb))
 						x,M,p = LandUse.run(LandUse.Region,p0)
 						LandUse.plot_ts(M,p0)
 
@@ -37,7 +39,7 @@ function i0()
 						p0 = LandUse.Param(par = Dict(:θut => [ugrowth for i in 1:14],
 											 :θrt => [rgrowth for i in 1:14],
 						                     :ϵr => epsim,:ϵsmax => 0.0,
-											 :σ => sigma ))
+											 :σ => sigma, :sbar => sb ))
 					    x,M,p = LandUse.run(LandUse.Region,p0)
 						LandUse.plot_ts(M,p0)
 					end
