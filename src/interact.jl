@@ -30,18 +30,21 @@ function i22()
 	         select(:year, :h, :u , :r)
 	    ds = stack(df, Not(:year))
 	    pl = @df ds plot(:year,:value, group = :variable,
-	               linewidth = 2, title = "Spending Shares")
+	               linewidth = 2, title = "Spending Shares",
+				   ylims = (0.0,0.85))
 
 		ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
 		pl2 = @df ds2 plot(:year, :value, group = :variable,
-		                 linewidth = 2, title = "Population")
+		                 linewidth = 2, title = "Population",
+						 ylims = (0.0,1.0))
 	    d3  = @linq d |>
 		        select(:year,:θu, :θr) |>
 				transform(theta_u = :θu, theta_r = :θr) |>
 				select(:year,:theta_u, :theta_r)
 	    ds3 = stack(d3, Not(:year))
 	    pl3 = @df ds3 plot(:year, :value, group = :variable,
-					      linewidth = 2, title = "Productivity")
+					      linewidth = 2, title = "Productivity",
+						  ylims = (0.0,3.5))
 		plot(pl,pl2,pl3, layout = (1,3),size = (700,250))
     end
 end
