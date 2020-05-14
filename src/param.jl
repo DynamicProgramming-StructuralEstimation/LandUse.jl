@@ -79,6 +79,12 @@ mutable struct Param
 		this.θu = this.θagg[1] * this.θut[1]
 		this.θr = this.θagg[1] * this.θrt[1]
 
+		# set epsilon slope
+		if this.ϵs != this.ϵsmax
+			@warn "you set ϵs not equal to ϵsmax. I take ϵsmax => ϵs."
+			this.ϵs = this.ϵsmax
+		end
+
         if this.η != 0
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
         end

@@ -1,7 +1,7 @@
 @testset "Single Region" begin
 	@testset "components in flat model checks" begin
 
-		p = LandUse.Param(par = Dict(:ϵs => 0.0))   # flat epsilon slope, so closed form solutions apply
+		p = LandUse.Param(par = Dict(:ϵsmax => 0.0))   # flat epsilon slope, so closed form solutions apply
 	    s = LandUse.get_starts(p)
 
 		# use m0 values as starting values
@@ -69,7 +69,14 @@
 
 	@testset "components in general model checks" begin
 
+		p = LandUse.Param(par = Dict(:ϵsmax => 0.0))
+		@test p.ϵs == 0.0
+		p = LandUse.Param(par = Dict(:ϵsmax => 10.0))
+		@test p.ϵs == 10.0
+
 		p = LandUse.Param(par = Dict(:ϵs => 10.0))
+		@test p.ϵs == 10.0
+
 		s = LandUse.get_starts(p)
 
 		# use m0 values as starting values
@@ -135,7 +142,7 @@
 
 	@testset "test flat elasticity ϵs = 0" begin
 
-		p = LandUse.Param(par = Dict(:ϵs => 0.0))   # flat epsilon slope, so closed form solutions apply
+		p = LandUse.Param(par = Dict(:ϵsmax => 0.0))   # flat epsilon slope, so closed form solutions apply
 		s = LandUse.get_starts(p)
 		LandUse.setperiod!(p,1)  # make sure we are in year 1
 		m = LandUse.Region(p)

@@ -58,14 +58,21 @@ function run(T::Type,p::Param)
 	# println("x0 = $(x0[1])")
 
 	setperiod!(p,1)  # go back to period 1
-	(x1,p) = adapt_ϵ(T(p),p,x0[1])  # adaptive search for higher epsilon in first period only
+	if p.ϵsmax == 0.0
+		# p.ϵs = 0.0
+		x1 = x0[1]
+		@assert p.ϵs == 0.0
+	else
+		(xt,p) = adapt_ϵ(T(p),p,x0[1])  # adaptive search for higher epsilon in center first period only
+		x1 = xt[1]
+	end
 
 	# if T == Urban
 	# 	x1[end] = x1[end][1:3]
 	# end
 	# println("x1 = $(x1[end])")
 
-	x,M = get_solutions(T,x1[end],p)  # get general model solutions
+	x,M = get_solutions(T,x1,p)  # get general model solutions
 
 	(x,M,p) # solutions, models, and parameter
 
