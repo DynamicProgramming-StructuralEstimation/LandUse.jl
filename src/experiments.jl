@@ -212,6 +212,24 @@ function issue12_1(ϵ; gf = [1.0,1.06])
 end
 
 """
+https://github.com/floswald/LandUse.jl/issues/22
+"""
+function issue_22()
+    x,M,p = run(Region,Param())
+    d = dataframe(M,p.T)
+    df = @linq d |>
+         select(:year,:Ch,:Cu,:Cr,:C ) |>
+         transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
+         select(:year, :h, :u , :r)
+    ds = stack(df, Not(:year))
+    pl = @df ds plot(:year,:value, group = :variable,
+               linewidth = 2, title = "Spending Shares")
+    savefig(pl, joinpath(dbplots,"spending-shares.pdf"))
+    pl
+end
+
+
+"""
 https://github.com/floswald/LandUse.jl/issues/21
 """
 function issue_21(n=8)
@@ -274,8 +292,6 @@ function issue_21(n=8)
     p
 
     # @df plot(:year,)
-
-
 end
 
 

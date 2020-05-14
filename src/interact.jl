@@ -1,5 +1,51 @@
 
 
+"""
+https://github.com/floswald/LandUse.jl/issues/22
+"""
+function i22()
+	sbs = 0.0:0.05:0.5
+	cbs = 0.0:0.05:0.5
+	sis = 0.1:0.1:0.99
+	ags = 1.0:0.1:1.3
+	θus = 1.0:0.05:1.2
+	θrs = 1.0:0.05:1.2
+	p = Param()
+	@manipulate for sb in slider(sbs, label = "sbar", value = p.sbar),
+		            cb in slider(cbs, label = "cbar", value = p.cbar),
+		            sig in slider(sis, label = "σ", value = p.σ),
+		            agg in slider(ags, label = "agg_g", value = p.θagg_g),
+		            θut in slider(θus, label = "θu", value = 1.0),
+		            θrt in slider(θrs, label = "θr", value = 1.0)
+		θr = [θrt for i in p.T]
+		θu = [θut for i in p.T]
+	    x,M,p = run(Region,
+		             Param(par = Dict(:ϵs => 0.0, :ϵsmax => 0.0,
+					                  :sbar => sb, :cbar => cb, :σ => sig,
+									  :θagg_g => agg, :θut => θu, :θrt => θr)))
+	    d = dataframe(M,p.T)
+	    df = @linq d |>
+	         select(:year,:Ch,:Cu,:Cr,:C ) |>
+	         transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
+	         select(:year, :h, :u , :r)
+	    ds = stack(df, Not(:year))
+	    pl = @df ds plot(:year,:value, group = :variable,
+	               linewidth = 2, title = "Spending Shares")
+
+		ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
+		pl2 = @df ds2 plot(:year, :value, group = :variable,
+		                 linewidth = 2, title = "Population")
+	    d3  = @linq d |>
+		        select(:year,:θu, :θr) |>
+				transform(theta_u = :θu, theta_r = :θr) |>
+				select(:year,:theta_u, :theta_r)
+	    ds3 = stack(d3, Not(:year))
+	    pl3 = @df ds3 plot(:year, :value, group = :variable,
+					      linewidth = 2, title = "Productivity")
+		plot(pl,pl2,pl3, layout = (1,3),size = (700,250))
+    end
+end
+
 
 function i0()
 	epsimax = 0.0:10.0

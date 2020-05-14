@@ -8,7 +8,6 @@ function setup_color(l::Int)
 end
 
 
-
 "make separate time series plot for each region"
 function plot_ts(C::Vector{Country})
 	df = dataframe(C)

@@ -35,6 +35,10 @@ mutable struct Region <: Model
 	θr   :: Float64  # current productivity
 	cr01 :: Tuple{Float64,Float64}  # consumption at locations 0 and 1. temps to check.
 	cu01 :: Tuple{Float64,Float64} # consumption at locations 0 and 1. temps to check.
+	Cu :: Float64  # aggregate urban consumption
+	Cr :: Float64  # aggregate rural consumption
+	Ch :: Float64  # aggregate housing consumption
+	C  :: Float64  # aggregate total consumption
 	# integration setup
 	inodes   :: Vector{Float64}  # theoretical integration nodes
 	iweights :: Vector{Float64}  # int weights
@@ -48,6 +52,7 @@ mutable struct Region <: Model
 	iτ        :: Float64   # ∫ τ(l) D(l) dl
 	iq        :: Float64   # ∫ ρ(l) dl
 	iy        :: Float64   # ∫ w(l) D(l) dl
+	ihexp       :: Float64   # ∫ q(l) h(l) D(l) dl
 	function Region(p::Param)
 		# creates a model fill with NaN
 		m      = new()
@@ -78,12 +83,13 @@ mutable struct Region <: Model
 		m.cu01 = (NaN,NaN)
 		m.inodes, m.iweights = gausslegendre(p.int_nodes)
 		m.nodes = zeros(p.int_nodes)
-		icu_input = NaN
-		iDensity  = NaN
-		icu       = NaN
-		iτ        = NaN
-		iq        = NaN
-		iy        = NaN
+		m.icu_input = NaN
+		m.iDensity  = NaN
+		m.icu       = NaN
+		m.iτ        = NaN
+		m.iq        = NaN
+		m.iy        = NaN
+		m.ihexp       = NaN
 		return m
 	end
 end
@@ -161,6 +167,12 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# display(m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 	integrate!(m,p)
+
+	# compute aggregate Consumption shares
+	m.Cu = m.icu + m.Lr * cur(p,m)  # urban cons inside city plus total urban cons in rural
+	m.Cr = m.pr * (m.icr + m.Lr * cr(m.ϕ,p,m))  # rural cons inside city plus total rural cons in rural
+	m.Ch = m.ihexp + m.qr * m.Srh  # rural cons inside city plus total rural cons in rural
+	m.C  = m.Cu + m.Cr + m.Ch
 end
 
 
@@ -179,6 +191,7 @@ function integrate!(m::Region,p::Param)
 	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
 	# @assert m.icu_input > 0
 	# @assert m.iDensity > 0

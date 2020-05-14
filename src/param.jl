@@ -63,7 +63,6 @@ mutable struct Param
 		this.t = 1
 		this.S = 1.0  # set default values for space and population
 		this.L = 1.0
-		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
 		this.θut = ones(T)
 		this.θrt = ones(T)
 
@@ -75,6 +74,8 @@ mutable struct Param
 				end
             end
         end
+		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
+
 		# set first period
 		this.θu = this.θagg[1] * this.θut[1]
 		this.θr = this.θagg[1] * this.θrt[1]
