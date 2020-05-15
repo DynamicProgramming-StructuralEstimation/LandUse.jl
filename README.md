@@ -18,7 +18,7 @@
     |__/                   |
 
     ```
-3. Hit the `]` key to switch to package manager mode. the prompt switches to 
+3. Hit the `]` key to switch to package manager mode. the prompt switches to
     ```
     (v1.2) pkg>
     ```
@@ -35,15 +35,15 @@
     (v1.2) pkg> activate .     # tell pkg manager to modify current directory as project
     (LandUse) pkg> instantiate    # download all dependencies
     ```
-7. Done! :tada: Now try it out. Go back to command mode with `ctrl-c`
+7. Done! :tada: Now try it out. Go back to command mode with `ctrl-c`. Run the standard model of a single region:
     ```julia
     julia> using LandUse
 
-    julia> @time (x,M,p) = LandUse.run();
-    8.649693 seconds (32.37 M allocations: 1.642 GiB, 8.71% gc time) 
+    julia> @time (x,M,p) = LandUse.run(LandUse.Region,LandUse.Param());
+    8.649693 seconds (32.37 M allocations: 1.642 GiB, 8.71% gc time)
     # first call needs to compile. slow.
 
-    julia> @time (x,M,p) = LandUse.run();
+    julia> @time (x,M,p) = LandUse.run(LandUse.Region,LandUse.Param())();
     0.061881 seconds (31.64 k allocations: 1.369 MiB)
 
     # fast!
@@ -55,15 +55,24 @@
      Resolving package versions...
     Test Summary: | Pass  Total
     LandUse.jl    |   44     44
-       Testing LandUse tests passed 
+       Testing LandUse tests passed
     ```
-9. Compare to matlab performance.  
+9. Run the interactives. (Go back to command mode with `ctrl-c`)
+    ```julia
+    # hit ? to go to help mode:
+    help?> LandUse.i22
+       https://github.com/floswald/LandUse.jl/issues/22
+
+    # run it
+    julia> LandUse.i22()  
+    ```
+10. Compare to matlab performance.  
     a. Matlab code is in `matlab/`
     ```
     starting values or each period:
 
     ans =
-    
+
         0.0593    0.0098    0.0622    0.5545    1.0918    0.9239
         0.0587    0.0105    0.0621    0.5334    1.0764    0.9202
         0.0582    0.0112    0.0619    0.5137    1.0617    0.9168
@@ -78,7 +87,7 @@
         0.0395    0.0419    0.2532    0.0317    0.4180    0.8236
         0.0406    0.0424    0.2792    0.0295    0.4087    0.8228
         0.0418    0.0428    0.3052    0.0277    0.4009    0.8221
-    
+
     period: 1
     starting epsilon search
     epsilon search step 2
@@ -104,8 +113,8 @@
     period: 13
     period: 14
     Elapsed time is 23.291344 seconds.
-    ``` 
-    
+    ```
+
     b. Julia starting values and performace:
     ```
     julia> vcat(LandUse.get_starts()'...)
@@ -128,4 +137,3 @@
      julia> @time (x,M,p) = LandUse.run();
     0.067674 seconds (31.65 k allocations: 1.372 MiB)
     ```
-
