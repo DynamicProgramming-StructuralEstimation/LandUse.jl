@@ -77,8 +77,8 @@ mutable struct Param
 		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
 
 		# set first period
-		this.θu = this.θagg[1] * this.θut[1]
-		this.θr = this.θagg[1] * this.θrt[1]
+		this.θu = this.θagg[1] + this.θut[1]
+		this.θr = this.θagg[1] + this.θrt[1]
 
 		# set epsilon slope
 		if this.ϵs != this.ϵsmax
@@ -135,8 +135,8 @@ end
 
 # set period specific values
 function setperiod!(p::Param,i::Int)
-	setfield!(p, :θr, p.θagg[i] * p.θrt[i])   # this will be constant across region.
-	setfield!(p, :θu, p.θagg[i] * p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
+	setfield!(p, :θr, p.θagg[i] + p.θrt[i])   # this will be constant across region.
+	setfield!(p, :θu, p.θagg[i] + p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
 
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
 	# setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.
