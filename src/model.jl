@@ -27,14 +27,23 @@ mutable struct Region <: Model
 	h0   :: Float64   # housing demand at center
 	hr   :: Float64   # housing demand at fringe
 	d0   :: Float64   # density at center
+	d01   :: Float64   # density at almost center
+	dq1  :: Float64   # density at quantile q of fringe
+	dq2  :: Float64   # density at quantile q of fringe
+	dq3  :: Float64   # density at quantile q of fringe
+	dq4  :: Float64   # density at quantile q of fringe
+	dq5  :: Float64   # density at quantile q of fringe
 	dr   :: Float64   # density at fringe
+	cr0  :: Float64   # cons of rural in center
+	cr1  :: Float64   # cons of rural at fringe
+	cu0  :: Float64   # cons of urban in center
+	cu1  :: Float64   # cons of urban at fringe
 	ϕ    :: Float64   # size of the city
 	xsr  :: Float64  # excess subsistence rural worker
 	U    :: Float64  # common utility level
 	θu   :: Float64  # current productivity
 	θr   :: Float64  # current productivity
-	cr01 :: Tuple{Float64,Float64}  # consumption at locations 0 and 1. temps to check.
-	cu01 :: Tuple{Float64,Float64} # consumption at locations 0 and 1. temps to check.
+
 	Cu :: Float64  # aggregate urban consumption
 	Cr :: Float64  # aggregate rural consumption
 	Ch :: Float64  # aggregate housing consumption
@@ -74,13 +83,16 @@ mutable struct Region <: Model
 		m.h0   = NaN
 		m.dr   = NaN
 		m.d0   = NaN
+		m.dq1   = NaN
+		m.dq2   = NaN
+		m.dq3   = NaN
+		m.dq4   = NaN
+		m.dq5   = NaN
 		m.ϕ    = NaN
 		m.xsr  = NaN
 		m.θu   = p.θu
 		m.θr   = p.θr
 		m.U    = NaN
-		m.cr01 = (NaN,NaN)
-		m.cu01 = (NaN,NaN)
 		m.inodes, m.iweights = gausslegendre(p.int_nodes)
 		m.nodes = zeros(p.int_nodes)
 		m.icu_input = NaN
@@ -156,11 +168,19 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.H0   = H(0.0,p,m)
 	m.h0   = h(0.0,p,m)
 	m.d0   = D(0.0,p,m)
+	m.dq1   = D(m.ϕ / 5,p,m)
+	m.dq2   = D(2 * m.ϕ / 5,p,m)
+	m.dq3   = D(3 * m.ϕ / 5,p,m)
+	m.dq4   = D(4 * m.ϕ / 5,p,m)
 	m.dr   = D(m.ϕ,p,m)
 	# compute consumption at locations 0 and 1 to check both positive in both sectors.
-	m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
-	m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )
-	m.U    = all( (m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) ) ? utility(0.0,p,m) : NaN
+	m.cr0 = cr(0.0,p,m)
+	m.cr1 = cr(m.ϕ,p,m)
+	m.cu0 = cu(0.0,p,m)
+	m.cu1 = cu(m.ϕ,p,m)
+	# m.cr01 = (cr(0.0,p,m)-p.cbar, cr(1.0,p,m)-p.cbar)
+	# m.cu01 = (cu(0.0,p,m)       , cu(1.0,p,m)       )
+	m.U    = ((m.cr0 .>= 0.0) && (m.cr1 .>= 0.0) && (m.cu0 .>= 0.0) && (m.cu1 .>= 0.0) ) ? utility(0.0,p,m) : NaN
 	# if !all((m.cr01 .>= 0.0) .* (m.cu01 .>= 0.0) )
 	# println("neg cons")
 	# end
@@ -171,7 +191,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# compute aggregate Consumption shares
 	m.Cu = m.icu + m.Lr * cur(p,m)  # urban cons inside city plus total urban cons in rural
 	m.Cr = m.pr * (m.icr + m.Lr * cr(m.ϕ,p,m))  # rural cons inside city plus total rural cons in rural
-	m.Ch = m.ihexp + m.qr * m.Srh  # rural cons inside city plus total rural cons in rural
+	m.Ch = m.ihexp + m.qr * h(m.ϕ,p,m) * m.Lr   # rural cons inside city plus total rural cons in rural
 	m.C  = m.Cu + m.Cr + m.Ch
 end
 
