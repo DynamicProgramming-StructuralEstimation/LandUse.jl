@@ -12,9 +12,11 @@ mutable struct Param
 	# productivity setup
 	θagg  :: Vector{Float64} # aggregate productivity
 	θagg_g  :: Float64 # aggregate productivity growth factor
+	θu_g  :: Float64 # constant growth factors by sector
+	θr_g  :: Float64 # constant growth factors by sector
 	θut   :: Vector{Float64}  # idiosyncratic level of urban producitivity in each period
 	θrt   :: Vector{Float64}  # idiosyncratic level of rural producitivity in each period
-	θr    :: Float64 # current period rural sector TFP = θagg[t] * θut[t]
+	θr    :: Float64 # current period rural sector TFP = θagg[t] + θut[t]
 	θu    :: Float64 # current period urban sector TFP
 
 
@@ -63,22 +65,43 @@ mutable struct Param
 		this.t = 1
 		this.S = 1.0  # set default values for space and population
 		this.L = 1.0
-		this.θut = ones(T)
-		this.θrt = ones(T)
+		this.θut = originalθ
+		this.θrt = originalθ
+		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
 
 		# override parameters from dict par, if any
         if length(par) > 0
             for (k,v) in par
 				if hasfield(Param,k)
-                	setfield!(this,k,v)
+					if (k == :θut)
+						if length(v) > 1
+							setfield!(this,k,v)
+						else
+							this.θut = [this.θut[1] ; Float64[growθ(this.θut[1], [this.θu_g for i in 2:it]) for it in 2:T]]
+						end
+					elseif (k == :θrt)
+						if length(v) > 1
+							setfield!(this,k,v)
+						else
+							this.θrt = [this.θrt[1] ; Float64[growθ(this.θrt[1], [this.θr_g for i in 2:it]) for it in 2:T]]
+						end
+					else
+                		setfield!(this,k,v)
+					end
 				end
             end
         end
 		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
 
-		# set first period
-		this.θu = this.θagg[1] + this.θut[1]
-		this.θr = this.θagg[1] + this.θrt[1]
+		# need to compute theta series here, given inputs.
+		# if no inputs, construct default series.
+		# if growth rate given , construct from growth rate
+
+		# add agg and idiosyncratic productivity
+		this.θut = this.θagg .+ this.θut
+		this.θrt = this.θagg .+ this.θrt
+		this.θu = this.θut[1]
+		this.θr = this.θrt[1]
 
 		# set epsilon slope
 		if this.ϵs != this.ϵsmax
@@ -93,6 +116,10 @@ mutable struct Param
 
     	return this
 	end
+end
+function getgrowth(p::Param,s::Symbol,g::Float64)
+	x = getfield(p,s)
+	[x[1] ; Float64[growθ(x[1], [g for i in 2:it]) for it in 2:length(p.T)]]
 end
 
 function show(io::IO, ::MIME"text/plain", p::Param)

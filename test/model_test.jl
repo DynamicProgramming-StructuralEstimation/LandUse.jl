@@ -169,7 +169,7 @@
 		LandUse.Eqsys!(x_analytic,fm,p)
 		LandUse.Eqsys!(x_general,m,p)
 
-		@test norm(x_analytic .- x_general) < 1.e-11
+		@test norm(x_analytic .- x_general) < 1.e-9
 
 		l = rand()
 		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar))
@@ -193,7 +193,7 @@
 			@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(m,p) + p.sbar - m.pr * p.cbar) + m.pr * p.cbar ,  m.pr * LandUse.Yr(m,p) / p.L )
 
 			@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(m,p) + p.sbar - m.pr * p.cbar) + m.pr * p.cbar - m.pr * LandUse.Yr(m,p) / p.L , LandUse.Rmk(m,p), atol = 1e-10)
-			@test isapprox(LandUse.Rmk(m,p) , 0.0, atol = 1e-13)
+			@test isapprox(LandUse.Rmk(m,p) , 0.0, atol = 1e-10)
 
 			# try with different formulation of total rural demand:
 			# rural cons in city + rural cons for each rural worker == total rural good production
@@ -201,7 +201,7 @@
 		end
 
 		@testset "equation (26) special case" begin
-			@test isapprox( (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) - p.sbar + p.ϵr * m.r , (1 - m.iτ) * LandUse.Yu(m,p) / m.Lu, atol = 0.05)
+			@test isapprox( (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) + p.sbar - m.pr * p.cbar) - p.sbar + p.ϵr * m.r , (1 - m.iτ) * LandUse.Yu(m,p) / m.Lu, atol = 0.05)
 			# @test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (m.Lu - m.iτ) * m.wu0 / p.L
 			yy = fm.ρr / p.L + fm.wu0 * (1.0 - LandUse.τ(fm.ϕ,fm.ϕ,p) * fm.Lr / p.L)
 

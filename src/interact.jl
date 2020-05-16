@@ -7,22 +7,31 @@ function i22()
 	sbs = 0.0:0.05:0.5
 	cbs = 0.0:0.05:0.5
 	sis = 0.1:0.1:0.99
-	ags = 1.0:0.1:1.3
-	θus = 1.0:0.05:1.2
-	θrs = 1.0:0.05:1.2
+	# ags = 0.0:0.1:1.0
+	θus = 1.0:0.05:1.3
+	θrs = 1.0:0.05:1.3
 	p = Param()
-	@manipulate for sb in slider(sbs, label = "sbar", value = p.sbar),
+	@manipulate for θtype in Dict("Matlab θ" => 1, "Growth θ" => 2),
+		            sb in slider(sbs, label = "sbar", value = p.sbar),
 		            cb in slider(cbs, label = "cbar", value = p.cbar),
 		            sig in slider(sis, label = "σ", value = p.σ),
-		            agg in slider(ags, label = "agg_g", value = p.θagg_g),
-		            θut in slider(θus, label = "θu", value = 1.0),
-		            θrt in slider(θrs, label = "θr", value = 1.0)
-		θr = [θrt for i in p.T]
-		θu = [θut for i in p.T]
-	    x,M,p = run(Region,
+		            # agg in slider(ags, label = "agg_g", value = p.θagg_g),
+		            θug in slider(θus, label = "θu_g", value = p.θu_g),
+		            θrg in slider(θrs, label = "θr_g", value = p.θr_g)
+
+		if θtype == 1
+			x,M,p = run(Region,
+			             Param(par = Dict(:ϵs => 0.0, :ϵsmax => 0.0,
+						                  :sbar => sb, :cbar => cb, :σ => sig)))
+		else
+	    	x,M,p = run(Region,
 		             Param(par = Dict(:ϵs => 0.0, :ϵsmax => 0.0,
 					                  :sbar => sb, :cbar => cb, :σ => sig,
-									  :θagg_g => agg, :θut => θu, :θrt => θr)))
+									  :θut => [0.32], :θrt => [0.32], :θu_g => θug, :θr_g => θrg)))
+        end
+		@info "model done."
+		println()
+
 	    d = dataframe(M,p.T)
 	    df = @linq d |>
 	         select(:year,:Ch,:Cu,:Cr,:C ) |>
@@ -35,17 +44,31 @@ function i22()
 
 		ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
 		pl2 = @df ds2 plot(:year, :value, group = :variable,
-		                 linewidth = 2, title = "Population",
-						 ylims = (0.0,1.0))
+		                 linewidth = 2, title = "Population")
 	    d3  = @linq d |>
 		        select(:year,:θu, :θr) |>
 				transform(theta_u = :θu, theta_r = :θr) |>
 				select(:year,:theta_u, :theta_r)
+
+		# ds3 = stack(d3, Not(:year))
+	    # pl3 = @df ds3 plot(:year, :value, group = :variable,
+		# 			      linewidth = 2, title = "Consumption",
+		# 				  ylims = (0.0,3.5))
+
 	    ds3 = stack(d3, Not(:year))
 	    pl3 = @df ds3 plot(:year, :value, group = :variable,
 					      linewidth = 2, title = "Productivity",
 						  ylims = (0.0,3.5))
-		plot(pl,pl2,pl3, layout = (1,3),size = (700,250))
+	    ds4 = stack(select(d,:year,:ϕ), Not(:year))
+		pl4 = @df ds4 plot(:year, :value, group = :variable,
+		                 linewidth = 2, title = "city size",
+						 ylims = (0.0,0.1))
+	    # ds4 = stack(select(d,:year,:pr), Not(:year))
+	    ds4 = stack(select(d,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr), Not(:year))
+		pl5 = @df ds4 plot(:year, :value, group = :variable,
+		                 linewidth = 2, title = "densities")
+		# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
+		plot(pl,pl2,pl5,pl4, layout = (1,4),size = (900,250))
     end
 end
 

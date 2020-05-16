@@ -77,7 +77,7 @@
 		"symbol" : "\\mathcal{T}"
 	},
 	"θagg" : {
-		"value" : [0.32],
+		"value" : [0.0],
 		"description" : "Aggregate Series of Productivity",
 		"type" : "region",
 		"symbol" : "\\theta_t"
@@ -89,14 +89,26 @@
 		"symbol" : "g"
 	},
 	"θut" : {
-		"value" : [1.0],
+		"value" : [0.32],
 		"description" : "idiosyncratic urban Productivity by period",
 		"type" : "region",
 		"symbol" : "\\theta_{u,i,t}"
 	},
 	"θrt" : {
-		"value" : [1.0],
+		"value" : [0.32],
 		"description" : "idiosyncratic rural Productivity by period",
+		"type" : "region",
+		"symbol" : "\\theta_{r,i,t}"
+	},
+	"θu_g" : {
+		"value" : 1.15,
+		"description" : "urban Productivity growth by period",
+		"type" : "region",
+		"symbol" : "\\theta_{u,i,t}"
+	},
+	"θr_g" : {
+		"value" : 1.15,
+		"description" : "rural Productivity growth by period",
 		"type" : "region",
 		"symbol" : "\\theta_{r,i,t}"
 	},
