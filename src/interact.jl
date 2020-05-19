@@ -27,7 +27,7 @@ function i22()
 	    	x,M,p = run(Region,
 		             Param(par = Dict(:ϵs => 0.0, :ϵsmax => 0.0,
 					                  :sbar => sb, :cbar => cb, :σ => sig,
-									  :θut => [0.32], :θrt => [0.32], :θu_g => θug, :θr_g => θrg)))
+									  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg)))
         end
 		@info "model done."
 		println()
@@ -182,7 +182,7 @@ function interact1()
 
     # mp = @manipulate for θr in slider(θrs, label = "θr"), θu in slider(θus, label = "θu")
     mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
-		                 g in slider(g2, label = "growth2", value = 1.01)
+		                 g in slider(g2, label = "growth2", value = 1.0)
 		x = LandUse.issue12_1(e; gf = [1.0,g])
 		x[5]
     end
@@ -199,4 +199,19 @@ function interact2()
 		x = LandUse.issue12_1(e; gf = [1.0,g])
 		x[5]
     end
+end
+
+
+function i12()
+	g1 = 1.0:0.01:1.04
+	es = 1.0:0.5:10.0
+	mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
+		                 gs1 in slider(g1,label = "ug1"),
+		                 gs2 in slider(g1,label = "ug2"),
+		                 gs3 in slider(g1,label = "ug3")
+
+						 x = issue12(e;gr = 1.04, gu = [gs1,gs2,gs3], θu = [0.31,0.315,0.32])
+						 x[5]
+					 end
+
 end

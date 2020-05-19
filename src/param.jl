@@ -77,13 +77,13 @@ mutable struct Param
 						if length(v) > 1
 							setfield!(this,k,v)
 						else
-							this.θut = [this.θut[1] ; Float64[growθ(this.θut[1], [this.θu_g for i in 2:it]) for it in 2:T]]
+							this.θut = [v ; Float64[growθ(v, [this.θu_g for i in 2:it]) for it in 2:T]]
 						end
 					elseif (k == :θrt)
 						if length(v) > 1
 							setfield!(this,k,v)
 						else
-							this.θrt = [this.θrt[1] ; Float64[growθ(this.θrt[1], [this.θr_g for i in 2:it]) for it in 2:T]]
+							this.θrt = [v ; Float64[growθ(v, [this.θr_g for i in 2:it]) for it in 2:T]]
 						end
 					else
                 		setfield!(this,k,v)

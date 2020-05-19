@@ -163,53 +163,89 @@ function issue11(;istart = 8, istop = 12, discount::Float64 = 0.03)
     out1,out2
 end
 
+function issue12_gif(n)
+    us = range(1.01,1.04,length = n)
+    ϵs = round.(range(1.0,5,length=8),digits=1)
+    anim = Animation()
+    for ie in ϵs
+        x = issue12(ie,gu = us)
+        frame(anim, x[6])
+    end
+    g = gif(anim, joinpath(dbplots,"issue12-$n.gif"),fps=0.5)
+    g
+end
 
 
-function issue12(; gf = [1.0,1.02,1.04])
+function issue12(ϵ;gr = 1.04, gu = [1.019,1.02,1.03], θu = [0.31,0.315,0.32])
+    K = length(gu)
     cpar = Dict(:S => 1.0, :L => 1.0,
-                :K => 3,
-                :kshare => [1/3 for i in 1:3])
+                :K => K,
+                :kshare => [1/K for i in 1:K])
 
-    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θut => [gf[i] for ti in 1:14],:ϵr => 2.0) for i in 1:3)
+
+    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θagg => [0.32],
+                           :θrt => 0.32,:θut => θu[i], :θu_g => gu[i] ,
+                           :θr_g => gr , :ϵr => ϵ ,:ϵs => 0.0) for i in 1:K)
     sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
     pl = LandUse.plot_ts_all(C)
-    savefig(pl,joinpath(dbplots,"multi-3-TS.pdf"))
+    savefig(pl,joinpath(dbplots,"multi-$K-TS.pdf"))
 
     d = dataframe(C)
     d.lϕ = log.(d.ϕ)
     d.lu = log.(d.Lu)
-    dd = select(d, :year, :region, :lϕ, :lu)
-    pl2 = @df dd plot(:lϕ,:lu,group = :year,
-                    xlab = L"\log \phi",
-                    ylab = L"\log L_u",
+    gd = groupby(d,:year)
+    gd = combine(gd, AsTable([:lϕ, :lu]) => (x -> round.(diff(vcat(extrema(x.lϕ)...)) ./ diff(vcat(extrema(x.lu)...)),digits = 1)) => :slope)
+    d  = innerjoin(d,gd,on = :year)
+    transform!(d, AsTable([:year, :slope]) => (x -> string.(x.year) .* ": slope=" .* string.(x.slope) ) => :year_s)
+
+    cols = range(colorant"red",colorant"blue",length = length(pp[1].T))
+    dd = select(d, :year_s, :region, :lϕ, :lu)
+    pl2 = @df dd plot(:lu,:lϕ,group = :year_s,
+                    ylab = L"\log \phi",
+                    xlab = L"\log L_u",
                     marker = (:circle, 4),
-                    legend = :bottomright)
-    savefig(pl2,joinpath(dbplots,"multi-3-phi-Lu.pdf"))
+                    colour = cols',
+                    legend = :outertopright,
+                    ylims = (-3.8,-2.7),
+                    xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
+                    title = "epsilon = $ϵ")
+                    # title = latexstring("City size vs pop \$\\epsilon\$ = $ϵ"))
+    savefig(pl2,joinpath(dbplots,"multi-$K-phi-Lu.pdf"))
     sols,C,cpar,pp,pl,pl2
 end
 
-function issue12_1(ϵ; gf = [1.0,1.06])
-    cpar = Dict(:S => 1.0, :L => 1.0,
-                :K => 2,
-                :kshare => [1/2 for i in 1:2])
-
-    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θut => [gf[i] for ti in 1:14], :ϵr => ϵ) for i in 1:2)
-    sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
-    pl = LandUse.plot_ts_all(C)
-    savefig(pl,joinpath(dbplots,"multi-2-TS.pdf"))
-
-    d = dataframe(C)
-    d.lϕ = log.(d.ϕ)
-    d.lu = log.(d.Lu)
-    dd = select(d, :year, :region, :lϕ, :lu)
-    pl2 = @df dd plot(:lϕ,:lu,group = :year,
-                    xlab = L"\log \phi",
-                    ylab = L"\log L_u",
-                    marker = (:circle, 4),
-                    legend = :bottomright)
-    savefig(pl2,joinpath(dbplots,"multi-2-phi-Lu.pdf"))
-    sols,C,cpar,pp,pl,pl2
-end
+# function issue12_1(ϵ; gu = [1.06,1.05], gr = 1.06)
+#     cpar = Dict(:S => 1.0, :L => 1.0,
+#                 :K => 2,
+#                 :kshare => [1/2 for i in 1:2])
+#
+#     ppar = Dict(i => Dict(:ϵsmax => 0.0,:θagg => [0.32],
+#                            :θrt => [0.32],:θut => [0.32], :θu_g => gu[i] ,
+#                            :θr_g => gr , :ϵr => ϵ ,:ϵs => 0.0)
+#                            for i in 1:2)
+#     sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
+#     pl = LandUse.plot_ts_all(C)
+#     savefig(pl,joinpath(dbplots,"multi-2-TS.pdf"))
+#
+#     d = dataframe(C)
+#     d.lϕ = log.(d.ϕ)
+#     d.lu = log.(d.Lu)
+#     gd = groupby(d,:year)
+#     gd = combine(gd, AsTable([:lϕ, :lu]) => (x -> round.(diff(vcat(extrema(x.lu)...)) ./ diff(vcat(extrema(x.lϕ)...)),digits = 1)) => :slope)
+#     d  = innerjoin(d,gd,on = :year)
+#     transform!(d, AsTable([:year, :slope]) => (x -> string.(x.year) .* ": slope=" .* string.(x.slope) ) => :year_s)
+#
+#     cols = range(colorant"red",colorant"blue",length = length(pp[1].T))
+#     dd = select(d, :year_s, :region, :lϕ, :lu)
+#     pl2 = @df dd plot(:lϕ,:lu,group = :year_s,
+#                     xlab = L"\log \phi",
+#                     ylab = L"\log L_u",
+#                     marker = (:circle, 4),
+#                     colour = cols',
+#                     legend = :topleft)
+#     savefig(pl2,joinpath(dbplots,"multi-2-phi-Lu.pdf"))
+#     sols,C,cpar,pp,pl,pl2
+# end
 
 """
 https://github.com/floswald/LandUse.jl/issues/22

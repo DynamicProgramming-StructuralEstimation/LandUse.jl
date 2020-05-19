@@ -48,8 +48,10 @@ function plot_ts_all(C::Vector{Country})
 	s = stack(df, Not([:year, :region]))
 	# sims = [(:Lr,:Lu); (:Sr, :ϕ, :Srh); (:qr, :r); (:wr , :wu0)]
 	# sims = [[:Lu], [:ϕ], [:pop], [:ρ0], [:q0], [:Srh]]
-	sims = [:Lu, :ϕ, :pop, :ρ0, :q0, :Srh, :Sr, :Hr]
+	# sims = ["Lu", "ϕ", "pop", "ρ0", "q0","Srh", "Sr", "Hr"]
+	sims = ["Lu", "ϕ", "pop"]
 	titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Central Land values"; "Central House prices"; "Rural Housing (Srh)"; "Rural Land (Sr)"; "r Housing supply"]
+	titles = ["Urban Labor"; "Urban Size"; "Total pop"]
 
 	plts = Any[]
 	for i in 1:length(sims)
@@ -65,7 +67,7 @@ function plot_ts_all(C::Vector{Country})
 
 	end
 	# push!(plts,plot())  # fill up with empty
-	plot(plts...,layout = (2,4))
+	plot(plts...,layout = (1,3), size = (600,250))
 
 
 end

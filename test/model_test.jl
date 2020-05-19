@@ -74,7 +74,7 @@
 		p = LandUse.Param(par = Dict(:ϵsmax => 10.0))
 		@test p.ϵs == 10.0
 
-		p = LandUse.Param(par = Dict(:ϵs => 10.0))
+		p = LandUse.Param(par = Dict(:ϵs => 10.0,:ϵsmax => 10.0))
 		@test p.ϵs == 10.0
 
 		s = LandUse.get_starts(p)
