@@ -588,8 +588,8 @@ end
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
 "commuting cost"
-τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
-# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * (x) * θu^(-p.ζ)
+# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
+τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * (x) * θu^(-p.ζ)
 # why is it that with θu growth (no θr growth), sbar = 0, ϕ is constant, Lu constant.
 # why happens in the monocentric model as income goes up? bid-rent does not change?
 
