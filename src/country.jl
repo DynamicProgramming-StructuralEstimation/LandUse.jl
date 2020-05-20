@@ -119,7 +119,7 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 
 
 		# 1. set ϕ for each region
-		c.R[ik].ϕ  = invτ(c.wr / p[ik].θu,p[ik])
+		c.R[ik].ϕ  = getfringe(c.wr / p[ik].θu,p[ik])
 		# 2. compute city size equation
 		c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes
 		# c.R[ik].Lu   = (c.R[ik].ϕ/2) * sum(c.R[ik].iweights[i] * D2(c.R[ik].nodes[i],p[ik],c.R[ik]) for i in 1:p[ik].int_nodes)[1]

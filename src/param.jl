@@ -37,6 +37,7 @@ mutable struct Param
 	int_nodes :: Int  # number of integration nodes
 	S     :: Float64  # area of region
 	ρrbar :: Float64  # fixed rural land value for urban model
+	ζ     :: Float64  # power of productivity in commuting cost
 
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))

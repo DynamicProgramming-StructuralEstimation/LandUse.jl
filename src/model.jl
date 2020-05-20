@@ -156,7 +156,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
 	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = 0.059
-	m.ϕ    = invτ(m.wr / p.θu,p)
+	m.ϕ    = getfringe(m.wr / p.θu,p)
 
 	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
@@ -356,7 +356,7 @@ function update!(m::Urban,p::Param,x::Vector{Float64})
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
 	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
-	m.ϕ    = invτ(m.wr / p.θu,p)
+	m.ϕ    = getfringe(m.wr / p.θu,p)
 
 	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
@@ -493,7 +493,7 @@ function update!(m::FModel,p::Param,x::Vector{Float64})
 	# m.wr   = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2
 	# m.ρr   = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
 	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
-	m.ϕ = invτ(m.wr / p.θu,p)
+	m.ϕ = getfringe(m.wr / p.θu,p)
 
 	m.xsr  = m.wr + m.r - m.pr * p.cbar + p.sbar
 	# m.xsu = m.wu0 + m.r - m.pr * p.cbar - p.sbar
@@ -588,8 +588,9 @@ end
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
 "commuting cost"
-# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
-τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * (x) * θu^(-p.ζ)
+τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
+invτ(x::Float64,ϕ::Float64,p::Param) = x / p.τ
+# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * (x) * p.θu^(-p.ζ)
 # why is it that with θu growth (no θr growth), sbar = 0, ϕ is constant, Lu constant.
 # why happens in the monocentric model as income goes up? bid-rent does not change?
 
@@ -598,8 +599,20 @@ end
 # become more expensive to offset higher wages as residents need to retain the same level
 # of utility as elsewhere in the economy and this is attained through a population increase in the city.
 
-"inverse of commuting cost function"
-invτ(x::Float64,p::Param) = (x > 1.0) ? 0.0 : (1.0 - x) / p.τ
+"""
+Get Fringe from indifference condition
+
+At the fringe ``\\phi`` we have the condition
+
+```math
+w(0)(1 - \\tau(\\phi)) = w_r
+```
+
+which can be inverted to obtain a map from ``\\frac{w_r}{\\theta_u}`` to ``\\phi``.
+
+The function takes ``\\frac{w_r}{\\theta_u}`` as argument `x`.
+"""
+getfringe(x::Float64,p::Param) = (x > 1.0) ? 0.0 : invτ((1.0 - x))
 
 "urban wage at location ``l``"
 wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) * (1.0 .- τ(l,ϕ,p))
