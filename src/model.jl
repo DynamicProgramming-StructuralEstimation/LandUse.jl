@@ -589,6 +589,14 @@ end
 
 "commuting cost"
 τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
+# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * (x) * θu^(-p.ζ)
+# why is it that with θu growth (no θr growth), sbar = 0, ϕ is constant, Lu constant.
+# why happens in the monocentric model as income goes up? bid-rent does not change?
+
+# An increase in the wage in a city increases house
+# prices everywhere in the city: equation (7) immediately implies dP(x) > 0. Housing needs to
+# become more expensive to offset higher wages as residents need to retain the same level
+# of utility as elsewhere in the economy and this is attained through a population increase in the city.
 
 "inverse of commuting cost function"
 invτ(x::Float64,p::Param) = (x > 1.0) ? 0.0 : (1.0 - x) / p.τ

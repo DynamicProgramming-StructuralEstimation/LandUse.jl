@@ -10,6 +10,8 @@ function i22()
 	# ags = 0.0:0.1:1.0
 	θus = 1.0:0.05:1.3
 	θrs = 1.0:0.05:1.3
+	esl = 1.0:10:100.0
+
 	p = Param()
 	@manipulate for θtype in Dict("Matlab θ" => 1, "Growth θ" => 2),
 		            sb in slider(sbs, label = "sbar", value = p.sbar),
@@ -17,15 +19,16 @@ function i22()
 		            sig in slider(sis, label = "σ", value = p.σ),
 		            # agg in slider(ags, label = "agg_g", value = p.θagg_g),
 		            θug in slider(θus, label = "θu_g", value = p.θu_g),
+		            esl in slider(esl, label = "ϵ-slope", value = 10.0),
 		            θrg in slider(θrs, label = "θr_g", value = p.θr_g)
 
 		if θtype == 1
 			x,M,p = run(Region,
-			             Param(par = Dict(:ϵs => 0.0, :ϵsmax => 0.0,
+			             Param(par = Dict(:ϵs => 0.0, :ϵsmax => esl,
 						                  :sbar => sb, :cbar => cb, :σ => sig)))
 		else
 	    	x,M,p = run(Region,
-		             Param(par = Dict(:ϵs => 0.0, :ϵsmax => 0.0,
+		             Param(par = Dict(:ϵs => 0.0, :ϵsmax => esl,
 					                  :sbar => sb, :cbar => cb, :σ => sig,
 									  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg)))
         end
@@ -203,15 +206,25 @@ end
 
 
 function i12()
-	g1 = 1.0:0.01:1.04
+	g1 = 1.0:0.005:1.04
+	esl = 1.0:20:400.0
 	es = 1.0:0.5:10.0
+	esm = 1.0:0.5:10.0
 	mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
+		                 esl in slider(esl,label = "eslope"),
+		                 gr in slider(g1,label = "gr"),
 		                 gs1 in slider(g1,label = "ug1"),
 		                 gs2 in slider(g1,label = "ug2"),
-		                 gs3 in slider(g1,label = "ug3")
+		                 gs3 in slider(g1,label = "ug3"),
+		                 gagg in slider(g1,label = "agg"),
+						 type in Dict("TS" => 1, "phi vs Lu" => 2)
 
-						 x = issue12(e;gr = 1.04, gu = [gs1,gs2,gs3], θu = [0.31,0.315,0.32])
-						 x[5]
+						 x = issue12(e;gr = gr, gu = [gs1,gs2,gs3], θu = [0.11,0.32,0.35],θagg_g = gagg, ϵsmax = esl)
+						 if type == 1
+						 	x[5]
+						else
+							x[6]
+						end
 					 end
 
 end

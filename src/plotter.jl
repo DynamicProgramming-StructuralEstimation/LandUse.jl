@@ -60,14 +60,15 @@ function plot_ts_all(C::Vector{Country})
 			px = @df x plot(:year, :value, group = :region,
 							title = titles[i],
 							titlefontsize=10,
-							legend = :topleft,
+							legend = i == 1 ? true : false,
 							linewidth=2,marker = (:circle,3),
 							legendfontsize = 5)
 			push!(plts, px)
 
 	end
 	# push!(plts,plot())  # fill up with empty
-	plot(plts...,layout = (1,3), size = (600,250))
+	# push!(plts, scatter((1:3)', xlim = (4,5), legend = true, framestyle = :none, labels = ["1" "2" "3"]))
+	plot(plts...,layout = (1,3), size = (600,200))
 
 
 end

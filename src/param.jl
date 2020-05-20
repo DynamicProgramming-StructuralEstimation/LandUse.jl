@@ -199,14 +199,14 @@ end
 
 
 
-function plot_ϵfun(;ϕ = 0.7,ϵtarget = 4)
-	p = Param()
+function plot_ϵfun(ϵsmax;ϕ = 0.7,ϵtarget = 4)
+	p = Param(par = Dict(:ϵsmax => ϵsmax))
 	xr = range(0.0,stop = 1.0,length=200)
-	sr = 0.0:0.1:p.ϵsmax
+	sr = range(0.0,p.ϵsmax,length = 10)
 	# y = [(d,s) -> ϵfun(d,ϕ,p) for d in xr, s in sr]
 	y = [ϵfun_tmp(d,s,ϕ,p) for d in xr, s in sr]
 
-	p = plot(xr,y, labels=reshape(["s=$i" for i in sr],1,11),title = L"\epsilon(\phi) \exp(-s (\phi - d))", xlabel = "distance to center", ylabel = "Elasticity")
+	p = plot(xr,y, labels=reshape(["s=$i" for i in sr],1,length(sr)),title = L"\epsilon(\phi) \exp(-s (\phi - d))", xlabel = "distance to center", ylabel = "Elasticity")
 	vline!(p,[ϕ], color = :red, label = "")
 	savefig(p, joinpath(@__FILE__,"..","..","images","epsfun.pdf"))
 	p
