@@ -19,11 +19,14 @@ mutable struct Param
 	θr    :: Float64 # current period rural sector TFP = θagg[t] + θut[t]
 	θu    :: Float64 # current period urban sector TFP
 
-
+	# commuting cost setup
+	τ0_g     :: Float64 # growth in commuting cost intercept
+	τ0t     :: Vector{Float64} # time varying values of τ0
+	τ      :: Float64 # current value of τ0
+	τ1     :: Float64 # commuting cost power of distance : total cost is τ0 * d^τ1
 
 	α     :: Float64 # labor weight on farm sector production function
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
-	τ     :: Float64 # commuting cost parameter
 	χr    :: Float64 # "easiness" to convert land into housing in rural sector
 	# χu    :: Float64 # "easiness" to convert land into housing in center of urban sector
 	L     :: Float64 # total population
@@ -86,12 +89,25 @@ mutable struct Param
 						else
 							this.θrt = [v ; Float64[growθ(v, [this.θr_g for i in 2:it]) for it in 2:T]]
 						end
+					elseif (k == :τ0t)
+						if length(v) > 1
+							setfield!(this,k,v)
+						else
+							this.τ0t = [v ; Float64[growθ(v, [this.τ0_g for i in 2:it]) for it in 2:T]]
+						end
 					else
                 		setfield!(this,k,v)
 					end
 				end
             end
-        end
+			if (:τ0t ∉ collect(keys(par)))
+				this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
+			end
+        else
+			this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
+		end
+
+		# if some fields have not been specified, compute growth rates from detaults
 		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
 
 		# need to compute theta series here, given inputs.
@@ -103,6 +119,7 @@ mutable struct Param
 		this.θrt = this.θagg .+ this.θrt
 		this.θu = this.θut[1]
 		this.θr = this.θrt[1]
+		this.τ  = this.τ0t[1]
 
 		# set epsilon slope
 		if this.ϵs != this.ϵsmax
@@ -165,6 +182,7 @@ end
 function setperiod!(p::Param,i::Int)
 	setfield!(p, :θr, p.θagg[i] + p.θrt[i])   # this will be constant across region.
 	setfield!(p, :θu, p.θagg[i] + p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
+	setfield!(p, :τ, p.τ0t[i])
 
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
 	# setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.

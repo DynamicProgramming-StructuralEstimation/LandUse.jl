@@ -64,11 +64,23 @@
 		"type" : "region",
 		"symbol" : "\\Psi"
 	},
-	"τ" : {
-		"value" : 7.0,
-		"description" : "Commuting Costs",
+	"τ0_g" : {
+		"value" : 1.0,
+		"description" : "Growth Commuting Costs Intercept",
 		"type" : "region",
-		"symbol" : "\\tau(l)"
+		"symbol" : "g\\tau_0"
+	},
+	"τ0t" : {
+		"value" : [7.0],
+		"description" : "Commuting Costs Intercept Series",
+		"type" : "region",
+		"symbol" : "\\tau_{0,t}"
+	},
+	"τ1" : {
+		"value" : 1.0,
+		"description" : "Exponent in Commuting Costs",
+		"type" : "region",
+		"symbol" : "\\tau_1"
 	},
 	"T" : {
 		"value" : [1855,15,2050],
@@ -177,5 +189,11 @@
 		"description" : "fixed land value for urban model",
 		"type" : "region",
 		"symbol" : "\\bar{\\rho_r}"
+	},
+	"ζ" : {
+		"value" : 0.1,
+		"description" : "power of productivity in commuting cost",
+		"type" : "region",
+		"symbol" : "\\zeta"
 	}
 }

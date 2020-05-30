@@ -177,7 +177,7 @@ end
 
 
 function issue12(ϵ;gr = 1.04, gu = [1.019,1.019,1.02], θu = [0.31,0.315,0.32], save = false,
-                  θagg_g = 1.2, ϵsmax = 0.0)
+                  θagg_g = 1.2, ϵsmax = 0.0, zeta = 0.0)
     K = length(gu)
     cpar = Dict(:S => 1.0, :L => 1.0,
                 :K => K,
@@ -187,7 +187,7 @@ function issue12(ϵ;gr = 1.04, gu = [1.019,1.019,1.02], θu = [0.31,0.315,0.32],
     ppar = Dict(i => Dict(:ϵsmax => 0.0, :θagg => [0.32],
                            :θrt => 0.32,:θut => θu[i], :θu_g => gu[i] ,
                            :θr_g => gr , :ϵr => ϵ ,:ϵs => 0.0, :θagg_g => θagg_g,
-                           :ϵsmax =>  ϵsmax) for i in 1:K)
+                           :ϵsmax =>  ϵsmax, :ζ => zeta) for i in 1:K)
     sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
     pl = LandUse.plot_ts_all(C)
     if save savefig(pl,joinpath(dbplots,"multi-$K-TS.pdf")) end
@@ -208,8 +208,8 @@ function issue12(ϵ;gr = 1.04, gu = [1.019,1.019,1.02], θu = [0.31,0.315,0.32],
                     marker = (:circle, 4),
                     colour = cols',
                     legend = :outertopright,
-                    ylims = (-3.8,-2.7),
-                    xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
+                    # ylims = (-3.8,-2.7),
+                    # xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
                     title = "epsilon = $ϵ")
                     # title = latexstring("City size vs pop \$\\epsilon\$ = $ϵ"))
     if save savefig(pl2,joinpath(dbplots,"multi-$K-phi-Lu.pdf")) end

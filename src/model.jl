@@ -588,9 +588,12 @@ end
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
 "commuting cost"
-τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
-invτ(x::Float64,ϕ::Float64,p::Param) = x / p.τ
-# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * (x) * p.θu^(-p.ζ)
+# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
+
+"inverse commuting cost. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
+invτ(x::Float64,p::Param) = ( x / (p.τ) )^(1/p.τ1)
+
+τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * (x)^p.τ1 
 # why is it that with θu growth (no θr growth), sbar = 0, ϕ is constant, Lu constant.
 # why happens in the monocentric model as income goes up? bid-rent does not change?
 
@@ -612,7 +615,7 @@ which can be inverted to obtain a map from ``\\frac{w_r}{\\theta_u}`` to ``\\phi
 
 The function takes ``\\frac{w_r}{\\theta_u}`` as argument `x`.
 """
-getfringe(x::Float64,p::Param) = (x > 1.0) ? 0.0 : invτ((1.0 - x))
+getfringe(x::Float64,p::Param) = (x > 1.0) ? 0.0 : invτ(1.0 - x,p)
 
 "urban wage at location ``l``"
 wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) * (1.0 .- τ(l,ϕ,p))

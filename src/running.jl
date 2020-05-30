@@ -21,6 +21,7 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 		# println("period $it")
 		setperiod!(p, it)   # set period on param to it
 		m0 = T(p)
+		println("tau = $(p.τ)")
 
 		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
 			                     sols[it],iterations = 10000)
