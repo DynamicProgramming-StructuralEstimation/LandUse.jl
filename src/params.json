@@ -64,21 +64,15 @@
 		"type" : "region",
 		"symbol" : "\\Psi"
 	},
-	"τ0_g" : {
-		"value" : 1.0,
-		"description" : "Growth Commuting Costs Intercept",
+	"τ" : {
+		"value" : 7.0,
+		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
-		"symbol" : "g\\tau_0"
-	},
-	"τ0t" : {
-		"value" : [7.0],
-		"description" : "Commuting Costs Intercept Series",
-		"type" : "region",
-		"symbol" : "\\tau_{0,t}"
+		"symbol" : "\\tau"
 	},
 	"τ1" : {
 		"value" : 1.0,
-		"description" : "Exponent in Commuting Costs",
+		"description" : "Exponent on Distance in Commuting Costs",
 		"type" : "region",
 		"symbol" : "\\tau_1"
 	},
@@ -191,7 +185,7 @@
 		"symbol" : "\\bar{\\rho_r}"
 	},
 	"ζ" : {
-		"value" : 0.1,
+		"value" : 1.0,
 		"description" : "power of productivity in commuting cost",
 		"type" : "region",
 		"symbol" : "\\zeta"

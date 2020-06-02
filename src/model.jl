@@ -412,10 +412,10 @@ end
 # τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * x
 
 "inverse commuting cost. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
-invτ(x::Float64,p::Param) = ( x / (p.τ) )^(1/p.τ1)
+invτ(x::Float64,p::Param) = ( x^(p.ζ) / (p.τ) )^(1/p.τ1)
 
-τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * (x)^p.τ1  
-# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.θu^(-p.ζ) * p.τ * (x)^p.τ1
+# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * (x)^p.τ1
+τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.θu^(-p.ζ) * p.τ * (x)^p.τ1
 # ζ ∈ (0,1), p.τ1 ∈ (1-ζ+number,1), number > 0
 # as η_l -> 0, number = 0
 # as η_l -> 1, number = ζ

@@ -20,10 +20,12 @@ mutable struct Param
 	θu    :: Float64 # current period urban sector TFP
 
 	# commuting cost setup
-	τ0_g     :: Float64 # growth in commuting cost intercept
-	τ0t     :: Vector{Float64} # time varying values of τ0
-	τ      :: Float64 # current value of τ0
-	τ1     :: Float64 # commuting cost power of distance : total cost is τ0 * d^τ1
+	# τ0_g   :: Float64 # growth in commuting cost intercept
+	# τ0t    :: Vector{Float64} # time varying values of τ0
+	τ      :: Float64 # current value of τ
+	τ1     :: Float64 # power on distance
+	ζ      :: Float64  # power on productivity
+
 
 	α     :: Float64 # labor weight on farm sector production function
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
@@ -40,7 +42,6 @@ mutable struct Param
 	int_nodes :: Int  # number of integration nodes
 	S     :: Float64  # area of region
 	ρrbar :: Float64  # fixed rural land value for urban model
-	ζ     :: Float64  # power of productivity in commuting cost
 
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
@@ -89,22 +90,22 @@ mutable struct Param
 						else
 							this.θrt = [v ; Float64[growθ(v, [this.θr_g for i in 2:it]) for it in 2:T]]
 						end
-					elseif (k == :τ0t)
-						if length(v) > 1
-							setfield!(this,k,v)
-						else
-							this.τ0t = [v ; Float64[growθ(v, [this.τ0_g for i in 2:it]) for it in 2:T]]
-						end
+					# elseif (k == :τ0t)
+					# 	if length(v) > 1
+					# 		setfield!(this,k,v)
+					# 	else
+					# 		this.τ0t = [v ; Float64[growθ(v, [this.τ0_g for i in 2:it]) for it in 2:T]]
+					# 	end
 					else
                 		setfield!(this,k,v)
 					end
 				end
             end
-			if (:τ0t ∉ collect(keys(par)))
-				this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
-			end
+			# if (:τ0t ∉ collect(keys(par)))
+			# 	this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
+			# end
         else
-			this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
+			# this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
 		end
 
 		# if some fields have not been specified, compute growth rates from detaults
@@ -119,7 +120,7 @@ mutable struct Param
 		this.θrt = this.θagg .+ this.θrt
 		this.θu = this.θut[1]
 		this.θr = this.θrt[1]
-		this.τ  = this.τ0t[1]
+		# this.τ  = this.τ0t[1]
 
 		# set epsilon slope
 		if this.ϵs != this.ϵsmax
@@ -130,6 +131,9 @@ mutable struct Param
         if this.η != 0
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
         end
+
+		if this.τ1 > 1.0 || this.τ1 < 0.0 error("τ1 ∈ (0,1) violated") end
+		if this.ζ > 1.0 || this.ζ < 0.0 error("ζ ∈ (0,1) violated") end
 
 
     	return this
@@ -182,7 +186,7 @@ end
 function setperiod!(p::Param,i::Int)
 	setfield!(p, :θr, p.θagg[i] + p.θrt[i])   # this will be constant across region.
 	setfield!(p, :θu, p.θagg[i] + p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
-	setfield!(p, :τ, p.τ0t[i])
+	# setfield!(p, :τ, p.τ0t[i])
 
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
 	# setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.
