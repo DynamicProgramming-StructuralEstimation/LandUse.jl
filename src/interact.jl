@@ -13,32 +13,32 @@ function i22()
 	esl = 0.0:10:100.0
 	eps = 0.0:0.1:6.0
 	taus = 0.5:0.1:1.5
-	zetas = 0.0:0.1:3.3
+	as = 0.2:0.1:0.99
 
 
 	p = Param()
 	@manipulate for θtype in Dict("Matlab θ" => 1, "Growth θ" => 2),
-		            sb in slider(sbs, label = "sbar", value = p.sbar),
+		            sb in slider(sbs, label = "sbar", value = 0.05),
 		            cb in slider(cbs, label = "cbar", value = p.cbar),
 		            sig in slider(sis, label = "σ", value = p.σ),
 		            # agg in slider(ags, label = "agg_g", value = p.θagg_g),
 		            θug in slider(θus, label = "θu_g", value = p.θu_g),
-		            esl in slider(esl, label = "ϵ-slope", value = 10.0),
+		            esl in slider(esl, label = "ϵ-slope", value = 0.0),
 		            epl in slider(eps, label = "ϵ", value = 3.0),
 		            θrg in slider(θrs, label = "θr_g", value = p.θr_g),
-		            tau in slider(taus, label = "τ1", value = p.τ1),
-					z in slider(zetas,label = "ζ", value = 0.0)
+		            tau2 in slider(taus, label = "τ1", value = 1.0),
+		            tau in slider(taus, label = "τ0_g", value = 1.0)
 
 
 		if θtype == 1
 			x,M,p = run(Region,
-			             Param(par = Dict(:τ1 => tau,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
-						                  :sbar => sb, :cbar => cb, :σ => sig, :ζ => z)))
+			             Param(par = Dict(:τ0_g => tau,:τ1 => tau2,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
+						                  :sbar => sb, :cbar => cb, :σ => sig)))
 		else
 	    	x,M,p = run(Region,
-		             Param(par = Dict(:τ1 => tau,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
+		             Param(par = Dict(:τ0_g => tau,:τ1 => tau2,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
 					                  :sbar => sb, :cbar => cb, :σ => sig,
-									  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg, :ζ => z)))
+									  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg)))
         end
 		@info "model done."
 		println()
@@ -55,7 +55,8 @@ function i22()
 
 		ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
 		pl2 = @df ds2 plot(:year, :value, group = :variable,
-		                 linewidth = 2, title = "Population")
+		                 linewidth = 2, title = "Population",
+						 ylims = (0,1))
 	    d3  = @linq d |>
 		        select(:year,:θu, :θr) |>
 				transform(theta_u = :θu, theta_r = :θr) |>
@@ -73,10 +74,13 @@ function i22()
 	    ds4 = stack(select(d,:year,:ϕ), Not(:year))
 		pl4 = @df ds4 plot(:year, :value, group = :variable,
 		                 linewidth = 2, title = "city size",
-						 ylims = (0.0,0.1))
+						 ylims = (0.0,0.3),
+						 leg = false)
 	    # ds4 = stack(select(d,:year,:pr), Not(:year))
 		df4 = @linq d |>
-			transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ) ./ :pr)
+			# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
+			transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) )
+			# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
 
 	    ds4 = stack(select(df4,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr, :avgd), Not(:year))
 	    ds5 = stack(select(df4,:year,:avgd), Not(:year))
@@ -87,7 +91,7 @@ function i22()
 		pl6 = @df ds5 plot(:year, :value, group = :variable,
 		                 linewidth = 2, title = "densities")
 		 pl7 = @df ds6 plot(:year, :value, group = :variable,
-						  linewidth = 2, title = "tauphi")
+						  linewidth = 2, title = "1 - tau(phi)",leg = false)
 		# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
 		# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
 		plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))

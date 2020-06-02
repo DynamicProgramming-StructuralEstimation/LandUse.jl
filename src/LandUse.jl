@@ -35,6 +35,7 @@ module LandUse
 	# our code
 	include("param.jl")
 	include("model.jl")
+	include("urban.jl")
 	include("country.jl")
 	include("startvals.jl")
 	include("running.jl")
