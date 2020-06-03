@@ -71,7 +71,7 @@
 		"symbol" : "\\tau"
 	},
 	"τ1" : {
-		"value" : 1.0,
+		"value" : 0.7,
 		"description" : "Exponent on Distance in Commuting Costs",
 		"type" : "region",
 		"symbol" : "\\tau_1"
@@ -185,7 +185,7 @@
 		"symbol" : "\\bar{\\rho_r}"
 	},
 	"ζ" : {
-		"value" : 1.0,
+		"value" : 0.0,
 		"description" : "power of productivity in commuting cost",
 		"type" : "region",
 		"symbol" : "\\zeta"

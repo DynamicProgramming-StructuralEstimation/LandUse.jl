@@ -12,8 +12,8 @@ function i22()
 	θrs = 1.0:0.05:1.3
 	esl = 0.0:10:100.0
 	eps = 0.0:0.1:6.0
-	taus = 0.5:0.1:1.5
-	as = 0.2:0.1:0.99
+	t1s = 0.1:0.05:0.99
+	zetas = 0.1:0.05:0.99
 
 
 	p = Param()
@@ -26,17 +26,17 @@ function i22()
 		            esl in slider(esl, label = "ϵ-slope", value = 0.0),
 		            epl in slider(eps, label = "ϵ", value = 3.0),
 		            θrg in slider(θrs, label = "θr_g", value = p.θr_g),
-		            tau2 in slider(taus, label = "τ1", value = 1.0),
-		            tau in slider(taus, label = "τ0_g", value = 1.0)
+		            t1 in slider(t1s, label = "τ1", value = 0.99),
+		            zeta in slider(zetas, label = "ζ", value = 0.35)
 
 
 		if θtype == 1
 			x,M,p = run(Region,
-			             Param(par = Dict(:τ0_g => tau,:τ1 => tau2,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
+			             Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
 						                  :sbar => sb, :cbar => cb, :σ => sig)))
 		else
 	    	x,M,p = run(Region,
-		             Param(par = Dict(:τ0_g => tau,:τ1 => tau2,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
+		             Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
 					                  :sbar => sb, :cbar => cb, :σ => sig,
 									  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg)))
         end
