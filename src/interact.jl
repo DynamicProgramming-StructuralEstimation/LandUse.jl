@@ -1,5 +1,149 @@
 
 
+
+
+function plot_i22(M,p::Param)
+	d = dataframe(M,p.T)
+	df = @linq d |>
+		 select(:year,:Ch,:Cu,:Cr,:C ) |>
+		 transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
+		 select(:year, :h, :u , :r)
+	ds = stack(df, Not(:year))
+	pl = @df ds plot(:year,:value, group = :variable,
+			   linewidth = 2, title = "Spending Shares",
+			   ylims = (0.0,0.85))
+
+	ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
+	pl2 = @df ds2 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "Population",
+					 ylims = (0,1))
+	d3  = @linq d |>
+			select(:year,:θu, :θr) |>
+			transform(theta_u = :θu, theta_r = :θr) |>
+			select(:year,:theta_u, :theta_r)
+
+	# ds3 = stack(d3, Not(:year))
+	# pl3 = @df ds3 plot(:year, :value, group = :variable,
+	# 			      linewidth = 2, title = "Consumption",
+	# 				  ylims = (0.0,3.5))
+
+	ds3 = stack(d3, Not(:year))
+	pl3 = @df ds3 plot(:year, :value, group = :variable,
+					  linewidth = 2, title = "Productivity",
+					  ylims = (0.0,3.5))
+	ds4 = stack(select(d,:year,:ϕ), Not(:year))
+	pl4 = @df ds4 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "city size",
+					 ylims = (0.0,0.3),
+					 leg = false)
+	# ds4 = stack(select(d,:year,:pr), Not(:year))
+	df4 = @linq d |>
+		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
+		transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) )
+		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
+
+	ds4 = stack(select(df4,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr, :avgd), Not(:year))
+	ds5 = stack(select(df4,:year,:avgd), Not(:year))
+	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
+	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
+	pl5 = @df ds4 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "densities")
+	pl6 = @df ds5 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "densities")
+	 pl7 = @df ds6 plot(:year, :value, group = :variable,
+					  linewidth = 2, title = "1 - tau(phi)",leg = false)
+	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
+	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
+	plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
+end
+
+
+
+function works()
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.99, :ζ => 0.1)))
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.99, :ζ => 0.2)))
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.99, :ζ => 0.3)))
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.99, :ζ => 0.4)))
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.98, :ζ => 0.5)))
+
+
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.4, :ζ => 0.2)))
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.5, :ζ => 0.2)))
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.6, :ζ => 0.2)))
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.7, :ζ => 0.2)))
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.8, :ζ => 0.2)))
+
+
+	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.9, :ζ => 0.3)))
+end
+
+function iccost()
+	sbs = 0.0:0.05:0.5
+	cbs = 0.0:0.05:0.5
+	sis = 0.1:0.1:0.99
+	θus = 1.0:0.05:1.3
+	θrs = 1.0:0.05:1.3
+	esl = 0.0:10:100.0
+	eps = 0.0:0.1:6.0
+	t1s = 0.4:0.1:0.8
+	zetas = 0.1:0.1:0.4
+
+	p = Param()
+	@manipulate for vartype in Dict("ζ" => 1, "τ1" => 2),
+					# sb in slider(sbs, label = "sbar", value = p.sbar),
+					# cb in slider(cbs, label = "cbar", value = p.cbar),
+					# sig in slider(sis, label = "σ", value = p.σ),
+					# # agg in slider(ags, label = "agg_g", value = p.θagg_g),
+					# θug in slider(θus, label = "θu_g", value = p.θu_g),
+					# esl in slider(esl, label = "ϵ-slope", value = p.ϵsmax),
+					# epl in slider(eps, label = "ϵ", value = p.ϵr),
+					# θrg in slider(θrs, label = "θr_g", value = p.θr_g),
+					t1 in slider(t1s, label = "τ1", value = 0.4),
+					# t1 in slider(range(0.99,0.99,length = 1)),
+					zeta in slider(zetas, label = "ζ", value = p.ζ)
+					# zeta in slider(range(0.1,0.1,length = 1))
+		if vartype == 1
+			t1 = 0.99
+			x,M,p = try
+				run(Region,
+				             # Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
+							 #                  :sbar => sb, :cbar => cb, :σ => sig)))
+							 Param(par = Dict(:ζ => zeta,:τ1 => t1)))
+
+
+			catch
+				# println("error with ζ = $zeta, τ1 = $t1")
+				(0,0,0)
+			end
+		else
+			zeta = 0.2
+			x,M,p = try
+	    		run(Region,
+		             # Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
+					 #                  :sbar => sb, :cbar => cb, :σ => sig,
+						# 			  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg)))
+						Param(par = Dict(:ζ => zeta,:τ1 => t1)))
+
+
+
+		    catch
+				(0,0,0)
+
+			end
+
+        end
+		if isa(M,Vector)
+		   	plot_i22(M,p)
+		else
+			println("error with ζ = $zeta, τ1 = $t1")
+		end
+	end
+
+
+
+
+end
+
 """
 https://github.com/floswald/LandUse.jl/issues/22
 """
@@ -12,89 +156,60 @@ function i22()
 	θrs = 1.0:0.05:1.3
 	esl = 0.0:10:100.0
 	eps = 0.0:0.1:6.0
-	t1s = 0.1:0.05:0.99
-	zetas = 0.1:0.05:0.99
+	t1s = range(0.6,stop = 0.98, length = 5)
+	zetas = 0.05:0.05:0.5
 
 
 	p = Param()
 	@manipulate for θtype in Dict("Matlab θ" => 1, "Growth θ" => 2),
-		            sb in slider(sbs, label = "sbar", value = p.sbar),
-		            cb in slider(cbs, label = "cbar", value = p.cbar),
-		            sig in slider(sis, label = "σ", value = p.σ),
-		            # agg in slider(ags, label = "agg_g", value = p.θagg_g),
+		            # sb in slider(sbs, label = "sbar", value = p.sbar),
+		            # cb in slider(cbs, label = "cbar", value = p.cbar),
+		            # sig in slider(sis, label = "σ", value = p.σ),
+		            # # agg in slider(ags, label = "agg_g", value = p.θagg_g),
 		            θug in slider(θus, label = "θu_g", value = p.θu_g),
-		            esl in slider(esl, label = "ϵ-slope", value = 0.0),
-		            epl in slider(eps, label = "ϵ", value = p.ϵr),
+		            # esl in slider(esl, label = "ϵ-slope", value = p.ϵsmax),
+		            # epl in slider(eps, label = "ϵ", value = p.ϵr),
 		            θrg in slider(θrs, label = "θr_g", value = p.θr_g),
-		            t1 in slider(t1s, label = "τ1", value = p.τ1),
+		            t1 in slider(t1s, label = "τ1", value = 0.98),
+		            # t1 in slider(range(0.99,0.99,length = 1)),
 		            zeta in slider(zetas, label = "ζ", value = p.ζ)
+		            # zeta in slider(range(0.1,0.1,length = 1))
 
 
 		if θtype == 1
-			x,M,p = run(Region,
-			             Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
-						                  :sbar => sb, :cbar => cb, :σ => sig)))
+			x,M,p = try
+				run(Region,
+				             # Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
+							 #                  :sbar => sb, :cbar => cb, :σ => sig)))
+							 Param(par = Dict(:ζ => zeta,:τ1 => t1)))
+
+
+			catch
+				println("error with ζ = $zeta, τ1 = $t1")
+				(0,0,0)
+			end
 		else
-	    	x,M,p = run(Region,
-		             Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
-					                  :sbar => sb, :cbar => cb, :σ => sig,
-									  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg)))
+			x,M,p = try
+	    		run(Region,
+		             # Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
+					 #                  :sbar => sb, :cbar => cb, :σ => sig,
+						# 			  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg)))
+						Param(par = Dict(:θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg,:ζ => zeta,:τ1 => t1)))
+
+
+
+		    catch
+				println("error with ζ = $zeta, τ1 = $t1")
+				(0,0,0)
+
+			end
+
         end
-		@info "model done."
-		println()
+		# @info "model done."
 
-	    d = dataframe(M,p.T)
-	    df = @linq d |>
-	         select(:year,:Ch,:Cu,:Cr,:C ) |>
-	         transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
-	         select(:year, :h, :u , :r)
-	    ds = stack(df, Not(:year))
-	    pl = @df ds plot(:year,:value, group = :variable,
-	               linewidth = 2, title = "Spending Shares",
-				   ylims = (0.0,0.85))
-
-		ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
-		pl2 = @df ds2 plot(:year, :value, group = :variable,
-		                 linewidth = 2, title = "Population",
-						 ylims = (0,1))
-	    d3  = @linq d |>
-		        select(:year,:θu, :θr) |>
-				transform(theta_u = :θu, theta_r = :θr) |>
-				select(:year,:theta_u, :theta_r)
-
-		# ds3 = stack(d3, Not(:year))
-	    # pl3 = @df ds3 plot(:year, :value, group = :variable,
-		# 			      linewidth = 2, title = "Consumption",
-		# 				  ylims = (0.0,3.5))
-
-	    ds3 = stack(d3, Not(:year))
-	    pl3 = @df ds3 plot(:year, :value, group = :variable,
-					      linewidth = 2, title = "Productivity",
-						  ylims = (0.0,3.5))
-	    ds4 = stack(select(d,:year,:ϕ), Not(:year))
-		pl4 = @df ds4 plot(:year, :value, group = :variable,
-		                 linewidth = 2, title = "city size",
-						 ylims = (0.0,0.3),
-						 leg = false)
-	    # ds4 = stack(select(d,:year,:pr), Not(:year))
-		df4 = @linq d |>
-			# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
-			transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) )
-			# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
-
-	    ds4 = stack(select(df4,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr, :avgd), Not(:year))
-	    ds5 = stack(select(df4,:year,:avgd), Not(:year))
-	    ds6 = stack(select(df4,:year,:tauphi), Not(:year))
-	    # ds4 = stack(select(df4,:year, :avgd), Not(:year))
-		pl5 = @df ds4 plot(:year, :value, group = :variable,
-						 linewidth = 2, title = "densities")
-		pl6 = @df ds5 plot(:year, :value, group = :variable,
-		                 linewidth = 2, title = "densities")
-		 pl7 = @df ds6 plot(:year, :value, group = :variable,
-						  linewidth = 2, title = "1 - tau(phi)",leg = false)
-		# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
-		# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
-		plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
+		if isa(M,Vector)
+		   	plot_i22()
+		end
     end
 end
 
@@ -230,21 +345,21 @@ end
 
 function i12()
 	g1 = 1.0:0.005:1.04
-	esl = 1.0:20:400.0
+	esl = 0.0:20:400.0
 	es = 1.0:0.5:10.0
 	esm = 1.0:0.5:10.0
-	zetas = 0.0:0.1:3.3
+	zetas = 0.0:0.1:0.99
 	mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
-		                 esl in slider(esl,label = "eslope"),
-		                 gr in slider(g1,label = "gr"),
-		                 gs1 in slider(g1,label = "ug1"),
-		                 gs2 in slider(g1,label = "ug2"),
-		                 gs3 in slider(g1,label = "ug3"),
-		                 gagg in slider(g1,label = "agg"),
+		                 esl in slider(esl,label = "eslope",value = 0),
+		                 # gr in slider(g1,label = "gr", value = 4.0),
+		                 gs1 in slider(g1,label = "ug1",value = 1.019),
+		                 gs2 in slider(g1,label = "ug2",value = 1.019),
+		                 gs3 in slider(g1,label = "ug3",value = 1.019),
+		                 # gagg in slider(g1,label = "agg"),
 						 z in slider(zetas,label = "ζ", value = 0.0),
 						 type in Dict("TS" => 1, "phi vs Lu" => 2)
 
-						 x = issue12(e;gr = gr, gu = [gs1,gs2,gs3], θu = [0.11,0.32,0.35],θagg_g = gagg, ϵsmax = esl, zeta = z)
+						 x = issue12(e; gu = [gs1,gs2,gs3], θu = [0.31,0.315,0.35],θagg_g = 1.01, ϵsmax = esl, zeta = z)
 						 # plot(rand(10))
 						 if type == 1
 						 	x[5]

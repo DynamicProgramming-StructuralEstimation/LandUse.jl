@@ -176,7 +176,7 @@ function issue12_gif(n)
 end
 
 
-function issue12(ϵ;gr = 1.04, gu = [1.019,1.019,1.02], θu = [0.31,0.315,0.32], save = false,
+function issue12(ϵ;gr = 1.04, gu = [1.019,1.0195,1.02], θu = [0.31,0.315,0.32], save = false,
                   θagg_g = 1.2, ϵsmax = 0.0, zeta = 0.0)
     K = length(gu)
     cpar = Dict(:S => 1.0, :L => 1.0,
