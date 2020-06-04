@@ -2,60 +2,9 @@
 
 
 
-function plot_i22(M,p::Param)
-	d = dataframe(M,p.T)
-	df = @linq d |>
-		 select(:year,:Ch,:Cu,:Cr,:C ) |>
-		 transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
-		 select(:year, :h, :u , :r)
-	ds = stack(df, Not(:year))
-	pl = @df ds plot(:year,:value, group = :variable,
-			   linewidth = 2, title = "Spending Shares",
-			   ylims = (0.0,0.85))
 
-	ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
-	pl2 = @df ds2 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Population",
-					 ylims = (0,1))
-	d3  = @linq d |>
-			select(:year,:θu, :θr) |>
-			transform(theta_u = :θu, theta_r = :θr) |>
-			select(:year,:theta_u, :theta_r)
 
-	# ds3 = stack(d3, Not(:year))
-	# pl3 = @df ds3 plot(:year, :value, group = :variable,
-	# 			      linewidth = 2, title = "Consumption",
-	# 				  ylims = (0.0,3.5))
 
-	ds3 = stack(d3, Not(:year))
-	pl3 = @df ds3 plot(:year, :value, group = :variable,
-					  linewidth = 2, title = "Productivity",
-					  ylims = (0.0,3.5))
-	ds4 = stack(select(d,:year,:ϕ), Not(:year))
-	pl4 = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "city size",
-					 ylims = (0.0,0.3),
-					 leg = false)
-	# ds4 = stack(select(d,:year,:pr), Not(:year))
-	df4 = @linq d |>
-		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
-		transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) )
-		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
-
-	ds4 = stack(select(df4,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr, :avgd), Not(:year))
-	ds5 = stack(select(df4,:year,:avgd), Not(:year))
-	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
-	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
-	pl5 = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "densities")
-	pl6 = @df ds5 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "densities")
-	 pl7 = @df ds6 plot(:year, :value, group = :variable,
-					  linewidth = 2, title = "1 - tau(phi)",leg = false)
-	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
-	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
-	plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
-end
 
 
 
@@ -133,15 +82,13 @@ function iccost()
 
         end
 		if isa(M,Vector)
-		   	plot_i22(M,p)
+		   	dd = ts_plots(M,p)
+			plot(dd[:pop],dd[:avdensity],dd[:phi],dd[:tauphi] ,layout = (1,4),size = (900,250))
+
 		else
 			println("error with ζ = $zeta, τ1 = $t1")
 		end
 	end
-
-
-
-
 end
 
 """
@@ -208,7 +155,8 @@ function i22()
 		# @info "model done."
 
 		if isa(M,Vector)
-		   	plot_i22()
+			dd = ts_plots(M,p)
+			plot(dd[:pop],dd[:avdensity],dd[:phi],dd[:tauphi] ,layout = (1,4),size = (900,250))
 		end
     end
 end
