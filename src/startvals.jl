@@ -14,8 +14,8 @@ function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,m::Model,p::Param)
 	solve!(result,x,p,m)
 end
 
-function nlopt_solveFM(;p = Param(),x0=nothing)
-	fm = FModel(p)
+function nlopt_solve(;p = Param(),x0=nothing)
+	fm = Region(p)
 	opt = Opt(:LN_COBYLA,4)
 	# opt = Opt(:LN_NELDERMEAD,4)
 	opt.lower_bounds = fill(0.001,4)
@@ -66,7 +66,7 @@ function get_starts(p::Param)
 
 		# if first year
 		if it == 1
-			x0 = nlopt_solveFM(p=p)
+			x0 = nlopt_solve(p=p)
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
 				push!(startvals, x0[2])
@@ -80,7 +80,7 @@ function get_starts(p::Param)
 			end
 
 		else  # in other years just start at previous solution
-			x0 = nlopt_solveFM(p=p,x0 = startvals[it-1])
+			x0 = nlopt_solve(p=p,x0 = startvals[it-1])
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
 				push!(startvals, x0[2])

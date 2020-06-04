@@ -18,16 +18,16 @@ function i22()
 
 	p = Param()
 	@manipulate for θtype in Dict("Matlab θ" => 1, "Growth θ" => 2),
-		            sb in slider(sbs, label = "sbar", value = 0.05),
+		            sb in slider(sbs, label = "sbar", value = p.sbar),
 		            cb in slider(cbs, label = "cbar", value = p.cbar),
 		            sig in slider(sis, label = "σ", value = p.σ),
 		            # agg in slider(ags, label = "agg_g", value = p.θagg_g),
 		            θug in slider(θus, label = "θu_g", value = p.θu_g),
 		            esl in slider(esl, label = "ϵ-slope", value = 0.0),
-		            epl in slider(eps, label = "ϵ", value = 3.0),
+		            epl in slider(eps, label = "ϵ", value = p.ϵr),
 		            θrg in slider(θrs, label = "θr_g", value = p.θr_g),
-		            t1 in slider(t1s, label = "τ1", value = 0.99),
-		            zeta in slider(zetas, label = "ζ", value = 0.35)
+		            t1 in slider(t1s, label = "τ1", value = p.τ1),
+		            zeta in slider(zetas, label = "ζ", value = p.ζ)
 
 
 		if θtype == 1

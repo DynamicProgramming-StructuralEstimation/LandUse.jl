@@ -23,6 +23,15 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 		m0 = T(p)
 		# println("tau = $(p.τ)")
 
+		# x0 = nlopt_solve(p=p,x0 = sols[it])
+		# if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
+		# 	push!(sols, x0[2])
+		# 	update!(m0,p,x0[2])
+		# 	push!(m,m0)
+		# else
+		# 	error("type $T Model not converged in period $it")
+		# end
+
 		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
 			                     sols[it],iterations = 10000)
 		# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
@@ -40,8 +49,6 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 			error("type $T Model not converged in period $it")
 		end
 	end
-	# final update
-
 	return (sols, m)
 end
 
