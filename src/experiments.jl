@@ -424,3 +424,14 @@ function fixed_rho(p::Param; fi = nothing)
     savefig(pl,joinpath(dbplots,fin))
     pl
 end
+
+
+function output_3Ms()
+
+    x,M,p = run(Region,Param(par = Dict(:ζ => 0.5, :τ1 => 0.98)))
+    dd = ts_plots(M,p)
+
+    # Labor Alloc and City size
+    p1 = plot(dd[:pop])
+
+end

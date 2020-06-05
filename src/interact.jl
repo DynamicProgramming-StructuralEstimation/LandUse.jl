@@ -304,16 +304,11 @@ function i12()
 		                 gs2 in slider(g1,label = "ug2",value = 1.019),
 		                 gs3 in slider(g1,label = "ug3",value = 1.019),
 		                 # gagg in slider(g1,label = "agg"),
-						 z in slider(zetas,label = "ζ", value = 0.0),
-						 type in Dict("TS" => 1, "phi vs Lu" => 2)
+						 z in slider(zetas,label = "ζ", value = 0.0)
 
 						 x = issue12(e; gu = [gs1,gs2,gs3], θu = [0.31,0.315,0.35],θagg_g = 1.01, ϵsmax = esl, zeta = z)
 						 # plot(rand(10))
-						 if type == 1
-						 	x[5]
-						else
-							x[6]
-						end
+						 plot(x[5],x[6],layout = (1,2),size = (900,600))
 					 end
 
 end

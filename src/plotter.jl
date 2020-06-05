@@ -23,6 +23,15 @@ function ts_plots(M,p::Param)
 	dd[:pop] = @df ds2 plot(:year, :value, group = :variable,
 					 linewidth = 2, title = "Population",
 					 ylims = (0,1))
+
+	dd[:r] = @df d plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Rents")
+	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values")
+	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values")
+	dd[:q0] = @df d plot(:year, :q0, linewidth = 2, color = "black", leg =false, title = "Central House Prices")
+	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices")
+
+	ds2 = stack(select(d,:year,:qr, :ρr), Not(:year))
+
 	d3  = @linq d |>
 			select(:year,:θu, :θr) |>
 			transform(theta_u = :θu, theta_r = :θr) |>
@@ -35,13 +44,14 @@ function ts_plots(M,p::Param)
 
 	ds3 = stack(d3, Not(:year))
 	dd[:productivity] = @df ds3 plot(:year, :value, group = :variable,
-					  linewidth = 2, title = "Productivity",
-					  ylims = (0.0,3.5))
+					  linewidth = 2, title = "Productivity")
 	ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	dd[:phi] = @df ds4 plot(:year, :value, group = :variable,
 					 linewidth = 2, title = "city size",
-					 ylims = (0.0,0.3),
 					 leg = false)
+    dd[:Sr] = @df d plot(:year, :Sr,
+				  linewidth = 2, color = "black",title = "Agricultural Land",
+				  leg = false)
 	# ds4 = stack(select(d,:year,:pr), Not(:year))
 	df4 = @linq d |>
 		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
@@ -62,66 +72,7 @@ function ts_plots(M,p::Param)
 	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
 	dd
 end
-function ts_plots(M::Vector{Region},p::Param)
 
-	d = dataframe(M,p.T)
-
-	# spending shares
-	df = @linq d |>
-		 select(:year,:Ch,:Cu,:Cr,:C ) |>
-		 transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
-		 select(:year, :h, :u , :r)
-	ds = stack(df, Not(:year))
-	p_sc = @df ds plot(:year,:value, group = :variable,
-			   linewidth = 2, title = "Spending Shares",
-			   ylims = (0.0,0.85))
-
-	# population alloc
-	ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
-	p_pop = @df ds2 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Population",
-					 ylims = (0,1))
-
-	d3  = @linq d |>
-			select(:year,:θu, :θr) |>
-			transform(theta_u = :θu, theta_r = :θr) |>
-			select(:year,:theta_u, :theta_r)
-
-	ds3 = stack(d3, Not(:year))
-	p_cons = @df ds3 plot(:year, :value, group = :variable,
-				      linewidth = 2, title = "Consumption",
-					  ylims = (0.0,3.5))
-
-	ds3 = stack(d3, Not(:year))
-	pl_prod = @df ds3 plot(:year, :value, group = :variable,
-					  linewidth = 2, title = "Productivity",
-					  ylims = (0.0,3.5))
-
-	ds4 = stack(select(d,:year,:ϕ), Not(:year))
-	pl4 = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "city size",
-					 ylims = (0.0,0.3),
-					 leg = false)
-	# ds4 = stack(select(d,:year,:pr), Not(:year))
-	df4 = @linq d |>
-		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
-		transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) )
-		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
-
-	ds4 = stack(select(df4,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr, :avgd), Not(:year))
-	ds5 = stack(select(df4,:year,:avgd), Not(:year))
-	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
-	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
-	pl5 = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "densities")
-	pl6 = @df ds5 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "densities")
-	 pl7 = @df ds6 plot(:year, :value, group = :variable,
-					  linewidth = 2, title = "1 - tau(phi)",leg = false)
-	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
-	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
-
-end
 
 "make separate time series plot for each region"
 function plot_ts(C::Vector{Country})

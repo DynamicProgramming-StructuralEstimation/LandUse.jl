@@ -41,7 +41,7 @@
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.1,
+		"value" : 0.05,
 		"description" : "Negative Urban Subsistence Level",
 		"type" : "region",
 		"symbol" : "\\underline{s}"
