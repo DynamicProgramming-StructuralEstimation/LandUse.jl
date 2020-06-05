@@ -29,7 +29,8 @@ function nlopt_solve(;p = Param(),x0=nothing)
 	# m.Sr   = x[4]   # amount of land used in rural production
 	# (optf,optx,ret) = optimize(opt, [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S])
 	if isnothing(x0)
-		x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]   # an almost arbitrary point in the interior domain.
+		# x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]   # an almost arbitrary point in the interior domain.
+		x0 = [0.24, 0.68, 1.1, 0.86]   # an almost arbitrary point in the interior domain.
 	else
 		@assert length(x0) == ndims(opt)
 	end

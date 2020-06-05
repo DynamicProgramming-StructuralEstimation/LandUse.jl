@@ -176,7 +176,7 @@ function issue12_gif(n)
 end
 
 
-function issue12(ϵ;gr = 1.04, gu = [1.019,1.0195,1.02], θu = [0.31,0.315,0.32], save = false,
+function issue12(ϵ;gr = 1.02, gu = [1.019,1.0195,1.02], θu = [0.99,1.0,1.01], save = false,
                   θagg_g = 1.2, ϵsmax = 0.0, zeta = 0.0)
     K = length(gu)
     cpar = Dict(:S => 1.0, :L => 1.0,
@@ -184,8 +184,8 @@ function issue12(ϵ;gr = 1.04, gu = [1.019,1.0195,1.02], θu = [0.31,0.315,0.32]
                 :kshare => [1/K for i in 1:K])
 
 
-    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θagg => [0.32],
-                           :θrt => 0.32,:θut => θu[i], :θu_g => gu[i] ,
+    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θagg => [1.0],
+                           :θrt => 1.0,:θut => θu[i], :θu_g => gu[i] ,
                            :θr_g => gr , :ϵr => ϵ ,:ϵs => 0.0, :θagg_g => θagg_g,
                            :ϵsmax =>  ϵsmax, :ζ => zeta) for i in 1:K)
     sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)

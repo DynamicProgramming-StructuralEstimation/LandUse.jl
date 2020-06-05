@@ -28,63 +28,44 @@ end
 
 function iccost()
 	sbs = 0.0:0.05:0.5
-	cbs = 0.0:0.05:0.5
+	cbs = 0.0:0.05:0.8
 	sis = 0.1:0.1:0.99
 	θus = 1.0:0.05:1.3
 	θrs = 1.0:0.05:1.3
 	esl = 0.0:10:100.0
 	eps = 0.0:0.1:6.0
-	t1s = 0.4:0.1:0.8
-	zetas = 0.1:0.1:0.4
+	t1s = 0.5:0.1:1.0
+	zetas = 0.0:0.1:0.5
 
 	p = Param()
-	@manipulate for vartype in Dict("ζ" => 1, "τ1" => 2),
-					# sb in slider(sbs, label = "sbar", value = p.sbar),
-					# cb in slider(cbs, label = "cbar", value = p.cbar),
+	@manipulate for sb in slider(sbs, label = "sbar", value = p.sbar),
+					cb in slider(cbs, label = "cbar", value = p.cbar),
 					# sig in slider(sis, label = "σ", value = p.σ),
 					# # agg in slider(ags, label = "agg_g", value = p.θagg_g),
 					# θug in slider(θus, label = "θu_g", value = p.θu_g),
 					# esl in slider(esl, label = "ϵ-slope", value = p.ϵsmax),
 					# epl in slider(eps, label = "ϵ", value = p.ϵr),
 					# θrg in slider(θrs, label = "θr_g", value = p.θr_g),
-					t1 in slider(t1s, label = "τ1", value = 0.4),
+					t1 in slider(t1s, label = "τ1", value = 0.9),
 					# t1 in slider(range(0.99,0.99,length = 1)),
 					zeta in slider(zetas, label = "ζ", value = p.ζ)
 					# zeta in slider(range(0.1,0.1,length = 1))
-		if vartype == 1
-			t1 = 0.99
+			# t1 = 0.99
 			x,M,p = try
 				run(Region,
 				             # Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
 							 #                  :sbar => sb, :cbar => cb, :σ => sig)))
-							 Param(par = Dict(:ζ => zeta,:τ1 => t1)))
+							 Param(par = Dict(:ζ => zeta, :τ1 => t1, :sbar => sb, :cbar => cb)))
 
 
 			catch
 				# println("error with ζ = $zeta, τ1 = $t1")
 				(0,0,0)
 			end
-		else
-			zeta = 0.2
-			x,M,p = try
-	    		run(Region,
-		             # Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
-					 #                  :sbar => sb, :cbar => cb, :σ => sig,
-						# 			  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg)))
-						Param(par = Dict(:ζ => zeta,:τ1 => t1)))
 
-
-
-		    catch
-				(0,0,0)
-
-			end
-
-        end
 		if isa(M,Vector)
 		   	dd = ts_plots(M,p)
 			plot(dd[:pop],dd[:avdensity],dd[:phi],dd[:tauphi] ,layout = (1,4),size = (900,250))
-
 		else
 			println("error with ζ = $zeta, τ1 = $t1")
 		end
@@ -297,6 +278,8 @@ function i12()
 	es = 1.0:0.5:10.0
 	esm = 1.0:0.5:10.0
 	zetas = 0.0:0.1:0.99
+	t1s = 0.5:0.1:1.0
+
 	mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
 		                 esl in slider(esl,label = "eslope",value = 0),
 		                 # gr in slider(g1,label = "gr", value = 4.0),
@@ -304,11 +287,14 @@ function i12()
 		                 gs2 in slider(g1,label = "ug2",value = 1.019),
 		                 gs3 in slider(g1,label = "ug3",value = 1.019),
 		                 # gagg in slider(g1,label = "agg"),
+						 t1 in slider(t1s, label = "τ1", value = 0.9),
+
 						 z in slider(zetas,label = "ζ", value = 0.0)
 
-						 x = issue12(e; gu = [gs1,gs2,gs3], θu = [0.31,0.315,0.35],θagg_g = 1.01, ϵsmax = esl, zeta = z)
+						 x = issue12(e; gu = [gs1,gs2,gs3], θu = [1.0,1.0,1.0],θagg_g = 0.0, ϵsmax = esl, zeta = z)
 						 # plot(rand(10))
-						 plot(x[5],x[6],layout = (1,2),size = (900,600))
+						 # plot(x[5],x[6],layout = (1,2),size = (900,600))
+						 x[5]
 					 end
 
 end

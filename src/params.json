@@ -29,19 +29,19 @@
 		"symbol" : "\\eta"
 	},
 	"ν" : {
-		"value" : 0.015,
+		"value" : 0.05,
 		"description" : "Preference Weight for Rural Consumption Good",
 		"type" : "region",
 		"symbol" : "\\nu"
 	},
 	"cbar" : {
-		"value" : 0.2,
+		"value" : 0.7,
 		"description" : "Rural Consumption Subsistence Level",
 		"type" : "region",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.05,
+		"value" : 0.2,
 		"description" : "Negative Urban Subsistence Level",
 		"type" : "region",
 		"symbol" : "\\underline{s}"
@@ -65,7 +65,7 @@
 		"symbol" : "\\Psi"
 	},
 	"τ" : {
-		"value" : 7.0,
+		"value" : 10.0,
 		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
 		"symbol" : "\\tau"
@@ -185,7 +185,7 @@
 		"symbol" : "\\bar{\\rho_r}"
 	},
 	"ζ" : {
-		"value" : 0.1,
+		"value" : 0.0,
 		"description" : "power of productivity in commuting cost",
 		"type" : "region",
 		"symbol" : "\\zeta"
