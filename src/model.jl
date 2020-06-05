@@ -26,8 +26,8 @@ mutable struct Region <: Model
 	Hr   :: Float64   # housing supply at fringe
 	h0   :: Float64   # housing demand at center
 	hr   :: Float64   # housing demand at fringe
+	dbar :: Float64   # total avg density
 	d0   :: Float64   # density at center
-	d01   :: Float64   # density at almost center
 	dq1  :: Float64   # density at quantile q of fringe
 	dq2  :: Float64   # density at quantile q of fringe
 	dq3  :: Float64   # density at quantile q of fringe
@@ -82,6 +82,7 @@ mutable struct Region <: Model
 		m.hr   = NaN
 		m.h0   = NaN
 		m.dr   = NaN
+		m.dbar   = NaN
 		m.d0   = NaN
 		m.dq1   = NaN
 		m.dq2   = NaN
@@ -167,6 +168,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.hr   = h(m.ϕ,p,m)
 	m.H0   = H(0.0,p,m)
 	m.h0   = h(0.0,p,m)
+	m.dbar   = m.Lu / m.ϕ
 	m.d0   = D(0.0,p,m)
 	m.dq1   = D(m.ϕ / 5,p,m)
 	m.dq2   = D(2 * m.ϕ / 5,p,m)

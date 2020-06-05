@@ -272,29 +272,43 @@ function interact2()
 end
 
 
-function i12()
-	g1 = 1.0:0.005:1.04
+function imulti3()
+	g1 = 1.18:0.01:1.22
 	esl = 0.0:20:400.0
 	es = 1.0:0.5:10.0
 	esm = 1.0:0.5:10.0
-	zetas = 0.0:0.1:0.99
+	zetas = 0.0:0.1:0.6
 	t1s = 0.5:0.1:1.0
 
-	mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
-		                 esl in slider(esl,label = "eslope",value = 0),
-		                 # gr in slider(g1,label = "gr", value = 4.0),
-		                 gs1 in slider(g1,label = "ug1",value = 1.019),
-		                 gs2 in slider(g1,label = "ug2",value = 1.019),
-		                 gs3 in slider(g1,label = "ug3",value = 1.019),
-		                 # gagg in slider(g1,label = "agg"),
-						 t1 in slider(t1s, label = "τ1", value = 0.9),
+	K = 3
+	cpar = Dict(:S => 1.0, :L => 1.0,
+				:K => K,
+				:kshare => [1/K for i in 1:K])
 
+
+	mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
+		                 esl in slider(esl,label = "eslope",value = 0.0),
+		                 # gr in slider(g1,label = "gr", value = 4.0),
+		                 gs1 in slider(g1,label = "u-growth 1",value = 1.19),
+		                 gs2 in slider(g1,label = "u-growth 2",value = 1.2),
+		                 gs3 in slider(g1,label = "u-growth 3",value = 1.21),
+						 t1 in slider(t1s, label = "τ1", value = 0.9),
 						 z in slider(zetas,label = "ζ", value = 0.0)
 
-						 x = issue12(e; gu = [gs1,gs2,gs3], θu = [1.0,1.0,1.0],θagg_g = 0.0, ϵsmax = esl, zeta = z)
-						 # plot(rand(10))
-						 # plot(x[5],x[6],layout = (1,2),size = (900,600))
-						 x[5]
-					 end
+						 d0 = Dict(:ζ => z, :τ1 => t1, :ϵr => e, :ϵsmax => esl)
+
+						 dd = Dict(1 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs1,  :θr_g => 1.2), d0),
+						 		   2 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs2, :θr_g => 1.2),d0),
+								   3 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs3,  :θr_g => 1.2),d0)
+								   )
+
+   					    sols,C,cp,pp = LandUse.runk(cpar = cpar,par = dd)
+   					    p1 = plot(impl_plot_ts_all(C)..., layout = (2,2))
+   					    p2 = impl_plot_slopes(C)
+
+						plot(p1,p2,layout = (1,2))
+	# 					p1
+	end
+
 
 end

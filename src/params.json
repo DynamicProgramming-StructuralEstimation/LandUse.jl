@@ -82,18 +82,6 @@
 		"type" : "region",
 		"symbol" : "\\mathcal{T}"
 	},
-	"θagg" : {
-		"value" : [0.0],
-		"description" : "Aggregate Series of Productivity",
-		"type" : "region",
-		"symbol" : "\\theta_t"
-	},
-	"θagg_g" : {
-		"value" : 1.2,
-		"description" : "Constant Growth of Aggregate Productivity",
-		"type" : "region",
-		"symbol" : "g"
-	},
 	"θut" : {
 		"value" : [0.32],
 		"description" : "idiosyncratic urban Productivity by period",

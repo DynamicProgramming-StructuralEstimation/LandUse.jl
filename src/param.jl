@@ -10,19 +10,17 @@ mutable struct Param
 	sbar  :: Float64 # neg urba subsistence level
 
 	# productivity setup
-	θagg  :: Vector{Float64} # aggregate productivity
-	θagg_g  :: Float64 # aggregate productivity growth factor
 	θu_g  :: Float64 # constant growth factors by sector
 	θr_g  :: Float64 # constant growth factors by sector
 	θut   :: Vector{Float64}  # idiosyncratic level of urban producitivity in each period
 	θrt   :: Vector{Float64}  # idiosyncratic level of rural producitivity in each period
-	θr    :: Float64 # current period rural sector TFP = θagg[t] + θut[t]
+	θr    :: Float64 # current period rural sector TFP = θut[t]
 	θu    :: Float64 # current period urban sector TFP
 
 	# commuting cost setup
 	# τ0_g   :: Float64 # growth in commuting cost intercept
 	# τ0t    :: Vector{Float64} # time varying values of τ0
-	τ      :: Float64 # current value of τ
+	τ      :: Float64 # constant factor in τ (like an intercept)
 	τ1     :: Float64 # power on distance
 	ζ      :: Float64  # power on productivity
 
@@ -72,7 +70,6 @@ mutable struct Param
 		this.L = 1.0
 		this.θut = originalθ
 		this.θrt = originalθ
-		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
 
 		# override parameters from dict par, if any
         if length(par) > 0
@@ -108,16 +105,6 @@ mutable struct Param
 			# this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
 		end
 
-		# if some fields have not been specified, compute growth rates from detaults
-		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
-
-		# need to compute theta series here, given inputs.
-		# if no inputs, construct default series.
-		# if growth rate given , construct from growth rate
-
-		# add agg and idiosyncratic productivity
-		this.θut = this.θagg .+ this.θut
-		this.θrt = this.θagg .+ this.θrt
 		this.θu = this.θut[1]
 		this.θr = this.θrt[1]
 		# this.τ  = this.τ0t[1]
@@ -184,8 +171,8 @@ end
 
 # set period specific values
 function setperiod!(p::Param,i::Int)
-	setfield!(p, :θr, p.θagg[i] + p.θrt[i])   # this will be constant across region.
-	setfield!(p, :θu, p.θagg[i] + p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
+	setfield!(p, :θr, p.θrt[i])   # this will be constant across region.
+	setfield!(p, :θu, p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
 	# setfield!(p, :τ, p.τ0t[i])
 
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.

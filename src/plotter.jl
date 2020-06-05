@@ -105,8 +105,31 @@ function plot_ts(C::Vector{Country})
 	plts
 end
 
+function impl_plot_slopes(C::Vector{Country})
+	d = dataframe(C)
+	d.lϕ = log.(d.ϕ)
+	d.lu = log.(d.Lu)
+	gd = groupby(d,:year)
+	gd = combine(gd, AsTable([:lϕ, :lu]) => (x -> round.(diff(vcat(extrema(x.lϕ)...)) ./ diff(vcat(extrema(x.lu)...)),digits = 1)) => :slope)
+	d  = innerjoin(d,gd,on = :year)
+	transform!(d, AsTable([:year, :slope]) => (x -> string.(x.year) .* ": slope=" .* string.(x.slope) ) => :year_s)
+
+	cols = range(colorant"red",colorant"blue",length = length(unique(d.year)))
+	dd = select(d, :year_s, :region, :lϕ, :lu)
+	pl2 = @df dd plot(:lu,:lϕ,group = :year_s,
+					ylab = L"\log \phi",
+					xlab = L"\log L_u",
+					marker = (:circle, 4),
+					colour = cols',
+					legend = :outertopright,
+					# ylims = (-3.8,-2.7),
+					# xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
+					)
+	pl2
+end
+
 "time series showing all regions together"
-function plot_ts_all(C::Vector{Country})
+function impl_plot_ts_all(C::Vector{Country})
 	df = dataframe(C)
 	K = length(C[1].R)
 	# vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
@@ -115,9 +138,9 @@ function plot_ts_all(C::Vector{Country})
 	# sims = [(:Lr,:Lu); (:Sr, :ϕ, :Srh); (:qr, :r); (:wr , :wu0)]
 	# sims = [[:Lu], [:ϕ], [:pop], [:ρ0], [:q0], [:Srh]]
 	# sims = ["Lu", "ϕ", "pop", "ρ0", "q0","Srh", "Sr", "Hr"]
-	sims = ["Lu", "ϕ", "pop"]
-	titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Central Land values"; "Central House prices"; "Rural Housing (Srh)"; "Rural Land (Sr)"; "r Housing supply"]
-	titles = ["Urban Labor"; "Urban Size"; "Total pop"]
+	sims = ["Lu", "ϕ", "pop","dbar"]
+	# titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Central Land values"; "Central House prices"; "Rural Housing (Srh)"; "Rural Land (Sr)"; "r Housing supply"]
+	titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Avg Density"]
 
 	plts = Any[]
 	for i in 1:length(sims)
@@ -134,7 +157,8 @@ function plot_ts_all(C::Vector{Country})
 	end
 	# push!(plts,plot())  # fill up with empty
 	# push!(plts, scatter((1:3)', xlim = (4,5), legend = true, framestyle = :none, labels = ["1" "2" "3"]))
-	plot(plts...,layout = (1,3), size = (600,200))
+	# plot(plts...,layout = (1,4))
+	plts
 
 
 end
