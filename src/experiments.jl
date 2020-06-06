@@ -422,7 +422,7 @@ function output_3Ms()
     dd = LandUse.ts_plots(M,p)
 
     si = Dict()
-    wihe = (700,400)
+    wihe = (700,340)
     si[:alloc] = plot(dd[:pop],dd[:spending], size = wihe)
     si[:space] = plot(dd[:Sr],dd[:phi], size = wihe)
     si[:h]     = plot(dd[:hr100],dd[:Hr100], size = wihe)
