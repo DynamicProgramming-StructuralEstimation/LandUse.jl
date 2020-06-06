@@ -309,6 +309,4 @@ function imulti3()
 						plot(p1,p2,layout = (1,2))
 	# 					p1
 	end
-
-
 end

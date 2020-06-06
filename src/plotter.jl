@@ -15,20 +15,50 @@ function ts_plots(M,p::Param)
 		 transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
 		 select(:year, :h, :u , :r)
 	ds = stack(df, Not(:year))
+
+	# marker
+	mmark = (:circle, 4)
+
 	dd[:spending] = @df ds plot(:year,:value, group = :variable,
 			   linewidth = 2, title = "Spending Shares",
-			   ylims = (0.0,0.85))
+			   ylims = (0.0,0.85), marker = mmark, legend = :right)
 
 	ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
 	dd[:pop] = @df ds2 plot(:year, :value, group = :variable,
 					 linewidth = 2, title = "Population",
-					 ylims = (0,1))
+					 ylims = (0,1), marker = mmark, legend = :topleft)
 
-	dd[:r] = @df d plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Rents")
-	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values")
-	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values")
-	dd[:q0] = @df d plot(:year, :q0, linewidth = 2, color = "black", leg =false, title = "Central House Prices")
-	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices")
+	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark)
+ 	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values", marker = mmark)
+ 	dd[:q0] = @df d plot(:year, :q0, linewidth = 2, color = "black", leg =false, title = "Central House Prices", marker = mmark)
+ 	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices", marker = mmark)
+	dd[:hr] = @df d plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand", marker = mmark)
+
+
+
+	dtemp = transform(select(d, :year, :r, :ρ0, :ρr, :q0, :qr, :hr, :Hr),
+	                  :r => ((x) -> 100*(x ./ x[7])) => :r,
+	                  :ρ0 => ((x) -> 100*(x ./ x[7])) => :ρ0,
+	                  :ρr => ((x) -> 100*(x ./ x[7])) => :ρr,
+	                  :q0 => ((x) -> 100*(x ./ x[7])) => :q0,
+	                  :hr => ((x) -> 100*(x ./ x[7])) => :hr,
+	                  :Hr => ((x) -> 100*(x ./ x[7])) => :Hr,
+	                  :qr => ((x) -> 100*(x ./ x[7])) => :qr
+					  )
+	dd[:r] = @df dtemp plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Land Rents (1945=100)", marker = mmark)
+	dd[:r_rho] = @df dtemp plot(:year, [:r, :ρ0],linewidth = 2, lab = [L"\rho_0" L"r"],
+	                           title = "Land Rents and Central Land Values (1945=100)",
+							   leg = :topleft,
+							   marker = mmark)
+
+    dd[:q0_qr] = @df dtemp plot(:year, [:q0, :qr],linewidth = 2, lab = [L"q_0" L"q_r"],
+	                           title = "Central and Fringe House Prices (1945=100)",
+							   leg = :topleft,
+							   marker = mmark)
+    dd[:hr100] = @df dtemp plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand (1945=100)", marker = mmark)
+    dd[:Hr100] = @df dtemp plot(:year, :Hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Supply (1945=100)", marker = mmark)
+
+
 
 	ds2 = stack(select(d,:year,:qr, :ρr), Not(:year))
 
@@ -47,11 +77,11 @@ function ts_plots(M,p::Param)
 					  linewidth = 2, title = "Productivity")
 	ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	dd[:phi] = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "city size",
-					 leg = false)
+					 linewidth = 2, title = "City Size", color = "black",
+					 leg = false, marker = mmark)
     dd[:Sr] = @df d plot(:year, :Sr,
 				  linewidth = 2, color = "black",title = "Agricultural Land",
-				  leg = false)
+				  leg = false, marker = mmark)
 	# ds4 = stack(select(d,:year,:pr), Not(:year))
 	df4 = @linq d |>
 		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
@@ -63,9 +93,9 @@ function ts_plots(M,p::Param)
 	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
 	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "densities")
+					 linewidth = 2, title = "Densities", leg = :topright)
 	dd[:avdensity] = @df ds5 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "avg density")
+					 linewidth = 2, title = "Avg Density", marker = mmark, legend = false,color = "black")
 	dd[:tauphi] = @df ds6 plot(:year, :value, group = :variable,
 					  linewidth = 2, title = "1 - tau(phi)",leg = false)
 	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))

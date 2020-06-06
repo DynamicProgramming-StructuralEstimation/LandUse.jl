@@ -183,6 +183,10 @@ end
 
 # multik(Dict(1 => Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => 1.2, :θr_g => 1.2), 2 => Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => 1.19, :θr_g => 1.2)))
 
+
+"""
+Runs K regions as a country and produces 2 plots
+"""
 function multik(ppar::Dict; save = false)
     K = length(ppar)
 
@@ -191,11 +195,11 @@ function multik(ppar::Dict; save = false)
                 :kshare => [1/K for i in 1:K])
 
     sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
-    pl = plot(impl_plot_ts_all(C), layout = (2,2))
+    pl = plot(impl_plot_ts_all(C)..., layout = (2,2))
 
     if save savefig(pl,joinpath(dbplots,"multi-$K-TS.pdf")) end
 
-    pl = impl_plot_slopes(C)
+    pl2 = impl_plot_slopes(C)
                     # title = latexstring("City size vs pop \$\\epsilon\$ = $ϵ"))
     if save savefig(pl2,joinpath(dbplots,"multi-$K-phi-Lu.pdf")) end
     sols,C,cpar,pp,pl,pl2
@@ -413,9 +417,33 @@ end
 
 function output_3Ms()
 
-    x,M,p = run(Region,Param(par = Dict(:ζ => 0.5, :τ1 => 0.98)))
-    dd = ts_plots(M,p)
+    # single region
+    x,M,p = LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:ζ => 0.5, :τ1 => 0.98)))
+    dd = LandUse.ts_plots(M,p)
 
+    si = Dict()
+    wihe = (700,400)
+    si[:alloc] = plot(dd[:pop],dd[:spending], size = wihe)
+    si[:space] = plot(dd[:Sr],dd[:phi], size = wihe)
+    si[:h]     = plot(dd[:hr100],dd[:Hr100], size = wihe)
+    si[:dens]  = plot(dd[:avdensity],dd[:densities], size = wihe)
+    si[:r_rho] = plot(dd[:r_rho], size = wihe)
+
+    for (k,v) in si
+        savefig(v, joinpath(dbplots,"$k.pdf"))
+    end
+
+    return si
+
+
+
+
+
+    # multi regions
+    mm = LandUse.multik(
+               Dict(1 => Dict(:θut=> 1.01, :θrt=> 1.0,:θu_g => 1.31, :θr_g => 1.2, :ζ => 0.5),
+                    2 => Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => 1.3, :θr_g => 1.2, :ζ => 0.5)))
+    LandUse.savefig(mm[5],joinpath(LandUse.dbplots,"multi2.pdf"))
     # Labor Alloc and City size
     # p1 = plot(dd[:pop])
 
