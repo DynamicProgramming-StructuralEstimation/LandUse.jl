@@ -428,6 +428,7 @@ function output_3Ms()
     si[:h]     = plot(dd[:hr100],dd[:Hr100], size = wihe)
     si[:dens]  = plot(dd[:avdensity],dd[:densities], size = wihe)
     si[:r_rho] = plot(dd[:r_rho], size = wihe)
+    si[:r_y] = plot(dd[:r_y], size = wihe)
 
     for (k,v) in si
         savefig(v, joinpath(dbplots,"$k.pdf"))

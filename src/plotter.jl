@@ -34,6 +34,11 @@ function ts_plots(M,p::Param)
  	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices", marker = mmark)
 	dd[:hr] = @df d plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand", marker = mmark)
 
+	df = @linq d |>
+		 select(:year,:r, :y ,:iq) |>
+		 transform(r_y = 100*(:r ./ :y), ru_y = 100*(:iq ./ :y))
+	dd[:r_y] = @df df plot(:year, [:r_y, :ru_y], labels = ["Total" "Urban Only"],
+	            linewidth = 2, title = "Land Rents over Income (%)", marker = mmark)
 
 
 	dtemp = transform(select(d, :year, :r, :ρ0, :ρr, :q0, :qr, :hr, :Hr),
@@ -46,7 +51,7 @@ function ts_plots(M,p::Param)
 	                  :qr => ((x) -> 100*(x ./ x[7])) => :qr
 					  )
 	dd[:r] = @df dtemp plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Land Rents (1945=100)", marker = mmark)
-	dd[:r_rho] = @df dtemp plot(:year, [:r, :ρ0],linewidth = 2, lab = [L"\rho_0" L"r"],
+	dd[:r_rho] = @df dtemp plot(:year, [:r, :ρ0],linewidth = 2, lab = [L"r" L"\rho_0" ],
 	                           title = "Land Rents and Central Land Values (1945=100)",
 							   leg = :topleft,
 							   marker = mmark)

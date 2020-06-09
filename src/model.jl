@@ -43,6 +43,9 @@ mutable struct Region <: Model
 	U    :: Float64  # common utility level
 	θu   :: Float64  # current productivity
 	θr   :: Float64  # current productivity
+	pcy  :: Float64  # per capita income
+	GDP  :: Float64  # GDP
+	y    :: Float64  # disposable income
 
 	Cu :: Float64  # aggregate urban consumption
 	Cr :: Float64  # aggregate rural consumption
@@ -94,6 +97,9 @@ mutable struct Region <: Model
 		m.θu   = p.θu
 		m.θr   = p.θr
 		m.U    = NaN
+		m.pcy    = NaN
+		m.GDP    = NaN
+		m.y    = NaN
 		m.inodes, m.iweights = gausslegendre(p.int_nodes)
 		m.nodes = zeros(p.int_nodes)
 		m.icu_input = NaN
@@ -189,6 +195,11 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# display(m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 	integrate!(m,p)
+
+	# income measures
+	m.pcy = pcy(m,p)
+	m.GDP = GDP(m,p)
+	m.y   = y(m,p)
 
 	# compute aggregate Consumption shares
 	m.Cu = m.icu + m.Lr * cur(p,m)  # urban cons inside city plus total urban cons in rural
@@ -544,6 +555,14 @@ utility(l::Float64,p::Param,m::Model) = (cr(l,p,m) - p.cbar)^(p.ν * (1-p.γ)) *
 
 "aggregate per capita income"
 pcy(m::Model,p::Param) = m.r + m.wr * m.Lr / p.L + m.iy / p.L
+
+
+"GDP"
+GDP(m::Model,p::Param) = (m.pr * Yr(m,p) + Yu(m,p)) / p.L
+
+"disposable income: GDP net of commuting costs"
+y(m::Model,p::Param) = GDP(m,p) - m.iτ / p.L
+
 
 "Production of Rural Good"
 function Yr(m::Model,p::Param)

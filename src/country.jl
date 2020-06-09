@@ -141,6 +141,11 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		cu01 = (cu(0.0,p[ik],c.R[ik])       , cu(1.0,p[ik],c.R[ik])       )
 		c.R[ik].U    = all( (cr01 .>= 0.0) .* (cu01 .>= 0.0) ) ? utility(0.0,p[ik],c.R[ik]) : NaN
 		integrate!(c.R[ik],p[ik])
+		# income measures
+		# income measures
+		c.R[ik].pcy = pcy(c.R[ik],p[ik])
+		c.R[ik].GDP = GDP(c.R[ik],p[ik])
+		c.R[ik].y   =   y(c.R[ik],p[ik])
 	end
 end
 
