@@ -7,6 +7,107 @@ function setup_color(l::Int)
     return colors
 end
 
+function ts_plots(M,p::Param)
+	d = dataframe(M,p.T)
+	dd = Dict()
+	df = @linq d |>
+		 select(:year,:Ch,:Cu,:Cr,:C ) |>
+		 transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
+		 select(:year, :h, :u , :r)
+	ds = stack(df, Not(:year))
+
+	# marker
+	mmark = (:circle, 4)
+
+	dd[:spending] = @df ds plot(:year,:value, group = :variable,
+			   linewidth = 2, title = "Spending Shares",
+			   ylims = (0.0,0.85), marker = mmark, legend = :right)
+
+	ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
+	dd[:pop] = @df ds2 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "Population",
+					 ylims = (0,1), marker = mmark, legend = :topleft)
+
+	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark)
+ 	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values", marker = mmark)
+ 	dd[:q0] = @df d plot(:year, :q0, linewidth = 2, color = "black", leg =false, title = "Central House Prices", marker = mmark)
+ 	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices", marker = mmark)
+	dd[:hr] = @df d plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand", marker = mmark)
+
+	df = @linq d |>
+		 select(:year,:r, :y ,:iq) |>
+		 transform(r_y = 100*(:r ./ :y), ru_y = 100*(:iq ./ :y))
+	dd[:r_y] = @df df plot(:year, [:r_y, :ru_y], labels = ["Total" "Urban Only"],
+	            linewidth = 2, title = "Land Rents over Income (%)", marker = mmark)
+
+
+	dtemp = transform(select(d, :year, :r, :ρ0, :ρr, :q0, :qr, :hr, :Hr),
+	                  :r => ((x) -> 100*(x ./ x[7])) => :r,
+	                  :ρ0 => ((x) -> 100*(x ./ x[7])) => :ρ0,
+	                  :ρr => ((x) -> 100*(x ./ x[7])) => :ρr,
+	                  :q0 => ((x) -> 100*(x ./ x[7])) => :q0,
+	                  :hr => ((x) -> 100*(x ./ x[7])) => :hr,
+	                  :Hr => ((x) -> 100*(x ./ x[7])) => :Hr,
+	                  :qr => ((x) -> 100*(x ./ x[7])) => :qr
+					  )
+	dd[:r] = @df dtemp plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Land Rents (1945=100)", marker = mmark)
+	dd[:r_rho] = @df dtemp plot(:year, [:r, :ρ0],linewidth = 2, lab = [L"r" L"\rho_0" ],
+	                           title = "Land Rents and Central Land Values (1945=100)",
+							   leg = :topleft,
+							   marker = mmark)
+
+    dd[:q0_qr] = @df dtemp plot(:year, [:q0, :qr],linewidth = 2, lab = [L"q_0" L"q_r"],
+	                           title = "Central and Fringe House Prices (1945=100)",
+							   leg = :topleft,
+							   marker = mmark)
+    dd[:hr100] = @df dtemp plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand (1945=100)", marker = mmark)
+    dd[:Hr100] = @df dtemp plot(:year, :Hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Supply (1945=100)", marker = mmark)
+
+
+
+	ds2 = stack(select(d,:year,:qr, :ρr), Not(:year))
+
+	d3  = @linq d |>
+			select(:year,:θu, :θr) |>
+			transform(theta_u = :θu, theta_r = :θr) |>
+			select(:year,:theta_u, :theta_r)
+
+	# ds3 = stack(d3, Not(:year))
+	# pl3 = @df ds3 plot(:year, :value, group = :variable,
+	# 			      linewidth = 2, title = "Consumption",
+	# 				  ylims = (0.0,3.5))
+
+	ds3 = stack(d3, Not(:year))
+	dd[:productivity] = @df ds3 plot(:year, :value, group = :variable,
+					  linewidth = 2, title = "Productivity")
+	ds4 = stack(select(d,:year,:ϕ), Not(:year))
+	dd[:phi] = @df ds4 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "City Size", color = "black",
+					 leg = false, marker = mmark)
+    dd[:Sr] = @df d plot(:year, :Sr,
+				  linewidth = 2, color = "black",title = "Agricultural Land",
+				  leg = false, marker = mmark)
+	# ds4 = stack(select(d,:year,:pr), Not(:year))
+	df4 = @linq d |>
+		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
+		transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) )
+		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
+
+	ds4 = stack(select(df4,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr, :avgd), Not(:year))
+	ds5 = stack(select(df4,:year,:avgd), Not(:year))
+	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
+	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
+	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "Densities", leg = :topright)
+	dd[:avdensity] = @df ds5 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "Avg Density", marker = mmark, legend = false,color = "black")
+	dd[:tauphi] = @df ds6 plot(:year, :value, group = :variable,
+					  linewidth = 2, title = "1 - tau(phi)",leg = false)
+	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
+	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
+	dd
+end
+
 
 "make separate time series plot for each region"
 function plot_ts(C::Vector{Country})
@@ -39,8 +140,31 @@ function plot_ts(C::Vector{Country})
 	plts
 end
 
+function impl_plot_slopes(C::Vector{Country})
+	d = dataframe(C)
+	d.lϕ = log.(d.ϕ)
+	d.lu = log.(d.Lu)
+	gd = groupby(d,:year)
+	gd = combine(gd, AsTable([:lϕ, :lu]) => (x -> round.(diff(vcat(extrema(x.lϕ)...)) ./ diff(vcat(extrema(x.lu)...)),digits = 1)) => :slope)
+	d  = innerjoin(d,gd,on = :year)
+	transform!(d, AsTable([:year, :slope]) => (x -> string.(x.year) .* ": slope=" .* string.(x.slope) ) => :year_s)
+
+	cols = range(colorant"red",colorant"blue",length = length(unique(d.year)))
+	dd = select(d, :year_s, :region, :lϕ, :lu)
+	pl2 = @df dd plot(:lu,:lϕ,group = :year_s,
+					ylab = L"\log \phi",
+					xlab = L"\log L_u",
+					marker = (:circle, 4),
+					colour = cols',
+					legend = :outertopright,
+					# ylims = (-3.8,-2.7),
+					# xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
+					)
+	pl2
+end
+
 "time series showing all regions together"
-function plot_ts_all(C::Vector{Country})
+function impl_plot_ts_all(C::Vector{Country})
 	df = dataframe(C)
 	K = length(C[1].R)
 	# vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
@@ -49,9 +173,9 @@ function plot_ts_all(C::Vector{Country})
 	# sims = [(:Lr,:Lu); (:Sr, :ϕ, :Srh); (:qr, :r); (:wr , :wu0)]
 	# sims = [[:Lu], [:ϕ], [:pop], [:ρ0], [:q0], [:Srh]]
 	# sims = ["Lu", "ϕ", "pop", "ρ0", "q0","Srh", "Sr", "Hr"]
-	sims = ["Lu", "ϕ", "pop"]
-	titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Central Land values"; "Central House prices"; "Rural Housing (Srh)"; "Rural Land (Sr)"; "r Housing supply"]
-	titles = ["Urban Labor"; "Urban Size"; "Total pop"]
+	sims = ["Lu", "ϕ", "pop","dbar"]
+	# titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Central Land values"; "Central House prices"; "Rural Housing (Srh)"; "Rural Land (Sr)"; "r Housing supply"]
+	titles = ["Urban Labor"; "Urban Size"; "Total pop"; "Avg Density"]
 
 	plts = Any[]
 	for i in 1:length(sims)
@@ -60,14 +184,16 @@ function plot_ts_all(C::Vector{Country})
 			px = @df x plot(:year, :value, group = :region,
 							title = titles[i],
 							titlefontsize=10,
-							legend = :topleft,
+							legend = i == 1 ? true : false,
 							linewidth=2,marker = (:circle,3),
 							legendfontsize = 5)
 			push!(plts, px)
 
 	end
 	# push!(plts,plot())  # fill up with empty
-	plot(plts...,layout = (1,3), size = (600,250))
+	# push!(plts, scatter((1:3)', xlim = (4,5), legend = true, framestyle = :none, labels = ["1" "2" "3"]))
+	# plot(plts...,layout = (1,4))
+	plts
 
 
 end
@@ -159,12 +285,12 @@ end
 function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tstring = nothing)
 
 	# sims = [[:Lr,:Lu], [:Sr, :ϕ, :Srh], [:qr, :r], [:wr , :wu0]]
-	# sims = [[:Lr,:Lu], [:ϕ], [:r], [:wr , :wu0]]
-	sims = [[:Lr,:Lu], [:ϕ], [:r], [:q0, :ρ0] , [:qr, :ρr], [:wr , :wu0],[:Hr , :hr]]
-	titles = ["Labor"; "Land"; "Rents"; "Central prices"; "Fringe prices"; "wages"; "Housing at phi"]
-	# nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
-	nms = [[L"L_r" L"L_u"], L"\phi" , L"r", [L"q_0" L"\rho_0"], [L"q_r" L"\rho_r"], [L"w_r" L"w_u = \theta_u"], ["Supply" "Demand"]]
-	# nms = [[L"L_r" L"L_u"], L"\phi" , L"r", [L"q_0" L"q_r"]]
+	sims = [["Lr","Lu"], ["ϕ"], ["r"], ["wr" , "wu0"]]
+	# sims = [[:Lr,:Lu], [:ϕ], [:r], [:q0, :ρ0] , [:qr, :ρr], [:wr , :wu0],[:Hr , :hr]]
+	# titles = ["Labor"; "Land"; "Rents"; "Central prices"; "Fringe prices"; "wages"; "Housing at phi"]
+	nms = [[L"L_r" L"L_u"], [L"S_r" L"\phi" L"S_{rh}"] , [L"q" L"r"], [L"w_r" L"w_u"]]
+	# nms = [[L"L_r" L"L_u"], L"\phi" , L"r", [L"q_0" L"\rho_0"], [L"q_r" L"\rho_r"], [L"w_r" L"w_u = \theta_u"], ["Supply" "Demand"]]
+	nms = [[L"L_r" L"L_u"], L"\phi" , L"r", [L"q_0" L"q_r"]]
 
 	plt = Any[]
 	if isnothing(year)
@@ -172,18 +298,18 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 			x = @linq s |>
 				where((:variable .∈ Ref(sims[i])))
 			px = @df x plot(:year, :value, group = :variable,
-							title = titles[i],
+							# title = titles[i],
 							titlefontsize=10,
 							label=nms[i],
-							legend = :bottomright,
-							linewidth=2,marker = (:circle,3))
+							legend = i < 3 ? :bottomright : :topleft,
+							linewidth=2,marker = (:circle,3), legendfontsize = 8)
 			push!(plt, px)
 		end
-		push!(plt,plot())
-		push!(plt,plot())
+		# push!(plt,plot())
+		# push!(plt,plot())
 		# ti = plot(title = "Time Series", grid = false, showaxis = false, bottom_margin = -30Plots.px)
 		# pl = plot(ti,plot(plt...,layout = (2,3), link = :x), layout = @layout([A{0.05h}; B]))
-		pl = plot(plt...,layout = (3,3), link = :x)
+		pl = plot(plt...,layout = (2,2), link = :x)
 		# return extrema of each subplot
 		xlims = [plt[i].subplots[1][:xaxis][:extrema] for i in 1:length(plt)]
 		ylims = [plt[i].subplots[1][:yaxis][:extrema] for i in 1:length(plt)]
@@ -215,7 +341,7 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 		end
 		# ti = plot(title = ti, grid = false, showaxis = false, bottom_margin = -30Plots.px)
 		# pl = plot(ti,plot(plt...,layout = (2,3), link = :x), layout = @layout([A{0.05h}; B]))
-		pl = plot(plt...,layout = (2,3), link = :x)
+		pl = plot(plt...,layout = (2,2), link = :x)
 
 		return pl
 	end

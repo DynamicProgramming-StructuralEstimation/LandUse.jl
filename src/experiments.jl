@@ -176,41 +176,32 @@ function issue12_gif(n)
 end
 
 
-function issue12(ϵ;gr = 1.04, gu = [1.019,1.02,1.03], θu = [0.31,0.315,0.32])
-    K = length(gu)
+# LandUse.runk(par =
+#     Dict(1 => Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => 1.2, :θr_g => 1.2),
+#          2 => Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => 1.19, :θr_g => 1.2)))
+
+
+# multik(Dict(1 => Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => 1.2, :θr_g => 1.2), 2 => Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => 1.19, :θr_g => 1.2)))
+
+
+"""
+Runs K regions as a country and produces 2 plots
+"""
+function multik(ppar::Dict; save = false)
+    K = length(ppar)
+
     cpar = Dict(:S => 1.0, :L => 1.0,
                 :K => K,
                 :kshare => [1/K for i in 1:K])
 
-
-    ppar = Dict(i => Dict(:ϵsmax => 0.0, :θagg => [0.32],
-                           :θrt => 0.32,:θut => θu[i], :θu_g => gu[i] ,
-                           :θr_g => gr , :ϵr => ϵ ,:ϵs => 0.0) for i in 1:K)
     sols,C,cpar,pp = LandUse.runk(cpar = cpar,par = ppar)
-    pl = LandUse.plot_ts_all(C)
-    savefig(pl,joinpath(dbplots,"multi-$K-TS.pdf"))
+    pl = plot(impl_plot_ts_all(C)..., layout = (2,2))
 
-    d = dataframe(C)
-    d.lϕ = log.(d.ϕ)
-    d.lu = log.(d.Lu)
-    gd = groupby(d,:year)
-    gd = combine(gd, AsTable([:lϕ, :lu]) => (x -> round.(diff(vcat(extrema(x.lϕ)...)) ./ diff(vcat(extrema(x.lu)...)),digits = 1)) => :slope)
-    d  = innerjoin(d,gd,on = :year)
-    transform!(d, AsTable([:year, :slope]) => (x -> string.(x.year) .* ": slope=" .* string.(x.slope) ) => :year_s)
+    if save savefig(pl,joinpath(dbplots,"multi-$K-TS.pdf")) end
 
-    cols = range(colorant"red",colorant"blue",length = length(pp[1].T))
-    dd = select(d, :year_s, :region, :lϕ, :lu)
-    pl2 = @df dd plot(:lu,:lϕ,group = :year_s,
-                    ylab = L"\log \phi",
-                    xlab = L"\log L_u",
-                    marker = (:circle, 4),
-                    colour = cols',
-                    legend = :outertopright,
-                    ylims = (-3.8,-2.7),
-                    xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
-                    title = "epsilon = $ϵ")
+    pl2 = impl_plot_slopes(C)
                     # title = latexstring("City size vs pop \$\\epsilon\$ = $ϵ"))
-    savefig(pl2,joinpath(dbplots,"multi-$K-phi-Lu.pdf"))
+    if save savefig(pl2,joinpath(dbplots,"multi-$K-phi-Lu.pdf")) end
     sols,C,cpar,pp,pl,pl2
 end
 
@@ -421,4 +412,40 @@ function fixed_rho(p::Param; fi = nothing)
     end
     savefig(pl,joinpath(dbplots,fin))
     pl
+end
+
+
+function output_3Ms()
+
+    # single region
+    x,M,p = LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:ζ => 0.5, :τ1 => 0.98)))
+    dd = LandUse.ts_plots(M,p)
+
+    si = Dict()
+    wihe = (700,340)
+    si[:alloc] = plot(dd[:pop],dd[:spending], size = wihe)
+    si[:space] = plot(dd[:Sr],dd[:phi], size = wihe)
+    si[:h]     = plot(dd[:hr100],dd[:Hr100], size = wihe)
+    si[:dens]  = plot(dd[:avdensity],dd[:densities], size = wihe)
+    si[:r_rho] = plot(dd[:r_rho], size = wihe)
+    si[:r_y] = plot(dd[:r_y], size = wihe)
+
+    for (k,v) in si
+        savefig(v, joinpath(dbplots,"$k.pdf"))
+    end
+
+    return si
+
+
+
+
+
+    # multi regions
+    mm = LandUse.multik(
+               Dict(1 => Dict(:θut=> 1.01, :θrt=> 1.0,:θu_g => 1.31, :θr_g => 1.2, :ζ => 0.5),
+                    2 => Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => 1.3, :θr_g => 1.2, :ζ => 0.5)))
+    LandUse.savefig(mm[5],joinpath(LandUse.dbplots,"multi2.pdf"))
+    # Labor Alloc and City size
+    # p1 = plot(dd[:pop])
+
 end

@@ -14,8 +14,8 @@ function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,m::Model,p::Param)
 	solve!(result,x,p,m)
 end
 
-function nlopt_solveFM(;p = Param(),x0=nothing)
-	fm = FModel(p)
+function nlopt_solve(;p = Param(),x0=nothing)
+	fm = Region(p)
 	opt = Opt(:LN_COBYLA,4)
 	# opt = Opt(:LN_NELDERMEAD,4)
 	opt.lower_bounds = fill(0.001,4)
@@ -29,7 +29,8 @@ function nlopt_solveFM(;p = Param(),x0=nothing)
 	# m.Sr   = x[4]   # amount of land used in rural production
 	# (optf,optx,ret) = optimize(opt, [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S])
 	if isnothing(x0)
-		x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]   # an almost arbitrary point in the interior domain.
+		# x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]   # an almost arbitrary point in the interior domain.
+		x0 = [0.24, 0.68, 1.1, 0.86]   # an almost arbitrary point in the interior domain.
 	else
 		@assert length(x0) == ndims(opt)
 	end
@@ -66,7 +67,7 @@ function get_starts(p::Param)
 
 		# if first year
 		if it == 1
-			x0 = nlopt_solveFM(p=p)
+			x0 = nlopt_solve(p=p)
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
 				push!(startvals, x0[2])
@@ -80,7 +81,7 @@ function get_starts(p::Param)
 			end
 
 		else  # in other years just start at previous solution
-			x0 = nlopt_solveFM(p=p,x0 = startvals[it-1])
+			x0 = nlopt_solve(p=p,x0 = startvals[it-1])
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
 				push!(startvals, x0[2])

@@ -119,7 +119,7 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 
 
 		# 1. set ϕ for each region
-		c.R[ik].ϕ  = invτ(c.wr / p[ik].θu,p[ik])
+		c.R[ik].ϕ  = getfringe(c.wr / p[ik].θu,p[ik])
 		# 2. compute city size equation
 		c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes
 		# c.R[ik].Lu   = (c.R[ik].ϕ/2) * sum(c.R[ik].iweights[i] * D2(c.R[ik].nodes[i],p[ik],c.R[ik]) for i in 1:p[ik].int_nodes)[1]
@@ -132,12 +132,20 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].qr   = qr(p[ik],c.R[ik])
 		c.R[ik].q0   = q(0.0,p[ik],c.R[ik])
 		c.R[ik].ρ0   = ρ(0.0,p[ik],c.R[ik])
+		c.R[ik].dbar   = c.R[ik].Lu / c.R[ik].ϕ
+		c.R[ik].d0   = D(0.0,p[ik],c.R[ik])
+		c.R[ik].dr   = D(c.R[ik].ϕ,p[ik],c.R[ik])
 		c.R[ik].Hr   = H(c.R[ik].ϕ,p[ik],c.R[ik])
 		c.R[ik].hr   = h(c.R[ik].ϕ,p[ik],c.R[ik])
 		cr01 = (cr(0.0,p[ik],c.R[ik])-p[ik].cbar, cr(1.0,p[ik],c.R[ik])-p[ik].cbar)
 		cu01 = (cu(0.0,p[ik],c.R[ik])       , cu(1.0,p[ik],c.R[ik])       )
 		c.R[ik].U    = all( (cr01 .>= 0.0) .* (cu01 .>= 0.0) ) ? utility(0.0,p[ik],c.R[ik]) : NaN
 		integrate!(c.R[ik],p[ik])
+		# income measures
+		# income measures
+		c.R[ik].pcy = pcy(c.R[ik],p[ik])
+		c.R[ik].GDP = GDP(c.R[ik],p[ik])
+		c.R[ik].y   =   y(c.R[ik],p[ik])
 	end
 end
 

@@ -29,19 +29,19 @@
 		"symbol" : "\\eta"
 	},
 	"ν" : {
-		"value" : 0.015,
+		"value" : 0.05,
 		"description" : "Preference Weight for Rural Consumption Good",
 		"type" : "region",
 		"symbol" : "\\nu"
 	},
 	"cbar" : {
-		"value" : 0.2,
+		"value" : 0.7,
 		"description" : "Rural Consumption Subsistence Level",
 		"type" : "region",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.1,
+		"value" : 0.2,
 		"description" : "Negative Urban Subsistence Level",
 		"type" : "region",
 		"symbol" : "\\underline{s}"
@@ -65,28 +65,22 @@
 		"symbol" : "\\Psi"
 	},
 	"τ" : {
-		"value" : 7.0,
-		"description" : "Commuting Costs",
+		"value" : 10.0,
+		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
-		"symbol" : "\\tau(l)"
+		"symbol" : "\\tau"
+	},
+	"τ1" : {
+		"value" : 1.0,
+		"description" : "Exponent on Distance in Commuting Costs",
+		"type" : "region",
+		"symbol" : "\\tau_1"
 	},
 	"T" : {
 		"value" : [1855,15,2050],
 		"description" : "Start year, increments, end year",
 		"type" : "region",
 		"symbol" : "\\mathcal{T}"
-	},
-	"θagg" : {
-		"value" : [0.0],
-		"description" : "Aggregate Series of Productivity",
-		"type" : "region",
-		"symbol" : "\\theta_t"
-	},
-	"θagg_g" : {
-		"value" : 1.2,
-		"description" : "Constant Growth of Aggregate Productivity",
-		"type" : "region",
-		"symbol" : "g"
 	},
 	"θut" : {
 		"value" : [0.32],
@@ -177,5 +171,11 @@
 		"description" : "fixed land value for urban model",
 		"type" : "region",
 		"symbol" : "\\bar{\\rho_r}"
+	},
+	"ζ" : {
+		"value" : 0.0,
+		"description" : "power of productivity in commuting cost",
+		"type" : "region",
+		"symbol" : "\\zeta"
 	}
 }

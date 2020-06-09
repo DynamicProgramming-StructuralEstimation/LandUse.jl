@@ -10,20 +10,23 @@ mutable struct Param
 	sbar  :: Float64 # neg urba subsistence level
 
 	# productivity setup
-	θagg  :: Vector{Float64} # aggregate productivity
-	θagg_g  :: Float64 # aggregate productivity growth factor
 	θu_g  :: Float64 # constant growth factors by sector
 	θr_g  :: Float64 # constant growth factors by sector
 	θut   :: Vector{Float64}  # idiosyncratic level of urban producitivity in each period
 	θrt   :: Vector{Float64}  # idiosyncratic level of rural producitivity in each period
-	θr    :: Float64 # current period rural sector TFP = θagg[t] + θut[t]
+	θr    :: Float64 # current period rural sector TFP = θut[t]
 	θu    :: Float64 # current period urban sector TFP
 
+	# commuting cost setup
+	# τ0_g   :: Float64 # growth in commuting cost intercept
+	# τ0t    :: Vector{Float64} # time varying values of τ0
+	τ      :: Float64 # constant factor in τ (like an intercept)
+	τ1     :: Float64 # power on distance
+	ζ      :: Float64  # power on productivity
 
 
 	α     :: Float64 # labor weight on farm sector production function
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
-	τ     :: Float64 # commuting cost parameter
 	χr    :: Float64 # "easiness" to convert land into housing in rural sector
 	# χu    :: Float64 # "easiness" to convert land into housing in center of urban sector
 	L     :: Float64 # total population
@@ -67,7 +70,6 @@ mutable struct Param
 		this.L = 1.0
 		this.θut = originalθ
 		this.θrt = originalθ
-		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
 
 		# override parameters from dict par, if any
         if length(par) > 0
@@ -85,23 +87,27 @@ mutable struct Param
 						else
 							this.θrt = [v ; Float64[growθ(v, [this.θr_g for i in 2:it]) for it in 2:T]]
 						end
+					# elseif (k == :τ0t)
+					# 	if length(v) > 1
+					# 		setfield!(this,k,v)
+					# 	else
+					# 		this.τ0t = [v ; Float64[growθ(v, [this.τ0_g for i in 2:it]) for it in 2:T]]
+					# 	end
 					else
                 		setfield!(this,k,v)
 					end
 				end
             end
-        end
-		this.θagg = [this.θagg[1] ; Float64[growθ(this.θagg[1], [this.θagg_g for i in 2:it]) for it in 2:T]]
+			# if (:τ0t ∉ collect(keys(par)))
+			# 	this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
+			# end
+        else
+			# this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
+		end
 
-		# need to compute theta series here, given inputs.
-		# if no inputs, construct default series.
-		# if growth rate given , construct from growth rate
-
-		# add agg and idiosyncratic productivity
-		this.θut = this.θagg .+ this.θut
-		this.θrt = this.θagg .+ this.θrt
 		this.θu = this.θut[1]
 		this.θr = this.θrt[1]
+		# this.τ  = this.τ0t[1]
 
 		# set epsilon slope
 		if this.ϵs != this.ϵsmax
@@ -112,6 +118,9 @@ mutable struct Param
         if this.η != 0
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
         end
+
+		if this.τ1 > 1.0 || this.τ1 < 0.0 error("τ1 ∈ (0,1) violated") end
+		if this.ζ > 1.0 || this.ζ < 0.0 error("ζ ∈ (0,1) violated") end
 
 
     	return this
@@ -162,8 +171,9 @@ end
 
 # set period specific values
 function setperiod!(p::Param,i::Int)
-	setfield!(p, :θr, p.θagg[i] + p.θrt[i])   # this will be constant across region.
-	setfield!(p, :θu, p.θagg[i] + p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
+	setfield!(p, :θr, p.θrt[i])   # this will be constant across region.
+	setfield!(p, :θu, p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
+	# setfield!(p, :τ, p.τ0t[i])
 
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
 	# setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.
@@ -199,14 +209,14 @@ end
 
 
 
-function plot_ϵfun(;ϕ = 0.7,ϵtarget = 4)
-	p = Param()
+function plot_ϵfun(ϵsmax;ϕ = 0.7,ϵtarget = 4)
+	p = Param(par = Dict(:ϵsmax => ϵsmax))
 	xr = range(0.0,stop = 1.0,length=200)
-	sr = 0.0:0.1:p.ϵsmax
+	sr = range(0.0,p.ϵsmax,length = 10)
 	# y = [(d,s) -> ϵfun(d,ϕ,p) for d in xr, s in sr]
 	y = [ϵfun_tmp(d,s,ϕ,p) for d in xr, s in sr]
 
-	p = plot(xr,y, labels=reshape(["s=$i" for i in sr],1,11),title = L"\epsilon(\phi) \exp(-s (\phi - d))", xlabel = "distance to center", ylabel = "Elasticity")
+	p = plot(xr,y, labels=reshape(["s=$i" for i in sr],1,length(sr)),title = L"\epsilon(\phi) \exp(-s (\phi - d))", xlabel = "distance to center", ylabel = "Elasticity")
 	vline!(p,[ϕ], color = :red, label = "")
 	savefig(p, joinpath(@__FILE__,"..","..","images","epsfun.pdf"))
 	p
