@@ -310,3 +310,42 @@ function imulti3()
 	# 					p1
 	end
 end
+
+function imulti2()
+	g1 = 1.0:0.01:1.1
+	esl = 0.0:20:400.0
+	es = 1.0:0.5:10.0
+	esm = 1.0:0.5:10.0
+	zetas = 0.0:0.1:0.6
+	t1s = 0.5:0.1:1.0
+
+	K = 2
+	cpar = Dict(:S => 1.0, :L => 1.0,
+				:K => K,
+				:kshare => [1/K for i in 1:K])
+
+
+	mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
+		                 esl in slider(esl,label = "eslope",value = 0.0),
+		                 # gr in slider(g1,label = "gr", value = 4.0),
+		                 gs1 in slider(g1,label = "u-shift 1",value = 1.0),
+		                 gs2 in slider(g1,label = "u-shift 2",value = 1.0),
+		                 # gs3 in slider(g1,label = "u-shift 3",value = 1.0),
+						 t1 in slider(t1s, label = "τ1", value = 0.9),
+						 z in slider(zetas,label = "ζ", value = 0.0)
+
+						 d0 = Dict(:ζ => z, :τ1 => t1, :ϵr => e, :ϵsmax => esl)
+
+						 dd = Dict(1 => merge(Dict(:θut=> gs1, :θrt=> 1.0,:θu_g => 1.2,  :θr_g => 1.2), d0),
+						 		   2 => merge(Dict(:θut=> gs2, :θrt=> 1.0,:θu_g => 1.2, :θr_g => 1.2),d0)
+								   # 3 => merge(Dict(:θut=> gs3, :θrt=> 1.0,:θu_g => 1.2,  :θr_g => 1.2),d0)
+								   )
+
+   					    sols,C,cp,pp = LandUse.runk(cpar = cpar,par = dd)
+   					    p1 = plot(impl_plot_ts_all(C)..., layout = (2,2))
+   					    p2 = impl_plot_slopes(C)
+
+						plot(p1,p2,layout = (1,2))
+	# 					p1
+	end
+end
