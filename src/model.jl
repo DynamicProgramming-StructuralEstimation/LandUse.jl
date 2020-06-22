@@ -46,7 +46,7 @@ mutable struct Region <: Model
 	pcy  :: Float64  # per capita income
 	GDP  :: Float64  # GDP
 	y    :: Float64  # disposable income
-	speedr :: Float64  # speed at fringe
+	speed0 :: Float64  # speed at fringe
 	speedϕ :: Float64  # speed at center
 
 	Cu :: Float64  # aggregate urban consumption
@@ -113,7 +113,7 @@ mutable struct Region <: Model
 		m.iy        = NaN
 		m.ihexp       = NaN
 		m.ispeed       = NaN
-		m.speedr       = NaN
+		m.speed0       = NaN
 		m.speedϕ       = NaN
 		return m
 	end
@@ -201,8 +201,8 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# display(m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 	integrate!(m,p)
-	# m.speed0 = speed(0.0,p)
-	# m.speedϕ = speed(m.ϕ,p)
+	m.speed0 = speed(0.01 * m.ϕ,p)
+	m.speedϕ = speed(m.ϕ,p)
 
 	# income measures
 	m.pcy = pcy(m,p)
@@ -233,7 +233,7 @@ function integrate!(m::Region,p::Param)
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	# m.ispeed    = (m.ϕ/2) * sum(m.iweights[i] * (speed(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.ispeed    = (m.ϕ/2) * sum(m.iweights[i] * (speed(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
 	# @assert m.icu_input > 0
 	# @assert m.iDensity > 0

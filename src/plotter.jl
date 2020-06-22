@@ -104,6 +104,10 @@ function ts_plots(M,p::Param;fixy = false)
 					 linewidth = 2, title = "Avg Density", marker = mmark, legend = false,color = "black", ylims = fixy ? (0,50) : false)
 	dd[:tauphi] = @df ds6 plot(:year, :value, group = :variable,
 					  linewidth = 2, title = "1 - tau(phi)",leg = false)
+    dss = stack(select(d,:year,:speed0,:speedϕ,:ispeed), Not(:year))
+	dd[:speed] = @df dss plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "Speed", leg = :topleft, ylims = fixy ? (0,1.3) : false)	
+
 	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
 	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
 	dd
