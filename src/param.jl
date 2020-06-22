@@ -18,11 +18,13 @@ mutable struct Param
 	θu    :: Float64 # current period urban sector TFP
 
 	# commuting cost setup
-	# τ0_g   :: Float64 # growth in commuting cost intercept
-	# τ0t    :: Vector{Float64} # time varying values of τ0
-	τ      :: Float64 # constant factor in τ (like an intercept)
-	τ1     :: Float64 # power on distance
-	ζ      :: Float64  # power on productivity
+	ηs     :: Float64   # speed elasticity of fixed cost
+	ηl     :: Float64   # location elasticity of fixed cost
+	cτ     :: Float64   # efficiency of transport technology
+	ζ      :: Float64   # valuation of commuting time in terms of forgone wages
+	τ      :: Float64   # implied combination of above parameters
+	ew     :: Float64   # exponent on wu (equation 5 in commutingtech)
+	el     :: Float64   # exponent on l (equation 5 in commutingtech)
 
 
 	α     :: Float64 # labor weight on farm sector production function
@@ -119,8 +121,13 @@ mutable struct Param
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
         end
 
-		if this.τ1 > 1.0 || this.τ1 < 0.0 error("τ1 ∈ (0,1) violated") end
+		if this.ηs < 0 error("ηs < 0 violated") end
 		if this.ζ > 1.0 || this.ζ < 0.0 error("ζ ∈ (0,1) violated") end
+		if this.ηl > 1.0 || this.ηl < 0.0 error("ηl ∈ (0,1) violated") end
+		# derived parameters
+		this.τ = ((1 + this.ηs) / this.ηs) * this.cτ^(1 / (1 + this.ηs)) * (2 * this.ζ)^((this.ηs + this.ηl) / (1 + this.ηs))
+		this.ew = (-1)/(1+this.ηs)
+		this.el = (this.ηs + this.ηl)/(1+this.ηs)
 
 
     	return this

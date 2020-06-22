@@ -144,47 +144,30 @@ end
 
 
 function i0()
-	epsimax = 0.0:10.0
 	gfac = 1.00:0.05:2.0
-	sigmas = 0.1:0.1:0.99
+	eta = 0.1:0.1:0.99
+	eta2 = 0.1:0.1:1.99
 	sbs = 0.0:0.1:0.5
 
-	@manipulate for growthtype = Dict("orig" => 1,"u-r const" => 4),
-					ugrowth in slider(gfac,value = 1.01, label = "u-growthrate"),
-					rgrowth in slider(gfac,value = 1.01, label = "r-growthrate"),
-					epsim in slider(epsimax, value = 1.0, label = "ϵr"),
-					sigma in slider(sigmas, value = 0.9, label = "sigma"),
-					sb in slider(sbs, label = "sbar")
+	@manipulate for growthtype = Dict("orig" => 1,"u-r const" => 2),
+					ugrowth in slider(gfac,value = 1.2, label = "u-growthrate"),
+					rgrowth in slider(gfac,value = 1.2, label = "r-growthrate"),
+					etas in slider(eta2, value = 0.9, label = "ηs"),
+					etal in slider(eta, value = 0.9, label = "ηl"),
+					zeta in slider(eta,value = 0.5, label = "ζ")
 
 					if growthtype == 1
-						p0 = LandUse.Param(par = Dict(:ϵr => epsim,:ϵsmax => 0.0,:σ => sigma , :sbar => sb))
+						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0, :ηs => etas, :ηl => etal, :ζ => zeta))
 						x,M,p = LandUse.run(LandUse.Region,p0)
-						LandUse.plot_ts(M,p0)
-
+						pl= LandUse.ts_plots(M,p0,fixy = true)
 					elseif growthtype == 2
-						println("does not work")
-						# p0 = LandUse.Param(par = Dict(:θug => [ugrowth for i in 1:14],
-						# 					 :ϵsmax => epsim,
-						# 					 :σ => sigma ))
-						# x,M,p = LandUse.run(LandUse.Region,p0)
-						# LandUse.plot_ts(M,p0)
-					#
-					elseif growthtype == 3
-						println("does not work")
-					# 		p0 = LandUse.Param(par = Dict(:θrg => [rgrowth for i in 1:14],
-					# 							 :ϵsmax => epsim,
-					# 							 :σ => sigma ))
-					# 		x,M,p = LandUse.run(LandUse.Region,p0)
-					# 		LandUse.plot_ts(M,p0,time)
-					#
-					elseif growthtype == 4
-						p0 = LandUse.Param(par = Dict(:θut => [ugrowth for i in 1:14],
-											 :θrt => [rgrowth for i in 1:14],
-						                     :ϵr => epsim,:ϵsmax => 0.0,
-											 :σ => sigma, :sbar => sb ))
+						p0 = LandUse.Param(par = Dict(:θu_g => ugrowth,:θut => 1.0, :θrt => 1.0,
+											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηs => etas, :ηl => etal, :ζ => zeta))
 					    x,M,p = LandUse.run(LandUse.Region,p0)
 						LandUse.plot_ts(M,p0)
+						pl= LandUse.ts_plots(M,p0,fixy = true)
 					end
+					plot(pl[:pop], pl[:phi], pl[:avdensity],pl[:productivity], l = (2,2))
 	end
 end
 
