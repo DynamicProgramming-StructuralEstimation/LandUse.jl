@@ -18,7 +18,7 @@ mutable struct Param
 	θu    :: Float64 # current period urban sector TFP
 
 	# commuting cost setup
-	ηs     :: Float64   # speed elasticity of fixed cost
+	ηm     :: Float64   # speed elasticity of fixed cost
 	ηl     :: Float64   # location elasticity of fixed cost
 	cτ     :: Float64   # efficiency of transport technology
 	ζ      :: Float64   # valuation of commuting time in terms of forgone wages
@@ -121,13 +121,13 @@ mutable struct Param
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
         end
 
-		if this.ηs < 0 error("ηs < 0 violated") end
+		if this.ηm < 0 error("ηm < 0 violated") end
 		if this.ζ > 1.0 || this.ζ < 0.0 error("ζ ∈ (0,1) violated") end
 		if this.ηl > 1.0 || this.ηl < 0.0 error("ηl ∈ (0,1) violated") end
 		# derived parameters
-		this.τ = ((1 + this.ηs) / this.ηs) * this.cτ^(1 / (1 + this.ηs)) * (2 * this.ζ)^((this.ηs + this.ηl) / (1 + this.ηs))
-		this.ew = (-1)/(1+this.ηs)
-		this.el = (this.ηs + this.ηl)/(1+this.ηs)
+		this.τ = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))
+		this.ew = (-1)/(1+this.ηm)
+		this.el = (this.ηm + this.ηl)/(1+this.ηm)
 
 
     	return this

@@ -145,29 +145,29 @@ end
 
 function i0()
 	gfac = 1.00:0.05:2.0
-	eta = 0.1:0.1:0.99
+	eta = 0.0:0.1:1.0
 	eta2 = 0.1:0.1:1.99
 	sbs = 0.0:0.1:0.5
 
 	@manipulate for growthtype = Dict("orig" => 1,"u-r const" => 2),
 					ugrowth in slider(gfac,value = 1.2, label = "u-growthrate"),
 					rgrowth in slider(gfac,value = 1.2, label = "r-growthrate"),
-					etas in slider(eta2, value = 0.9, label = "ηs"),
+					etas in slider(eta2, value = 0.9, label = "ηm"),
 					etal in slider(eta, value = 0.9, label = "ηl"),
 					zeta in slider(eta,value = 0.5, label = "ζ")
 
 					if growthtype == 1
-						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0, :ηs => etas, :ηl => etal, :ζ => zeta))
+						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0, :ηm => etas, :ηl => etal, :ζ => zeta))
 						x,M,p = LandUse.run(LandUse.Region,p0)
 						pl= LandUse.ts_plots(M,p0,fixy = true)
 					elseif growthtype == 2
 						p0 = LandUse.Param(par = Dict(:θu_g => ugrowth,:θut => 1.0, :θrt => 1.0,
-											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηs => etas, :ηl => etal, :ζ => zeta))
+											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etas, :ηl => etal, :ζ => zeta))
 					    x,M,p = LandUse.run(LandUse.Region,p0)
 						LandUse.plot_ts(M,p0)
 						pl= LandUse.ts_plots(M,p0,fixy = true)
 					end
-					plot(pl[:pop], pl[:phi], pl[:avdensity],pl[:speed], l = (2,2))
+					plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime], l = (2,2))
 	end
 end
 

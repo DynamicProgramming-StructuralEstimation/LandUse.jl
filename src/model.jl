@@ -46,8 +46,10 @@ mutable struct Region <: Model
 	pcy  :: Float64  # per capita income
 	GDP  :: Float64  # GDP
 	y    :: Float64  # disposable income
-	speed0 :: Float64  # speed at fringe
-	speedϕ :: Float64  # speed at center
+	mode0 :: Float64  # mode at center
+	modeϕ :: Float64  # mode at fringe
+	ctime0 :: Float64  # commute time at center
+	ctimeϕ :: Float64  # commute time at fringe
 
 	Cu :: Float64  # aggregate urban consumption
 	Cr :: Float64  # aggregate rural consumption
@@ -67,7 +69,8 @@ mutable struct Region <: Model
 	iq        :: Float64   # ∫ ρ(l) dl
 	iy        :: Float64   # ∫ w(l) D(l) dl
 	ihexp       :: Float64   # ∫ q(l) h(l) D(l) dl
-	ispeed       :: Float64   # ∫ speed(l) D(l) dl
+	imode       :: Float64   # ∫ mode(l) D(l) dl
+	ictime       :: Float64   # ∫ ctime(l) D(l) dl
 	function Region(p::Param)
 		# creates a model fill with NaN
 		m      = new()
@@ -112,9 +115,13 @@ mutable struct Region <: Model
 		m.iq        = NaN
 		m.iy        = NaN
 		m.ihexp       = NaN
-		m.ispeed       = NaN
-		m.speed0       = NaN
-		m.speedϕ       = NaN
+		m.imode       = NaN
+		m.mode0       = NaN
+		m.modeϕ       = NaN
+		m.ictime       = NaN
+		m.ctime0       = NaN
+		m.ctimeϕ       = NaN
+
 		return m
 	end
 end
@@ -201,8 +208,10 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# display(m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
 	integrate!(m,p)
-	m.speed0 = speed(0.01 * m.ϕ,p)
-	m.speedϕ = speed(m.ϕ,p)
+	m.mode0 = mode(0.01 * m.ϕ,p)
+	m.ctime0 = 0.01 * m.ϕ / m.mode0
+	m.modeϕ = mode(m.ϕ,p)
+	m.ctimeϕ = m.ϕ / m.modeϕ
 
 	# income measures
 	m.pcy = pcy(m,p)
@@ -233,7 +242,8 @@ function integrate!(m::Region,p::Param)
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	m.ispeed    = (m.ϕ/2) * sum(m.iweights[i] * (speed(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.imode     = (m.ϕ/2) * sum(m.iweights[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.ictime    = (m.ϕ/2) * sum(m.iweights[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
 	# @assert m.icu_input > 0
 	# @assert m.iDensity > 0
@@ -428,7 +438,7 @@ end
 
 # Model Component Functions
 
-speed(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηs)) * l^((1 - p.ηl)/(1+p.ηs))
+mode(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm))
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 

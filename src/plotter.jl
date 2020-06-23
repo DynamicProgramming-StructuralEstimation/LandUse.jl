@@ -100,13 +100,23 @@ function ts_plots(M,p::Param;fixy = false)
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
 	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
 					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,130) : false)
+    incdens = df4.avgd[1] / df4.avgd[end]
 	dd[:avdensity] = @df ds5 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Avg Density", marker = mmark, legend = false,color = "black", ylims = fixy ? (0,50) : false)
+					 linewidth = 2, title = "Avg Density", marker = mmark,
+					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (2000,50,"$(round(incdens,digits = 1))x"))
 	dd[:tauphi] = @df ds6 plot(:year, :value, group = :variable,
 					  linewidth = 2, title = "1 - tau(phi)",leg = false)
-    dss = stack(select(d,:year,:speed0,:speedϕ,:ispeed), Not(:year))
-	dd[:speed] = @df dss plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Speed", leg = :topleft, ylims = fixy ? (0,1.3) : false)	
+    dss = stack(select(d,:year,:mode0,:modeϕ,:imode), Not(:year))
+	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
+	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
+
+	dd[:mode] = @df dss plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "mode", leg = :topleft, ylims = fixy ? (0,1.4) : false, labels = reshape(labs,1,3) )
+    dss = stack(select(d,:year,:ctime0,:ctimeϕ,:ictime), Not(:year))
+	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
+	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
+	dd[:ctime] = @df dss plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "commute time", leg = :topleft, labels = reshape(labs,1,3) )
 
 	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
 	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
