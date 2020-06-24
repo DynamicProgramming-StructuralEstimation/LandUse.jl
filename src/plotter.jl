@@ -81,10 +81,14 @@ function ts_plots(M,p::Param;fixy = false)
 	ds3 = stack(d3, Not(:year))
 	dd[:productivity] = @df ds3 plot(:year, :value, group = :variable,
 					  linewidth = 2, title = "Productivity", ylims = fixy ? (0,20) : false)
-	ds4 = stack(select(d,:year,:ϕ), Not(:year))
-	dd[:phi] = @df ds4 plot(:year, :value, group = :variable,
+	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
+	ds4 = select(d,:year,:ϕ)
+	incphi = d.ϕ[end] / d.ϕ[1]
+
+	dd[:phi] = @df d plot(:year, :ϕ,
 					 linewidth = 2, title = "City Size", color = "black",
-					 leg = false, marker = mmark, ylims = fixy ? (0.0,0.15) : false)
+					 leg = fixy ? :topleft : false, marker = mmark, label = fixy ? "$(round(incphi,digits=1))x" : nothing,
+					 ylims = fixy ? (0.0,0.15) : false)
     dd[:Sr] = @df d plot(:year, :Sr,
 				  linewidth = 2, color = "black",title = "Agricultural Land",
 				  leg = false, marker = mmark, ylims = fixy ? (0.6,1.0) : false)

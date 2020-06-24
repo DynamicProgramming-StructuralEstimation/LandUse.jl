@@ -152,8 +152,8 @@ function i0()
 	@manipulate for growthtype = Dict("orig" => 1,"u-r const" => 2),
 					ugrowth in slider(gfac,value = 1.2, label = "u-growthrate"),
 					rgrowth in slider(gfac,value = 1.2, label = "r-growthrate"),
-					etas in slider(eta2, value = 0.9, label = "ηm"),
-					etal in slider(eta, value = 0.9, label = "ηl"),
+					etas in slider(eta2, value = 1.0, label = "ηm"),
+					etal in slider(eta, value = 0.0, label = "ηl"),
 					zeta in slider(eta,value = 0.5, label = "ζ")
 
 					if growthtype == 1
