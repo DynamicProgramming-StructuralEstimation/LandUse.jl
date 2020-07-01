@@ -261,7 +261,8 @@ function imulti3()
 	es = 1.0:0.5:10.0
 	esm = 1.0:0.5:10.0
 	zetas = 0.0:0.1:0.6
-	t1s = 0.5:0.1:1.0
+	t1s = 0.0:0.1:1.0
+	t2s = 0.5:0.1:2.0
 
 	K = 3
 	cpar = Dict(:S => 1.0, :L => 1.0,
@@ -269,16 +270,17 @@ function imulti3()
 				:kshare => [1/K for i in 1:K])
 
 
-	mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
-		                 esl in slider(esl,label = "eslope",value = 0.0),
+	mp = @manipulate for
+		                 # esl in slider(esl,label = "eslope",value = 0.0),
 		                 # gr in slider(g1,label = "gr", value = 4.0),
 		                 gs1 in slider(g1,label = "u-growth 1",value = 1.19),
 		                 gs2 in slider(g1,label = "u-growth 2",value = 1.2),
 		                 gs3 in slider(g1,label = "u-growth 3",value = 1.21),
-						 t1 in slider(t1s, label = "τ1", value = 0.9),
-						 z in slider(zetas,label = "ζ", value = 0.0)
+						 etam in slider(t2s, label = "ηm", value = 1.0),
+						 etal in slider(t1s, label = "ηl", value = 0.0)
+						 # z in slider(zetas,label = "ζ", value = 0.0)
 
-						 d0 = Dict(:ζ => z, :τ1 => t1, :ϵr => e, :ϵsmax => esl)
+						 d0 = Dict(:ηm => etam, :ηl => etal)
 
 						 dd = Dict(1 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs1,  :θr_g => 1.2), d0),
 						 		   2 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs2, :θr_g => 1.2),d0),
@@ -289,7 +291,7 @@ function imulti3()
    					    p1 = plot(impl_plot_ts_all(C)..., layout = (2,2))
    					    p2 = impl_plot_slopes(C)
 
-						plot(p1,p2,layout = (1,2))
+						p1
 	# 					p1
 	end
 end
