@@ -2,6 +2,12 @@
 
 [![Build Status](https://travis-ci.com/floswald/LandUse.jl.svg?token=yCXmyQ4r4F8RyxxzHZFG&branch=master)](https://travis-ci.com/floswald/LandUse.jl)
 
+[![pipeline status](https://gitlab.com/floswald/LandUse.jl/badges/master/pipeline.svg)](https://gitlab.com/floswald/LandUse.jl/commits/master)
+[![coverage report](https://gitlab.com/floswald/LandUse.jl/badges/master/coverage.svg)](https://gitlab.com/floswald/LandUse.jl/commits/master)
+[![codecov](https://codecov.io/gl/floswald/LandUse.jl/branch/master/graph/badge.svg)](https://codecov.io/gl/floswald/LandUse.jl)
+[![documentation (placeholder)](https://img.shields.io/badge/docs-latest-blue.svg)](https://floswald.gitlab.io/LandUse.jl/)
+
+
 ## How to Use this
 
 1. [Download julia](https://julialang.org/downloads/)
