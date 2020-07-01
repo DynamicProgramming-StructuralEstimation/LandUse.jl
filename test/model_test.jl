@@ -43,7 +43,7 @@
 
 		# test excess consumption
 		@test LandUse.wr(m.ϕ,p) == m.wr
-		@test LandUse.xsr(p,m) == m.wr + m.r + p.sbar - m.pr * p.cbar
+		@test LandUse.xsr(p,m) ≈ m.wr + m.r + p.sbar - m.pr * p.cbar
 		@test LandUse.xsu(0.0,p,m) == LandUse.w(0.0,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar
 		@test LandUse.xsu(0.0,p,m) > LandUse.xsr(p,m)
 		@test LandUse.xsu(m.ϕ,p,m) == LandUse.xsr(p,m)
@@ -114,7 +114,7 @@
 
 
 		# test excess consumption
-		@test LandUse.xsr(p,m) == m.wr + m.r + p.sbar - m.pr * p.cbar
+		@test LandUse.xsr(p,m) ≈ m.wr + m.r + p.sbar - m.pr * p.cbar
 		@test LandUse.xsu(0.0,p,m) == LandUse.w(0.0,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar
 		@test LandUse.xsu(0.0,p,m) > LandUse.xsr(p,m)
 		@test LandUse.xsu(m.ϕ,p,m) == LandUse.xsr(p,m)
@@ -143,7 +143,7 @@
 
 	@testset "test flat elasticity ϵs = 0" begin
 
-		p = LandUse.Param(par = Dict(:ϵsmax => 0.0))   # flat epsilon slope, so closed form solutions apply
+		p = LandUse.Param(par = Dict(:ϵsmax => 0.0, :ζ => 0.0, :τ1 => 1.0))   # flat epsilon slope, so closed form solutions apply
 		s = LandUse.get_starts(p)
 		LandUse.setperiod!(p,1)  # make sure we are in year 1
 		m = LandUse.Region(p)
@@ -202,7 +202,7 @@
 		end
 
 		@testset "equation (26) special case" begin
-			# no longer true without linear transport cost
+
 			@test_broken isapprox( (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) + p.sbar - m.pr * p.cbar) - p.sbar + p.ϵr * m.r , (1 - m.iτ) * LandUse.Yu(m,p) / m.Lu, atol = 0.05)
 			# @test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (m.Lu - m.iτ) * m.wu0 / p.L
 			yy = fm.ρr / p.L + fm.wu0 * (1.0 - LandUse.τ(fm.ϕ,fm.ϕ,p) * fm.Lr / p.L)
@@ -215,7 +215,7 @@
 	end
 
 	@testset "test full solution" begin
-		p = LandUse.Param()   # flat epsilon slope, so closed form solutions apply
+		p = LandUse.Param(par = Dict( :ζ => 0.3, :τ1 => 0.9 ))   # non zero zeta!
 
 		x,M,p = LandUse.run(LandUse.Region,p)
 
