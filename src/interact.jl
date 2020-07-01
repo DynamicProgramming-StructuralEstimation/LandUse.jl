@@ -144,47 +144,30 @@ end
 
 
 function i0()
-	epsimax = 0.0:10.0
 	gfac = 1.00:0.05:2.0
-	sigmas = 0.1:0.1:0.99
+	eta = 0.0:0.1:1.0
+	eta2 = 0.1:0.1:1.99
 	sbs = 0.0:0.1:0.5
 
-	@manipulate for growthtype = Dict("orig" => 1,"u-r const" => 4),
-					ugrowth in slider(gfac,value = 1.01, label = "u-growthrate"),
-					rgrowth in slider(gfac,value = 1.01, label = "r-growthrate"),
-					epsim in slider(epsimax, value = 1.0, label = "ϵr"),
-					sigma in slider(sigmas, value = 0.9, label = "sigma"),
-					sb in slider(sbs, label = "sbar")
+	@manipulate for growthtype = Dict("orig" => 1,"u-r const" => 2),
+					ugrowth in slider(gfac,value = 1.2, label = "u-growthrate"),
+					rgrowth in slider(gfac,value = 1.2, label = "r-growthrate"),
+					etas in slider(eta2, value = 1.0, label = "ηm"),
+					etal in slider(eta, value = 0.0, label = "ηl"),
+					zeta in slider(eta,value = 0.5, label = "ζ")
 
 					if growthtype == 1
-						p0 = LandUse.Param(par = Dict(:ϵr => epsim,:ϵsmax => 0.0,:σ => sigma , :sbar => sb))
+						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0, :ηm => etas, :ηl => etal, :ζ => zeta))
 						x,M,p = LandUse.run(LandUse.Region,p0)
-						LandUse.plot_ts(M,p0)
-
+						pl= LandUse.ts_plots(M,p0,fixy = true)
 					elseif growthtype == 2
-						println("does not work")
-						# p0 = LandUse.Param(par = Dict(:θug => [ugrowth for i in 1:14],
-						# 					 :ϵsmax => epsim,
-						# 					 :σ => sigma ))
-						# x,M,p = LandUse.run(LandUse.Region,p0)
-						# LandUse.plot_ts(M,p0)
-					#
-					elseif growthtype == 3
-						println("does not work")
-					# 		p0 = LandUse.Param(par = Dict(:θrg => [rgrowth for i in 1:14],
-					# 							 :ϵsmax => epsim,
-					# 							 :σ => sigma ))
-					# 		x,M,p = LandUse.run(LandUse.Region,p0)
-					# 		LandUse.plot_ts(M,p0,time)
-					#
-					elseif growthtype == 4
-						p0 = LandUse.Param(par = Dict(:θut => [ugrowth for i in 1:14],
-											 :θrt => [rgrowth for i in 1:14],
-						                     :ϵr => epsim,:ϵsmax => 0.0,
-											 :σ => sigma, :sbar => sb ))
+						p0 = LandUse.Param(par = Dict(:θu_g => ugrowth,:θut => 1.0, :θrt => 1.0,
+											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etas, :ηl => etal, :ζ => zeta))
 					    x,M,p = LandUse.run(LandUse.Region,p0)
 						LandUse.plot_ts(M,p0)
+						pl= LandUse.ts_plots(M,p0,fixy = true)
 					end
+					plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime], l = (2,2))
 	end
 end
 
@@ -278,9 +261,50 @@ function imulti3()
 	es = 1.0:0.5:10.0
 	esm = 1.0:0.5:10.0
 	zetas = 0.0:0.1:0.6
-	t1s = 0.5:0.1:1.0
+	t1s = 0.0:0.1:1.0
+	t2s = 0.5:0.1:2.0
 
 	K = 3
+	cpar = Dict(:S => 1.0, :L => 1.0,
+				:K => K,
+				:kshare => [1/K for i in 1:K])
+
+
+	mp = @manipulate for
+		                 # esl in slider(esl,label = "eslope",value = 0.0),
+		                 # gr in slider(g1,label = "gr", value = 4.0),
+		                 gs1 in slider(g1,label = "u-growth 1",value = 1.19),
+		                 gs2 in slider(g1,label = "u-growth 2",value = 1.2),
+		                 gs3 in slider(g1,label = "u-growth 3",value = 1.21),
+						 etam in slider(t2s, label = "ηm", value = 1.0),
+						 etal in slider(t1s, label = "ηl", value = 0.0)
+						 # z in slider(zetas,label = "ζ", value = 0.0)
+
+						 d0 = Dict(:ηm => etam, :ηl => etal)
+
+						 dd = Dict(1 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs1,  :θr_g => 1.2), d0),
+						 		   2 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs2, :θr_g => 1.2),d0),
+								   3 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs3,  :θr_g => 1.2),d0)
+								   )
+
+   					    sols,C,cp,pp = LandUse.runk(cpar = cpar,par = dd)
+   					    p1 = plot(impl_plot_ts_all(C)..., layout = (2,2))
+   					    p2 = impl_plot_slopes(C)
+
+						p1
+	# 					p1
+	end
+end
+
+function imulti2()
+	g1 = 1.0:0.01:1.1
+	esl = 0.0:20:400.0
+	es = 1.0:0.5:10.0
+	esm = 1.0:0.5:10.0
+	zetas = 0.0:0.1:0.6
+	t1s = 0.5:0.1:1.0
+
+	K = 2
 	cpar = Dict(:S => 1.0, :L => 1.0,
 				:K => K,
 				:kshare => [1/K for i in 1:K])
@@ -289,17 +313,17 @@ function imulti3()
 	mp = @manipulate for e in slider(es, label = "ϵr", value = 4.0 ),
 		                 esl in slider(esl,label = "eslope",value = 0.0),
 		                 # gr in slider(g1,label = "gr", value = 4.0),
-		                 gs1 in slider(g1,label = "u-growth 1",value = 1.19),
-		                 gs2 in slider(g1,label = "u-growth 2",value = 1.2),
-		                 gs3 in slider(g1,label = "u-growth 3",value = 1.21),
+		                 gs1 in slider(g1,label = "u-shift 1",value = 1.0),
+		                 gs2 in slider(g1,label = "u-shift 2",value = 1.0),
+		                 # gs3 in slider(g1,label = "u-shift 3",value = 1.0),
 						 t1 in slider(t1s, label = "τ1", value = 0.9),
 						 z in slider(zetas,label = "ζ", value = 0.0)
 
 						 d0 = Dict(:ζ => z, :τ1 => t1, :ϵr => e, :ϵsmax => esl)
 
-						 dd = Dict(1 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs1,  :θr_g => 1.2), d0),
-						 		   2 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs2, :θr_g => 1.2),d0),
-								   3 => merge(Dict(:θut=> 1.0, :θrt=> 1.0,:θu_g => gs3,  :θr_g => 1.2),d0)
+						 dd = Dict(1 => merge(Dict(:θut=> gs1, :θrt=> 1.0,:θu_g => 1.2,  :θr_g => 1.2), d0),
+						 		   2 => merge(Dict(:θut=> gs2, :θrt=> 1.0,:θu_g => 1.2, :θr_g => 1.2),d0)
+								   # 3 => merge(Dict(:θut=> gs3, :θrt=> 1.0,:θu_g => 1.2,  :θr_g => 1.2),d0)
 								   )
 
    					    sols,C,cp,pp = LandUse.runk(cpar = cpar,par = dd)

@@ -28,6 +28,18 @@
 		"type" : "region",
 		"symbol" : "\\eta"
 	},
+	"ηm" : {
+		"value" : 0.9,
+		"description" : "elasticity of F commuting cost wrt mode",
+		"type" : "region",
+		"symbol" : "\\eta_m"
+	},
+	"ηl" : {
+		"value" : 0.9,
+		"description" : "elasticity of F commuting cost wrt location",
+		"type" : "region",
+		"symbol" : "\\eta_l"
+	},
 	"ν" : {
 		"value" : 0.05,
 		"description" : "Preference Weight for Rural Consumption Good",
@@ -64,17 +76,11 @@
 		"type" : "region",
 		"symbol" : "\\Psi"
 	},
-	"τ" : {
+	"cτ" : {
 		"value" : 10.0,
 		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
-		"symbol" : "\\tau"
-	},
-	"τ1" : {
-		"value" : 1.0,
-		"description" : "Exponent on Distance in Commuting Costs",
-		"type" : "region",
-		"symbol" : "\\tau_1"
+		"symbol" : "c_\\tau"
 	},
 	"T" : {
 		"value" : [1855,15,2050],
@@ -173,8 +179,8 @@
 		"symbol" : "\\bar{\\rho_r}"
 	},
 	"ζ" : {
-		"value" : 0.0,
-		"description" : "power of productivity in commuting cost",
+		"value" : 0.5,
+		"description" : "Valuation of commuting time in terms of wages",
 		"type" : "region",
 		"symbol" : "\\zeta"
 	}

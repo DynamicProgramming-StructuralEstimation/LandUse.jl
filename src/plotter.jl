@@ -7,7 +7,7 @@ function setup_color(l::Int)
     return colors
 end
 
-function ts_plots(M,p::Param)
+function ts_plots(M,p::Param;fixy = false)
 	d = dataframe(M,p.T)
 	dd = Dict()
 	df = @linq d |>
@@ -28,17 +28,17 @@ function ts_plots(M,p::Param)
 					 linewidth = 2, title = "Population",
 					 ylims = (0,1), marker = mmark, legend = :topleft)
 
-	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark)
- 	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values", marker = mmark)
- 	dd[:q0] = @df d plot(:year, :q0, linewidth = 2, color = "black", leg =false, title = "Central House Prices", marker = mmark)
- 	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices", marker = mmark)
-	dd[:hr] = @df d plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand", marker = mmark)
+	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
+ 	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values", marker = mmark, ylims = fixy ? (0.19,0.36) : false )
+ 	dd[:q0] = @df d plot(:year, :q0, linewidth = 2, color = "black", leg =false, title = "Central House Prices", marker = mmark, ylims = fixy ? (0.0,5.0) : false )
+ 	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices", marker = mmark, ylims = fixy ? (0.5,1.5) : false )
+	dd[:hr] = @df d plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand", marker = mmark, ylims = fixy ? (0.0,5.0) : false )
 
 	df = @linq d |>
 		 select(:year,:r, :y ,:iq) |>
 		 transform(r_y = 100*(:r ./ :y), ru_y = 100*(:iq ./ :y))
 	dd[:r_y] = @df df plot(:year, [:r_y, :ru_y], labels = ["Total" "Urban Only"],
-	            linewidth = 2, title = "Land Rents over Income (%)", marker = mmark)
+	            linewidth = 2, title = "Land Rents over Income (%)", marker = mmark, ylims = fixy ? (0,50) : false)
 
 
 	dtemp = transform(select(d, :year, :r, :ρ0, :ρr, :q0, :qr, :hr, :Hr),
@@ -50,18 +50,19 @@ function ts_plots(M,p::Param)
 	                  :Hr => ((x) -> 100*(x ./ x[7])) => :Hr,
 	                  :qr => ((x) -> 100*(x ./ x[7])) => :qr
 					  )
-	dd[:r] = @df dtemp plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Land Rents (1945=100)", marker = mmark)
+	dd[:r] = @df dtemp plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Land Rents (1945=100)", marker = mmark, ylims = fixy ? (95,500) : false)
 	dd[:r_rho] = @df dtemp plot(:year, [:r, :ρ0],linewidth = 2, lab = [L"r" L"\rho_0" ],
 	                           title = "Land Rents and Central Land Values (1945=100)",
 							   leg = :topleft,
-							   marker = mmark)
+							   marker = mmark, ylims = fixy ? (50,500) : false)
 
     dd[:q0_qr] = @df dtemp plot(:year, [:q0, :qr],linewidth = 2, lab = [L"q_0" L"q_r"],
 	                           title = "Central and Fringe House Prices (1945=100)",
 							   leg = :topleft,
-							   marker = mmark)
-    dd[:hr100] = @df dtemp plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand (1945=100)", marker = mmark)
-    dd[:Hr100] = @df dtemp plot(:year, :Hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Supply (1945=100)", marker = mmark)
+							   marker = mmark, ylims = fixy ? (85,150) : false)
+	# is missing density!
+    # dd[:hr100] = @df dtemp plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand (1945=100)", marker = mmark)
+    # dd[:Hr100] = @df dtemp plot(:year, :Hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Supply (1945=100)", marker = mmark)
 
 
 
@@ -79,14 +80,18 @@ function ts_plots(M,p::Param)
 
 	ds3 = stack(d3, Not(:year))
 	dd[:productivity] = @df ds3 plot(:year, :value, group = :variable,
-					  linewidth = 2, title = "Productivity")
-	ds4 = stack(select(d,:year,:ϕ), Not(:year))
-	dd[:phi] = @df ds4 plot(:year, :value, group = :variable,
+					  linewidth = 2, title = "Productivity", ylims = fixy ? (0,20) : false)
+	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
+	ds4 = select(d,:year,:ϕ)
+	incphi = d.ϕ[end] / d.ϕ[1]
+
+	dd[:phi] = @df d plot(:year, :ϕ,
 					 linewidth = 2, title = "City Size", color = "black",
-					 leg = false, marker = mmark)
+					 leg = fixy ? :topleft : false, marker = mmark, label = fixy ? "$(round(incphi,digits=1))x" : nothing,
+					 ylims = fixy ? (0.0,0.15) : false)
     dd[:Sr] = @df d plot(:year, :Sr,
 				  linewidth = 2, color = "black",title = "Agricultural Land",
-				  leg = false, marker = mmark)
+				  leg = false, marker = mmark, ylims = fixy ? (0.6,1.0) : false)
 	# ds4 = stack(select(d,:year,:pr), Not(:year))
 	df4 = @linq d |>
 		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
@@ -98,11 +103,25 @@ function ts_plots(M,p::Param)
 	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
 	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Densities", leg = :topright)
+					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,130) : false)
+    incdens = df4.avgd[1] / df4.avgd[end]
 	dd[:avdensity] = @df ds5 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Avg Density", marker = mmark, legend = false,color = "black")
+					 linewidth = 2, title = "Avg Density", marker = mmark,
+					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (2000,50,"$(round(incdens,digits = 1))x"))
 	dd[:tauphi] = @df ds6 plot(:year, :value, group = :variable,
 					  linewidth = 2, title = "1 - tau(phi)",leg = false)
+    dss = stack(select(d,:year,:mode0,:modeϕ,:imode), Not(:year))
+	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
+	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
+
+	dd[:mode] = @df dss plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "mode", leg = :topleft, ylims = fixy ? (0,1.4) : false, labels = reshape(labs,1,3) )
+    dss = stack(select(d,:year,:ctime0,:ctimeϕ,:ictime), Not(:year))
+	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
+	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
+	dd[:ctime] = @df dss plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "commute time", leg = :topleft, labels = reshape(labs,1,3) )
+
 	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
 	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
 	dd
