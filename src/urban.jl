@@ -176,3 +176,8 @@ function Eqsys!(F::Vector{Float64},m::Urban,p::Param)
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
 	F[4] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
 end
+
+
+function whoisthis()
+	println("i am florian")
+end
