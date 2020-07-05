@@ -137,7 +137,7 @@
 		@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar))
 
 		@test LandUse.Yu(m,p) == p.θu * m.Lu
-		@test LandUse.D(l,p,m) ≈ LandUse.D2(l,p,m)
+		# @test LandUse.D(l,p,m) ≈ LandUse.D2(l,p,m)
 
 	end
 
