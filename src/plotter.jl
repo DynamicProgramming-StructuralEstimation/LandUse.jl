@@ -115,12 +115,21 @@ function ts_plots(M,p::Param;fixy = false)
 	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
 
 	dd[:mode] = @df dss plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "mode", leg = :topleft, ylims = fixy ? (0,1.4) : false, labels = reshape(labs,1,3) )
+					 linewidth = 2, title = "mode", leg = :topleft, ylims = fixy ? (0,1.4) : false )
     dss = stack(select(d,:year,:ctime0,:ctimeϕ,:ictime), Not(:year))
 	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
 	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
 	dd[:ctime] = @df dss plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "commute time", leg = :topleft, labels = reshape(labs,1,3) )
+					 # linewidth = 2, title = "commute time", leg = :topleft, labels = reshape(labs,1,3) )
+					 linewidth = 2, title = "commute time", leg = :topleft) 
+
+
+    # to time vs distancne in 2005
+	cdistances = [log(M[11].nodes[i]) for i in 1:p.int_nodes]
+	cspeed     = [log(mode(M[11].nodes[i],p)) for i in 1:p.int_nodes]
+	dd[:dist_vs_time] = plot(cdistances,cspeed,title = "2005",
+	               xlab = "dist",ylab = "speed",ylims = (-5,-1),
+				   xlims = (-10,-4),leg=false)
 
 	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
 	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
