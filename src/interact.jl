@@ -167,7 +167,7 @@ function i0()
 						LandUse.plot_ts(M,p0)
 						pl= LandUse.ts_plots(M,p0,fixy = true)
 					end
-					plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime], l = (2,2))
+					plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
 	end
 end
 

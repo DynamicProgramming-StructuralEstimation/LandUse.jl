@@ -242,8 +242,8 @@ function integrate!(m::Region,p::Param)
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	m.imode     = (m.ϕ/2) * sum(m.iweights[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	m.ictime    = (m.ϕ/2) * sum(m.iweights[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.imode     = (m.ϕ/2) * sum(m.iweights[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) / m.Lu for i in 1:p.int_nodes)[1]
+	m.ictime    = (m.ϕ/2) * sum(m.iweights[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) / m.Lu for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
 	# @assert m.icu_input > 0
 	# @assert m.iDensity > 0
