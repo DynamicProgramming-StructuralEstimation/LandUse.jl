@@ -449,3 +449,38 @@ function output_3Ms()
     # p1 = plot(dd[:pop])
 
 end
+
+"""
+    https://github.com/floswald/LandUse.jl/issues/36
+
+1. same growth in sectors
+    i. high cbar vs low sbar: show implied city density time series to see that only that config works
+    ii. show falling housing spending share as well
+2. implications of growth in either sector only
+3. identify commuting cost params by matching time series data
+"""
+function issue36()
+    r = Dict()
+
+    # 1. same growth in sectors
+    #     i. high cbar vs low sbar: show implied city density time series to see that only that config works
+    #     ii. show falling housing spending share as well
+    r[:part1] = Dict()
+
+    p1  = Param() # baseline param: high cbar and low sbar
+    x,M,p0  = run(Region,p1)
+    pl1 = LandUse.ts_plots(M,p1)
+
+    r[:part1][:baseline] = plot(pl1[:pop],pl1[:spending],pl1[:avdensity],pl1[:phi],
+                                layout = (2,2),link = :x)
+
+    p2 = Param(par = Dict(:cbar => 0.0, :sbar => 0.4)) # low cbar and high sbar
+    x,M,p0  = run(Region,p2)
+    pl2 = LandUse.ts_plots(M,p2)
+    r[:part1][:low_cbar] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:phi],
+    layout = (2,2),link = :x)
+
+
+    return r
+
+end
