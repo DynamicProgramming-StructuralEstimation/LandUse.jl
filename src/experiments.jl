@@ -465,22 +465,41 @@ function issue36()
     # 1. same growth in sectors
     #     i. high cbar vs low sbar: show implied city density time series to see that only that config works
     #     ii. show falling housing spending share as well
-    r[:part1] = Dict()
+    r[1] = Dict()
 
     p1  = Param() # baseline param: high cbar and low sbar
     x,M,p0  = run(Region,p1)
     pl1 = LandUse.ts_plots(M,p1)
 
-    r[:part1][:baseline] = plot(pl1[:pop],pl1[:spending],pl1[:avdensity],pl1[:phi],
+    r[1][:baseline] = plot(pl1[:pop],pl1[:spending],pl1[:avdensity],pl1[:phi],
                                 layout = (2,2),link = :x)
 
     p2 = Param(par = Dict(:cbar => 0.0, :sbar => 0.4)) # low cbar and high sbar
     x,M,p0  = run(Region,p2)
     pl2 = LandUse.ts_plots(M,p2)
-    r[:part1][:low_cbar] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:phi],
-    layout = (2,2),link = :x)
+    r[1][:low_cbar] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:phi],
+                                layout = (2,2),link = :x)
 
+    # 2. implications of growth in either sector only
+    # i. u grows faster than r
+    r[2] = Dict()
+    p2 = LandUse.Param(par = Dict(:θu_g => 1.3,:θut => 1.0, :θrt => 1.0,:θr_g => 1.1))
+    x,M,p0  = run(Region,p2)
+    pl2 = LandUse.ts_plots(M,p2)
+    r[2][:u_fast] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],
+                                layout = (2,2),link = :x)
 
+    p2 = LandUse.Param(par = Dict(:θu_g => 1.1,:θut => 1.0, :θrt => 1.0,:θr_g => 1.3))
+    x,M,p0  = run(Region,p2)
+    pl2 = LandUse.ts_plots(M,p2)
+    r[2][:r_fast] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],
+                                layout = (2,2),link = :x)
+
+    # save plots
+    savefig(r[1][:baseline], joinpath(dbplots,"issue36-baseline.pdf"))
+    savefig(r[1][:low_cbar], joinpath(dbplots,"issue36-low-cbar.pdf"))
+    savefig(r[2][:u_fast], joinpath(dbplots,"issue36-u-fast.pdf"))
+    savefig(r[2][:r_fast], joinpath(dbplots,"issue36-r-fast.pdf"))
     return r
 
 end

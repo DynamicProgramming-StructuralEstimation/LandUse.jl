@@ -20,9 +20,11 @@ module LandUse
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
-#	const dbpath = joinpath(ENV["HOME"],"Dropbox","research","LandUse","output","model")
-#	const dbplots = joinpath(dbpath,"plots")
-#	const dbtables = joinpath(dbpath,"tables")
+	user = splitdir(homedir())[end]
+	isflo = user == "florian.oswald" || "74079"
+	const dbpath = isflo ? joinpath(ENV["HOME"],"Dropbox","research","LandUse","output","model") : error("Marc: put your dropbox path here")
+	const dbplots = joinpath(dbpath,"plots")
+	const dbtables = joinpath(dbpath,"tables")
 	const originalθ = [0.32, 0.33, 0.34, 0.36, 0.38, 0.41, 0.48, 0.7, 1.35, 2.3, 3, 4.5, 5, 5.5] ./ 0.32  # those number from initial matlab code
 
 	# imports
