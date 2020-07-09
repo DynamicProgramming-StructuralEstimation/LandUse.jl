@@ -21,7 +21,7 @@ module LandUse
 	# constants
 	const PEN = 100.0  # penalty for nl solver
 	user = splitdir(homedir())[end]
-	isflo = user == "florian.oswald" || "74079"
+	isflo = (user == "florian.oswald") || (user == "74097")
 	const dbpath = isflo ? joinpath(ENV["HOME"],"Dropbox","research","LandUse","output","model") : error("Marc: put your dropbox path here")
 	const dbplots = joinpath(dbpath,"plots")
 	const dbtables = joinpath(dbpath,"tables")
