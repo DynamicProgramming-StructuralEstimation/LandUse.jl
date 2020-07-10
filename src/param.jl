@@ -43,6 +43,8 @@ mutable struct Param
 	S     :: Float64  # area of region
 	ρrbar :: Float64  # fixed rural land value for urban model
 
+	trace :: Bool  # whether to trace solver
+
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
         j = JSON.parse(f)
@@ -62,6 +64,8 @@ mutable struct Param
 	            else
 	                setfield!(this,Symbol(k),v["value"])
 	            end
+			elseif v["type"] == "numerical"
+				setfield!(this,Symbol(k),v["value"])
 			end
         end
 

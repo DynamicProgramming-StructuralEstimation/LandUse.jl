@@ -121,7 +121,7 @@ function ts_plots(M,p::Param;fixy = false)
 	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
 	dd[:ctime] = @df dss plot(:year, :value, group = :variable,
 					 # linewidth = 2, title = "commute time", leg = :topleft, labels = reshape(labs,1,3) )
-					 linewidth = 2, title = "commute time", leg = :topleft) 
+					 linewidth = 2, title = "commute time", leg = :topleft)
 
 
     # to time vs distancne in 2005
@@ -556,19 +556,17 @@ end
 
 # plotter for optimization tracking
 
-function traceplot(it)
-	ft = hcat(Ftrace...)'
-	xt = hcat(Xtrace...)'
-	K = Int((length(Ftrace[1]) - 3)/2)  # 2K+3 equations
-	# nrows = min(size(xt)[1],1000)
-	# p1 = plot(ft[1:nrows,:],title = "Ftrace $it",
+function traceplot(x::NLsolve.SolverResults,it)
+
+	ft = ftrace(x)
+	xt = xtrace(x)
 	p1 = plot(ft,title = "Ftrace $it",
-	         label = hcat(["Labor"],reshape(["Land_$i" for i in 1:K],1,K),["rents"],["Urban Good"],reshape(["citysize_$i" for i in 1:K],1,K)),
+	         label = ["Land" "Citysize" "Rent" "Urban good"],
 			 xlabel = "iteration")
-	p2 = plot(xt,title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K),reshape(["Lu_$i" for i in 1:K],1,K)),xlabel = "iteration")
+	p2 = plot(xt,title = "xtrace $it",label = ["r" "Lr" "pr" "Sr"], xlabel = "iteration")
 	# p2 = plot(xt[1:nrows,:],title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K)),xlabel = "iteration")
 	pl = plot(p1,p2,layout = (1,2))
-	savefig(pl,joinpath(@__DIR__,"..","images","country_trace$it.pdf"))
+	savefig(pl,joinpath(@__DIR__,"..","images","solver_trace$it.pdf"))
 end
 
 

@@ -183,5 +183,10 @@
 		"description" : "Valuation of commuting time in terms of wages",
 		"type" : "region",
 		"symbol" : "\\zeta"
+	},
+	"trace" : {
+		"value" : true,
+		"description" : "trace solver or not",
+		"type" : "numerical"
 	}
 }

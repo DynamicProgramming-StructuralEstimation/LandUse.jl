@@ -1,5 +1,8 @@
 
 
+xtrace(x::NLsolve.SolverResults) = vcat([(x.trace[i].metadata["x"])' for i in 1:x.iterations]...)
+ftrace(x::NLsolve.SolverResults) = vcat([(x.trace[i].metadata["f(x)"])' for i in 1:x.iterations]...)
+
 """
 	get_solutions()
 
@@ -33,11 +36,14 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 		# end
 
 		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
-			                     sols[it],iterations = 10000)
+			                     sols[it],iterations = 10000,store_trace = p.trace, extended_trace = p.trace)
 		# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
 		# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01],
 		# 	                                        [Inf,1.0,Inf,1.0,Inf,1.0],
 		# 	                                        sols[it-1],iterations = 1000)
+		if p.trace
+			traceplot(r1,it)
+		end
 		if converged(r1)
 			push!(sols, r1.zero)
 			update!(m0,p,r1.zero)
