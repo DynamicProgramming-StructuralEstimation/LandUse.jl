@@ -191,8 +191,18 @@ function smooth_θ(dt::StepRange)
 	pu = SmoothingSplines.predict(su,convert(Array{Float64},dt))
 	pr = SmoothingSplines.predict(sr,convert(Array{Float64},dt))
 
-	Dict(:θr => pr ./ pr[1], :θu => pu ./ pu[1])
 
+
+	ret = Dict(:θr => pr ./ pr[1], :θu => pu ./ pu[1])
+	plu = scatter(u.year, u.theta ./ u.theta[1],title = "Urban Productivity",leg=false)
+	plot!(plu,dt,ret[:θu],m=(3,:auto,:red))
+	savefig(plu, joinpath(dbplots,"smooth-thetau.pdf"))
+
+	plr = scatter(r.year, r.theta ./ r.theta[1],title = "Rural Productivity",leg=false)
+	plot!(plr,dt,ret[:θr],m=(3,:auto,:red))
+	savefig(plr, joinpath(dbplots,"smooth-thetar.pdf"))
+
+	ret
 end
 
 
