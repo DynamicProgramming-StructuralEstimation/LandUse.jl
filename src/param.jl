@@ -74,8 +74,9 @@ mutable struct Param
 		this.t = 1
 		this.S = 1.0  # set default values for space and population
 		this.L = 1.0
-		this.θut = originalθ
-		this.θrt = originalθ
+		thetas = smooth_θ(this.T)
+		this.θut = thetas[:θu]
+		this.θrt = thetas[:θr]
 
 		# override parameters from dict par, if any
         if length(par) > 0
@@ -168,6 +169,30 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      c1      : $(p.c1  )\n")
 	print(io,"      c2      : $(p.c2  )\n")
 	print(io,"      Ψ       : $(p.Ψ   )\n")
+end
+
+function smooth_θ(dt::StepRange)
+	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
+	x = @linq d |>
+		where((:year .<= dt.stop) .& (:year .>= dt.start))
+
+	# normalize to year 1
+	r = select(x,:year,:theta_rural => :theta)
+	u = select(x,:year,:theta_urban => :theta)
+
+	r = r[completecases(r),:]
+	disallowmissing!(r)
+	sr = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.theta, 250.0)
+
+	u = u[completecases(u),:]
+	disallowmissing!(u)
+	su = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},u.year), u.theta, 250.0)
+
+	pu = SmoothingSplines.predict(su,convert(Array{Float64},dt))
+	pr = SmoothingSplines.predict(sr,convert(Array{Float64},dt))
+
+	Dict(:θr => pr ./ pr[1], :θu => pu ./ pu[1])
+
 end
 
 
