@@ -108,7 +108,7 @@
 		# test optimal consumption rules
 		@test LandUse.cu(0.0,p,m) == (1.0 - p.γ)*(1.0 - p.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
 		@test LandUse.cu(0.9,p,m) == (1.0 - p.γ)*(1.0 - p.ν)*(LandUse.w(m.Lu,0.9,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
-		@test LandUse.cr(0.0,p,m) == p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
+		@test LandUse.cr(0.0,p,m) ≈ p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
 		@test LandUse.cr(0.9,p,m) == p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,0.9,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
 
 
