@@ -26,7 +26,7 @@ function ts_plots(M,p::Param;fixy = false)
 	ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
 	dd[:pop] = @df ds2 plot(:year, :value, group = :variable,
 					 linewidth = 2, title = "Population",
-					 ylims = (0,1), marker = mmark, legend = :topleft)
+					 ylims = (0,1), marker = mmark, legend = :right)
 
 	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
  	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values", marker = mmark, ylims = fixy ? (0.19,0.36) : false )
@@ -80,7 +80,8 @@ function ts_plots(M,p::Param;fixy = false)
 
 	ds3 = stack(d3, Not(:year))
 	dd[:productivity] = @df ds3 plot(:year, :value, group = :variable,
-					  linewidth = 2, title = "Productivity", ylims = fixy ? (0,20) : false)
+					  linewidth = 2, title = "Productivity", ylims = fixy ? (0,20) : false, marker = mmark,
+					  legend = :left)
 	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	ds4 = select(d,:year,:ϕ)
 	incphi = d.ϕ[end] / d.ϕ[1]
@@ -105,9 +106,11 @@ function ts_plots(M,p::Param;fixy = false)
 	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
 					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,130) : false)
     incdens = df4.avgd[1] / df4.avgd[end]
+    diffdens = df4.avgd[1] - df4.avgd[end]
+	ancdens = df4.avgd[end] + 0.2 * diffdens
 	dd[:avdensity] = @df ds5 plot(:year, :value, group = :variable,
 					 linewidth = 2, title = "Avg Density", marker = mmark,
-					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (2000,50,"$(round(incdens,digits = 1))x"))
+					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (p.T.stop,ancdens,"$(round(incdens,digits = 1))x"))
 	dd[:tauphi] = @df ds6 plot(:year, :value, group = :variable,
 					  linewidth = 2, title = "1 - tau(phi)",leg = false)
     dss = stack(select(d,:year,:mode0,:modeϕ,:imode), Not(:year))
@@ -115,13 +118,13 @@ function ts_plots(M,p::Param;fixy = false)
 	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
 
 	dd[:mode] = @df dss plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "mode", leg = :topleft, ylims = fixy ? (0,1.4) : false )
+					 linewidth = 2, title = "mode", leg = :left, ylims = fixy ? (0,1.4) : false , marker = mmark)
     dss = stack(select(d,:year,:ctime0,:ctimeϕ,:ictime), Not(:year))
 	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
 	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
 	dd[:ctime] = @df dss plot(:year, :value, group = :variable,
 					 # linewidth = 2, title = "commute time", leg = :topleft, labels = reshape(labs,1,3) )
-					 linewidth = 2, title = "commute time", leg = :topleft)
+					 linewidth = 2, title = "commute time", leg = :topleft, marker = mmark)
 
 
     # to time vs distancne in 2005
