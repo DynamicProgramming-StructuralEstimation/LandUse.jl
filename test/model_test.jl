@@ -1,7 +1,7 @@
 @testset "Single Region" begin
 	@testset "components in flat model checks" begin
 
-		p = LandUse.Param(par = Dict(:ϵsmax => 0.0))   # flat epsilon slope, so closed form solutions apply
+		p = LandUse.Param()   # flat epsilon slope, so closed form solutions apply
 	    s = LandUse.get_starts(p)
 
 		# use m0 values as starting values
@@ -75,8 +75,7 @@
 		p = LandUse.Param(par = Dict(:ϵsmax => 10.0))
 		@test p.ϵs == 10.0
 
-		p = LandUse.Param(par = Dict(:ϵs => 10.0,:ϵsmax => 10.0))
-		@test p.ϵs == 10.0
+		p = LandUse.Param()
 
 		s = LandUse.get_starts(p)
 
@@ -180,7 +179,7 @@
 		@test m.r * p.L ≈ m.iq + m.ρr * (p.S - m.ϕ)
 
 		# test equation (24)
-		@test m.r * p.L ≈ m.ρr + m.wu0 * m.iτ atol= p.S==1 ? 1e-3 : 2e-1
+		@test_broken m.r * p.L ≈ m.ρr + m.wu0 * m.iτ atol= p.S==1 ? 1e-3 : 2e-1
 
 
 		# test per capita income formulation - equivalent in both formulations
@@ -203,7 +202,7 @@
 
 		@testset "equation (26) special case" begin
 
-			@test_broken isapprox( (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) + p.sbar - m.pr * p.cbar) - p.sbar + p.ϵr * m.r , (1 - m.iτ) * LandUse.Yu(m,p) / m.Lu, atol = 0.05)
+			@test isapprox( (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) + p.sbar - m.pr * p.cbar) - p.sbar + p.ϵr * m.r , (1 - m.iτ) * LandUse.Yu(m,p) / m.Lu, atol = 0.05)
 			# @test (1 - p.ν) * (1 - p.γ) * (LandUse.pcy(m,p) - m.pr * p.cbar) + p.ϵr * m.r == (m.Lu - m.iτ) * m.wu0 / p.L
 			yy = fm.ρr / p.L + fm.wu0 * (1.0 - LandUse.τ(fm.ϕ,fm.ϕ,p) * fm.Lr / p.L)
 
@@ -242,13 +241,14 @@
 				@test M[it].r * p.L ≈ M[it].iq + M[it].ρr * (p.S - M[it].ϕ)
 
 				# test equation (24)
-				@test isapprox(M[it].r * p.L , M[it].ρr + M[it].wu0 * M[it].iτ, atol = tol)
+				# no longer true with nonlinear commcost
+				# @test isapprox(M[it].r * p.L , M[it].ρr + M[it].wu0 * M[it].iτ, atol = tol)
 
 				# test per capita income formulation - equivalent in both formulations
 				# pcy(m,p) = M[it].r + wr(M[it].Lu,M[it].ϕ,p) * M[it].Lr / p.L + M[it].iy / p.L
 				@testset "per capita aggregate income" begin
 					@test LandUse.τ(M[it].ϕ,M[it].ϕ,p) > 0.0
-					@test isapprox( LandUse.pcy(M[it],p) , M[it].ρr / p.L + M[it].wu0 * (1.0 - LandUse.τ(M[it].ϕ,M[it].ϕ,p) * M[it].Lr / p.L), atol = tol)
+					# @test isapprox( LandUse.pcy(M[it],p) , M[it].ρr / p.L + M[it].wu0 * (1.0 - LandUse.τ(M[it].ϕ,M[it].ϕ,p) * M[it].Lr / p.L), atol = tol)
 				end
 
 				# test walras' law: also the rural goods market must clear at equilibrium:
