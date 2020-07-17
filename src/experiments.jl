@@ -474,7 +474,7 @@ function issue36()
     r[1][:baseline] = plot(pl1[:pop],pl1[:spending],pl1[:avdensity],pl1[:phi],
                                 layout = (2,2),link = :x)
 
-    p2 = Param(par = Dict(:cbar => 0.0, :sbar => 0.4)) # low cbar and high sbar
+    p2 = Param(par = Dict(:cbar => 0.0, :sbar => 1.0)) # low cbar and high sbar
     x,M,p0  = run(Region,p2)
     pl2 = LandUse.ts_plots(M,p2)
     r[1][:low_cbar] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:phi],
@@ -495,11 +495,14 @@ function issue36()
     r[2][:r_fast] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],
                                 layout = (2,2),link = :x)
 
+    r[3] = plot(pl1[:mode],pl1[:ctime],layout = (2,1), link = :x)
+
     # save plots
     savefig(r[1][:baseline], joinpath(dbplots,"issue36-baseline.pdf"))
     savefig(r[1][:low_cbar], joinpath(dbplots,"issue36-low-cbar.pdf"))
     savefig(r[2][:u_fast], joinpath(dbplots,"issue36-u-fast.pdf"))
     savefig(r[2][:r_fast], joinpath(dbplots,"issue36-r-fast.pdf"))
+    savefig(r[3], joinpath(dbplots,"issue36-commute.pdf"))
     return r
 
 end
