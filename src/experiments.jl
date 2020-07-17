@@ -459,7 +459,7 @@ end
 2. implications of growth in either sector only
 3. identify commuting cost params by matching time series data
 """
-function issue36(save=false)
+function issue36( ; save=false)
     r = Dict()
 
     # 1. same growth in sectors
@@ -498,20 +498,13 @@ function issue36(save=false)
     r[3] = plot(pl1[:mode],pl1[:ctime],layout = (2,1), link = :x)
 
     # save plots
-<<<<<<< HEAD
     if save
         savefig(r[1][:baseline], joinpath(dbplots,"issue36-baseline.pdf"))
         savefig(r[1][:low_cbar], joinpath(dbplots,"issue36-low-cbar.pdf"))
         savefig(r[2][:u_fast], joinpath(dbplots,"issue36-u-fast.pdf"))
         savefig(r[2][:r_fast], joinpath(dbplots,"issue36-r-fast.pdf"))
+        savefig(r[3], joinpath(dbplots,"issue36-commute.pdf"))
     end
-=======
-    savefig(r[1][:baseline], joinpath(dbplots,"issue36-baseline.pdf"))
-    savefig(r[1][:low_cbar], joinpath(dbplots,"issue36-low-cbar.pdf"))
-    savefig(r[2][:u_fast], joinpath(dbplots,"issue36-u-fast.pdf"))
-    savefig(r[2][:r_fast], joinpath(dbplots,"issue36-r-fast.pdf"))
-    savefig(r[3], joinpath(dbplots,"issue36-commute.pdf"))
->>>>>>> ectra
     return r
 
 end
