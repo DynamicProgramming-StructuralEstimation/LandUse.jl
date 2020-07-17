@@ -177,11 +177,17 @@ function smooth_θ(dt::StepRange)
 		where((:year .<= dt.stop) .& (:year .>= dt.start))
 
 	# normalize to year 1
-	r = select(x,:year,:theta_rural => :theta)
-	u = select(x,:year,:theta_urban => :theta)
+	r = select(x,:year,:theta_rural => (x -> x ./ x[1]) => :theta)
+	u = select(x,:year,:theta_urban => (x -> x ./ x[1]) => :theta)
 
 	r = r[completecases(r),:]
 	disallowmissing!(r)
+	# from year 2000 onwards, first do a moving average smoothing
+	iy = findfirst(dt .>= 2000)
+	ir = r.theta[iy:end]
+	ma(v,n) = [mean(v[i:(i+n-1)]) for i in 1:(length(v)-(n-1))]
+	r.theta[iy:(end-3)] = ma(ir,4)
+	r.theta[(end-3):end] .= r.theta[(end-3)]
 	sr = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.theta, 250.0)
 
 	u = u[completecases(u),:]
@@ -191,9 +197,12 @@ function smooth_θ(dt::StepRange)
 	pu = SmoothingSplines.predict(su,convert(Array{Float64},dt))
 	pr = SmoothingSplines.predict(sr,convert(Array{Float64},dt))
 
+	# manually set pr to flat line after last data point
+	pr[dt .>= 2015] .= pr[findfirst(dt .>= 2015)]
 
 
-	ret = Dict(:θr => pr ./ pr[1], :θu => pu ./ pu[1])
+
+	ret = Dict(:θr => pr, :θu => pu )
 	plu = scatter(u.year, u.theta ./ u.theta[1],title = "Urban Productivity",leg=false)
 	plot!(plu,dt,ret[:θu],m=(3,:auto,:red))
 	savefig(plu, joinpath(dbplots,"smooth-thetau.pdf"))
@@ -201,6 +210,13 @@ function smooth_θ(dt::StepRange)
 	plr = scatter(r.year, r.theta ./ r.theta[1],title = "Rural Productivity",leg=false)
 	plot!(plr,dt,ret[:θr],m=(3,:auto,:red))
 	savefig(plr, joinpath(dbplots,"smooth-thetar.pdf"))
+
+	pls = plot(plu,plr,layout = (1,2),link = :y)
+	savefig(pls, joinpath(dbplots,"smooth-thetas.pdf"))
+
+
+	ret[:θu] = ret[:θu] ./ ret[:θu][1]
+	ret[:θr] = ret[:θr] ./ ret[:θr][1]
 
 	ret
 end

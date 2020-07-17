@@ -129,6 +129,9 @@ function get_urban_sols(x0::Vector{Float64},p::Param)
 	return (sols, m)
 end
 
+function runm()
+	run(Region,Param())
+end
 
 
 function matlab_bm()
