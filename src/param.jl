@@ -203,11 +203,11 @@ function smooth_θ(dt::StepRange)
 
 
 	ret = Dict(:θr => pr, :θu => pu )
-	plu = scatter(u.year, u.theta ./ u.theta[1],title = "Urban Productivity",leg=false)
+	plu = scatter(u.year, u.theta ./ u.theta[1],title = "Urban Productivity",leg=false, ylabel = "$(dt.start) = 1")
 	plot!(plu,dt,ret[:θu],m=(3,:auto,:red))
 	savefig(plu, joinpath(dbplots,"smooth-thetau.pdf"))
 
-	plr = scatter(r.year, r.theta ./ r.theta[1],title = "Rural Productivity",leg=false)
+	plr = scatter(r.year, r.theta ./ r.theta[1],title = "Rural Productivity",leg=false, ylabel = "$(dt.start) = 1")
 	plot!(plr,dt,ret[:θr],m=(3,:auto,:red))
 	savefig(plr, joinpath(dbplots,"smooth-thetar.pdf"))
 
