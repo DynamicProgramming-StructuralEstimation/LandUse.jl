@@ -1,0 +1,209 @@
+
+
+% preamble to include
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{stmaryrd}
+\usepackage{verbatim}
+% \usepackage{color}
+\usepackage{setspace}
+\usepackage{pgfpages}
+\usepackage{adjustbox}
+\usepackage{booktabs}
+\usepackage{dcolumn}
+\usepackage{versions}
+\usepackage{xifthen}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+% \usepackage{caption}
+%\usepackage{beamerthemeshadow}
+%\usetheme{Pittsburgh}
+\usepackage{graphicx,subfigure}
+\usepackage{booktabs}
+\usepackage{amssymb, amsfonts,amsmath}
+\setbeamertemplate{footline}[frame number]
+ %\setlength{\slidewidth}{9.2in}
+\def\one{\mathbf{1}}
+\def\l{\ell}
+\def\wu{\overline{w}}
+\def\wl{\underline{w}}
+\def\hc{\hat{c}}
+\def\hy{\hat{y}}
+\def\la{\lambda}
+\def\k{\kappa}
+\def\g{\gamma}
+\def\a{\alpha}
+\def\d{\delta}
+\def\Jb{\bar{J}}
+\def\Jlb{\underline{J}}
+
+\newcommand{\bm}[1]{\mbox{\boldmath$#1$}}
+
+% red expressions
+\newcommand{\re}[1]{\textcolor[rgb]{0.8,0,0}{#1}}
+% blue expressions
+\newcommand{\bl}[1]{\textcolor[rgb]{0,0,0.7}{#1}}
+% green expressions
+\newcommand{\greenie}[1]{\textcolor[rgb]{0,0.71,0.35}{#1}}
+% grey expressions
+\newcommand{\gr}[1]{\textcolor[rgb]{0.5,0.5,0.5}{#1}}
+
+% itemize
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+
+% equation display (no number)
+\newcommand{\beq}{\begin{eqnarray*}}
+\newcommand{\eeq}{\end{eqnarray*}}
+% equation display (numbered)
+\newcommand{\beqn}{\begin{eqnarray}}
+\newcommand{\eeqn}{\end{eqnarray}}
+\newcommand{\ti}{\frametitle}
+\newcommand{\ed}{\end{document}}
+
+\newcommand{\beginbackup}{
+   \newcounter{framenumbervorappendix}
+   \setcounter{framenumbervorappendix}{\value{framenumber}}
+}
+\newcommand{\backupend}{
+   \addtocounter{framenumbervorappendix}{-\value{framenumber}}
+   \addtocounter{framenumber}{\value{framenumbervorappendix}}
+}
+
+\newcommand{\db}{$HOME/Dropbox/research/LandUse}
+\newcommand{\screenshots}{\db/data/manual-measurement/present-screenshots}
+\newcommand{\dataplots}{\db/output/data/plots}
+\newcommand{\modelplots}{\db/output/model/plots}
+\newcommand{\imgs}{\db/slides/imgs}
+
+% new commands
+
+% define long or short presentation
+%
+% For now: 2 versions, 30 mins and 75 mins
+%
+% baseline version is the shortest presentation
+% longer presentations just add slides to that short presentation 
+% place additional material inside 
+% \begin{v75mins}
+% material to be added 
+% \end{v75mins}
+% environment
+
+\newcommand{\plength}{0}  % set presentation length. set to > 0 for long presentation. can have three different lengths...
+% plengths:
+% 0: Baseline, 30mins
+% 1: 60 mins
+% 2: 75 mins
+\ifthenelse{\plength > 0}{
+%     \includeversion{v60mins}
+%     \excludeversion{v75mins}
+% }{
+    % \includeversion{v60mins}
+    \includeversion{v75mins}
+}{
+    \excludeversion{v75mins}
+}
+
+
+% colored text
+\newcommand{\dred}{\textcolor[rgb]{0.65,0,0}}
+\newcommand{\red}[1]{{\color{red}{#1}}}
+\newcommand{\darkred}[1]{\dred{#1}}
+\newcommand{\blue}[1]{{\color{blue}{#1}}}
+\newcommand{\bred}[1]{\textbf{\dred{#1}}}
+\newcommand{\bblue}[1]{\textbf{\color{blue}{#1}}}
+
+% boxes around text
+\newtcbox{\cyanbox}{on line, arc=1pt,left=1pt,right=1pt,top=1pt,bottom=1pt, colback=cyan!35!white, colframe=cyan!75!black,boxrule=1pt}
+\newtcbox{\bluebox}{on line, arc=1pt,left=1pt,right=1pt,top=1pt,bottom=1pt, colback=blue!15!white, colframe=blue!80!black,boxrule=1pt}
+\newtcbox{\redbox}{on line, arc=1pt,left=1pt,right=1pt,top=1pt,bottom=1pt, colback=red!5!white, colframe=red!75!black,boxrule=1pt}
+\newtcbox{\greybox}{on line, arc=1pt,left=0.2pt,right=0.2pt,top=0.2pt,bottom=0.2pt, colback=black!5!white, colframe=white!75!black,boxrule=0.5pt}
+\newcommand{\link}[2]{\greybox{\hyperlink{#1}{\texttt{#2}}}}
+\newcommand{\slink}[2]{\greybox{\hyperlink{#1}{{\small\texttt{#2}}}}}
+
+\newcommand{\separator}[1]{
+\begin{frame}[plain]{}
+
+\vspace{1cm}
+
+\begin{center}
+\textbf{\blue{\LARGE{}#1}}{\LARGE\par}
+\par\end{center}
+
+\end{frame}
+}
+
+% new counter
+% \newcounter{saveenumi}
+% \newcommand{\seti}{\setcounter{saveenumi}{\value{enumi}}}
+% \newcommand{\conti}{\setcounter{enumi}{\value{saveenumi}}}
+
+% new variable linewidth environments
+% first for standard slides
+\newenvironment{smalli}
+{ \begin{itemize}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
+    \setlength{\parsep}{1pt}     }
+{ \end{itemize}                  } 
+\newenvironment{widei}
+{ \begin{itemize}
+    \setlength{\itemsep}{10pt}
+    \setlength{\parskip}{10pt}
+    \setlength{\parsep}{10pt}     }
+{ \end{itemize}                  } 
+\newenvironment{smalle}
+{ \begin{enumerate}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
+    \setlength{\parsep}{1pt}     }
+{ \end{enumerate}                  } 
+\newenvironment{widee}
+{ \begin{enumerate}
+    \setlength{\itemsep}{10pt}
+    \setlength{\parskip}{10pt}
+    \setlength{\parsep}{10pt}     }
+{ \end{enumerate}                  } 
+\newenvironment{mide}
+{ \begin{enumerate}
+    \setlength{\itemsep}{5pt}
+    \setlength{\parskip}{5pt}
+    \setlength{\parsep}{5pt}     }
+{ \end{enumerate}                  } 
+\newenvironment{midi}
+{ \begin{itemize}
+    \setlength{\itemsep}{5pt}
+    \setlength{\parskip}{5pt}
+    \setlength{\parsep}{5pt}     }
+{ \end{itemize}                  } 
+
+% input table commands from dcolumn package
+\newcolumntype{d}[1]{D{.}{.}{#1}}
+\newcommand\mc[1]{\multicolumn{1}{c}{#1}} % handy shortcut macro
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% beamer template settings
+% \usetheme{Warsaw}
+% \usecolortheme[RGB={200,0,0}]{structure}
+% \title[Fertility And Housing]{Fertility across and within cities}
+
+% %pour imprimer, enlever \usecolortheme[RGB={200,0,0}]{structure} et changer le documentclass en haut
+% % et introduire les deux lignes suivantes
+% %\usecolortheme{dove}
+% %\pgfpagesuselayout{4 on 1}[a4paper,landscape,border shrink=3mm]
+
+% \usefonttheme[onlysmall]{structurebold}
+
+% this is for 16:9 format
+% \setbeamersize{text margin left=1.5cm} \setbeamersize{text margin right=2cm}
+%\setbeamercovered{transparent}
+
+
+
+

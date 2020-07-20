@@ -1,0 +1,133 @@
+---
+title: "(Urban?) Land Use"
+subtitle: "⚒️<br/> Moving To The City, 1875-2017"
+author: "Nicolas Coeurdacier, Florian Oswald and </br> Marc"
+institute: "ScPo and U Barcelona"
+date: "`r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: ["default", "mytheme.css","default-fonts"]
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+      beforeInit: ["js/resize.js"]
+
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  echo = FALSE,
+  dev = "svg",
+  cache = TRUE,
+  fig.align = "center"
+  #fig.width = 11,
+  #fig.height = 5
+)
+```
+
+class: inverse, center, middle
+
+# Pictures
+
+---
+
+# Reims 1860 vs 2017
+
+<center>
+<iframe width="800" height="500" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" sandbox="allow-forms allow-scripts allow-same-origin" src="https://www.geoportail.gouv.fr/carte?c=4.034289920654297,49.25013978524157&z=13&l0=GEOGRAPHICALGRIDSYSTEMS.ETATMAJOR40::GEOPORTAIL:OGC:WMTS(1)&l1=BUILDINGS.BUILDINGS::GEOPORTAIL:OGC:WMTS(0.45)&permalink=yes"></iframe>
+</center>
+
+
+
+---
+
+# Reims 1950 vs 2017
+
+<center>
+<iframe width="800" height="500" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" sandbox="allow-forms allow-scripts allow-same-origin" src="https://www.geoportail.gouv.fr/embed/visu.html?c=4.035190693349969,49.24728566254643&z=13&l0=GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN50.1950::GEOPORTAIL:OGC:WMTS(1)&l1=BUILDINGS.BUILDINGS::GEOPORTAIL:OGC:WMTS(0.46)&permalink=yes"></iframe>
+</center>
+
+https://www.geoportail.gouv.fr/carte?c=4.031715,49.25831900000003&z=13&l0=GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN50.1950::GEOPORTAIL:OGC:WMTS(1)&l1=BUILDINGS.BUILDINGS::GEOPORTAIL:OGC:WMTS(0.52)&permalink=yes
+
+---
+
+# maths
+
+$$\begin{eqnarray*}
+w_r=\alpha p\theta_r\left(\alpha  +(1-\alpha)\left(\frac{S_r}{L_r}\right)^{\frac{\sigma-1}{\sigma}} \right)^{\frac{1}{\sigma-1}}, \\
+q_r=(1-\alpha)p\theta_r\left(\alpha \left(\re{\frac{L_r}{S_r}}\right)^{\frac{\sigma-1}{\sigma}} +(1-\alpha) \right)^{\frac{1}{\sigma-1}},
+\end{eqnarray*}$$
+
+---
+
+class: inverse, center, middle
+
+# Remonter le Temps
+
+### [https://remonterletemps.ign.fr](https://remonterletemps.ign.fr)
+
+#### You can drag the next pictures with your mouse. Zoom in and out with the scroll function of the mouse.
+
+---
+
+# Today vs 1950 on Equal Scale
+
+<center>
+<iframe src="https://remonterletemps.ign.fr/comparer?x=6.120698&y=49.088264&z=16&layer1=ORTHOIMAGERY.ORTHOPHOTOS&layer2=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&mode=doubleMap" width="800" height="500" frameborder="0" style="border:0"></iframe>
+</center>
+---
+
+# Remonter le Temps a Reims
+
+<center>
+<iframe src="https://remonterletemps.ign.fr/comparer?x=4.031715&y=49.258319&z=13&layer1=ORTHOIMAGERY.ORTHOPHOTOS2006-2010&layer2=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&mode=doubleMap" width="800" height="500" frameborder="0" style="border:0"></iframe>
+</center>
+
+---
+
+# A Bordeaux
+
+<center>
+<iframe src="https://remonterletemps.ign.fr/comparer?x=-0.641682&y=44.835830&z=12&layer1=ORTHOIMAGERY.ORTHOPHOTOS2006-2010&layer2=GEOGRAPHICALGRIDSYSTEMS.ETATMAJOR40&mode=doubleMap" width="800" height="500" frameborder="0" style="border:0"></iframe>
+</center>
+
+---
+
+# A Grenoble
+
+<center>
+<iframe src="https://remonterletemps.ign.fr/comparer?x=5.722757&y=45.174909&z=14&layer1=ORTHOIMAGERY.ORTHOPHOTOS2006-2010&layer2=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&mode=doubleMap" width="800" height="500" frameborder="0" style="border:0"></iframe>
+</center>
+
+---
+
+# Toulouse
+
+<center>
+<iframe src="https://remonterletemps.ign.fr/comparer?x=1.445580&y=43.580255&z=13&layer1=ORTHOIMAGERY.ORTHOPHOTOS2006-2010&layer2=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&mode=doubleMap" width="800" height="500" frameborder="0" style="border:0"></iframe>
+</center>
+
+
+---
+
+
+class: inverse, center, middle
+
+# Measuring City Size
+
+### [https://www.geoportail.gouv.fr/donnees/cartes-1950](https://www.geoportail.gouv.fr/donnees/cartes-1950)
+
+---
+
+# measuring grenoble 1950-2017
+
+<div align="center">
+![:scale 45%](images/grenoble-1955.png)![:scale 47%](images/grenoble-2017.png)
+</div>
+

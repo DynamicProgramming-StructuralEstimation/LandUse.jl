@@ -1,0 +1,32 @@
+Package: LandUseR
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Florian",
+           family = "Oswald",
+           role = c("aut", "cre"),
+           email = "florian.oswald@gmail.com",
+           comment = c(ORCID = "https://orcid.org/0000-0001-7737-2038"))
+Description: What the package does (one paragraph).
+License: What license it uses
+Encoding: UTF-8
+LazyData: true
+Depends:
+    magrittr,
+    tibble,
+    data.table (>= 1.12.2),
+    ggplot2,
+    futile.logger
+Imports: 
+    dplyr,
+    raster,
+    sf,
+    readxl,
+    rnaturalearth,
+    roxygen2,
+    cowplot,
+    tidyr,
+    googlesheets4,
+    googledrive,
+    progress
+RoxygenNote: 7.1.0

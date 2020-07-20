@@ -1,0 +1,1284 @@
+
+\documentclass[aspectratio=169]{beamer}
+% \documentclass{beamer}
+
+
+\input{preamble}
+
+\begin{document}
+%\renewcommand{\inserttotalframenumber}{57}
+\title{\textbf{Structural Change, Land Use and Urban Expansion}}
+\author{Nicolas Coeurdacier (SciencesPo \& CEPR)\\ \ \\Florian Oswald (SciencesPo) \\ \ \\ Marc Teignier (U. Barcelona)}
+\date{ESWC (Milano) 2020}
+
+
+\frame{\titlepage}
+
+%\frame{\frametitle{Table of contents}\tableofcontents}
+
+
+\section{Introduction}
+
+\begin{frame}{Motivation: Reims in 1866}
+\begin{adjustbox}{center}
+\includegraphics[height=0.8\paperheight]{\screenshots/over2-reims1.png}\end{adjustbox}
+\end{frame}
+
+\begin{frame}{Motivation: Reims in 1866 vs IGN \emph{Buildings} in 2017}
+\begin{adjustbox}{center}
+\includegraphics[height=0.8\paperheight]{\screenshots/over2-reims2.png}\end{adjustbox}
+\end{frame}
+
+\begin{frame}{Motivation: Reims in 1950 vs IGN \emph{Buildings} in 2017}
+\begin{adjustbox}{center}
+\includegraphics[height=0.8\paperheight]{\screenshots/over2-reims3.png}\end{adjustbox}
+\end{frame}
+
+\begin{frame}{Motivation: Fall in Urban Density}
+\begin{columns}
+\begin{column}{0.7\textwidth}
+\includegraphics[width=\textwidth]{\dataplots/Reims2.pdf}
+\end{column}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item 50\% work in Agriculture in 1866, 2\% in 2015.
+\item Expansion at expense of Agricultural Land.
+\end{midi}
+
+\end{column}
+\end{columns}
+\end{frame}
+
+
+
+\begin{frame}
+	\frametitle{This paper}
+	\medskip	
+	\hspace{-0.2cm}Spatial general equilibrium model of structural change and land use.
+	\medskip
+	\bi
+	\item Three sectors/goods: rural, urban, and housing.
+	\smallskip
+	\bi
+	\item Different intensity in the use of land as input.
+	\smallskip
+	\item Rival Land Use: Agricultural or Housing.	
+	\smallskip
+	\item Fixed Supply of Land.
+	\ei
+	\bigskip
+	\item Drivers of structural change:
+	\smallskip
+	\bi 
+	\item Non-homothetic preferences for the rural good.
+	\smallskip
+	\item Transitory dynamics with rising productivity.
+	\ei
+
+	\bigskip
+	\item Land reallocation.
+	\smallskip
+	\bi
+	\item City expands as rural employment falls.
+	\smallskip
+	\item Urban good produced at city center.
+	\smallskip
+	\item Commuting costs for urban workers.
+	%\item Perfect mobility of workers across sectors
+	\ei
+	\ei
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Main Theoretical Mechanisms}
+\framesubtitle{Transitory dynamics with rising productivity and falling commuting costs}
+
+\begin{widei}
+\item \textbf{In Year 1866:} Land is scarce. High values of farmland with respect to income due to low productivity (`food problem'). Very small and dense, \emph{walkable} cities.
+\item \textbf{From 1866 to 1970:} Productivity and income increases, subsistence problems diminish. Workers move to cities and into industry. Farmland getting more abundant. Free up land for cities to expand, accommodating rising demand for housing. Cities getting large (in area) and much less dense \emph{without} a large increase in land values. Longer commutes.
+\item \textbf{From 1970 on} Reallocation of factors/land use slows down. Cities expand less and land prices increase more with rising productivity. Land particularly scarce in some locations.
+\end{widei}
+\end{frame}
+
+
+
+\begin{frame}
+	\frametitle{Why Do We Care?}
+\framesubtitle{A general equilibrium spatial model of land use}
+\bi
+\item Understanding land/housing prices across space and time in the long-run.
+\bi
+\item Housing Affordability crisis.
+\ei
+\bigskip
+\item Understanding sprawling and soil artificialization.
+\bi
+\item Environmental impact (IPCC (2019)).
+\ei
+\bigskip
+\item Implications for welfare and aggregate productivity of land use restrictions. \greenie{[not there yet]} %here broadly speaking include building restrictions
+\bi
+\item Is sprawling `excessive'? Benefits of compact cities?
+\item General equilibrium implications of lowering commuting costs.
+\ei
+\ei
+\end{frame}
+
+\frame{\frametitle{Related literature}
+
+\small{\textbf{(Traditional) Macro and Land Values}}
+\begin{itemize}
+\item \footnotesize{Ricardo (1817), Nichols (1970), Grossman and Steger (2016). Measurement. Morris and Heathcote (2007), Piketty and Zucman (2014), Knoll, Schularick and Steger (2017).}
+\end{itemize}
+
+\smallskip
+\small{\textbf{(Macro) Structural Change}}
+\begin{itemize}
+\item \footnotesize{Survey: Herrendorf, Rogerson and Valentinyi (2014). Theory: Kongsamut et al. (2001), Gollin et al. (2002), Boppart (2014), Acemoglu and Guerrieri (2008), Ngai and Pissarides (2007)...\\
+Structural change and urbanization. Lewis (1954), Michaels et al. (2012). Eckert and Peters (2018).
+}
+\item \footnotesize{Agricultural Productivity Gap.  Gollin et al. (2014), Lagakos and Waugh (2013), Young (2013), Restuccia et al. (2008).}
+\end{itemize}
+
+\smallskip
+\small{\textbf{Urban --- Size and Expansion of Cities}}
+\begin{itemize}
+\item \footnotesize{Theory. Alonso-Mills-Muth. Surveys by Duranton and Puga (2014, 2015). Brueckner (1990), Brueckner and Lall (2014), ... \\
+Quantitative Spatial Economics. Redding and Rossi-Hansberg (2017). Sprawl/Density. Glaeser et al., Ahlfeldt et al. (2015), Angel et al. (2010)} %Burchfield et al. (2006),
+\item \footnotesize{Land Prices and Rents. Combes et al. (forthcoming), Albouy (et al.) (2016, 2018), Glaeser et al. (2005).}
+\end{itemize}
+
+}
+
+
+\begin{v75mins}
+
+\frame{\frametitle{Outline}
+\begin{itemize}
+\item[1.] Facts about Land use and Urban Expansion in France since 1850.
+
+\bigskip
+\item[2.] Theory
+\smallskip
+\bi
+\item A general equilibrium model of structural change and land use
+\ei
+
+\bigskip
+\item[3.] Quantitative analysis \greenie{[in progress]}
+
+\smallskip
+\bi
+\item Richer multi-cities/regions model calibrated to French data since 1850.
+\ei
+
+
+\end{itemize}
+}\end{v75mins}
+
+\separator{Urban Expansion in France: Facts}
+
+\section{Facts}
+\subsection{Data}
+\begin{frame}
+\frametitle{Urban Expansion in France 1866--2016}
+\framesubtitle{Data description}
+\bi
+\item Land use and employment in agriculture across French regions
+\bi\item Historical: mostly from Toutain (1993) based on Recensement Agricole. Post-1950, Ministry of Agriculture. \ei
+\bigskip
+\item Employment and spending across sectors
+\bi\item Insee, Toutain (1993), Villa (1996), Herrendorf et al. (2014).\ei
+\bigskip
+\item The expansion of cities
+\bi\item Carte Etat-Major (1866), IGN (1950), Satellite Data post-1975 (GHSL data). Census for Population.
+\ei
+\bigskip
+\item Housing and Land Prices \greenie{[in progress]}
+\bi\item Aggregate Historical: Piketty et al. (2014), Knoll et al. (2017). Farmland across regions: Ministère de l'Agriculture since 1950. Housing/Farmland Transactions: Base des Notaires.
+\ei
+\ei
+\end{frame}
+
+
+\subsection{Factor reallocation}
+
+\begin{frame}
+\frametitle{Land and labor reallocation: Aggregate France}
+\begin{columns}
+\begin{column}{0.7\textwidth}
+\includegraphics[scale=0.7]{\imgs/Share_EmpLand_Agr100long_FRA.pdf}
+\end{column}
+\begin{column}{0.3\textwidth}
+Sources:
+\begin{mide}
+\item Toutain (1993) 
+\item Recensement Agricole (Ministry of Agriculture)
+\item INSEE
+\item Villa (1996)
+\end{mide}
+\end{column}
+\end{columns}
+\end{frame}
+
+% \begin{v75mins}
+% \begin{frame}
+% \frametitle{Land and labor reallocation}
+% \framesubtitle{Regional dispersion (change over 1865-1985)}
+
+% \begin{figure}
+% 	\begin{center}
+% 		\includegraphics[scale=0.7]{\imgs/LandReallocationRegion_FRA.pdf}
+% 	\end{center}
+% {\tiny Source: Toutain (1993) based on Recensement Agricole. Ministry of Agriculture.}
+% \end{figure}
+% \end{frame}
+
+% \begin{frame}
+% \frametitle{Spending Share on Food and Drinks}
+% \begin{figure}
+% 	%\caption{Share of spending on food and drinks (1895-2015)}
+% 	%\label{fig:1}
+% 	\begin{center}
+% 		\includegraphics[scale=0.7]{\imgs/Foodspending_FRA.pdf}
+% 	\end{center}
+% \end{figure}
+% {\tiny Source: INSEE and Villa (1996).}
+% \end{frame}
+% \end{v75mins}
+
+
+\begin{frame}
+\frametitle{City Area and Population Measurement}
+\begin{columns}
+
+\begin{column}{0.7\textwidth}
+	\begin{adjustbox}{center}
+	\includegraphics[height=0.85\textheight]{\dataplots/Reims-sat-area.png}\end{adjustbox}
+	\end{column}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item 1866: Manual + Census
+\item 1950: Manual + Census
+\item 1975, 1990, 2000, 2015: GHSL
+\end{midi}
+	
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{v75mins}
+
+\begin{frame}
+\frametitle{Growth of City Areas}
+\framesubtitle{1866 versus 1950 (60 urban areas)}
+
+\begin{columns}
+\begin{column}{0.8\textwidth}
+	\begin{adjustbox}{right}
+	\includegraphics[scale=0.7]{\imgs/EMto1950.pdf}\end{adjustbox}
+\end{column}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item Average city area multiplied by 8.
+\end{midi}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Growth of City Areas}
+\framesubtitle{1950 versus 2015 (30 urban areas)}\begin{columns}
+\begin{column}{0.8\textwidth}
+	\begin{adjustbox}{right}
+	\includegraphics[scale=0.7]{\imgs/1950to2015_largemanual.pdf}\end{adjustbox}
+\end{column}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item Average city area multiplied by 6.
+\end{midi}
+\end{column}
+\end{columns}
+\end{frame}\end{v75mins}
+%those 30 cities account for about 23 millions people in 2015
+
+\begin{frame}[label=density]
+\frametitle{The Historical Fall in Urban Density}
+\framesubtitle{Average across Top 30 French Urban Areas}
+\begin{figure}
+	%\caption{Share of spending on food and drinks (1895-2015)}
+	%\label{fig:1}
+	\begin{center}
+		\includegraphics[scale=0.6]{\imgs/logdensity_weighted.pdf}
+	\end{center}
+\end{figure}\hyperlink{Paris}{\beamergotobutton{Paris}}
+\hyperlink{Lyon}{\beamergotobutton{Lyon}}
+\hyperlink{Marseille}{\beamergotobutton{Marseille}}
+\hyperlink{Reims}{\beamergotobutton{Reims}}
+\hyperlink{world_sample_city}{\beamergotobutton{World sample 1990-2015}}\\
+{\tiny Source: Carte Etat-Major, IGN and GHSL. Census}
+
+\end{frame}
+
+
+
+\subsection{Land Prices}
+
+% \begin{frame}{Housing And Agricultural Wealth}{Hockey-Stick house price and decline in agricultural value share.}
+% \begin{columns}
+% \begin{column}{0.49\textwidth}
+% \begin{center}
+% \includegraphics[scale=0.5]{\imgs/hpreal100_FRA.pdf}
+% \footnotesize{Real HPI France (1990=100). Knoll et al. (2017)}\end{center}
+% \end{column}
+% \begin{column}{0.49\textwidth}
+% \begin{center}
+% \includegraphics[scale=0.5]{\imgs/PikettyWealth_FRA.pdf}
+% \footnotesize{Piketty and Zucman (2014)}\end{center}
+% \end{column}
+% \end{columns}
+
+% \end{frame}
+
+
+\begin{frame}
+\frametitle{The hockey-stick in housing prices}
+\framesubtitle{Real Housing Price Index in France (1870-2010): Knoll et al. (2017)}
+	\begin{center}
+		\includegraphics[scale=0.65]{\imgs/hpreal100_FRA.pdf}
+	\end{center}
+\end{frame}
+
+
+\begin{v75mins}
+\begin{frame}
+\frametitle{Housing and Agricultural Land Wealth}
+\framesubtitle{Share of National Income: Piketty and Zucman (2014)}
+%	\caption{Agricultural Land and Housing Wealth (1830-2010)}
+%	\label{fig:1}
+	\begin{center}
+		\includegraphics[scale=0.65]{\imgs/PikettyWealth_FRA.pdf}
+	\end{center}
+\end{frame}\end{v75mins}
+
+
+\separator{Model}
+
+\section{Theory}
+\subsection{Model}
+\begin{frame}
+\frametitle{A general equilibrium model of land use}
+\framesubtitle{Set-up}
+
+\begin{midi}
+\item Economy endowed with a fixed amount of land and $L$ ex-ante identical workers supplying one unit of labour.
+\item Three sectors/goods: rural  \re{($r$)}, urban \re{($u$)} and housing \re{($h$)}.
+\item Goods and factor markets perfectly competitive. Labor mobile.
+\item Goods (u) and (r) perfectly tradable.
+\end{midi}
+\end{frame}
+
+%here say replication of static equilibrium, abstract from t indices
+
+\begin{frame}
+\frametitle{Technology}
+\framesubtitle{Urban and Rural good}
+\begin{midi}
+\item For the urban good, only labor for simplicity,
+\begin{equation*}
+Y_u=\re{\theta_u}L_u.
+\end{equation*}
+\item For the rural good,
+\begin{equation*}
+Y_r=\re{\theta_r}\left(\alpha (L_r)^{\frac{\sigma-1}{\sigma}} +(1-\alpha)(S_r)^{\frac{\sigma-1}{\sigma}} \right)^{\frac{\sigma}{\sigma-1}},
+\end{equation*}
+\item $\theta_i=$ TFP in sector $i$, $L_i=$ labor used in $i$, $S_r=$ land used in $r$.
+\item \re{Rural good more intensive in land.}
+\item Stronger decreasing returns to labor in (r).
+\end{midi}
+
+\end{frame}
+
+
+\begin{v75mins}
+\begin{frame}
+\frametitle{Factor Payments}
+
+Urban wage,
+\begin{equation*}w_u=\theta_u, \end{equation*}
+with ($u$) good numeraire.
+
+\bigskip
+\pause
+Rural wage $w_r$ and rental rate of rural land $\rho_r$,
+\vspace{-0.5cm}
+\begin{eqnarray*}
+w_r=\alpha p\theta_r\left(\alpha  +(1-\alpha)\left(\frac{S_r}{L_r}\right)^{\frac{\sigma-1}{\sigma}} \right)^{\frac{1}{\sigma-1}}, \\
+\rho_r=(1-\alpha)p\theta_r\left(\alpha \left(\re{\frac{L_r}{S_r}}\right)^{\frac{\sigma-1}{\sigma}} +(1-\alpha) \right)^{\frac{1}{\sigma-1}},
+\end{eqnarray*}
+where \re{$p$} the relative price of the rural good\\
+%Importantly, $\frac{\partial q_r}{\partial (L_r/S_r)} > 0.$
+\end{frame}\end{v75mins}
+
+\begin{frame}[label=preference]
+\frametitle{Preferences and budget constraint}
+\begin{midi}
+\item Non-homothetic preferences for an individual in location $\ell$
+\begin{equation*}
+C(\ell)=\left( c_r(\ell)-\re{\underline{c}}\right)^{\nu(1-\gamma)} \left(c_u(\ell) + \re{\underline{s}}\right) ^{(1-\nu)(1-\gamma)}h(\ell)^\gamma,
+\end{equation*}
+$c_i(\ell)=$ consumption of $i=\{r,u\}$, housing consumption $h(\ell)$.\\
+\re{$\underline{c},\underline{s}$ subsistence consumption level} for the rural and urban goods, respectively.\\
+%\small{Sensitivity. $C(\ell)=\left( c_r(\ell)-\re{\underline{c}}\right)^{\nu(1-\gamma)} (c_u(\ell)+\re{s}) ^{(1-\nu)(1-\gamma)}h(\ell)^\gamma$.}
+\item Budget constraint,
+\begin{equation*}
+pc_r(\ell)+c_u(\ell)+q(\ell)h(\ell)=w(\ell)+\mathbf{r},
+\end{equation*}
+$q(\ell)$ the rental price per unit of housing in location $\ell$.\\
+$\mathbf{r}$ land rents per capita, equally distributed.
+\end{midi}
+\end{frame}
+
+% \begin{frame}
+% \frametitle{Spending shares}
+% \bi \item  Optimal expenditure across goods:\ei
+% \begin{eqnarray*}
+% pc_r(\ell)&=&(1-\gamma)\nu(w(\ell)+\mathbf{r}-p\underline{c})+p\underline{c} \\
+% c_u(\ell)&=&(1-\gamma)\left( 1-\nu\right) (w(\ell)+\mathbf{r}-p\underline{c}) \\
+% q(\ell)h(\ell)&=&\gamma (w(\ell)+\mathbf{r}-p\underline{c}).
+% \end{eqnarray*}
+
+% \begin{midi}
+% \item As income increases (via $w(\ell)$ or $r$),
+% \bi
+% \item Budget shares of $c_u \uparrow$, $h \uparrow$, but
+% \item Budget share of $c_r \downarrow$
+% \ei
+% \item Engel's Law.
+% \end{midi}
+% \end{frame}
+
+
+
+\begin{v75mins}
+\begin{frame}
+\frametitle{Spatial Structure}
+\begin{midi}
+\item Only one city \greenie{[for now]}
+\item Continuous locations \re{$\ell$} between $[0,1]$. Urban good produced in the city at location $\ell=0$.
+
+\item Urban commuting costs
+ \bi \item A worker in location $\ell$ pays a fraction \re{$\tau(\ell)$} of its wage to work in $u$.
+ \item Earns $w_u(1-\tau(\ell))$, $\tau(0)=0$ and $\partial \tau(\ell)/\partial \ell \geq 0$. \ei
+\item Urban workers locate as close as possible to $\ell=0$.
+\item Urban fringe: $\ell=\re{\phi}<1$, the furthest away (endogenous) location of a urban worker.
+\end{midi}
+
+\end{frame}\end{v75mins}
+
+% \begin{frame}{Spatial Structure: Wage Function $w(\ell)$}{Wages Net Of Commuting Costs}
+% \begin{columns}
+% \begin{column}{0.7\textwidth}
+% % \input{tikz/urban-wage}
+% \end{column}
+% \begin{column}{0.3\textwidth}
+% \begin{mide}
+% \item Space $\ell \in[0,1]$
+% \pause
+% \item Urban production at $\ell=0$
+% \pause
+% \item Residence at any $\ell \in[0,1]$
+% \pause
+% \item $\tau(\ell)$: commuting cost from $\ell$
+% \pause
+% \item $w_u(1-\tau(\ell))$ urban wage
+% \end{mide}
+% \end{column}
+% \end{columns}
+% \end{frame}
+
+\begin{frame}{Spatial Structure: Wage Function $w(\ell)$}{Wages Net Of Commuting Costs}
+\begin{columns}
+\begin{column}{0.7\textwidth}
+\input{tikz/urban-wage}
+\end{column}
+\begin{column}{0.3\textwidth}
+\begin{mide}
+\item<1-> Space $\ell \in[0,1]$
+\item<2-> Urban production at $\ell=0$
+\item<2-> Residence at any $\ell \in[0,1]$
+\item<3-> $\tau(\ell)$: commuting cost from $\ell$
+\item<3-> $w_u(1-\tau(\ell))$ urban wage
+\item<4-> {\color{red}{$\phi$}} denotes urban fringe.
+\end{mide}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Commuting Costs}
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{midi}
+\item $\tau(\ell)$ is composed of a fixed operating cost $o$ and time cost $t(\ell)$
+\begin{equation*}
+\tau(\ell) = o + \zeta w_u t(\ell)
+\end{equation*}
+\item Commuting time with transport mode $m$ (speed): $\frac{\ell}{m}$
+\item Operating cost $o(\ell,m)$ is s.t. longer ($\uparrow \ell$) and faster ($\uparrow m$) commutes are more expensive.
+\item Train line vs horse-drawn carriage.
+\end{midi}
+\end{column}
+\pause
+\begin{column}{0.5\textwidth}
+\begin{midi}
+\item Assume $o(\ell,m) = \frac{c_\tau}{\eta_m} m^{\eta_m} \ell^{\eta_\ell}$ 
+\item Allows closed form optimal mode choice:
+\begin{equation*}
+m = \left( \frac{2 \zeta w_u}{c_\tau} \right)^\frac{1}{1+\eta_m} \ell^\frac{1-\eta_\ell}{1+\eta_m}
+\end{equation*}
+\begin{enumerate}
+\item Faster commutes for people further away.
+\item Speed increases with wage (opp. cost of time).
+\item Elasticity of $\tau(\ell)$ wrt wage is strictly less than unity% $\rightarrow$ people are willing to live further away as labor productivity increases.
+\end{enumerate}
+\end{midi}
+
+\end{column}
+\end{columns}
+
+\end{frame}
+
+
+
+\begin{v75mins}
+\begin{frame}{Location Sorting}{Spatial Equilibrium}
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+
+\begin{midi}
+ \item  Indifference conditions across locations,
+\begin{equation*}
+ \overline{C}=C(\ell)=\kappa\frac{w(\ell)+\mathbf{r}-p\underline{c}}{q(\ell)^{\gamma}}.
+\end{equation*}
+\item Same house price $q_r$ at $\phi$ and in the rural area, $q(\ell \geq \phi)=q_r$.
+\item Indifference at the fringe,
+\begin{equation*}
+\re{w(\phi)=w_u(1-\tau(\phi))=w_r}
+\end{equation*}
+\end{midi} 
+\end{column}		
+\begin{column}{0.5\textwidth}
+		
+\end{column}
+\end{columns}
+\pause
+
+\input{tikz/urban-wage2}
+\end{frame}
+
+% \begin{frame}
+% \frametitle{Equilibrium Sorting}
+% \framesubtitle{Housing Rental Price Gradient}
+% \bi
+% \item Competition for location: $q(\ell)$ adjusts to equalize utility across locations.
+% \begin{equation*}
+% q(\ell)=q_r\left( \frac{w(\ell)+\mathbf{r}-p\underline{c}}{w(\phi)+\mathbf{r}-p\underline{c}}\right)
+% ^{1/\gamma}=q_r\left( \frac{w(\ell)+\mathbf{r}-p\underline{c}}{w_r+\mathbf{r}-p\underline{c}}\right)
+% ^{1/\gamma}.
+% \end{equation*}
+% \item Within the city, $q(\ell)$ is falling with $\ell$ to compensate workers who live in worse locations.
+% \item In the rural area, $\ell$ above $\phi$, housing price is constant across locations, equal to $q_r$.
+% \ei
+% %The crucial difference compared to the standard urban model is that the price at the fringe $q$ is endogenously determined in our general equilibrium model.
+% \end{frame}
+
+% \begin{frame}
+% \frametitle{Housing Market Equilibrium}
+% \framesubtitle{Housing Demand}
+% \bi
+% \item Demand for housing space per worker in each location increasing with $\ell$ for $\ell \leq \phi$,
+% \bigskip
+
+% $h(\ell)=\gamma \left( \frac{w(\ell)+\mathbf{r}-p\underline{c}}{q(\ell)}\right)$\\
+% $h(\ell)=\left(
+% \frac{\gamma }{q_r}\right) (w(\phi)+\mathbf{r}-p\underline{c})^{1/\gamma}
+% (w(\ell)+\mathbf{r}-p\underline{c})^{1-1/\gamma}$
+% \bigskip
+
+% %Facing higher housing prices, household closer to the CBD demand less housing space.
+% \item For locations in the rural area, housing demand per rural worker is constant, $h(\ell \geq \phi)=\gamma \left( \frac{w_r+\mathbf{r}-p\underline{c}}{q_r}\right)$.
+% \ei
+% \end{frame}
+
+
+\begin{frame}{Housing Rental Price Gradient}{Piecewise Constant Housing Price, Demand, and Population Density}
+\begin{columns}
+\begin{column}{0.7\textwidth}
+\input{tikz/urban-q}
+\end{column}
+\begin{column}{0.3\textwidth}
+Closed forms for:
+\begin{midi}
+\item House price $q(\ell)$
+\item Housing demand $h(\ell)$
+\item Population Density: $D(\ell)$
+\end{midi}
+
+\end{column}
+\end{columns}
+\end{frame}
+\end{v75mins}
+
+% \begin{frame}{Closing The Model}{Market Clearing}
+
+% We need to clear 5 Markets in order to find:
+
+% \begin{mide}
+% \item The price of land in each location $\rho(\ell)$
+% \item The number of people living in the city
+% \item Urban Goods Market: Equate Urban Good Production and Consumption.
+% \item Rural Goods 
+% \end{mide}
+
+% \end{frame}
+
+
+
+\begin{v75mins}
+\begin{frame}[label=landdevelopers]
+\frametitle{Housing Market Equilibrium}
+\framesubtitle{Land developers}
+\bi
+\item Housing supply provided by land developers. \hyperlink{comics}{\beamergotobutton{land developers}}
+\item Use more or less intensively the land for residential purposes.
+\item Technology\\
+\medskip
+In each location, developers supply housing space $H$ per unit of land with a convex cost,
+\begin{equation*}
+\frac{H^{1+1/\epsilon}}{1+1/\epsilon},
+\end{equation*}
+in units of the numeraire.\\
+ \re{$\epsilon=$} cost parameter, possibly dependent on the location.
+    %which is meant to capture that it might be more costly for developers to build closer to the city center than in the suburbs or the rural part of the economy. but needs toe be the same at the fringe and in the rural part
+\ei
+\end{frame}
+
+\begin{frame}
+\frametitle{Housing Market Equilibrium}
+\framesubtitle{Housing supply}
+\bi
+\item Profits per unit of land at $\ell$,
+\begin{equation*}
+\pi(\ell)=q(\ell)H(\ell)-\frac{H(\ell)^{1+1/\epsilon_{\ell}}}{ 1+1/\epsilon_{\ell} }- \rho(\ell),
+\end{equation*}
+$\rho(\ell)$ the price of a unit of \textbf{land} in $\ell$.
+\item Housing supply from profit maximization,
+\begin{equation*}
+H(\ell)=q(\ell) ^{\epsilon_{\ell}},
+\end{equation*}
+with housing supply elasticity  $\re{\epsilon_{\ell}\geq 0}$, $\re{\partial\epsilon_{\ell}/\partial \ell \geq 0}$.
+
+see Baum-Snow and Huan (2019).  %important quantitatively but not qualitatively
+\ei
+\end{frame}
+
+\begin{frame}
+\frametitle{Housing Market Equilibrium: Supply}
+\framesubtitle{Land Prices and Land Use}
+\bi
+\item Profit maximization and free entry of developers pins down land prices in $\ell$,
+\begin{equation*}
+\rho(\ell)=\frac{q(\ell)^{1+\epsilon_{\ell}}}{ 1+\epsilon_{\ell}},
+\end{equation*}
+\item Land use with the highest rental value (\re{Rivalry})
+\item Indifference conditions across uses at the fringe,
+\begin{equation*}
+ \re{\rho_r=\frac{\left( q_r \right)^{1+\varepsilon_r}}{1+\varepsilon_r} = (1-\alpha)p\theta_r\left(\alpha \left(\frac{L_r}{S_r}\right)^{\frac{\sigma-1}{\sigma}} +(1-\alpha) \right)^{\frac{1}{\sigma-1}}}.
+\end{equation*}
+\ei
+\end{frame}
+\end{v75mins}
+
+
+\begin{frame}
+\frametitle{Housing Market Equilibrium}
+\framesubtitle{Housing market clearing in the city}
+\bi
+\item Within the city, $\ell \leq \phi$, density \re{$D(\ell)$} in location $\ell$.
+\item Housing market clearing, $H(\ell)=D(\ell)h(\ell)$, leads to
+\begin{equation*}
+D(\ell)= \frac{\rho_r}{\gamma_{\ell}}(w(\phi)+\mathbf{r}-p\underline{c}+\underline{s}) ^{-1/\gamma_{\ell} } (w(\ell)+\mathbf{r}-p\underline{c}+\underline{s})^{1/\gamma_{\ell} -1},
+\end{equation*}
+with $\gamma_{\ell}=\frac{\gamma}{1+\epsilon_{\ell}}=$ supply-adjusted housing spending share.
+\item Total urban population
+\begin{equation}
+\re{L_u=\int_0^{\phi}D(\ell)d\ell}  \label{eq:citysize}
+\end{equation}
+\item Pins down the city size $\phi$ for a given sectoral allocation of workers (and for given prices), \re{$\phi(L_u, w_u, \rho_r, p\underline{c})$}.
+\ei
+\end{frame}
+
+\begin{frame}
+\frametitle{Land and Labor Market Clearing}
+\bi
+\item Land market clearing
+ \begin{equation*}
+ \re{\phi+S_{hr}+S_r =1},
+ \end{equation*}
+with $S_{hr}=$ the land demand for housing in the rural area.
+\begin{equation*}
+S_{hr}=\frac{L_r \gamma_r \left( w_r+\mathbf{r}-p\underline{c} +\underline{s}\right)}{ \rho_r}
+ \end{equation*}
+with $\gamma_r=\gamma_\phi$ (homogenous rural housing supply conditions).
+ \item Labor market clearing
+  \begin{equation*}
+ L_u+L_r=L.
+ \end{equation*}
+ \item Land Rents
+  \begin{equation}
+ \mathbf{r} L=\int_{0}^{\phi}\rho(\ell)d\ell+\rho_r \times (1-\phi). \label{eq:landrents}
+ \end{equation}
+ \ei
+\end{frame}
+
+\begin{v75mins}
+
+\begin{frame}
+\frametitle{Goods Market Equilibrium}
+\framesubtitle{Goods Market Clearing}
+\bi
+\item Per capita consumption of the goods, $c_i=\frac{1}{L}\int_{0}^{1}c_i(\ell)d\ell$.
+\item Per capita market clearing condition for the rural good,
+\begin{equation*}
+c_r=y_r,
+\end{equation*}
+where $y_r=\frac{Y_r}{L}=$ production per worker of $(r)$.
+\item For the urban good,
+\begin{equation*}
+c_u+\frac{w_u}{L}\int_{0}^{\phi}\tau(\ell)D(\ell)d\ell+\frac{1}{L}\int_{0}^{\phi} \frac{\epsilon_{\ell}}{1+\epsilon_{\ell}}q(\ell)H(\ell)d\ell=y_u,
+\end{equation*}
+where $y_u=\frac{Y_u}{L}=$ production per worker of $(u)$.
+\ei
+\end{frame}\end{v75mins}
+
+\begin{frame}
+\frametitle{Equilibrium Allocation}
+\framesubtitle{Definition of the Equilibrium}
+For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictions $\mathbf{\{\tau(\ell)\}_{\ell}}$, housing supply conditions $\mathbf{\{\epsilon_{\ell}\}_{\ell}}$, and preference parameters, $(\nu,\gamma, \underline{c}, \underline{s})$, an equilibrium is a sectoral labor allocation $(L_u,L_r)$, a city fringe ($\phi$) and rural land for production $(S_r)$, factors and goods prices $(w_u,w_r,\rho_r,p)$ and land rents ($\mathbf{r}$), such that:
+
+\emph{
+	\begin{itemize}
+		\item Factors are paid their marginal productivity.
+		\item Workers are indifferent across locations.
+		\item The demand for urban land (or city fringe $\phi$) satisfies the city size Eq. \ref{eq:citysize}.
+		\item Land and labor markets clear.
+	    \item Rural and urban goods markets clear.
+		\item Land rents satisfy Eq. \ref{eq:landrents}.
+	
+	\end{itemize}
+}
+\end{frame}
+
+
+\separator{Parameterization}
+
+
+\subsection{Parameterization}
+
+\begin{frame}{Parameterization}{Productivity Series $\{\theta_{u,t}\},\{\theta_{r,t}$\}}
+
+\begin{columns}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item We feed the model series $\theta_{u,t},\theta_{r,t}$
+\item We measure value added for rural and urban production in French Data.
+\item Applying our production functions, we can back out $\theta_{u,t},\theta_{r,t}$
+\end{midi}
+\end{column}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[width=\textwidth]{\modelplots/smooth-thetas.pdf}
+\end{adjustbox}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Parameter values}
+
+\noindent \textbf{Technology}. $\alpha=0.75$, $\sigma=1$.\\
+\medskip
+\noindent \textbf{Preferences}. Housing weight, $\gamma=25\%$. Rural weight, $\nu=1.5\%$.\\
+Subsistence level $\underline{c}$ such that given initial $\theta$, slightly more than $50\%$ of workers in ($r$), $\underline{s} << \underline{c}$.
+
+\medskip
+\noindent \textbf{Commuting costs}. $\eta_\ell=0, \eta_m=1$, $\zeta = 0.5$.
+
+\medskip
+\noindent \textbf{Housing supply elasticity.} Baseline with $\epsilon_{\ell} = \epsilon_r=4$. Version with lower $\epsilon_{\ell}$ at CBD.
+
+\medskip
+\noindent \textbf{Population}. Baseline. $L=1$.\\
+Alternative. Rising population since 1860, roughly doubles.
+\end{frame}
+
+\begin{frame}[label=res_laborland]
+\frametitle{Results}
+\framesubtitle{Baseline Model}
+
+\begin{columns}
+\begin{column}{0.3\textwidth}
+\begin{mide}
+\item Rural population: 60\% $\rightarrow$ 2\%
+\item Rural spending share: 60\% $\rightarrow$ 5\%
+\item Urban Density: Falls by factor of 14.
+\item City size increases substantially.
+\end{mide}
+\end{column}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[scale=0.5]{\modelplots/issue36-baseline.pdf}\end{adjustbox}
+\end{column}\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Results}
+\framesubtitle{Counterfactual 1: Low $\underline{c}$, high $\underline{s}$. Too little reallocation!}
+
+\begin{columns}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item High preference for urban good does not deliver.
+\item Too little population reallocation.
+\item Spending shares are wrong.
+\end{midi}
+\end{column}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[scale=0.5]{\modelplots/issue36-low-cbar.pdf}\end{adjustbox}
+\end{column}\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Results}
+\framesubtitle{Counterfactual 2: High Urban Productivity Growth}
+
+\begin{columns}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item Population reallocation is too slow.
+\item Spending shares evolution dampened.
+\item Huge fall in urban density.
+\end{midi}
+\end{column}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[scale=0.5]{\modelplots/issue36-u-fast.pdf}\end{adjustbox}
+\end{column}\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Results}
+\framesubtitle{Counterfactual 3: High Rural Productivity Growth}
+
+\begin{columns}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item Qualitatively correct implications.
+\item Rural productivity growth is key.
+\item Precise shape of moments (in particular density) also depends on moving cost.
+\end{midi}
+\end{column}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[scale=0.5]{\modelplots/issue36-r-fast.pdf}\end{adjustbox}
+\end{column}\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Results}
+\framesubtitle{Baseline Model Commuting Patterns}
+
+\begin{columns}
+\begin{column}{0.3\textwidth}
+\begin{mide}
+\item People at fringe choose fastest commute.
+\item People in center ($\ell=0$) walk.
+\item Shorter commute in center ($\ell=0$).
+\item Longer commutes at fringe ($\ell=\phi$).
+\end{mide}
+\end{column}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[height=0.8\textheight]{\modelplots/issue36-commute.pdf}\end{adjustbox}
+\end{column}\end{columns}
+\end{frame}
+
+\begin{v75mins}
+\begin{frame}
+\frametitle{Results}
+\framesubtitle{Land Value}
+
+\begin{adjustbox}{center}
+\includegraphics[scale=0.5]{\modelplots/r_rho.pdf}\end{adjustbox}
+\end{frame}
+
+\begin{frame}
+\frametitle{Results}
+\framesubtitle{Land Value Shares}
+
+\begin{adjustbox}{center}
+\includegraphics[scale=0.5]{\modelplots/r_y.pdf}\end{adjustbox}
+\end{frame}
+
+
+
+\begin{frame}{Multiple Cities}
+
+\begin{midi}
+\item Urban Economists think a lot about cross-sectional City Growth: Why do we observe large and small cities at the same time?
+\begin{enumerate}
+\item Existence of Agglomeration Economies
+\item Selection of fittest firms in large cities (Combes et al 2012)
+\item Nursery Cities (Duranton \& Puga 2001): Process innovation
+\item Exchange of ideas (Davis \& Dingel 2019)
+\end{enumerate}
+\item Our model can generate different cities, each with their own rural \emph{hinterland}.
+\item Hence, model has both time series (single region) as well as cross-sectional implications.
+\item We want to use time-series variation in data to identify the model.
+\end{midi}
+\end{frame}
+
+\begin{frame}{Multiple Cities}{A \emph{Country} with $K$ \emph{Regions}}
+\begin{widei}
+\item Split total area into $K$ equal parts. (arbitrary)
+\item Assume that rural productivity $\theta_{r,k}=\theta_{r}, \forall k$.
+\item Initial level and growth of urban productivity $\theta_{u,k}$ determines city sizes.
+
+\end{widei}
+\end{frame}
+
+\begin{frame}{Multiple Cities: A \emph{Country} with \emph{Regions} 1 and 2}
+
+\begin{columns}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[scale=0.5]{\modelplots/multi2.pdf}\end{adjustbox}
+\end{column}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item $\theta_{u,1}$ grows 1\% faster than $\theta_{u,2}$
+\item $\theta_{r,1}=\theta_{r,2}$
+\item Commuting Cost specification matters here.
+\end{midi}
+
+\end{column}
+\end{columns}
+
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Parameters Sensitivity}
+\bi
+\item Housing supply conditions, $\epsilon_{\ell}$
+\bi\item Less elastic supply magnifies sprawling and the reallocation of land use. Limits the reallocation of workers to the city. \ei
+\bigskip
+\item Complementarity between land and labor in $(r)$, $\sigma$
+\bi\item More complementarities magnifies the effects. Larger fall of farmland prices when workers move to the city.
+\item Interaction with population growth. Leads to more reallocation towards the city.\ei
+\bigskip
+\item Sectoral productivity growth and Reallocation
+\bi\item Reallocation is mainly due to \re{agricultural} technological progress.
+\item But transport cost falling with \re{urban} tech. progress amplifies sprawling.
+\item Investigating the relative importance of each is interesting.
+\ei
+\ei
+\end{frame}\end{v75mins}
+
+
+\section{Extensions and Conclusion}
+\begin{frame}
+\frametitle{Possible Extensions}
+\bi
+\item Multiple cities/regions
+\bi\item Sectoral technological comparative advantages.\\ Potentially additional heterogeneity across cities (housing supply conditions, commuting technologies).
+\item Similar aggregate outcomes with a distribution of city size/land use across regions.\ei
+\bigskip
+\item Dynamic Model
+\bi\item Pins down a path for the real interest rate.\\
+Housing/Land values beyond rents.
+\item Relatively simple without capital, perfect mobility and ex-ante homogenous households.\ei
+\bigskip
+\item Frictions
+\bi \item Quantitative investigation of commuting frictions. Congestion.
+\item Additional Frictions: Land Use Restrictions. 
+\ei
+\ei
+\end{frame}
+
+\begin{frame}
+\frametitle{Conclusion}
+
+\bi
+\item Spatial general equilibrium of land use to explain
+\smallskip
+
+\bi\item The evolution of the sectoral allocation of economic activity across space.
+\smallskip
+\item The evolution of the density of settlements.
+\smallskip
+\item The evolution of the distribution of land values.
+\ei
+\bigskip
+\item Beyond positive implications, a potentially useful tool to evaluate the welfare effects of land use restrictions.\ei
+
+\bigskip
+\begin{center}
+  THANK YOU!
+\end{center}
+\end{frame}
+
+\beginbackup
+
+\begin{frame}[label=SatParis]
+\frametitle{The area of cities}
+\framesubtitle{Satellite measurement of Paris in 2015}
+\begin{figure}
+	\begin{center}
+	\includegraphics[height=0.65\textheight]{\imgs/SMOD_Paris.png}
+	\end{center}
+\end{figure}
+\hyperlink{AreaMeasure}{\beamergotobutton{back}}\\
+\end{frame}
+
+\begin{frame}[label=Paris]
+\frametitle{The historical fall in urban density}
+\framesubtitle{Paris}
+\begin{figure}
+	\begin{center}
+		\includegraphics[scale=0.65]{\imgs/logdensity_paris2.pdf}
+	\end{center}
+\end{figure}
+\hspace{-1cm}
+\hyperlink{density}{\beamergotobutton{back}}\\
+{\tiny Source: Carte Etat-Major, IGN and GHSL. Census. Central Paris = Districts 1 to 6.}
+\end{frame}
+
+\begin{frame}[label=Lyon]
+\frametitle{The historical fall in urban density}
+\framesubtitle{Lyon}
+\begin{figure}
+	\begin{center}
+		\includegraphics[scale=0.65]{\imgs/logdensity_lyon.pdf}
+	\end{center}
+\end{figure}
+\hyperlink{density}{\beamergotobutton{back}}\\
+{\tiny Source: Carte Etat-Major, IGN and GHSL. Census}
+\end{frame}
+
+\begin{frame}[label=Marseille]
+\frametitle{The historical fall in urban density}
+\framesubtitle{Marseille}
+\begin{figure}
+	\begin{center}
+		\includegraphics[scale=0.65]{\imgs/logdensity_marseille.pdf}
+	\end{center}
+\end{figure}
+\hyperlink{density}{\beamergotobutton{back}}\\
+{\tiny Source: Carte Etat-Major, IGN and GHSL. Census}
+\end{frame}
+
+\begin{frame}[label=Reims]
+\frametitle{The historical fall in urban density}
+\framesubtitle{Reims}
+\begin{figure}
+	\begin{center}
+		\includegraphics[scale=0.65]{\imgs/logdensity_reims.pdf}
+	\end{center}
+\end{figure}
+\hyperlink{density}{\beamergotobutton{back}}\\
+{\tiny Source: Carte Etat-Major, IGN and GHSL. Census}
+\end{frame}
+
+\begin{frame}[label=world_sample_city]
+\frametitle{The fall in urban density across the globe, 1990-2015}
+\framesubtitle{World sample of large cities}
+\begin{figure}
+	\begin{center}
+		\includegraphics[scale=0.6]{\imgs/worldcity_density.pdf}
+	\end{center}
+\end{figure}
+{\tiny Source: Atlas of Urban Expansion. Sample of 73 cities above 1 000 000 people. Details in Angel et al. (2010).}\\
+\hyperlink{density}{\beamergotobutton{back}}
+\end{frame}
+
+% \begin{frame}[label=sens_pref]
+% \frametitle{Preferences}
+% \framesubtitle{Sensitivity}
+% \bi
+% \item Different income elasticity of demand across goods.
+% \bigskip
+% \item Kongsamut, Rebelo and Xie (2001).
+% \bigskip
+% \item Preferences
+% \begin{equation*}
+% C(\ell)=\left( c_r(\ell)-\re{\underline{c}}\right)^{\nu(1-\gamma)} (c_u(\ell)+\re{\underline{s}}) ^{(1-\nu)(1-\gamma)}h(\ell)^\gamma
+% \end{equation*}
+% \ei
+% \hyperlink{preference}{\beamergotobutton{back}}
+% \end{frame}
+%\small{Sensitivity. $C(\ell)=\left( c_r(\ell)-\re{\underline{c}}\right)^{\nu(1-\gamma)} (c_u(\ell)+\re{s}) ^{(1-\nu)(1-\gamma)}h(\ell)^\gamma$.}
+
+% \begin{frame}[label=comics]
+% \frametitle{Housing Market Equilibrium}
+% \framesubtitle{Land Developers}
+% \begin{figure}
+% 	\begin{center}
+% 		\includegraphics[scale=0.60]{\imgs/comics.pdf}
+% 	\end{center}
+% \end{figure}
+% \hyperlink{landdevelopers}{\beamergotobutton{back}}
+% \end{frame}
+
+% \begin{frame}[label=comppartial]
+% \frametitle{Comparative statics}
+% \framesubtitle{Partial Eq. vs. GE}
+% \begin{figure}
+% 	\begin{center}
+% 		\includegraphics[scale=0.7]{\imgs/compstat_partial_work.pdf}
+% 	\end{center}
+% \end{figure}
+% \hyperlink{eqcharac}{\beamergotobutton{back}}
+% \end{frame}
+
+% \begin{frame}[label=comprod]
+% \frametitle{Comparative statics}
+% \framesubtitle{Rising Productivity}
+% \begin{figure}
+% 	\begin{center}
+% 		\includegraphics[scale=0.7]{\imgs/compstat_prod.pdf}
+% 	\end{center}
+% \end{figure}
+% \hyperlink{eqcharac}{\beamergotobutton{back}}
+% \end{frame}
+
+% \begin{frame}[label=compcommute]
+% \frametitle{Comparative statics}
+% \framesubtitle{Commuting costs, lower $\tau$}
+% \begin{figure}
+% 	\begin{center}
+% 		\includegraphics[scale=0.7]{\imgs/compstat_tau.pdf}
+% 	\end{center}
+% \end{figure}
+% \hyperlink{eqcharac}{\beamergotobutton{back}}
+% \end{frame}
+
+% \begin{frame}[label=compepsilon]
+% \frametitle{Comparative statics}
+% \framesubtitle{Housing supply conditions, higher $\epsilon$}
+% \begin{figure}
+% 	\begin{center}
+% 		\includegraphics[scale=0.7]{\imgs/compstat_epsilon.pdf}
+% 	\end{center}
+% \end{figure}
+% \hyperlink{eqcharac}{\beamergotobutton{back}}
+% \end{frame}
+
+
+
+%\begin{frame}[label=res_laborland_epsilon]
+%\frametitle{Results}
+%\framesubtitle{Labor Allocation and Land Use}
+%
+%1/ Share of workers in the rural sector (in green) together with land use for agriculture (braun)\\
+%2/ City size (in blue)
+%
+%\begin{figure}
+%% \label{fig:1}
+%\begin{center}
+%%\includegraphics[scale=0.7]{PikettyWealth_FRA.pdf}
+%\end{center}
+%\end{figure}
+%\small{Left-panel: Share of rural workers [left-axis] and share of land in agriculture [right-axis]. Right-panel: Urban area (share of total land).}\\
+%{\tiny Note: $\epsilon_{\ell}$, $\epsilon_{\phi}=4$, constant $\tau$, L=1.}\\
+%\hyperlink{res_laborland}{\beamergotobutton{back}}
+%\end{frame}
+
+
+%\begin{frame}[label=res_density_epsilon]
+%\frametitle{Results}
+%\framesubtitle{Urban Density}
+%
+% 1/ average density (red)\\
+% 2/CBD density (red) and fringe density. Large scale all the way to zero for both. Increase the scale for the fringe (up to 15?) such that it is below the CBD.
+%
+%\begin{figure}
+%%\caption{}
+%% \label{fig:1}
+%\begin{center}
+%%Urban Density
+%%\includegraphics[scale=0.7]{PikettyWealth_FRA.pdf}
+%\end{center}
+%\end{figure}
+%\small{Left-panel: Average Urban Density. Right-panel: Density at $\ell=0$ [left-axis] and at the fringe, $\ell=\phi$ [right-axis].}\\
+%{\tiny Note: $\epsilon_{\ell}$, $\epsilon_{\phi}=4$, constant $\tau$, L=1.}\\
+%\hyperlink{res_density}{\beamergotobutton{back}}
+%\end{frame}
+
+%
+%\begin{frame}[label=res_landrents_epsilon]
+%\frametitle{Results}
+%\framesubtitle{Land Rents}
+%
+%1/ Aggregate land rents index (urban and all, 1990=100)\\
+%2/ Land real rental prices at CBD (blue) and fringe (braun)
+%
+%\begin{figure}
+%%\caption{}
+%% \label{fig:1}
+%\begin{center}
+%%Land Rents
+%%\includegraphics[scale=0.7]{PikettyWealth_FRA.pdf}
+%\end{center}
+%\end{figure}
+%\small{Left-panel: Real Land Rents Index (1990=100). Right-panel: Land real rental prices at $\ell=0$  [left-axis] and at the fringe, $\ell=\phi$ [right-axis].}\\
+%{\tiny Note: $\epsilon_{\ell}$, $\epsilon_{\phi}=4$, constant $\tau$, L=1.}\\
+%\hyperlink{res_landrents}{\beamergotobutton{back}}
+%\end{frame}
+
+
+
+%\begin{frame}[label=res_agp_epsilon]
+%\frametitle{Results}
+%\framesubtitle{Urban/Rural Gap}
+%
+%graphs with 1/AGP 2/ ratio of housing prices at the CBD and at the fringe
+%
+%\begin{figure}
+%%\caption{}
+%% \label{fig:1}
+%\begin{center}
+%%Rural/Urban Wage Gap
+%%\includegraphics[scale=0.7]{PikettyWealth_FRA.pdf}
+%\end{center}
+%\end{figure}
+%\small{Left-panel: Agricultural Productivity Gap, $w_u/w_r$. Right-panel: Ratio of Housing prices at $\ell=0$ and at the fringe ($\ell=\phi$), $q(0)/q(\phi)$.}\\
+%{\tiny Note: $\epsilon_{\ell}$, $\epsilon_{\phi}=4$, constant $\tau$, L=1.}\\
+%\hyperlink{res_agp}{\beamergotobutton{back}}
+%\end{frame}
+
+
+\backupend
+\end{document}
+
+
+
+
+
