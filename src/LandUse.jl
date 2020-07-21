@@ -18,6 +18,7 @@ module LandUse
 	using ColorSchemes
 	using CSV
 	using SmoothingSplines
+	using LaTeXTabulars
 
 
 	# constants

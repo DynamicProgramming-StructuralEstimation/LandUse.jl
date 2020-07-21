@@ -150,11 +150,13 @@ function latex_param()
 	j = JSON.parse(f)
 	close(f)
 
-	latex_tabular(stdout, Tabular("l l D{.}{.}{2.5}@{}"), [
+	getline(x) = [x["symbol"], x["symbol"], x["value"]]
+
+	latex_tabular(joinpath(dbtables,"params.tex"), Tabular("l l D{.}{.}{5.5}@{}"), [
 	   Rule(:top),
-       ["name", "description", "value"],
+       ["name", "description", MultiColumn(1,:c,"value")],
        Rule(:mid),
-       [x["L"]["symbol"],x["L"]["description"],x["L"]["value"]],
+	   getline(j["L"]),
        Rule(:bottom)
 	   ]
 	)
