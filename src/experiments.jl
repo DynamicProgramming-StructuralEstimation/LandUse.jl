@@ -508,3 +508,36 @@ function issue36( ; save=false)
     return r
 
 end
+
+
+"""
+produces all output from the model needed to compile the paper.
+
+This uses current baseline parameters defined in `params.json`
+"""
+function output_paper(;save = false)
+    # 1. everything from issue36
+    i36 = issue36(save = save)
+
+    p1  = Param() # baseline param: high cbar and low sbar
+    x,M,p0  = run(Region,p1)
+    pl1 = LandUse.ts_plots(M,p1)
+    # 2. density by distance quantile
+    push!(i36, (:densities => pl1[:densities]))
+
+    # 3. land rents over income
+    push!(i36, (:r_y => pl1[:r_y]))
+
+    # 4. house prices
+    push!(i36, (:q0_qr => pl1[:q0_qr]))
+
+    if save
+        savefig(i36[:densities], joinpath(dbplots,"densities.pdf"))
+        savefig(i36[:r_y], joinpath(dbplots,"r_y.pdf"))
+        savefig(i36[:q0_qr], joinpath(dbplots,"prices.pdf"))
+    end
+
+    i36
+
+
+end
