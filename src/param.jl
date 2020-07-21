@@ -143,6 +143,25 @@ function getgrowth(p::Param,s::Symbol,g::Float64)
 	[x[1] ; Float64[growθ(x[1], [g for i in 2:it]) for it in 2:length(p.T)]]
 end
 
+
+"print default param to latex table"
+function latex_param()
+	f = open(joinpath(dirname(@__FILE__),"params.json"))
+	j = JSON.parse(f)
+	close(f)
+
+	latex_tabular(stdout, Tabular("l l D{.}{.}{2.5}@{}"), [
+	   Rule(:top),
+       ["name", "description", "value"],
+       Rule(:mid),
+       [x["L"]["symbol"],x["L"]["description"],x["L"]["value"]],
+       Rule(:bottom)
+	   ]
+	)
+
+end
+
+
 function show(io::IO, ::MIME"text/plain", p::Param)
     print(io,"LandUse Param:\n")
 	print(io,"      γ       : $(p.γ   )\n")

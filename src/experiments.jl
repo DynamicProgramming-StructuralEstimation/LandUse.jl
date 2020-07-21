@@ -516,28 +516,24 @@ produces all output from the model needed to compile the paper.
 This uses current baseline parameters defined in `params.json`
 """
 function output_paper(;save = false)
-    # 1. everything from issue36
-    i36 = issue36(save = save)
 
     p1  = Param() # baseline param: high cbar and low sbar
     x,M,p0  = run(Region,p1)
     pl1 = LandUse.ts_plots(M,p1)
-    # 2. density by distance quantile
-    push!(i36, (:densities => pl1[:densities]))
 
-    # 3. land rents over income
-    push!(i36, (:r_y => pl1[:r_y]))
+    # names of plots we want
+    key = [:pop,:spending,:avdensity,:phi,:densities,:r_y,:r_rho,:q0_qr,:mode,:ctime]
 
-    # 4. house prices
-    push!(i36, (:q0_qr => pl1[:q0_qr]))
+    # subset to those
+    r = filter( x -> x.first ∈ key , pl1)
 
+    # save if wanted
     if save
-        savefig(i36[:densities], joinpath(dbplots,"densities.pdf"))
-        savefig(i36[:r_y], joinpath(dbplots,"r_y.pdf"))
-        savefig(i36[:q0_qr], joinpath(dbplots,"prices.pdf"))
+        for (k,v) in r
+            savefig(v, joinpath(dbplots,"$k.pdf"))
+        end
     end
-
-    i36
+    r
 
 
 end
