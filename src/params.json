@@ -48,13 +48,13 @@
 	},
 	"cbar" : {
 		"value" : 0.7,
-		"description" : "Rural Consumption Subsistence Level",
+		"description" : "Rural Consumption Good Subsistence Level",
 		"type" : "region",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
 		"value" : 0.2,
-		"description" : "Negative Urban Subsistence Level",
+		"description" : "Initial Urban Good Endowment",
 		"type" : "region",
 		"symbol" : "\\underline{s}"
 	},

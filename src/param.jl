@@ -150,13 +150,24 @@ function latex_param()
 	j = JSON.parse(f)
 	close(f)
 
-	getline(x) = [x["symbol"], x["symbol"], x["value"]]
+	getline(x) = [latexstring(x["symbol"]), x["description"], x["value"]]
 
 	latex_tabular(joinpath(dbtables,"params.tex"), Tabular("l l D{.}{.}{5.5}@{}"), [
 	   Rule(:top),
-       ["name", "description", MultiColumn(1,:c,"value")],
+       ["Parameter", "Description", MultiColumn(1,:c,"value")],
        Rule(:mid),
+	   getline(j["S"]),
 	   getline(j["L"]),
+	   getline(j["γ"]),
+	   getline(j["σ"]),
+	   getline(j["α"]),
+	   getline(j["ν"]),
+	   getline(j["cbar"]),
+	   getline(j["sbar"]),
+	   getline(j["ηl"]),
+	   getline(j["ηm"]),
+	   getline(j["cτ"]),
+	   getline(j["ζ"]),
        Rule(:bottom)
 	   ]
 	)
@@ -242,6 +253,22 @@ function smooth_θ(dt::StepRange)
 	ret
 end
 
+function plot_shares()
+	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
+	x = @linq d |>
+		where((:year .< 2018) .& (:year .> 1895))
+
+	x = select!(x,:year,:SpendingShare_Rural => :Rural, :SpendingShare_Urban => :Urban, :SpendingShare_Housing => :Housing)
+	x = stack(x, Not(:year))
+
+	pl = @df x plot(:year, :value, group = :variable,
+	           linewidth = 2,ylab = "Spending Share", leg = :bottomright)
+
+   savefig(pl, joinpath(dbdataplots,"spending-shares.pdf"))
+
+
+
+end
 
 
 # function theta_rec(x::Float64,cp::CParam,i::Int)
