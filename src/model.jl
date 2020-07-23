@@ -13,6 +13,7 @@ mutable struct Region <: Model
 	ρr   :: Float64   # land price in rural sector
 	qr   :: Float64     # housing price in rural sector
 	ρ0   :: Float64     # land price in center of city
+	ρ0_y :: Float64     # land price in center of city over income
 	q0   :: Float64     # housing price in center of city
 	qbar :: Float64     # average housing price in city
 	Lr   :: Float64   # employment in rural sector
@@ -29,6 +30,7 @@ mutable struct Region <: Model
 	hr   :: Float64   # housing demand at fringe
 	dbar :: Float64   # total avg density
 	d0   :: Float64   # density at center
+	dq100  :: Float64   # density at quantile q of fringe
 	dq1  :: Float64   # density at quantile q of fringe
 	dq2  :: Float64   # density at quantile q of fringe
 	dq3  :: Float64   # density at quantile q of fringe
@@ -78,6 +80,7 @@ mutable struct Region <: Model
 		m.ρr   = NaN
 		m.qr   = NaN
 		m.ρ0   = NaN
+		m.ρ0_y   = NaN
 		m.q0   = NaN
 		m.qbar = NaN
 		m.Lr   = NaN
@@ -95,6 +98,7 @@ mutable struct Region <: Model
 		m.dr   = NaN
 		m.dbar   = NaN
 		m.d0   = NaN
+		m.dq100   = NaN
 		m.dq1   = NaN
 		m.dq2   = NaN
 		m.dq3   = NaN
@@ -191,6 +195,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.h0   = h(0.0,p,m)
 	m.dbar   = m.Lu / m.ϕ
 	m.d0   = D(0.0,p,m)
+	m.dq100   = D(m.ϕ / 100,p,m)
 	m.dq1   = D(m.ϕ / 5,p,m)
 	m.dq2   = D(2 * m.ϕ / 5,p,m)
 	m.dq3   = D(3 * m.ϕ / 5,p,m)
@@ -219,6 +224,8 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.pcy = pcy(m,p)
 	m.GDP = GDP(m,p)
 	m.y   = y(m,p)
+
+	m.ρ0_y = m.ρ0 / m.y
 
 	# compute aggregate Consumption shares
 	m.Cu = m.icu + m.Lr * cur(p,m)  # urban cons inside city plus total urban cons in rural
@@ -448,6 +455,8 @@ mode(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.�
 "commuting cost"
 τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * p.θu^(p.ew) * x^p.el
 
+
+
 "inverse commuting cost. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
 invτ(x::Float64,p::Param) = ( x / ( p.τ * p.θu^(p.ew)) )^(1/p.el)
 
@@ -595,13 +604,22 @@ Rmk(m::Model,p::Param) = m.icr + m.Lr * cr(m.ϕ,p,m) - Yr(m,p)
 
 
 "Obtain a Time Series for a single region as a DataFrame"
-function dataframe(M::Vector{T},tt::StepRange) where T <: Model
-	df = DataFrame(year = tt)
+function dataframe(M::Vector{T},p::Param) where T <: Model
+	tt = length(p.T)
+	df = DataFrame(year = p.T)
 	for fi in setdiff(fieldnames(eltype(M)),(:cr01,:cu01,:inodes,:iweights,:nodes))
-		df[!,fi] = [getfield(M[it],fi) for it in 1:length(tt)]
+		df[!,fi] = [getfield(M[it],fi) for it in 1:length(p.T)]
 	end
-	df.area = [area(M[it]) for it in 1:length(tt)]
-	df.pop  = [pop(M[it]) for it in 1:length(tt)]
+	df.area = [area(M[it]) for it in 1:length(p.T)]
+	df.pop  = [pop(M[it]) for it in 1:length(p.T)]
+
+	# compute commuting cost at initial fringe in each period
+	initϕ = df.ϕ[1]
+	df.τ_ts = zeros(tt)
+	for i in 1:tt
+		setperiod!(p,i)
+		df[i, :τ_ts] = τ(initϕ, df[i, :ϕ] , p)
+	end
 
 	df
 end

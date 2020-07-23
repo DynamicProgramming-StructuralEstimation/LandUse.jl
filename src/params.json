@@ -29,7 +29,7 @@
 		"symbol" : "\\eta"
 	},
 	"ηm" : {
-		"value" : 1.0,
+		"value" : 4.8,
 		"description" : "elasticity of F commuting cost wrt mode",
 		"type" : "region",
 		"symbol" : "\\eta_m"

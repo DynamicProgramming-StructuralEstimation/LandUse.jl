@@ -243,7 +243,7 @@ https://github.com/floswald/LandUse.jl/issues/22
 """
 function issue_22()
     x,M,p = run(Region,Param())
-    d = dataframe(M,p.T)
+    d = dataframe(M,p)
     df = @linq d |>
          select(:year,:Ch,:Cu,:Cr,:C ) |>
          transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
@@ -264,14 +264,14 @@ function issue_21(n=8)
     es = range(0.5,8,length = n)
     e = es[1]
     x,M,p = run(Region,Param(par = Dict(:ϵsmax => 0.0, :ϵr => e)))
-    # d = select(dataframe(M,p.T),:year,:Hr,:H0,:hr,:h0,:ρr,:qr,:ρ0,:q0, :ϕ, :Sr, :Srh)
-    d = dataframe(M,p.T)
+    # d = select(dataframe(M,p),:year,:Hr,:H0,:hr,:h0,:ρr,:qr,:ρ0,:q0, :ϕ, :Sr, :Srh)
+    d = dataframe(M,p)
     d[!,:ϵr] .= e
 
     for (i,e) in enumerate(es[2:end])
         # println("e = $e")
         x,M,p = run(Region,Param(par = Dict(:ϵsmax => 0.0, :ϵr => e)))
-        d0 = dataframe(M,p.T)
+        d0 = dataframe(M,p)
         d0[!,:ϵr] .= e
         append!(d,d0)
     end
