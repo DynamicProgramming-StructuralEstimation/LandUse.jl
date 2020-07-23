@@ -29,6 +29,7 @@ function ts_plots(M,p::Param;fixy = false)
 					 ylims = (0,1), marker = mmark, legend = :right)
 
 	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
+	dd[:qbar] = @df d plot(:year, :qbar, linewidth = 2, color = "black", leg =false, title = "Average House Prices", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
  	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values", marker = mmark, ylims = fixy ? (0.19,0.36) : false )
  	dd[:q0] = @df d plot(:year, :q0, linewidth = 2, color = "black", leg =false, title = "Central House Prices", marker = mmark, ylims = fixy ? (0.0,5.0) : false )
  	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices", marker = mmark, ylims = fixy ? (0.5,1.5) : false )

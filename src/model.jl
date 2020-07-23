@@ -14,6 +14,7 @@ mutable struct Region <: Model
 	qr   :: Float64     # housing price in rural sector
 	ρ0   :: Float64     # land price in center of city
 	q0   :: Float64     # housing price in center of city
+	qbar :: Float64     # average housing price in city
 	Lr   :: Float64   # employment in rural sector
 	Lu   :: Float64   # employment in urban sector
 	wu0  :: Float64   # wage in urban sector (at center)
@@ -78,6 +79,7 @@ mutable struct Region <: Model
 		m.qr   = NaN
 		m.ρ0   = NaN
 		m.q0   = NaN
+		m.qbar = NaN
 		m.Lr   = NaN
 		m.Lu   = NaN
 		m.wu0  = NaN
@@ -242,6 +244,7 @@ function integrate!(m::Region,p::Param)
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.qbar      = (m.ϕ/(m.Lu * 2)) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	m.imode     = (m.ϕ/2) * sum(m.iweights[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) / m.Lu for i in 1:p.int_nodes)[1]
 	m.ictime    = (m.ϕ/2) * sum(m.iweights[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) / m.Lu for i in 1:p.int_nodes)[1]
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
