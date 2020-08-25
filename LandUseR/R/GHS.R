@@ -180,7 +180,7 @@ plot_sat_built <- function(){
       png(pngname,width = 1000, height=700, res = 175)
       print(out[[ir]])
       dev.off()
-      pdf(pdfname,width = 8,height = 6)
+      pdf(pdfname,width = 11,height = 6)
       print(out[[ir]])
       dev.off()
 
