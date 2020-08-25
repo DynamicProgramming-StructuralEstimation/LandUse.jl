@@ -44,6 +44,8 @@ mutable struct Param
 	ρrbar :: Float64  # fixed rural land value for urban model
 
 	trace :: Bool  # whether to trace solver
+	ma    :: Int64  # moving average window size
+	mag    :: Float64  # assumed growth for extraploating producivities.
 
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
@@ -74,7 +76,7 @@ mutable struct Param
 		this.t = 1
 		this.S = 1.0  # set default values for space and population
 		this.L = 1.0
-		thetas = smooth_θ(this.T)
+		thetas = smooth_θ(this.T, this.ma, this.mag)
 		this.θut = thetas[:θu]
 		this.θrt = thetas[:θr]
 
@@ -203,52 +205,57 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      Ψ       : $(p.Ψ   )\n")
 end
 
-function smooth_θ(dt::StepRange)
+
+function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
 	x = @linq d |>
-		where((:year .<= dt.stop) .& (:year .>= dt.start))
+		where((:year .<= dt.stop) .& (:year .>= dt.start)) |>
+		select(:year, :theta_rural, :theta_urban)
 
 	# normalize to year 1
-	r = select(x,:year,:theta_rural => (x -> x ./ x[1]) => :theta)
-	u = select(x,:year,:theta_urban => (x -> x ./ x[1]) => :theta)
+	x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
+	# moving average smoother
+	transform!(x, :theta_rural => (y -> runmean(y,ma)) => :stheta_rural, :theta_urban => (y -> runmean(y,ma)) => :stheta_urban)
 
+	# from year 2000 onwards, replace rural with x percent growth
+	x[:, :stheta_rural] .= ifelse.(x.year .> 2000,vcat(zeros(sum(x.year .<= 2000)),[x[x.year .== 2000,:stheta_rural] * growth^i for i in 1:sum(x.year .> 2000)]...),x.stheta_rural)
+    x[:, :stheta_urban] .= ifelse.(x.year .> 2000,vcat(zeros(sum(x.year .<= 2000)),[x[x.year .== 2000,:stheta_urban] * growth^i for i in 1:sum(x.year .> 2000)]...),
+   							   x.stheta_urban)
+
+    p1 = @df x plot(:year, [:theta_rural :stheta_rural],leg=:bottomright)
+	savefig(p1, joinpath(dbplots,"smooth-theta-data.pdf"))
+
+
+	r = copy(x)
 	r = r[completecases(r),:]
-	disallowmissing!(r)
-	# from year 2000 onwards, first do a moving average smoothing
-	iy = findfirst(dt .>= 2000)
-	ir = r.theta[iy:end]
-	ma(v,n) = [mean(v[i:(i+n-1)]) for i in 1:(length(v)-(n-1))]
-	r.theta[iy:(end-3)] = ma(ir,4)
-	r.theta[(end-3):end] .= r.theta[(end-3)]
-	sr = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.theta, 250.0)
+	p2 = @df r plot(:year, [:theta_rural :stheta_rural],leg=:bottomright)
+	savefig(p2, joinpath(dbplots,"smooth-theta-data-nonmissing.pdf"))
 
-	u = u[completecases(u),:]
-	disallowmissing!(u)
-	su = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},u.year), u.theta, 250.0)
+
+	# fill gaps in data with spline
+	disallowmissing!(r)
+	sr = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.stheta_rural, 250.0)
+	su = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.stheta_urban, 250.0)
 
 	pu = SmoothingSplines.predict(su,convert(Array{Float64},dt))
 	pr = SmoothingSplines.predict(sr,convert(Array{Float64},dt))
 
-	# manually set pr to flat line after last data point
-	pr[dt .>= 2015] .= pr[findfirst(dt .>= 2015)]
-
-
-
+	# plots checking return
 	ret = Dict(:θr => pr, :θu => pu )
-	plu = scatter(u.year, u.theta ./ u.theta[1],title = "Urban Productivity",leg=false, ylabel = "$(dt.start) = 1")
+
+	plu = scatter(x.year, x.theta_urban ,title = "Urban Productivity",leg=false, ylabel = "$(dt.start) = 1")
 	plot!(plu,dt,ret[:θu],m=(3,:auto,:red))
 	savefig(plu, joinpath(dbplots,"smooth-thetau.pdf"))
 
-	plr = scatter(r.year, r.theta ./ r.theta[1],title = "Rural Productivity",leg=false, ylabel = "$(dt.start) = 1")
+	plr = scatter(x.year, x.theta_rural,title = "Rural Productivity",leg=false, ylabel = "$(dt.start) = 1")
 	plot!(plr,dt,ret[:θr],m=(3,:auto,:red))
 	savefig(plr, joinpath(dbplots,"smooth-thetar.pdf"))
 
 	pls = plot(plu,plr,layout = (1,2),link = :y)
 	savefig(pls, joinpath(dbplots,"smooth-thetas.pdf"))
 
-
-	ret[:θu] = ret[:θu] ./ ret[:θu][1]
-	ret[:θr] = ret[:θr] ./ ret[:θr][1]
+	# ret[:θu] = ret[:θu] ./ ret[:θu][1]
+	# ret[:θr] = ret[:θr] ./ ret[:θr][1]
 
 	ret
 end

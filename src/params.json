@@ -184,6 +184,18 @@
 		"type" : "region",
 		"symbol" : "\\zeta"
 	},
+	"ma" : {
+		"value" : 3,
+		"description" : "moving average window size for theta smoother",
+		"type" : "numerical",
+		"symbol" : "ma"
+	},
+	"mag" : {
+		"value" : 1.01,
+		"description" : "extrapolating growth rate for productivities",
+		"type" : "numerical",
+		"symbol" : "mag"
+	},
 	"trace" : {
 		"value" : true,
 		"description" : "trace solver or not",
