@@ -83,7 +83,7 @@
 		"symbol" : "c_\\tau"
 	},
 	"T" : {
-		"value" : [1855,15,2050],
+		"value" : [1855,5,2050],
 		"description" : "Start year, increments, end year",
 		"type" : "region",
 		"symbol" : "\\mathcal{T}"

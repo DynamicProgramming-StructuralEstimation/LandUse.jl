@@ -251,7 +251,7 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 	plot!(plr,dt,ret[:θr],m=(3,:auto,:red))
 	savefig(plr, joinpath(dbplots,"smooth-thetar.pdf"))
 
-	pls = plot(plu,plr,layout = (1,2),link = :y)
+	pls = plot(dt,[ret[:θr],ret[:θu]])
 	savefig(pls, joinpath(dbplots,"smooth-thetas.pdf"))
 
 	# ret[:θu] = ret[:θu] ./ ret[:θu][1]

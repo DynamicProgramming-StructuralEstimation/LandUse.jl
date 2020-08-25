@@ -156,19 +156,19 @@ function i0()
 					rgrowth in slider(gfac,value = 1.2, label = "r-growthrate"),
 					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
-					etas in slider(eta2, value = 1.0, label = "ηm"),
+					etam in slider(eta2, value = p1.ηm, label = "ηm"),
 					taus in slider(tau, value = 10.0, label = "cτ"),
-					etal in slider(eta, value = 0.0, label = "ηl")
+					etal in slider(eta, value = p1.ηl, label = "ηl")
 
 					if growthtype == 1
 						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0,
-						                              :ηm => etas, :ηl => etal,
+						                              :ηm => etam, :ηl => etal,
 													  :cbar => cbar, :sbar => sbar, :cτ => taus))
 						x,M,p = LandUse.run(LandUse.Region,p0)
 						pl= LandUse.ts_plots(M,p0,fixy = false)
 					elseif growthtype == 2
 						p0 = LandUse.Param(par = Dict(:θu_g => ugrowth,:θut => 1.0, :θrt => 1.0,
-											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etas, :ηl => etal,
+											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etam, :ηl => etal,
 											 :cbar => cbar, :sbar => sbar, :cτ => taus))
 					    x,M,p = LandUse.run(LandUse.Region,p0)
 						# LandUse.plot_ts(M,p0)
