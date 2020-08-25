@@ -2,10 +2,16 @@
 % Please edit documentation in R/GHS.R
 \name{french_cities}
 \alias{french_cities}
-\title{List of French cities in stury}
+\title{Cut Out rasters for French cities}
 \usage{
 french_cities()
 }
+\arguments{
+\item{yr}{for which year to do that
+France UCDB: Cities
+
+List of French cities in study}
+}
 \description{
-List of French cities in stury
+Crop GHS Settlement Model for One City
 }

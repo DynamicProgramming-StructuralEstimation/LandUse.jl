@@ -8,17 +8,18 @@
 
 # urban centre database
 # https://ghslsys.jrc.ec.europa.eu/ghs_stat_ucdb2015mt_r2019a.php
-UCDB <- function(overwrite = FALSE){
-  if (overwrite){
-    x = sf::st_read(file.path(datadir(),"GHS/GHS_STAT_UCDB2015MT_GLOBE_R2019A_V1_0/GHS_STAT_UCDB2015MT_GLOBE_R2019A_V1_0.shp"))
-    saveRDS(x,file.path(datadir(),"UCDB.Rds"))
-  } else {
-    x = sf::st_as_sf(readRDS(file.path(datadir(),"UCDB.Rds")))
-  }
-  x
-}
+# UCDB <- function(overwrite = FALSE){
+#   if (overwrite){
+#     x = sf::st_read(file.path(datadir(),"GHS/GHS_STAT_UCDB2015MT_GLOBE_R2019A_V1_0/GHS_STAT_UCDB2015MT_GLOBE_R2019A_V1_0.shp"))
+#     saveRDS(x,file.path(datadir(),"UCDB.Rds"))
+#   } else {
+#     x = sf::st_as_sf(readRDS(file.path(datadir(),"UCDB.Rds")))
+#   }
+#   x
+# }
 
 GHS_years <- function() c(1975,1990,2000,2015)
+
 
 cropcities <- function(overwrite = FALSE){
   if (overwrite){
@@ -155,6 +156,40 @@ combine_measures <- function(overwrite = FALSE,cutoff = 30){
     z
 }
 
+
+tops <- function(){
+    c("Paris", "Lyon", "Marseille", "Toulouse", "Reims")
+}
+
+plot_sat_built <- function(){
+  cc = LandUseR:::cropcities()  # first index level is years
+
+  ci = bboxes_top100()[LIBGEO %in% tops()]  # 5 cities we want to see
+    out = list()
+  for (ir in 1:nrow(ci)){
+      cci = ci[ir,]
+      # indices 1,2,3,4 are years
+      ss = stack(cc[[1]][[cci$CODGEO]]$built,cc[[2]][[cci$CODGEO]]$built,cc[[3]][[cci$CODGEO]]$built,cc[[4]][[cci$CODGEO]]$built)
+      pngname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.png"))
+      pdfname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.pdf"))
+
+      # plot
+      out[[ir]] = levelplot(ss,xlab = NULL, ylab = NULL, scales=list(draw=FALSE), names.attr=paste0(cci$LIBGEO,' % built ', LandUseR:::GHS_years()))
+
+      # write
+      png(pngname,width = 1000, height=700, res = 175)
+      print(out[[ir]])
+      dev.off()
+      pdf(pdfname,width = 8,height = 6)
+      print(out[[ir]])
+      dev.off()
+
+
+  }
+    out
+}
+
+
 plot_sat_densities <- function(){
     z = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
     x = z[type == "satellite" ,list(year,p50,p90,p10,CODGEO,LIBGEO,rank,area,logarea=log(area),pop,logpop = log(pop))]
@@ -218,222 +253,220 @@ crop_rasters <- function(r,e){
 
 #' Cut Out rasters for French cities
 #'
-#' @export
-cropFrance <- function(cutoff=20,overwrite = FALSE,overwrite_cropping = FALSE){
-    if (overwrite) {
-      bb <- bboxes()   # get bounding boxes for top 30 cities
-      res = bb[,list(city,year = 1975, built = NA_real_, pop = NA_real_)]
-      res = res[rep(1:nrow(bb),4)]
-      res[,year := rep(GHS_years(),each = nrow(bb))]
-      setkey(res,city,year)
-
-      for (yr in GHS_years()){
-        # load raster for that year
-        r = loadRaster(yr = yr)
-        for (ci in french_cities()){
-        # for (ci in c("Paris [FRA]","Lyon [FRA]")){
-          x = crop_smod(bb[city == ci],r,yr,cutoff = cutoff,overwrite=overwrite_cropping)
-          res[.(ci,yr), c("built", "pop") := list(x$area,x$pop)]
-          # print(res[.(ci)])
-        }
-      }
-      saveRDS(res,file.path(outdir(),"france_cropped.Rds"))
-
-    } else {
-      res = readRDS(file.path(outdir(),"france_cropped.Rds"))
-    }
-
-    res
-}
+# cropFrance <- function(cutoff=20,overwrite = FALSE,overwrite_cropping = FALSE){
+#     if (overwrite) {
+#       bb <- bboxes()   # get bounding boxes for top 30 cities
+#       res = bb[,list(city,year = 1975, built = NA_real_, pop = NA_real_)]
+#       res = res[rep(1:nrow(bb),4)]
+#       res[,year := rep(GHS_years(),each = nrow(bb))]
+#       setkey(res,city,year)
+#
+#       for (yr in GHS_years()){
+#         # load raster for that year
+#         r = loadRaster(yr = yr)
+#         for (ci in french_cities()){
+#         # for (ci in c("Paris [FRA]","Lyon [FRA]")){
+#           x = crop_smod(bb[city == ci],r,yr,cutoff = cutoff,overwrite=overwrite_cropping)
+#           res[.(ci,yr), c("built", "pop") := list(x$area,x$pop)]
+#           # print(res[.(ci)])
+#         }
+#       }
+#       saveRDS(res,file.path(outdir(),"france_cropped.Rds"))
+#
+#     } else {
+#       res = readRDS(file.path(outdir(),"france_cropped.Rds"))
+#     }
+#
+#     res
+# }
 
 
 
 #' Crop GHS Settlement Model for One City
 #'
 #' @param yr for which year to do that
-crop_smod <- function(bbox,r,yr,cutoff = 20,overwrite = FALSE){
-    city = bbox[,city]
-    flog.info("cropping %s to level %s in year %d",city,cutoff,yr)
-
-    # get bouding box for city
-    # pa = LandUseR:::paris_box()
-    # pa = LandUseR:::city_box(city)
-
-
-    # setup output dir structure
-    odir = file.path(outdir(),city)
-    dir.create(odir,showWarnings = FALSE, recursive = T)
-    levs = GHS_L2()
-    ghc_cols = GHS_LS_scale()
-
-    if (!file.exists(file.path(odir,paste0("cropped",yr,".Rds"))) | overwrite){
-        flog.info("re-cropping raster to %s",city)
-
-        r_c <- crop_rasters(r,bbox[,extent][[1]])  # extents in WGS84!
-        # r_c$smod <- raster::as.factor(r_c$smod)
-        # print(unique(values(r_c$smod)))
-        r_c$builtpop <- raster::stack(r_c$built,r_c$pop)
-        names(r_c$builtpop) <- c("built","pop")
-        r_c$built <- NULL
-        r_c$pop <- NULL
-
-        saveRDS(r_c, file = file.path(odir,paste0("cropped",yr,".Rds")))
-    } else {
-        r_c <- readRDS(file.path(odir,paste0("cropped",yr,".Rds")))
-    }
-
-    r_c$smod <- raster::ratify(r_c$smod)   # need to preserve categorical data!!!! no reprojection possible!!!!
-    # rat <- levels(r_c$smod)[[1]]
-    # rat$ID <- LandUseR:::GHS_L2()$ID
-    # rat$label <- as.character(LandUseR:::GHS_L2()$label)
-    #
-    # # rat$cols <- LandUseR:::GHS_LS_scale()
-    # levels(r_c$smod) <- rat
-
-    levs = subset(levs, ID %in% unique(raster::values(r_c$smod)))
-    ghc_cols = subset(ghc_cols, ID %in% unique(raster::values(r_c$smod)))
-
-    # png(file.path(odir,paste0("SMOD_",city,yr,".png")),width = 9,height=6,units = "in",res = 200)
-    # plot(r_c$smod,legend = FALSE, col = cols$color,main=paste(city,"SMOD as is",yr))
-    # legend(x = 'bottomright', legend = levs$label, fill = cols$color)
-    # dev.off()
-
-    # plot fine grids
-    png(file.path(odir,paste0("pop-built-",city,yr,".png")),width = 10,height=5,units = "in",res = 200)
-    par(mfcol = c(1,2))
-    raster::plot(r_c$builtpop$pop,xaxt="n",yaxt="n", legend = FALSE, paste(city,"population"))
-    raster::plot(r_c$builtpop$pop, legend.only=TRUE, horizontal = TRUE,
-         legend.args = list(text='Population', side = 1, line = 2))
-    raster::plot(r_c$builtpop$built,xaxt="n",yaxt="n", legend = FALSE, paste(city,"% Built"))
-    raster::plot(r_c$builtpop$built, legend.only=TRUE, horizontal = TRUE,
-                 legend.args = list(text='% Built', side = 1, line = 2))
-    par(mfcol = c(1,1))
-    dev.off()
-
-
-
-    # aggregate pop and built to 1km grids
-    built1k <- raster::aggregate(r_c$builtpop$built, fact = 4, mean)
-    pop1k <- raster::aggregate(r_c$builtpop$pop, fact = 4, sum)
-    bp1k <- raster::stack(built1k, pop1k)
-    names(bp1k) <- c("built","pop")
-
-    # force extents to be equal
-    raster::extent(bp1k) <- raster::extent(r_c$smod)
-
-    # get definition of SMOD "city"
-    s_mask = r_c$smod
-    raster::values(s_mask) = raster::values(r_c$smod > cutoff)
-    stopifnot(raster::extent(s_mask) == raster::extent(bp1k))
-
-    # clip to mask
-    # bp1k_c = bp1k[s_mask, drop = FALSE]
-
-    cc <- r_c$smod[s_mask,drop = FALSE]
-    cc = raster::clump(cc)
-    fc = data.frame(raster::freq(cc))
-    whichc = fc %>% na.omit() %>% dplyr::filter(count == max(count)) %>% dplyr::pull(value)
-    mask_city = cc
-    raster::values(mask_city) = raster::values(cc == whichc)
-    raster::values(mask_city)[raster::values(mask_city) == 1] = TRUE
-    raster::values(mask_city)[raster::values(mask_city) != 1] = NA
-    # values(mask_city) = values(cc > 0)
-    # values(mask_city)[values(mask_city) == 1] = TRUE
-    # values(mask_city)[values(mask_city) != 1] = NA
-
-
-    # inverse mask
-    imask = mask_city
-    raster::values(imask) <- is.na(raster::values(mask_city))
-    raster::values(imask)[!raster::values(imask)] <- NA
-
-    totarea = raster::cellStats(mask_city, sum)   # total area of main city from SMOD
-    bp1k_mask = bp1k[s_mask]
-    totpop = sum(bp1k_mask[,"pop"],na.rm=T)
-    meanbuilt = mean(bp1k_mask[,"built"],na.rm=T)
-
-    # plot city model only
-    png(file.path(odir,paste0("SMOD_",city,yr,".png")),width = 9,height=6,units = "in",res = 200)
-    raster::plot(r_c$smod,legend = FALSE, col = ghc_cols$color,main=paste(city,"Settlement Model",yr))
-    legend(x = 'bottomright', legend = levs$label, fill = ghc_cols$color)
-    dev.off()
-
-
-    # plot city model and mask
-    png(file.path(odir,paste0("SMOD_",city,"_classify",yr,".png")),width = 9,height=6,units = "in",res = 200)
-    par(mfcol = c(1,2))
-    raster::plot(r_c$smod,legend = FALSE, col = ghc_cols$color,main=paste(city,"SMOD as is",yr))
-    legend(x = 'bottomright', legend = levs$label, fill = ghc_cols$color)
-    raster::plot(r_c$smod,legend = FALSE, col = ghc_cols$color,main = "Main City Classification",alpha = 0.1)
-    raster::plot(mask_city,legend = FALSE, col = ghc_cols$color[length(ghc_cols$color)], add = TRUE)
-    dev.off()
-    par(mfcol = c(1,1))
-
-    # plot both original and masked data
-    png(file.path(odir,paste0("maskpop-",city,yr,".png")),width = 9,height=6,units = "in",res = 200)
-    par(mfcol = c(1,2))
-    raster::plot(bp1k$pop,legend = TRUE,main=paste(city,"pop as is",yr))
-    # plot(bp1k$pop, legend.only=TRUE, horizontal = TRUE,
-    #      legend.args = list(text='Population', side = 1, line = 2))
-    raster::plot(bp1k$pop, main = "Cut-out population",legend = FALSE)
-    raster::plot(imask,add=TRUE,col="black",legend=FALSE)
-    dev.off()
-    par(mfcol = c(1,1))
-
-    png(file.path(odir,paste0("maskbuilt-",city,yr,".png")),width = 9,height=6,units = "in",res = 200)
-    par(mfcol = c(1,2))
-    raster::plot(bp1k$built,legend = TRUE,main=paste(city,"Built as is",yr))
-    # plot(bp1k$pop, legend.only=TRUE, horizontal = TRUE,
-    #      legend.args = list(text='Population', side = 1, line = 2))
-    raster::plot(bp1k$built, main = "Cut-out Built",legend = FALSE)
-    raster::plot(imask,add=TRUE,col="black",legend=FALSE)
-    dev.off()
-    par(mfcol = c(1,1))
-
-    # get densitty in each gridcell
-    # dgrid = copy(built_paris)
-    # values(dgrid) <- values(pop_paris) / values(built_paris)
-
-    l <- list(area = totarea, pop = totpop, meanbuilt=meanbuilt)
-    return(l)
-}
+# crop_smod <- function(bbox,r,yr,cutoff = 20,overwrite = FALSE){
+#     city = bbox[,city]
+#     flog.info("cropping %s to level %s in year %d",city,cutoff,yr)
+#
+#     # get bouding box for city
+#     # pa = LandUseR:::paris_box()
+#     # pa = LandUseR:::city_box(city)
+#
+#
+#     # setup output dir structure
+#     odir = file.path(outdir(),city)
+#     dir.create(odir,showWarnings = FALSE, recursive = T)
+#     levs = GHS_L2()
+#     ghc_cols = GHS_LS_scale()
+#
+#     if (!file.exists(file.path(odir,paste0("cropped",yr,".Rds"))) | overwrite){
+#         flog.info("re-cropping raster to %s",city)
+#
+#         r_c <- crop_rasters(r,bbox[,extent][[1]])  # extents in WGS84!
+#         # r_c$smod <- raster::as.factor(r_c$smod)
+#         # print(unique(values(r_c$smod)))
+#         r_c$builtpop <- raster::stack(r_c$built,r_c$pop)
+#         names(r_c$builtpop) <- c("built","pop")
+#         r_c$built <- NULL
+#         r_c$pop <- NULL
+#
+#         saveRDS(r_c, file = file.path(odir,paste0("cropped",yr,".Rds")))
+#     } else {
+#         r_c <- readRDS(file.path(odir,paste0("cropped",yr,".Rds")))
+#     }
+#
+#     r_c$smod <- raster::ratify(r_c$smod)   # need to preserve categorical data!!!! no reprojection possible!!!!
+#     # rat <- levels(r_c$smod)[[1]]
+#     # rat$ID <- LandUseR:::GHS_L2()$ID
+#     # rat$label <- as.character(LandUseR:::GHS_L2()$label)
+#     #
+#     # # rat$cols <- LandUseR:::GHS_LS_scale()
+#     # levels(r_c$smod) <- rat
+#
+#     levs = subset(levs, ID %in% unique(raster::values(r_c$smod)))
+#     ghc_cols = subset(ghc_cols, ID %in% unique(raster::values(r_c$smod)))
+#
+#     # png(file.path(odir,paste0("SMOD_",city,yr,".png")),width = 9,height=6,units = "in",res = 200)
+#     # plot(r_c$smod,legend = FALSE, col = cols$color,main=paste(city,"SMOD as is",yr))
+#     # legend(x = 'bottomright', legend = levs$label, fill = cols$color)
+#     # dev.off()
+#
+#     # plot fine grids
+#     png(file.path(odir,paste0("pop-built-",city,yr,".png")),width = 10,height=5,units = "in",res = 200)
+#     par(mfcol = c(1,2))
+#     raster::plot(r_c$builtpop$pop,xaxt="n",yaxt="n", legend = FALSE, paste(city,"population"))
+#     raster::plot(r_c$builtpop$pop, legend.only=TRUE, horizontal = TRUE,
+#          legend.args = list(text='Population', side = 1, line = 2))
+#     raster::plot(r_c$builtpop$built,xaxt="n",yaxt="n", legend = FALSE, paste(city,"% Built"))
+#     raster::plot(r_c$builtpop$built, legend.only=TRUE, horizontal = TRUE,
+#                  legend.args = list(text='% Built', side = 1, line = 2))
+#     par(mfcol = c(1,1))
+#     dev.off()
+#
+#
+#
+#     # aggregate pop and built to 1km grids
+#     built1k <- raster::aggregate(r_c$builtpop$built, fact = 4, mean)
+#     pop1k <- raster::aggregate(r_c$builtpop$pop, fact = 4, sum)
+#     bp1k <- raster::stack(built1k, pop1k)
+#     names(bp1k) <- c("built","pop")
+#
+#     # force extents to be equal
+#     raster::extent(bp1k) <- raster::extent(r_c$smod)
+#
+#     # get definition of SMOD "city"
+#     s_mask = r_c$smod
+#     raster::values(s_mask) = raster::values(r_c$smod > cutoff)
+#     stopifnot(raster::extent(s_mask) == raster::extent(bp1k))
+#
+#     # clip to mask
+#     # bp1k_c = bp1k[s_mask, drop = FALSE]
+#
+#     cc <- r_c$smod[s_mask,drop = FALSE]
+#     cc = raster::clump(cc)
+#     fc = data.frame(raster::freq(cc))
+#     whichc = fc %>% na.omit() %>% dplyr::filter(count == max(count)) %>% dplyr::pull(value)
+#     mask_city = cc
+#     raster::values(mask_city) = raster::values(cc == whichc)
+#     raster::values(mask_city)[raster::values(mask_city) == 1] = TRUE
+#     raster::values(mask_city)[raster::values(mask_city) != 1] = NA
+#     # values(mask_city) = values(cc > 0)
+#     # values(mask_city)[values(mask_city) == 1] = TRUE
+#     # values(mask_city)[values(mask_city) != 1] = NA
+#
+#
+#     # inverse mask
+#     imask = mask_city
+#     raster::values(imask) <- is.na(raster::values(mask_city))
+#     raster::values(imask)[!raster::values(imask)] <- NA
+#
+#     totarea = raster::cellStats(mask_city, sum)   # total area of main city from SMOD
+#     bp1k_mask = bp1k[s_mask]
+#     totpop = sum(bp1k_mask[,"pop"],na.rm=T)
+#     meanbuilt = mean(bp1k_mask[,"built"],na.rm=T)
+#
+#     # plot city model only
+#     png(file.path(odir,paste0("SMOD_",city,yr,".png")),width = 9,height=6,units = "in",res = 200)
+#     raster::plot(r_c$smod,legend = FALSE, col = ghc_cols$color,main=paste(city,"Settlement Model",yr))
+#     legend(x = 'bottomright', legend = levs$label, fill = ghc_cols$color)
+#     dev.off()
+#
+#
+#     # plot city model and mask
+#     png(file.path(odir,paste0("SMOD_",city,"_classify",yr,".png")),width = 9,height=6,units = "in",res = 200)
+#     par(mfcol = c(1,2))
+#     raster::plot(r_c$smod,legend = FALSE, col = ghc_cols$color,main=paste(city,"SMOD as is",yr))
+#     legend(x = 'bottomright', legend = levs$label, fill = ghc_cols$color)
+#     raster::plot(r_c$smod,legend = FALSE, col = ghc_cols$color,main = "Main City Classification",alpha = 0.1)
+#     raster::plot(mask_city,legend = FALSE, col = ghc_cols$color[length(ghc_cols$color)], add = TRUE)
+#     dev.off()
+#     par(mfcol = c(1,1))
+#
+#     # plot both original and masked data
+#     png(file.path(odir,paste0("maskpop-",city,yr,".png")),width = 9,height=6,units = "in",res = 200)
+#     par(mfcol = c(1,2))
+#     raster::plot(bp1k$pop,legend = TRUE,main=paste(city,"pop as is",yr))
+#     # plot(bp1k$pop, legend.only=TRUE, horizontal = TRUE,
+#     #      legend.args = list(text='Population', side = 1, line = 2))
+#     raster::plot(bp1k$pop, main = "Cut-out population",legend = FALSE)
+#     raster::plot(imask,add=TRUE,col="black",legend=FALSE)
+#     dev.off()
+#     par(mfcol = c(1,1))
+#
+#     png(file.path(odir,paste0("maskbuilt-",city,yr,".png")),width = 9,height=6,units = "in",res = 200)
+#     par(mfcol = c(1,2))
+#     raster::plot(bp1k$built,legend = TRUE,main=paste(city,"Built as is",yr))
+#     # plot(bp1k$pop, legend.only=TRUE, horizontal = TRUE,
+#     #      legend.args = list(text='Population', side = 1, line = 2))
+#     raster::plot(bp1k$built, main = "Cut-out Built",legend = FALSE)
+#     raster::plot(imask,add=TRUE,col="black",legend=FALSE)
+#     dev.off()
+#     par(mfcol = c(1,1))
+#
+#     # get densitty in each gridcell
+#     # dgrid = copy(built_paris)
+#     # values(dgrid) <- values(pop_paris) / values(built_paris)
+#
+#     l <- list(area = totarea, pop = totpop, meanbuilt=meanbuilt)
+#     return(l)
+# }
 
 
 #' France UCDB: Cities
 #'
-#' @export
-franceUCDB <- function(topn = 30,overwrite = FALSE){
-  if (overwrite) {
-    x = UCDB()
-    # WTF is Cambrin?? https://en.wikipedia.org/wiki/Cambrin
-    y = x %>% dplyr::filter(CTR_MN_ISO == "FRA") %>%
-      sf::st_set_geometry(NULL) %>% data.table
+# franceUCDB <- function(topn = 30,overwrite = FALSE){
+#   if (overwrite) {
+#     x = UCDB()
+#     # WTF is Cambrin?? https://en.wikipedia.org/wiki/Cambrin
+#     y = x %>% dplyr::filter(CTR_MN_ISO == "FRA") %>%
+#       sf::st_set_geometry(NULL) %>% data.table
+#
+#     y[, city := as.character(UC_NM_MN)]
+#     y = y[!(city %in% c("Cambrin [FRA]","Brest [FRA]","Nantes [FRA]", "Rennes [FRA]","Saint-Denis [FRA]")), .(P15,P00, P90, P75, B15, B00, B90, B75, city)][order(P15,decreasing = T)][1:topn]
+#
+#     setcolorder(y,c("city","P75","P90","P00","P15","B75","B90","B00","B15"))
+#     m = melt.data.table(y, id = "city", measure =patterns("^P","^B"), value.name = c("pop","built"), variable.name = "nyear", variable.factor = FALSE)
+#     m[nyear == "4", year := 2015]
+#     m[nyear == "3", year := 2000]
+#     m[nyear == "2", year := 1990]
+#     m[nyear == "1", year := 1975]
+#     m[,nyear := NULL]
+#     m[,density := pop / built]
+#     m[city == "Clermont-Ferran [FRA]", city := "Clermont-Ferrand [FRA]"]
+#     setcolorder(m,c("city","year"))
+#     fwrite(m,file.path(datadir(),"france_cities_ucdb.csv"))
+#   } else {
+#     if (!file.exists(file.path(datadir(),"france_cities_ucdb.csv"))) {
+#       stop("must run with overwrite=TRUE first")
+#     } else {
+#       m = fread(file.path(datadir(),"france_cities_ucdb.csv"))
+#     }
+#   }
+#   m
+# }
 
-    y[, city := as.character(UC_NM_MN)]
-    y = y[!(city %in% c("Cambrin [FRA]","Brest [FRA]","Nantes [FRA]", "Rennes [FRA]","Saint-Denis [FRA]")), .(P15,P00, P90, P75, B15, B00, B90, B75, city)][order(P15,decreasing = T)][1:topn]
-
-    setcolorder(y,c("city","P75","P90","P00","P15","B75","B90","B00","B15"))
-    m = melt.data.table(y, id = "city", measure =patterns("^P","^B"), value.name = c("pop","built"), variable.name = "nyear", variable.factor = FALSE)
-    m[nyear == "4", year := 2015]
-    m[nyear == "3", year := 2000]
-    m[nyear == "2", year := 1990]
-    m[nyear == "1", year := 1975]
-    m[,nyear := NULL]
-    m[,density := pop / built]
-    m[city == "Clermont-Ferran [FRA]", city := "Clermont-Ferrand [FRA]"]
-    setcolorder(m,c("city","year"))
-    fwrite(m,file.path(datadir(),"france_cities_ucdb.csv"))
-  } else {
-    if (!file.exists(file.path(datadir(),"france_cities_ucdb.csv"))) {
-      stop("must run with overwrite=TRUE first")
-    } else {
-      m = fread(file.path(datadir(),"france_cities_ucdb.csv"))
-    }
-  }
-  m
-}
-
-#' List of French cities in stury
+#' List of French cities in study
 #'
 #' @export
 french_cities <- function(){
@@ -442,39 +475,39 @@ french_cities <- function(){
 }
 
 
-plot_france <- function(y,outcome = "density",fname = "densities-1975-FRA",dotted = FALSE){
-  others = "Paris|Lyon|Marseille|Montpellier"
-  y[city %like% others,lines :=  "Paris"]
-  y[!(city %like% others),lines :=  "Other"]
-  years = y[,unique(year)]
-  setkey(y,city,year)
-  topn = y[,length(unique(city))]
-  linet = grep(others,y[,unique(city)]) # indices of dashed lines
-  linev = rep("solid",topn)
-  if (dotted){
-    linev[linet] <- "dotted"
-  }
-
-
-  pl = ggplot2::ggplot(y,ggplot2::aes(x = year,y = .data[[outcome]],color = city,linetype = city)) +
-    ggplot2::geom_line() +
-    ggplot2::geom_point() +
-    ggplot2::theme_bw() +
-    ggplot2::scale_color_hue(name = "City") +
-    ggplot2::scale_linetype_manual(name = "City", values = linev) +
-    ggplot2::scale_x_continuous(breaks = years) +
-    ggplot2::scale_y_continuous(name = outcome, labels = scales::comma)
-  if (outcome == "density") {
-    pl = pl + ggplot2::labs(title = paste0("France ",outcome," over time"),
-                           caption = "density = number of people / total built up surface (in km2)")
-  } else {
-    pl = pl + ggplot2::labs(title = paste0("France ",outcome," over time"))
-  }
-
-  ggplot2::ggsave(plot = pl, filename = file.path(outdir(),"plots",paste0(fname,".pdf")),width = 10, height = 6)
-  ggplot2::ggsave(plot = pl, filename = file.path(outdir(),"plots",paste0(fname,".png")),width = 10, height = 6)
-  pl
-}
+# plot_france <- function(y,outcome = "density",fname = "densities-1975-FRA",dotted = FALSE){
+#   others = "Paris|Lyon|Marseille|Montpellier"
+#   y[city %like% others,lines :=  "Paris"]
+#   y[!(city %like% others),lines :=  "Other"]
+#   years = y[,unique(year)]
+#   setkey(y,city,year)
+#   topn = y[,length(unique(city))]
+#   linet = grep(others,y[,unique(city)]) # indices of dashed lines
+#   linev = rep("solid",topn)
+#   if (dotted){
+#     linev[linet] <- "dotted"
+#   }
+#
+#
+#   pl = ggplot2::ggplot(y,ggplot2::aes(x = year,y = .data[[outcome]],color = city,linetype = city)) +
+#     ggplot2::geom_line() +
+#     ggplot2::geom_point() +
+#     ggplot2::theme_bw() +
+#     ggplot2::scale_color_hue(name = "City") +
+#     ggplot2::scale_linetype_manual(name = "City", values = linev) +
+#     ggplot2::scale_x_continuous(breaks = years) +
+#     ggplot2::scale_y_continuous(name = outcome, labels = scales::comma)
+#   if (outcome == "density") {
+#     pl = pl + ggplot2::labs(title = paste0("France ",outcome," over time"),
+#                            caption = "density = number of people / total built up surface (in km2)")
+#   } else {
+#     pl = pl + ggplot2::labs(title = paste0("France ",outcome," over time"))
+#   }
+#
+#   ggplot2::ggsave(plot = pl, filename = file.path(outdir(),"plots",paste0(fname,".pdf")),width = 10, height = 6)
+#   ggplot2::ggsave(plot = pl, filename = file.path(outdir(),"plots",paste0(fname,".png")),width = 10, height = 6)
+#   pl
+# }
 
 
 #' Get French Boudning Boxes
@@ -526,88 +559,88 @@ bboxes <- function(){
 }
 
 
-plot_france_UCDB <- function(topn = 30){
-  y = france(topn)
-  plot_france(y)
-}
+# plot_france_UCDB <- function(topn = 30){
+#   y = france(topn)
+#   plot_france(y)
+# }
 
-overlay_GHSPOP_UDB <- function(){
-  # paris city database
-  x = UCDB()
-  pa = x %>% dplyr::filter(grepl("Paris",UC_NM_MN))
-  ma = x %>% dplyr::filter(grepl("Marseille",UC_NM_MN))
-
-  for (yr in paste(c(1975, 1990, 2000, 2015))){
-
-    pop <- raster::raster(file.path(datadir(),paste0("GHS/GHS_POP_E",yr,"_GLOBE_R2019A_54009_250_V1_0_18_3/GHS_POP_E",yr,"_GLOBE_R2019A_54009_250_V1_0_18_3.tif")))
-    if(yr==2015){
-      built <- raster::raster(file.path(datadir(),paste0("GHS/GHS_BUILT_LDS2014_GLOBE_R2018A_54009_250_V2_0_18_3/GHS_BUILT_LDS2014_GLOBE_R2018A_54009_250_V2_0_18_3.tif")))
-    } else {
-      built <- raster::raster(file.path(datadir(),paste0("GHS/GHS_BUILT_LDS",yr,"_GLOBE_R2018A_54009_250_V2_0_18_3/GHS_BUILT_LDS",yr,"_GLOBE_R2018A_54009_250_V2_0_18_3.tif")))
-    }
-
-
-
-    # same crs
-    pat = sf::st_transform(pa, raster::projection(pop))
-
-    # crop raster to shape of border
-    pop_paris = raster::crop(pop,raster::extent(pat))
-    built_paris = raster::crop(built,raster::extent(pat))
-
-    # plot
-    png(file.path(outdir(),paste0("plots/UCDB-paris-",yr,".png")),width = 19,height=8,units = "in",res = 200)
-    par(mfcol=c(1,2))
-    raster::plot(pop_paris,main = paste0("Paris Population ",yr," overlaid with city boundary 2015"), legend=FALSE, axes=FALSE)
-    raster::plot(pop_paris,legend.only=TRUE,horizontal = TRUE,
-                                legend.args=list(text='Number of People',side=1,line = 2))
-    plot(sf::st_geometry(pat),add = TRUE, fill = NA, border = "red", lw = 2)
-    raster::plot(built_paris,main = paste0("Paris Built ",yr), legend=FALSE, axes=FALSE)
-    raster::plot(built_paris,legend.only=TRUE,horizontal = TRUE,
-                 legend.args=list(text='Percent Built Up',side=1,line = 2))
-    plot(sf::st_geometry(pat),add = TRUE, fill = NA, border = "red", lw = 2)
-    dev.off()
-  }
-  # https://cran.r-project.org/web/packages/magick/vignettes/intro.html
-  img <- magick::image_read(grep("UCDB-paris-",list.files(file.path(outdir(),"plots"),full.names = TRUE),value = TRUE))
-  # ani <- magick::image_animate(img,fps = 0.5)
-  magick::image_write_gif(img, file.path(outdir(),paste0("plots/UCDB-paris.gif")),delay = 2)
-  # magick::image_convert(grep("UCDB-paris-",list.files(file.path(outdir(),"plots"),full.names = TRUE),value = TRUE))
-}
-
-GHS_L2 <- function(){
-    data.frame(ID = c(10,11,12,13,21,22,23,30), label = c("Water","Uninhabited","Rural Dispersed","Village","Suburbs","Semi-Dense Town","Dense Town","City"))
-}
-GHS_LS_scale <- function(){
-    d = data.frame(ID = c(10,11,12,13,21,22,23,30), color =
-    c(rgb(122, 182, 245, maxColorValue = 255),
-      rgb(205, 245, 122, maxColorValue = 255),
-      rgb(171, 205, 102, maxColorValue = 255),
-      rgb(55, 86, 35, maxColorValue = 255),
-      rgb(255, 255, 0, maxColorValue = 255),
-      rgb(168, 112, 0, maxColorValue = 255),
-      rgb(115, 38, 0, maxColorValue = 255),
-      rgb(255, 0, 0, maxColorValue = 255)
-      )
-    )
-    d$color = as.character(d$color)
-    d
-}
-
-rayt <- function(){
-    el = matrix(raster::extract(pop_paris, raster::extent(pop_paris)),nrow = ncol(pop_paris), ncol = nrow(pop_paris))
-    el %>% sphere_shade(texture = "imhof4") %>%   add_shadow(ray_shade(el, zscale = 15, maxsearch = 300), 0.5) %>%  add_shadow(ambmat, 0.5) %>% plot_3d(el, zscale = 10, fov = 0, theta = 135, zoom = 0.75, phi = 45, windowsize = c(1000, 800))
-
-
-    phivechalf = 30 + 60 * 1/(1 + exp(seq(-7, 20, length.out = 180)/2))
-    phivecfull = c(phivechalf, rev(phivechalf))
-    thetavec = -90 + 60 * sin(seq(0,359,length.out = 360) * pi/180)
-    zoomvec = 0.45 + 0.2 * 1/(1 + exp(seq(-5, 20, length.out = 180)))
-    zoomvecfull = c(zoomvec, rev(zoomvec))
-
-    render_movie(filename = "paris-movie", type = "custom",
-                             frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
-}
+# overlay_GHSPOP_UDB <- function(){
+#   # paris city database
+#   x = UCDB()
+#   pa = x %>% dplyr::filter(grepl("Paris",UC_NM_MN))
+#   ma = x %>% dplyr::filter(grepl("Marseille",UC_NM_MN))
+#
+#   for (yr in paste(c(1975, 1990, 2000, 2015))){
+#
+#     pop <- raster::raster(file.path(datadir(),paste0("GHS/GHS_POP_E",yr,"_GLOBE_R2019A_54009_250_V1_0_18_3/GHS_POP_E",yr,"_GLOBE_R2019A_54009_250_V1_0_18_3.tif")))
+#     if(yr==2015){
+#       built <- raster::raster(file.path(datadir(),paste0("GHS/GHS_BUILT_LDS2014_GLOBE_R2018A_54009_250_V2_0_18_3/GHS_BUILT_LDS2014_GLOBE_R2018A_54009_250_V2_0_18_3.tif")))
+#     } else {
+#       built <- raster::raster(file.path(datadir(),paste0("GHS/GHS_BUILT_LDS",yr,"_GLOBE_R2018A_54009_250_V2_0_18_3/GHS_BUILT_LDS",yr,"_GLOBE_R2018A_54009_250_V2_0_18_3.tif")))
+#     }
+#
+#
+#
+#     # same crs
+#     pat = sf::st_transform(pa, raster::projection(pop))
+#
+#     # crop raster to shape of border
+#     pop_paris = raster::crop(pop,raster::extent(pat))
+#     built_paris = raster::crop(built,raster::extent(pat))
+#
+#     # plot
+#     png(file.path(outdir(),paste0("plots/UCDB-paris-",yr,".png")),width = 19,height=8,units = "in",res = 200)
+#     par(mfcol=c(1,2))
+#     raster::plot(pop_paris,main = paste0("Paris Population ",yr," overlaid with city boundary 2015"), legend=FALSE, axes=FALSE)
+#     raster::plot(pop_paris,legend.only=TRUE,horizontal = TRUE,
+#                                 legend.args=list(text='Number of People',side=1,line = 2))
+#     plot(sf::st_geometry(pat),add = TRUE, fill = NA, border = "red", lw = 2)
+#     raster::plot(built_paris,main = paste0("Paris Built ",yr), legend=FALSE, axes=FALSE)
+#     raster::plot(built_paris,legend.only=TRUE,horizontal = TRUE,
+#                  legend.args=list(text='Percent Built Up',side=1,line = 2))
+#     plot(sf::st_geometry(pat),add = TRUE, fill = NA, border = "red", lw = 2)
+#     dev.off()
+#   }
+#   # https://cran.r-project.org/web/packages/magick/vignettes/intro.html
+#   img <- magick::image_read(grep("UCDB-paris-",list.files(file.path(outdir(),"plots"),full.names = TRUE),value = TRUE))
+#   # ani <- magick::image_animate(img,fps = 0.5)
+#   magick::image_write_gif(img, file.path(outdir(),paste0("plots/UCDB-paris.gif")),delay = 2)
+#   # magick::image_convert(grep("UCDB-paris-",list.files(file.path(outdir(),"plots"),full.names = TRUE),value = TRUE))
+# }
+#
+# GHS_L2 <- function(){
+#     data.frame(ID = c(10,11,12,13,21,22,23,30), label = c("Water","Uninhabited","Rural Dispersed","Village","Suburbs","Semi-Dense Town","Dense Town","City"))
+# }
+# GHS_LS_scale <- function(){
+#     d = data.frame(ID = c(10,11,12,13,21,22,23,30), color =
+#     c(rgb(122, 182, 245, maxColorValue = 255),
+#       rgb(205, 245, 122, maxColorValue = 255),
+#       rgb(171, 205, 102, maxColorValue = 255),
+#       rgb(55, 86, 35, maxColorValue = 255),
+#       rgb(255, 255, 0, maxColorValue = 255),
+#       rgb(168, 112, 0, maxColorValue = 255),
+#       rgb(115, 38, 0, maxColorValue = 255),
+#       rgb(255, 0, 0, maxColorValue = 255)
+#       )
+#     )
+#     d$color = as.character(d$color)
+#     d
+# }
+#
+# rayt <- function(){
+#     el = matrix(raster::extract(pop_paris, raster::extent(pop_paris)),nrow = ncol(pop_paris), ncol = nrow(pop_paris))
+#     el %>% sphere_shade(texture = "imhof4") %>%   add_shadow(ray_shade(el, zscale = 15, maxsearch = 300), 0.5) %>%  add_shadow(ambmat, 0.5) %>% plot_3d(el, zscale = 10, fov = 0, theta = 135, zoom = 0.75, phi = 45, windowsize = c(1000, 800))
+#
+#
+#     phivechalf = 30 + 60 * 1/(1 + exp(seq(-7, 20, length.out = 180)/2))
+#     phivecfull = c(phivechalf, rev(phivechalf))
+#     thetavec = -90 + 60 * sin(seq(0,359,length.out = 360) * pi/180)
+#     zoomvec = 0.45 + 0.2 * 1/(1 + exp(seq(-5, 20, length.out = 180)))
+#     zoomvecfull = c(zoomvec, rev(zoomvec))
+#
+#     render_movie(filename = "paris-movie", type = "custom",
+#                              frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
+# }
 
 
 

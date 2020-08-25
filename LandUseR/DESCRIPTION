@@ -28,5 +28,6 @@ Imports:
     tidyr,
     googlesheets4,
     googledrive,
-    progress
-RoxygenNote: 7.1.0
+    progress,
+    rasterVis
+RoxygenNote: 7.1.1

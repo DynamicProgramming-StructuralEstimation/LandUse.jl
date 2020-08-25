@@ -280,8 +280,8 @@ get_paris_pop_1950 <- function(p){
 
 
 bboxes_top100 <- function(){
-    v=get_manuals()[,LIBGEO]
-    bn = data.table(LIBGEO = v, extent = vector("list", length = 100))
+    bn = LandUseR:::get_manuals()[,list(LIBGEO,CODGEO)]
+    bn[ , extent := vector("list", length = 100) ]
 
     bn[LIBGEO == "Lille",                  extent := raster::extent(c(2.944861, 3.298341 , 50.543319, 50.778156))]
     bn[LIBGEO == "Amiens",                 extent := raster::extent(c(2.2145981, 2.414104 ,49.847181 , 49.959225))]
@@ -383,6 +383,7 @@ bboxes_top100 <- function(){
     bn[LIBGEO == "Morlaix",                extent := raster::extent(c(-3.875495,-3.779227,48.556620,48.600425))]
     bn[LIBGEO == "Vannes",                 extent := raster::extent(c(-2.812036,-2.691376,47.633021,47.703814))]
     bn[LIBGEO == "Saint-Nazaire",          extent := raster::extent(c(-2.296981,-2.112192,47.233045,47.339467))]
+    bn
 }
 
 # archive
