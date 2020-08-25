@@ -243,7 +243,7 @@ https://github.com/floswald/LandUse.jl/issues/22
 """
 function issue_22()
     x,M,p = run(Region,Param())
-    d = dataframe(M,p.T)
+    d = dataframe(M,p)
     df = @linq d |>
          select(:year,:Ch,:Cu,:Cr,:C ) |>
          transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
@@ -264,14 +264,14 @@ function issue_21(n=8)
     es = range(0.5,8,length = n)
     e = es[1]
     x,M,p = run(Region,Param(par = Dict(:ϵsmax => 0.0, :ϵr => e)))
-    # d = select(dataframe(M,p.T),:year,:Hr,:H0,:hr,:h0,:ρr,:qr,:ρ0,:q0, :ϕ, :Sr, :Srh)
-    d = dataframe(M,p.T)
+    # d = select(dataframe(M,p),:year,:Hr,:H0,:hr,:h0,:ρr,:qr,:ρ0,:q0, :ϕ, :Sr, :Srh)
+    d = dataframe(M,p)
     d[!,:ϵr] .= e
 
     for (i,e) in enumerate(es[2:end])
         # println("e = $e")
         x,M,p = run(Region,Param(par = Dict(:ϵsmax => 0.0, :ϵr => e)))
-        d0 = dataframe(M,p.T)
+        d0 = dataframe(M,p)
         d0[!,:ϵr] .= e
         append!(d,d0)
     end
@@ -459,7 +459,7 @@ end
 2. implications of growth in either sector only
 3. identify commuting cost params by matching time series data
 """
-function issue36()
+function issue36( ; save=false)
     r = Dict()
 
     # 1. same growth in sectors
@@ -498,11 +498,42 @@ function issue36()
     r[3] = plot(pl1[:mode],pl1[:ctime],layout = (2,1), link = :x)
 
     # save plots
-    savefig(r[1][:baseline], joinpath(dbplots,"issue36-baseline.pdf"))
-    savefig(r[1][:low_cbar], joinpath(dbplots,"issue36-low-cbar.pdf"))
-    savefig(r[2][:u_fast], joinpath(dbplots,"issue36-u-fast.pdf"))
-    savefig(r[2][:r_fast], joinpath(dbplots,"issue36-r-fast.pdf"))
-    savefig(r[3], joinpath(dbplots,"issue36-commute.pdf"))
+    if save
+        savefig(r[1][:baseline], joinpath(dbplots,"issue36-baseline.pdf"))
+        savefig(r[1][:low_cbar], joinpath(dbplots,"issue36-low-cbar.pdf"))
+        savefig(r[2][:u_fast], joinpath(dbplots,"issue36-u-fast.pdf"))
+        savefig(r[2][:r_fast], joinpath(dbplots,"issue36-r-fast.pdf"))
+        savefig(r[3], joinpath(dbplots,"issue36-commute.pdf"))
+    end
     return r
+
+end
+
+
+"""
+produces all output from the model needed to compile the paper.
+
+This uses current baseline parameters defined in `params.json`
+"""
+function output_paper(;save = false)
+
+    p1  = Param() # baseline param: high cbar and low sbar
+    x,M,p0  = run(Region,p1)
+    pl1 = LandUse.ts_plots(M,p1)
+
+    # names of plots we want
+    key = [:pop,:spending,:avdensity,:phi,:densities,:r_y,:r_rho,:q0_qr,:mode,:ctime]
+
+    # subset to those
+    r = filter( x -> x.first ∈ key , pl1)
+
+    # save if wanted
+    if save
+        for (k,v) in r
+            savefig(v, joinpath(dbplots,"$k.pdf"))
+        end
+    end
+    r
+
 
 end

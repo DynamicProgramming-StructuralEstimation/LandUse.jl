@@ -3,3 +3,6 @@
 /dev/
 images/*.pdf
 /docs/build
+/LandUseR/.Rproj.*
+/LandUseR/.Rbuildignore
+/LandUseR/.Rhistory

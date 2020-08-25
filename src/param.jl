@@ -43,6 +43,10 @@ mutable struct Param
 	S     :: Float64  # area of region
 	ρrbar :: Float64  # fixed rural land value for urban model
 
+	trace :: Bool  # whether to trace solver
+	ma    :: Int64  # moving average window size
+	mag    :: Float64  # assumed growth for extraploating producivities.
+
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
         j = JSON.parse(f)
@@ -62,6 +66,8 @@ mutable struct Param
 	            else
 	                setfield!(this,Symbol(k),v["value"])
 	            end
+			elseif v["type"] == "numerical"
+				setfield!(this,Symbol(k),v["value"])
 			end
         end
 
@@ -70,8 +76,9 @@ mutable struct Param
 		this.t = 1
 		this.S = 1.0  # set default values for space and population
 		this.L = 1.0
-		this.θut = originalθ
-		this.θrt = originalθ
+		thetas = smooth_θ(this.T, this.ma, this.mag)
+		this.θut = thetas[:θu]
+		this.θrt = thetas[:θr]
 
 		# override parameters from dict par, if any
         if length(par) > 0
@@ -138,6 +145,38 @@ function getgrowth(p::Param,s::Symbol,g::Float64)
 	[x[1] ; Float64[growθ(x[1], [g for i in 2:it]) for it in 2:length(p.T)]]
 end
 
+
+"print default param to latex table"
+function latex_param()
+	f = open(joinpath(dirname(@__FILE__),"params.json"))
+	j = JSON.parse(f)
+	close(f)
+
+	getline(x) = [latexstring(x["symbol"]), x["description"], x["value"]]
+
+	latex_tabular(joinpath(dbtables,"params.tex"), Tabular("l l D{.}{.}{5.5}@{}"), [
+	   Rule(:top),
+       ["Parameter", "Description", MultiColumn(1,:c,"value")],
+       Rule(:mid),
+	   getline(j["S"]),
+	   getline(j["L"]),
+	   getline(j["γ"]),
+	   getline(j["σ"]),
+	   getline(j["α"]),
+	   getline(j["ν"]),
+	   getline(j["cbar"]),
+	   getline(j["sbar"]),
+	   getline(j["ηl"]),
+	   getline(j["ηm"]),
+	   getline(j["cτ"]),
+	   getline(j["ζ"]),
+       Rule(:bottom)
+	   ]
+	)
+
+end
+
+
 function show(io::IO, ::MIME"text/plain", p::Param)
     print(io,"LandUse Param:\n")
 	print(io,"      γ       : $(p.γ   )\n")
@@ -166,6 +205,77 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      Ψ       : $(p.Ψ   )\n")
 end
 
+
+function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
+	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
+	x = @linq d |>
+		where((:year .<= dt.stop) .& (:year .>= dt.start)) |>
+		select(:year, :theta_rural, :theta_urban)
+
+	# normalize to year 1
+	x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
+	# moving average smoother
+	transform!(x, :theta_rural => (y -> runmean(y,ma)) => :stheta_rural, :theta_urban => (y -> runmean(y,ma)) => :stheta_urban)
+
+	# from year 2000 onwards, replace rural with x percent growth
+	x[:, :stheta_rural] .= ifelse.(x.year .> 2000,vcat(zeros(sum(x.year .<= 2000)),[x[x.year .== 2000,:stheta_rural] * growth^i for i in 1:sum(x.year .> 2000)]...),x.stheta_rural)
+    x[:, :stheta_urban] .= ifelse.(x.year .> 2000,vcat(zeros(sum(x.year .<= 2000)),[x[x.year .== 2000,:stheta_urban] * growth^i for i in 1:sum(x.year .> 2000)]...),
+   							   x.stheta_urban)
+
+    p1 = @df x plot(:year, [:theta_rural :stheta_rural],leg=:bottomright)
+	savefig(p1, joinpath(dbplots,"smooth-theta-data.pdf"))
+
+
+	r = copy(x)
+	r = r[completecases(r),:]
+	p2 = @df r plot(:year, [:theta_rural :stheta_rural],leg=:bottomright)
+	savefig(p2, joinpath(dbplots,"smooth-theta-data-nonmissing.pdf"))
+
+
+	# fill gaps in data with spline
+	disallowmissing!(r)
+	sr = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.stheta_rural, 250.0)
+	su = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.stheta_urban, 250.0)
+
+	pu = SmoothingSplines.predict(su,convert(Array{Float64},dt))
+	pr = SmoothingSplines.predict(sr,convert(Array{Float64},dt))
+
+	# plots checking return
+	ret = Dict(:θr => pr, :θu => pu )
+
+	plu = scatter(x.year, x.theta_urban ,title = "Urban Productivity",leg=false, ylabel = "$(dt.start) = 1")
+	plot!(plu,dt,ret[:θu],m=(3,:auto,:red))
+	savefig(plu, joinpath(dbplots,"smooth-thetau.pdf"))
+
+	plr = scatter(x.year, x.theta_rural,title = "Rural Productivity",leg=false, ylabel = "$(dt.start) = 1")
+	plot!(plr,dt,ret[:θr],m=(3,:auto,:red))
+	savefig(plr, joinpath(dbplots,"smooth-thetar.pdf"))
+
+	pls = plot(dt,[ret[:θr],ret[:θu]])
+	savefig(pls, joinpath(dbplots,"smooth-thetas.pdf"))
+
+	# ret[:θu] = ret[:θu] ./ ret[:θu][1]
+	# ret[:θr] = ret[:θr] ./ ret[:θr][1]
+
+	ret
+end
+
+function plot_shares()
+	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
+	x = @linq d |>
+		where((:year .< 2018) .& (:year .> 1895))
+
+	x = select!(x,:year,:SpendingShare_Rural => :Rural, :SpendingShare_Urban => :Urban, :SpendingShare_Housing => :Housing)
+	x = stack(x, Not(:year))
+
+	pl = @df x plot(:year, :value, group = :variable,
+	           linewidth = 2,ylab = "Spending Share", leg = :bottomright)
+
+   savefig(pl, joinpath(dbdataplots,"spending-shares.pdf"))
+
+
+
+end
 
 
 # function theta_rec(x::Float64,cp::CParam,i::Int)

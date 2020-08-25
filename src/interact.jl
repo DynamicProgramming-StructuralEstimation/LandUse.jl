@@ -146,34 +146,36 @@ end
 function i0()
 	gfac = 1.00:0.05:2.0
 	eta = 0.0:0.1:1.0
-	eta2 = 0.1:0.1:1.99
+	tau = 0.1:0.3:10
+	eta2 = 0.1:0.1:20.99
 	cbars = 0.0:0.1:0.7
 	p1 = Param()
 
-	@manipulate for growthtype = OrderedDict("u-r const" => 1,"orig" => 2),
+	@manipulate for growthtype = OrderedDict("orig" => 1,"u-r const" => 2),
 					ugrowth in slider(gfac,value = 1.2, label = "u-growthrate"),
 					rgrowth in slider(gfac,value = 1.2, label = "r-growthrate"),
 					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
-					etas in slider(eta2, value = 1.0, label = "ηm"),
-					etal in slider(eta, value = 0.0, label = "ηl")
+					etam in slider(eta2, value = p1.ηm, label = "ηm"),
+					taus in slider(tau, value = 10.0, label = "cτ"),
+					etal in slider(eta, value = p1.ηl, label = "ηl")
 
-					if growthtype == 2
+					if growthtype == 1
 						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0,
-						                              :ηm => etas, :ηl => etal,
-													  :cbar => cbar, :sbar => sbar))
+						                              :ηm => etam, :ηl => etal,
+													  :cbar => cbar, :sbar => sbar, :cτ => taus))
 						x,M,p = LandUse.run(LandUse.Region,p0)
-						pl= LandUse.ts_plots(M,p0,fixy = true)
-					elseif growthtype == 1
+						pl= LandUse.ts_plots(M,p0,fixy = false)
+					elseif growthtype == 2
 						p0 = LandUse.Param(par = Dict(:θu_g => ugrowth,:θut => 1.0, :θrt => 1.0,
-											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etas, :ηl => etal,
-											 :cbar => cbar, :sbar => sbar))
+											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etam, :ηl => etal,
+											 :cbar => cbar, :sbar => sbar, :cτ => taus))
 					    x,M,p = LandUse.run(LandUse.Region,p0)
 						# LandUse.plot_ts(M,p0)
 						pl= LandUse.ts_plots(M,p0,fixy = true)
 					end
 					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
-					plot(pl[:pop],pl[:spending],pl[:avdensity],pl[:phi],layout = (2,2),link = :x)
+					plot(pl[:pop],pl[:spending],pl[:qbar],pl[:phi],pl[:densities], pl[:q0_qr], layout = (2,3),link = :x)
 	end
 end
 

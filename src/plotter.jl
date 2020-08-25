@@ -8,7 +8,7 @@ function setup_color(l::Int)
 end
 
 function ts_plots(M,p::Param;fixy = false)
-	d = dataframe(M,p.T)
+	d = dataframe(M,p)
 	dd = Dict()
 	df = @linq d |>
 		 select(:year,:Ch,:Cu,:Cr,:C ) |>
@@ -29,6 +29,8 @@ function ts_plots(M,p::Param;fixy = false)
 					 ylims = (0,1), marker = mmark, legend = :right)
 
 	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
+	dd[:qbar] = @df d plot(:year, :qbar, linewidth = 2, color = "black", leg =false, title = "Average House Prices", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
+	dd[:ρ0_y] = @df d plot(:year, :ρ0_y, linewidth = 2, color = "black", leg =false, title = "Central Rents over Income", marker = mmark, ylims = fixy ? (0.0,200.0) : false )
  	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values", marker = mmark, ylims = fixy ? (0.19,0.36) : false )
  	dd[:q0] = @df d plot(:year, :q0, linewidth = 2, color = "black", leg =false, title = "Central House Prices", marker = mmark, ylims = fixy ? (0.0,5.0) : false )
  	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices", marker = mmark, ylims = fixy ? (0.5,1.5) : false )
@@ -104,7 +106,7 @@ function ts_plots(M,p::Param;fixy = false)
 	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
 	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,130) : false)
+					 linewidth = 2, title = "Densities", leg = false, ylims = fixy ? (0,300) : false)
     incdens = df4.avgd[1] / df4.avgd[end]
     diffdens = df4.avgd[1] - df4.avgd[end]
 	ancdens = df4.avgd[end] + 0.2 * diffdens
@@ -386,7 +388,7 @@ function doit()
 end
 
 function plot_ts(M::Vector{Region},p::Param,it::Int)
-	df = dataframe(M,p.T)
+	df = dataframe(M,p)
 	s = stack(df, Not([:year]))
 	# prepare a TS
 
@@ -405,7 +407,7 @@ function plot_ts(M::Vector{Region},p::Param,it::Int)
 end
 
 function plot_ts(M::Vector{Region},p::Param)
-	df = dataframe(M,p.T)
+	df = dataframe(M,p)
 	s = stack(df, Not([:year]))
 	# prepare a TS
 	LandUse.setperiod!(p,1)
@@ -419,7 +421,7 @@ function plot_ts(M::Vector{Region},p::Param)
 end
 
 function plot_ts_xsect(M::Vector{Region},p::Param,it::Int)
-	df = dataframe(M,p.T)
+	df = dataframe(M,p)
 	s = stack(df, Not([:year]))
 	# prepare a TS
 
@@ -559,19 +561,17 @@ end
 
 # plotter for optimization tracking
 
-function traceplot(it)
-	ft = hcat(Ftrace...)'
-	xt = hcat(Xtrace...)'
-	K = Int((length(Ftrace[1]) - 3)/2)  # 2K+3 equations
-	# nrows = min(size(xt)[1],1000)
-	# p1 = plot(ft[1:nrows,:],title = "Ftrace $it",
+function traceplot(x::NLsolve.SolverResults,it)
+
+	ft = ftrace(x)
+	xt = xtrace(x)
 	p1 = plot(ft,title = "Ftrace $it",
-	         label = hcat(["Labor"],reshape(["Land_$i" for i in 1:K],1,K),["rents"],["Urban Good"],reshape(["citysize_$i" for i in 1:K],1,K)),
+	         label = ["Land" "Citysize" "Rent" "Urban good"],
 			 xlabel = "iteration")
-	p2 = plot(xt,title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K),reshape(["Lu_$i" for i in 1:K],1,K)),xlabel = "iteration")
+	p2 = plot(xt,title = "xtrace $it",label = ["r" "Lr" "pr" "Sr"], xlabel = "iteration")
 	# p2 = plot(xt[1:nrows,:],title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K)),xlabel = "iteration")
 	pl = plot(p1,p2,layout = (1,2))
-	savefig(pl,joinpath(@__DIR__,"..","images","country_trace$it.pdf"))
+	savefig(pl,joinpath(@__DIR__,"..","images","solver_trace$it.pdf"))
 end
 
 
@@ -583,7 +583,7 @@ end
 
 # nicolas question about rho vs y
 function plot_ts0(M::Vector{Region},p::Param)
-	df = dataframe(M,p.T)
+	df = dataframe(M,p)
 	# vars = (:ρr, :qr, :Lr, :Lu, :wu0, :wr, :Sr, :Srh, :r, :pr, :ϕ, :icu_input, :iDensity, :icu, :icr, :iτ, :iq, :iy)
 	# @df df plot(:year, cols(2:size(df,2)))
 	s = stack(df, Not(:year))
