@@ -189,6 +189,41 @@ plot_sat_built <- function(){
     out
 }
 
+#' plot manual vs satellite measurements 2015/2016
+#'
+plot_sat_vs_manual <- function(){
+  f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
+  cf = dcast.data.table(f[year > 2014,list(type, area, LIBGEO)], LIBGEO~ type, value.var = "area")
+  cf[ , error := manual - satellite]
+  p = ggplot(dcast.data.table(f[year > 2014,list(type, area, LIBGEO)], LIBGEO~ type, value.var = "area"), aes(x= manual, y = satellite)) + geom_point() + geom_abline(slope=1) + ggtitle("manual (2016) vs satellite (2015) area measures", subtitle = "solid line is slope 1") + scale_x_log10("km2 manual 2016") + scale_y_log10("km2 satellite 2015")
+  ggsave(p, filename = file.path(LandUseR:::outdir(),"data","plots","areas-manual-satellite.pdf"))
+  p
+}
+
+#' plot top 100 cities densities over time
+#' https://github.com/floswald/LandUse.jl/issues/42
+#'
+plot_top100_densities <- function(){
+  f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
+  f[,density := pop / area]
+  ff = f[,list(LIBGEO,year,density,rank)]
+  ff = ff[complete.cases(ff)]
+  p1 = ggplot(ff, aes(factor(year), y = density)) + geom_violin(draw_quantiles = 0.5) + scale_y_log10(labels = scales::comma, name = "population / km2") + ggtitle("Urban Density over time in France") + scale_x_discrete(name = "year") + theme_bw()
+
+  # label min/max city
+  ll = ff[, .SD[,list(mi = min(density),
+                      ma = max(density),
+                      milab = LIBGEO[which.min(density)],
+                      malab = LIBGEO[which.max(density)])],by = factor(year)]
+  p2 = p1 + geom_text(data = ll, mapping = aes(x = factor, y = mi, label = milab), nudge_y = -.1)
+  p3 = p2 + geom_text(data = ll, mapping = aes(x = factor, y = ma, label = malab),nudge_y = .1)
+
+  ggsave(p3, filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))
+
+  p4 = ggplot(ff[,.(density = median(density)),by=year],aes(x=year, y = density)) + geom_point(size = 3) + scale_y_log10() + geom_path(size = 1.1) + theme_bw() + ggtitle("Median Urban Density in France",subtitle = "Top 100 French cities")
+  ggsave(p4, filename = file.path(LandUseR:::outdir(),"data","plots","densities-time.pdf"))
+
+}
 
 plot_sat_densities <- function(){
     z = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
