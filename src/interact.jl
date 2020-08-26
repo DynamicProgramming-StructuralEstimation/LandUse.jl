@@ -168,7 +168,7 @@ function i0()
 						pl= LandUse.ts_plots(M,p0,fixy = false)
 					elseif growthtype == 2
 						p0 = LandUse.Param(par = Dict(:θu_g => ugrowth,:θut => 1.0, :θrt => 1.0,
-											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etam, :ηl => etal,
+											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etal, :ηl => etal,
 											 :cbar => cbar, :sbar => sbar, :cτ => taus))
 					    x,M,p = LandUse.run(LandUse.Region,p0)
 						# LandUse.plot_ts(M,p0)

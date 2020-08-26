@@ -158,3 +158,37 @@ function plotsingle()
 	x,M,p0  = run(Region,p1)
 	LandUse.ts_plots(M,p1)
 end
+
+function run1()
+	p = Param()
+	# x0 = get_starts(par=par)
+	x0 = get_starts(p)   # a T-array of starting vectors
+
+	# if T == Urban
+	# 	x0[1] = x0[1][1:3]
+	# end
+
+	# (x1,p) = adapt_ϵ(x0[1],par=par)
+	# println("x0 = $(x0[1])")
+
+	setperiod!(p,1)  # go back to period 1
+	if p.ϵsmax == 0.0
+		# p.ϵs = 0.0
+		x1 = x0[1]
+		@assert p.ϵs == 0.0
+	else
+		(xt,p) = adapt_ϵ(T(p),p,x0[1])  # adaptive search for higher epsilon in center first period only
+		x1 = xt[1]
+	end
+
+	# if T == Urban
+	# 	x1[end] = x1[end][1:3]
+	# end
+	# println("x1 = $(x1[end])")
+
+	p.T = p.T[1:2]
+	x,M = get_solutions(Region,x1,p)  # get general model solutions
+
+	(x,M,p) # solutions, models, and parameter
+
+end
