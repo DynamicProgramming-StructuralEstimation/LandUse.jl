@@ -34,13 +34,29 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 		# else
 		# 	error("type $T Model not converged in period $it")
 		# end
+		# m.r    = x[1]   # land rent
+		# m.Lr   = x[2]   # employment in rural sector
+		# m.pr   = x[3]   # relative price rural good
+		# m.Sr   = x[4]   # amount of land used in rural production
 
+		# nlopt solution
+		# x0 = nlopt_solve(m0,p,sols[it])
+		# if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
+		# 	push!(sols, x0[2])
+		# 	update!(m0,p,x0[2])
+		# 	push!(m,m0)
+		# else
+		# 	error("type $T Model not converged in period $it")
+		# end
+
+		# nlsolve solution
 		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
 			                     sols[it],iterations = 10000,store_trace = p.trace, extended_trace = p.trace)
-		# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
-		# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01],
-		# 	                                        [Inf,1.0,Inf,1.0,Inf,1.0],
-		# 	                                        sols[it-1],iterations = 1000)
+		# # r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m0),
+		# 	                                        [0.0,0.0,0.0,0.0],
+		# 	                                        [Inf,1.0,Inf,1.0],
+		# 	                                        sols[it],iterations = 10000,store_trace = p.trace, extended_trace = p.trace)
+
 		if p.trace
 			traceplot(r1,it)
 		end
@@ -63,7 +79,7 @@ end
 function run(T::Type,p::Param)
 	# x0 = get_starts(par=par)
 	# x0 = get_starts(p)   # a T-array of starting vectors
-	r0 = nlsolve_starts(p=p)   # a nlsolve result object
+	r0 = nlsolve_starts(startval(),p=p)   # a nlsolve result object
 	x0 = [r0.zero]
 
 	# if T == Urban
