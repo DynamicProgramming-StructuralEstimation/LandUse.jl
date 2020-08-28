@@ -286,6 +286,7 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 	plm = plot(dt,[ret[:θr],ret[:θu]],m=(3,:auto), color = [:green :blue] ,
 	            label = ["rural" "urban"],
 				yscale = :log10,
+				yformatter = x -> round(identity(x),digits = 1),
 				legend = :topleft, title = "thetas in model")
 	savefig(plm, joinpath(dbplots,"smooth-thetas-model.pdf"))
 
@@ -293,7 +294,8 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 	pld = scatter(x.year,[x.theta_rural x.theta_urban],color = [:green :blue] ,
 	            label = ["rural" "urban"],
 				yscale = :log10,
-				legend = :topleft, title = "thetas in data")
+				legend = :topleft, title = "thetas in data",
+				yformatter = x -> round(identity(x),digits = 1))
 	plot!(pld, x.year, [x.stheta_rural x.stheta_urban],color = [:green :blue], lab = "", linewidth = 2)
 	savefig(pld, joinpath(dbplots,"smooth-thetas-data.pdf"))
 
