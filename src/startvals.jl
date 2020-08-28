@@ -37,6 +37,19 @@ function nlopt_solve(;p = Param(),x0=nothing)
 	(optf,optx,ret) = optimize(opt, x0)
 end
 
+function nlsolve_starts(;p = Param(), x0 = nothing)
+	m = Region(p)
+	if isnothing(x0)
+		x0 = [0.24, 0.68, 1.1, 0.86]
+	end
+	r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m),
+							 x0,iterations = 10000,store_trace = p.trace, extended_trace = p.trace)
+	if !converged(r1)
+		error("no starting values found")
+	end
+	r1
+end
+
 
 
 

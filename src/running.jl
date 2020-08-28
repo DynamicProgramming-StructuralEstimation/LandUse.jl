@@ -62,7 +62,9 @@ end
 # function run(;par = Dict())
 function run(T::Type,p::Param)
 	# x0 = get_starts(par=par)
-	x0 = get_starts(p)   # a T-array of starting vectors
+	# x0 = get_starts(p)   # a T-array of starting vectors
+	r0 = nlsolve_starts(p=p)   # a nlsolve result object
+	x0 = [r0.zero]
 
 	# if T == Urban
 	# 	x0[1] = x0[1][1:3]
@@ -161,8 +163,9 @@ end
 
 function run1()
 	p = Param()
-	# x0 = get_starts(par=par)
-	x0 = get_starts(p)   # a T-array of starting vectors
+	# x0 = get_starts(par=par)  # nlopt
+	r0 = nlsolve_starts(p=p)    # nlsolve
+	x0 = [r0.zero]
 
 	# if T == Urban
 	# 	x0[1] = x0[1][1:3]

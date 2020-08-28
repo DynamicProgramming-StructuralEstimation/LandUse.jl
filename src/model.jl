@@ -62,6 +62,7 @@ mutable struct Region <: Model
 	inodes   :: Vector{Float64}  # theoretical integration nodes
 	iweights :: Vector{Float64}  # int weights
 	nodes    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ])
+	imat     :: Matrix{Float64}
 
 	# resulting integrals from [0,ϕ]
 	icu_input :: Float64   # ∫ cu_input(l) dl
@@ -114,6 +115,7 @@ mutable struct Region <: Model
 		m.y    = NaN
 		m.inodes, m.iweights = gausslegendre(p.int_nodes)
 		m.nodes = zeros(p.int_nodes)
+		m.imat = zeros(p.int_nodes,11)
 		m.icu_input = NaN
 		m.iDensity  = NaN
 		m.icu       = NaN
@@ -243,6 +245,33 @@ doing a matmul on it? have to allocate memory though.
 """
 function integrate!(m::Region,p::Param)
 
+	# each variable to integrate has a column in a matrix imat
+	# each column can be filled in parallel
+	# when done, do simple matrix multiplication with weights
+
+	#
+	# nodes = m.nodes
+	# DM = [D(m.nodes[i],p,m) for i in 1:p.int_nodes]
+	# qM = [q(m.nodes[i],p,m) for i in 1:p.int_nodes]
+	#
+	# Threads.@threads for i in 1:p.int_nodes
+	# 	dm = DM[i] # current density value
+	# 	qm = qM[i] # current q value
+	# 	m.imat[i,1] = cu_input(m.nodes[i],p,m)    # will end up in m.icu_input
+	# 	m.imat[i,2] = dm
+	# 	m.imat[i,3] = cu(m.nodes[i],p,m) * dm
+	# 	m.imat[i,4] = cr(m.nodes[i],p,m) * dm
+	# 	m.imat[i,5] = τ(m.nodes[i],m.ϕ,p) * dm
+	# 	m.imat[i,6] = ρ(m.nodes[i],p,m)
+	# 	m.imat[i,7] = w(m.Lu,m.nodes[i],m.ϕ,p) * dm
+	# 	m.imat[i,8] = qm * dm
+	# 	m.imat[i,9] = m.imat[i,8] * h(m.nodes[i],p,m)
+	# 	m.imat[i,10] = mode(m.nodes[i],p) * dm
+	# 	m.imat[i,11] = (m.nodes[i] / mode(m.nodes[i],p)) * dm
+	# end
+	#
+	# integrals = (m.ϕ/2) * m.iweights' * m.imat   # matmul
+
 	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
@@ -250,10 +279,36 @@ function integrate!(m::Region,p::Param)
 	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	m.qbar      = (m.ϕ/(m.Lu * 2)) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	m.imode     = (m.ϕ/2) * sum(m.iweights[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) / m.Lu for i in 1:p.int_nodes)[1]
-	m.ictime    = (m.ϕ/2) * sum(m.iweights[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) / m.Lu for i in 1:p.int_nodes)[1]
+	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.imode     = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.ictime    = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	# #
+	# @assert m.icu_input ≈ integrals[1]
+	# @assert m.iDensity  ≈ integrals[2]
+	# @assert m.icu       ≈ integrals[3]
+	# @assert m.icr       ≈ integrals[4]
+	# @assert m.iτ        ≈ integrals[5]
+	# @assert m.iq        ≈ integrals[6]
+	# @assert m.iy        ≈ integrals[7]
+	# @assert m.qbar      ≈ integrals[8] / m.Lu
+	# @assert m.ihexp     ≈ integrals[9]
+	# @assert m.imode     ≈ integrals[10] / m.Lu
+	# @assert m.ictime    ≈ integrals[11] / m.Lu
+
+	# m.icu_input = integrals[1]
+	# m.iDensity  = integrals[2]
+	# m.icu       = integrals[3]
+	# m.icr       = integrals[4]
+	# m.iτ        = integrals[5]
+	# m.iq        = integrals[6]
+	# m.iy        = integrals[7]
+	# m.qbar      = integrals[8] / m.Lu
+	# m.ihexp     = integrals[9]
+	# m.imode     = integrals[10] / m.Lu
+	# m.ictime    = integrals[11] / m.Lu
+
+	# println("asserts passed")
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
 	# @assert m.icu_input > 0
 	# @assert m.iDensity > 0
