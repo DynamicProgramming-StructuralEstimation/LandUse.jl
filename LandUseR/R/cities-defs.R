@@ -8,7 +8,7 @@ pop_1950_2 <- function(overwrite = FALSE){
     if (overwrite){
         x = get_manuals()   # get manual area measurements for top 100 cities in france
         r=bboxes_top100() #get raster values
-        x=merge(x,r,by="LIBGEO") #Merge by name of city
+        x=merge(x,r,by=c("LIBGEO","CODGEO")) #Merge by name of city
         p0 = readpop() # get census population counts 1860-2016
         p = as.data.table(p0)  # get census population counts 1860-2016
         p54 = p[year == 1954]   # get the fifties count
@@ -371,7 +371,7 @@ bboxes_top100 <- function(){
     bn[LIBGEO == "Le Puy-en-Velay",        extent := raster::extent(c(3.854840,3.936414,45.009143,45.067228))]
     bn[LIBGEO == "Chambéry",               extent := raster::extent(c(5.861817,5.993300,45.540713,45.624977))]
     bn[LIBGEO == "Narbonne",               extent := raster::extent(c(2.955498,3.040298,43.149743,43.201157))]
-    bn[LIBGEO == "Chemillé-en-Anjou",      extent := raster::extent(c(-0.745537,-0.703095,47.199192,47.228597))]
+    bn[LIBGEO == "Sedan",                  extent := raster::extent(c(4.861946,4.991722,49.664227,49.731291))]
     bn[LIBGEO == "Lisieux",                extent := raster::extent(c(0.204394,0.288547,49.123454,49.172273))]
     bn[LIBGEO == "Agen",                   extent := raster::extent(c(0.572322,0.708979,44.172293,44.213214))]
     bn[LIBGEO == "Châteauroux",            extent := raster::extent(c(1.637382,1.748112,46.769781,46.843388))]

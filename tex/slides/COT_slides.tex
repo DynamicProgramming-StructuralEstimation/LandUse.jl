@@ -304,22 +304,40 @@ Sources:
 \end{frame}\end{v75mins}
 %those 30 cities account for about 23 millions people in 2015
 
+% \begin{frame}[label=density]
+% \frametitle{The Historical Fall in Urban Density}
+% \framesubtitle{Average across Top 30 French Urban Areas}
+% \begin{figure}
+% 	%\caption{Share of spending on food and drinks (1895-2015)}
+% 	%\label{fig:1}
+% 	\begin{center}
+% 		\includegraphics[scale=0.6]{\imgs/logdensity_weighted.pdf}
+% 	\end{center}
+% \end{figure}\hyperlink{Paris}{\beamergotobutton{Paris}}
+% \hyperlink{Lyon}{\beamergotobutton{Lyon}}
+% \hyperlink{Marseille}{\beamergotobutton{Marseille}}
+% \hyperlink{Reims}{\beamergotobutton{Reims}}
+% \hyperlink{world_sample_city}{\beamergotobutton{World sample 1990-2015}}\\
+% {\tiny Source: Carte Etat-Major, IGN and GHSL. Census}
+
+% \end{frame}
+
 \begin{frame}[label=density]
 \frametitle{The Historical Fall in Urban Density}
-\framesubtitle{Average across Top 30 French Urban Areas}
-\begin{figure}
-	%\caption{Share of spending on food and drinks (1895-2015)}
-	%\label{fig:1}
-	\begin{center}
-		\includegraphics[scale=0.6]{\imgs/logdensity_weighted.pdf}
-	\end{center}
-\end{figure}\hyperlink{Paris}{\beamergotobutton{Paris}}
-\hyperlink{Lyon}{\beamergotobutton{Lyon}}
-\hyperlink{Marseille}{\beamergotobutton{Marseille}}
-\hyperlink{Reims}{\beamergotobutton{Reims}}
-\hyperlink{world_sample_city}{\beamergotobutton{World sample 1990-2015}}\\
-{\tiny Source: Carte Etat-Major, IGN and GHSL. Census}
+\begin{columns}
+\begin{column}{0.9\textwidth}
+\includegraphics[width=0.9\textwidth]{\dataplots/densities-time-log.pdf}
+\end{column}
+\begin{column}{0.2\textwidth}
+\begin{itemize}
+\item[] \hyperlink{Paris}{\beamergotobutton{Paris}}
+\item[] \hyperlink{violins}{\beamergotobutton{Distribution}}
+\item[] \hyperlink{Top5}{\beamergotobutton{Top 5}}
+\item[] \hyperlink{world_sample_city}{\beamergotobutton{World}}
+\end{itemize}
+\end{column}
 
+\end{columns}
 \end{frame}
 
 
@@ -510,40 +528,40 @@ $\mathbf{r}$ land rents per capita, equally distributed.
 \item<2-> Urban production at $\ell=0$
 \item<2-> Residence at any $\ell \in[0,1]$
 \item<3-> $\tau(\ell)$: commuting cost from $\ell$
-\item<3-> $w_u(1-\tau(\ell))$ urban wage
+\item<3-> $w_u - \tau(\ell)$ urban wage
 \item<4-> {\color{red}{$\phi$}} denotes urban fringe.
 \end{mide}
 \end{column}
 \end{columns}
 \end{frame}
 
-\begin{frame}{Commuting Costs}
+\begin{frame}{Commuting Costs in units of numeraire good}
 
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{midi}
-\item $\tau(\ell)$ is composed of a fixed operating cost $o$ and time cost $t(\ell)$
+\item $\tau(\ell)$ is composed of a fixed operating cost $f$ and time cost $t(\ell)$
 \begin{equation*}
-\tau(\ell) = o + \zeta w_u t(\ell)
+\tau(\ell) = f + \zeta w_u t(\ell)
 \end{equation*}
 \item Commuting time with transport mode $m$ (speed): $\frac{\ell}{m}$
-\item Operating cost $o(\ell,m)$ is s.t. longer ($\uparrow \ell$) and faster ($\uparrow m$) commutes are more expensive.
-\item Train line vs horse-drawn carriage.
+\item Operating cost $f(\ell,m)$ is s.t. longer ($\uparrow \ell$) and faster ($\uparrow m$) commutes are more expensive.
+\item (e.g. Train line vs horse-drawn carriage.)
 \end{midi}
 \end{column}
 \pause
 \begin{column}{0.5\textwidth}
 \begin{midi}
-\item Assume $o(\ell,m) = \frac{c_\tau}{\eta_m} m^{\eta_m} \ell^{\eta_\ell}$ 
 \item Allows closed form optimal mode choice:
-\begin{equation*}
-m = \left( \frac{2 \zeta w_u}{c_\tau} \right)^\frac{1}{1+\eta_m} \ell^\frac{1-\eta_\ell}{1+\eta_m}
-\end{equation*}
+% \begin{equation*}
+% m = \left( \frac{2 \zeta w_u}{c_\tau} \right)^\frac{1}{1+\eta_m} \ell^\frac{1-\eta_\ell}{1+\eta_m}
+% \end{equation*}
 \begin{enumerate}
 \item Faster commutes for people further away.
 \item Speed increases with wage (opp. cost of time).
 \item Elasticity of $\tau(\ell)$ wrt wage is strictly less than unity% $\rightarrow$ people are willing to live further away as labor productivity increases.
 \end{enumerate}
+\item Menu of transport modes $m$ is fixed throughout. Higher incomes allow faster mode choices.
 \end{midi}
 
 \end{column}
@@ -801,7 +819,8 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 \end{column}
 \begin{column}{0.7\textwidth}
 \begin{adjustbox}{center}
-\includegraphics[width=\textwidth]{\modelplots/smooth-thetas.pdf}
+% \includegraphics[width=\textwidth]{\modelplots/smooth-thetas.pdf}
+\includegraphics[width=\textwidth]{\dataplots/Thetalong_FRA1815.pdf}
 \end{adjustbox}
 \end{column}
 \end{columns}
@@ -1068,7 +1087,22 @@ Housing/Land values beyond rents.
 \end{figure}
 \hspace{-1cm}
 \hyperlink{density}{\beamergotobutton{back}}\\
-{\tiny Source: Carte Etat-Major, IGN and GHSL. Census. Central Paris = Districts 1 to 6.}
+\end{frame}
+
+\begin{frame}[label=violins]
+\frametitle{The historical fall in urban density}
+	\begin{center}
+		\includegraphics[height=0.85\textheight]{\dataplots/densities-violins.pdf}
+	\end{center}
+\hyperlink{density}{\beamergotobutton{back}}
+\end{frame}
+
+\begin{frame}[label=Top5]
+\frametitle{The historical fall in urban density}
+	\begin{center}
+		\includegraphics[height=0.85\textheight]{\dataplots/densities-time-top5then-city.pdf}
+	\end{center}
+\hyperlink{density}{\beamergotobutton{back}}
 \end{frame}
 
 \begin{frame}[label=Lyon]
