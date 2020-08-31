@@ -483,7 +483,7 @@ function issue36( ; save=false)
     # 2. implications of growth in either sector only
     # i. u grows faster than r
     r[2] = Dict()
-    p2 = LandUse.Param(par = Dict(:θu_g => 1.0,:θut => 1.0, :θrt => 1.0,:θr_g => 1.0, :ηm => 1.0))
+    p2 = LandUse.Param(par = Dict(:θu_g => 1.1,:θut => 1.0, :θrt => 1.0,:θr_g => 1.05))
     x,M,p0  = run(Region,p2)
     pl2 = LandUse.ts_plots(M,p2)
     r[2][:u_fast] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],
