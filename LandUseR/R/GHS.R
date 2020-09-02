@@ -160,74 +160,11 @@ combine_measures <- function(overwrite = FALSE,cutoff = 30){
 tops <- function(){
     c("Paris", "Lyon", "Marseille", "Toulouse", "Reims")
 }
-
-plot_sat_built <- function(){
-  cc = LandUseR:::cropcities()  # first index level is years
-
-  ci = bboxes_top100()[LIBGEO %in% tops()]  # 5 cities we want to see
-    out = list()
-  for (ir in 1:nrow(ci)){
-      cci = ci[ir,]
-      # indices 1,2,3,4 are years
-      ss = stack(cc[[1]][[cci$CODGEO]]$built,cc[[2]][[cci$CODGEO]]$built,cc[[3]][[cci$CODGEO]]$built,cc[[4]][[cci$CODGEO]]$built)
-      pngname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.png"))
-      pdfname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.pdf"))
-
-      # plot
-      out[[ir]] = levelplot(ss,xlab = NULL, ylab = NULL, scales=list(draw=FALSE), names.attr=paste0(cci$LIBGEO,' % built ', LandUseR:::GHS_years()))
-
-      # write
-      png(pngname,width = 1000, height=700, res = 175)
-      print(out[[ir]])
-      dev.off()
-      pdf(pdfname,width = 11,height = 6)
-      print(out[[ir]])
-      dev.off()
-
-
-  }
-    out
+top5then <- function(){
+  c("Paris", "Lyon", "Marseille", "Bordeaux", "Lille")
 }
-
-
-plot_sat_densities <- function(){
-    z = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
-    x = z[type == "satellite" ,list(year,p50,p90,p10,CODGEO,LIBGEO,rank,area,logarea=log(area),pop,logpop = log(pop))]
-
-    parea = list()
-    ppop = list()
-
-    ppop$q10 = ggplot(x[rank < 11],aes(x = logpop, y = p10, color = LIBGEO, label = year, group = LIBGEO)) + geom_point() + geom_path() + geom_text(hjust = 0,nudge_x = 0.05) + ggtitle("10th percentile pop density",subtitle= "how did the lowest density parts of each city develop?")
-    ppop$q50 = ggplot(x[rank < 11],aes(x = logpop, y = p50, color = LIBGEO, label = year, group = LIBGEO)) + geom_point() + geom_path() + geom_text(hjust = 0,nudge_x = 0.05) + ggtitle("median pop density",subtitle= "how did the median density parts of each city develop?")
-    ppop$q90 = ggplot(x[rank < 11],aes(x = logpop, y = p90, color = LIBGEO, label = year, group = LIBGEO)) + geom_point() + geom_path() + geom_text(hjust = 0,nudge_x = 0.05) + ggtitle("90th percentile pop density",subtitle= "how did the densest parts of each city develop?")
-    lapply(ppop, function(x) theme_set(theme_bw()))
-
-
-    parea$q10 = ggplot(x[rank < 11],aes(x = logarea, y = p10, color = LIBGEO, label = year, group = LIBGEO)) + geom_point() + geom_path() + geom_text(hjust = 0,nudge_x = 0.05) + ggtitle("10th percentile pop density",subtitle= "how did the lowest density parts of each city develop?")
-    parea$q50 = ggplot(x[rank < 11],aes(x = logarea, y = p50, color = LIBGEO, label = year, group = LIBGEO)) + geom_point() + geom_path() + geom_text(hjust = 0,nudge_x = 0.05) + ggtitle("median pop density",subtitle= "how did the median density parts of each city develop?")
-    parea$q90 = ggplot(x[rank < 11],aes(x = logarea, y = p90, color = LIBGEO, label = year, group = LIBGEO)) + geom_point() + geom_path() + geom_text(hjust = 0,nudge_x = 0.05) + ggtitle("90th percentile pop density",subtitle= "how did the densest parts of each city develop?")
-    lapply(parea, function(x) theme_set(theme_bw()))
-
-
-    setkey(x,CODGEO,year)
-    x[ , agrowth_pct := .SD[,100*(area[.N] - area[1])/area[1]],by = CODGEO]
-    x[ , agrowth := .SD[,area[.N] - area[1]],by = CODGEO]
-    x[ , pgrowth := .SD[,pop[.N] - pop[1]],by = CODGEO]
-    x[ , pgrowth_pct := .SD[,100*(pop[.N] - pop[1])/pop[1]],by = CODGEO]
-
-    # summarize: percent growth for all cols
-    s = x[ , lapply(.SD,function(y) 100*(y[.N] - y[1])/y[1]), .SDcols = c("p10","p50","p90", "area","pop"),by = .(CODGEO,LIBGEO)]
-
-    # growth plots
-    pg = list()
-
-    pg$p10 = ggplot(s,aes(x=area,y=p10)) + geom_point() + scale_x_continuous("% change in area") + scale_y_continuous("% change in density") + geom_smooth(method = "lm") + ggtitle("% change in density at 10-th quantile", subtitle = "Change 1975-2015")
-    pg$p50 = ggplot(s,aes(x=area,y=p50)) + geom_point() + scale_x_continuous("% change in area") + scale_y_continuous("% change in density")+ geom_smooth(method = "lm") + ggtitle("% change in density at 50-th quantile", subtitle = "Change 1975-2015")
-    pg$p90 = ggplot(s,aes(x=area,y=p90)) + geom_point() + scale_x_continuous("% change in area") + scale_y_continuous("% change in density")+ geom_smooth(method = "lm") + ggtitle("% change in density at 90-th quantile", subtitle = "Change 1975-2015")
-
-    lapply(pg, function(x) theme_set(theme_bw()))
-    return(list(growth = pg, area = parea, pop = ppop))
-
+top5now <- function(){
+  c("Paris", "Lyon", "Lille", "Marseille", "Nice")
 }
 
 

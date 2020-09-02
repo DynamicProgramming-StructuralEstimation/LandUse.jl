@@ -212,8 +212,34 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 		where((:year .<= dt.stop) .& (:year .>= dt.start)) |>
 		select(:year, :theta_rural, :theta_urban)
 
-	# normalize to year 1
+	# normalize year 1 to 1.0
 	x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
+
+	# append the future to end of data
+	if maximum(x.year) < dt.stop
+		append!(x, DataFrame(year = 2021:dt.stop, theta_rural = missing, theta_urban = missing))
+	end
+
+	# fill in missings in 1914-1919 and 1939-1948 with straight lines
+	insertcols!(x, :m1913 => ((x.year .> 1913) .& (x.year .< 1920)))
+	insertcols!(x, :m1938 => ((x.year .> 1938) .& (x.year .< 1949)))
+	y1913 = x[x.year .== 1913,[:theta_urban,:theta_rural]]
+	y1920 = x[x.year .== 1920,[:theta_urban,:theta_rural]]
+	y1938 = x[x.year .== 1938,[:theta_urban,:theta_rural]]
+	y1949 = x[x.year .== 1949,[:theta_urban,:theta_rural]]
+
+	# slopes
+	sr1913 = (y1920.theta_rural[1] - y1913.theta_rural[1]) / (1920 - 1913)
+	su1913 = (y1920.theta_urban[1] - y1913.theta_urban[1]) / (1920 - 1913)
+	sr1938 = (y1949.theta_rural[1] - y1938.theta_rural[1]) / (1949 - 1938)
+	su1938 = (y1949.theta_urban[1] - y1938.theta_urban[1]) / (1949 - 1938)
+
+	x[x.m1913,:theta_rural] .= collect(y1913.theta_rural[1] .+ sr1913 .* (1:length(1914:1919)))
+	x[x.m1913,:theta_urban] .= collect(y1913.theta_urban[1] .+ su1913 .* (1:length(1914:1919)))
+
+	x[x.m1938,:theta_rural] .= collect(y1938.theta_rural[1] .+ sr1938 .* (1:length(1939:1948)))
+	x[x.m1938,:theta_urban] .= collect(y1938.theta_urban[1] .+ su1938 .* (1:length(1939:1948)))
+
 	# moving average smoother
 	transform!(x, :theta_rural => (y -> runmean(y,ma)) => :stheta_rural, :theta_urban => (y -> runmean(y,ma)) => :stheta_urban)
 
@@ -225,23 +251,29 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
     p1 = @df x plot(:year, [:theta_rural :stheta_rural],leg=:bottomright)
 	savefig(p1, joinpath(dbplots,"smooth-theta-data.pdf"))
 
-
 	r = copy(x)
 	r = r[completecases(r),:]
-	p2 = @df r plot(:year, [:theta_rural :stheta_rural],leg=:bottomright)
-	savefig(p2, joinpath(dbplots,"smooth-theta-data-nonmissing.pdf"))
-
+	# p2 = @df r plot(:year, [:theta_rural :stheta_rural],leg=:bottomright)
+	# savefig(p2, joinpath(dbplots,"smooth-theta-data-nonmissing.pdf"))
 
 	# fill gaps in data with spline
 	disallowmissing!(r)
 	sr = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.stheta_rural, 250.0)
 	su = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.stheta_urban, 250.0)
-
+	#
 	pu = SmoothingSplines.predict(su,convert(Array{Float64},dt))
 	pr = SmoothingSplines.predict(sr,convert(Array{Float64},dt))
+	# pu = pu[1] > 1.0 ? pu .- (pu[1] - 1.0)  : pu .+ (1.0 - pu[1])
+	# pr = pr[1] > 1.0 ? pr .- (pr[1] - 1.0) : pr .+ (1.0 - pr[1])
+	# pr = pu
+	# println("pu[1] = $(pu[1])")
+	# println("pr[1] = $(pr[1])")
 
 	# plots checking return
 	ret = Dict(:θr => pr, :θu => pu )
+	ret[:θu] = ret[:θu] ./ ret[:θu][1]
+	ret[:θr] = ret[:θr] ./ ret[:θr][1]
+	# ret = Dict(:θr => x[x.year .∈ Rf(dt) , :stheta_rural], :θu => x[x.year .∈ Ref(dt) , :stheta_urban])
 
 	plu = scatter(x.year, x.theta_urban ,title = "Urban Productivity",leg=false, ylabel = "$(dt.start) = 1")
 	plot!(plu,dt,ret[:θu],m=(3,:auto,:red))
@@ -251,11 +283,24 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 	plot!(plr,dt,ret[:θr],m=(3,:auto,:red))
 	savefig(plr, joinpath(dbplots,"smooth-thetar.pdf"))
 
-	pls = plot(dt,[ret[:θr],ret[:θu]])
-	savefig(pls, joinpath(dbplots,"smooth-thetas.pdf"))
+	plm = plot(dt,[ret[:θr],ret[:θu]],m=(3,:auto), color = [:green :blue] ,
+	            label = ["rural" "urban"],
+				yscale = :log10,
+				yformatter = x -> round(identity(x),digits = 1),
+				legend = :topleft, title = "thetas in model")
+	savefig(plm, joinpath(dbplots,"smooth-thetas-model.pdf"))
 
-	# ret[:θu] = ret[:θu] ./ ret[:θu][1]
-	# ret[:θr] = ret[:θr] ./ ret[:θr][1]
+
+	pld = scatter(x.year,[x.theta_rural x.theta_urban],color = [:green :blue] ,
+	            label = ["rural" "urban"],
+				yscale = :log10,
+				legend = :topleft, title = "thetas in data",
+				yformatter = x -> round(identity(x),digits = 1))
+	plot!(pld, x.year, [x.stheta_rural x.stheta_urban],color = [:green :blue], lab = "", linewidth = 2)
+	savefig(pld, joinpath(dbplots,"smooth-thetas-data.pdf"))
+
+	pl = plot(pld, plm, layout = (1,2), link = :both, size = (800,400))
+	savefig(pl, joinpath(dbplots,"smooth-thetas.pdf"))
 
 	ret
 end

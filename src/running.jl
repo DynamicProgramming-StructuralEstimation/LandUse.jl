@@ -34,13 +34,29 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 		# else
 		# 	error("type $T Model not converged in period $it")
 		# end
+		# m.r    = x[1]   # land rent
+		# m.Lr   = x[2]   # employment in rural sector
+		# m.pr   = x[3]   # relative price rural good
+		# m.Sr   = x[4]   # amount of land used in rural production
 
+		# nlopt solution
+		# x0 = nlopt_solve(m0,p,sols[it])
+		# if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
+		# 	push!(sols, x0[2])
+		# 	update!(m0,p,x0[2])
+		# 	push!(m,m0)
+		# else
+		# 	error("type $T Model not converged in period $it")
+		# end
+
+		# nlsolve solution
 		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
 			                     sols[it],iterations = 10000,store_trace = p.trace, extended_trace = p.trace)
-		# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
-		# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01],
-		# 	                                        [Inf,1.0,Inf,1.0,Inf,1.0],
-		# 	                                        sols[it-1],iterations = 1000)
+		# # r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m0),
+		# 	                                        [0.0,0.0,0.0,0.0],
+		# 	                                        [Inf,1.0,Inf,1.0],
+		# 	                                        sols[it],iterations = 10000,store_trace = p.trace, extended_trace = p.trace)
+
 		if p.trace
 			traceplot(r1,it)
 		end
@@ -62,7 +78,9 @@ end
 # function run(;par = Dict())
 function run(T::Type,p::Param)
 	# x0 = get_starts(par=par)
-	x0 = get_starts(p)   # a T-array of starting vectors
+	# x0 = get_starts(p)   # a T-array of starting vectors
+	r0 = nlsolve_starts(startval(),p=p)   # a nlsolve result object
+	x0 = [r0.zero]
 
 	# if T == Urban
 	# 	x0[1] = x0[1][1:3]
@@ -157,4 +175,39 @@ function plotsingle()
 	p1  = Param() # baseline param: high cbar and low sbar
 	x,M,p0  = run(Region,p1)
 	LandUse.ts_plots(M,p1)
+end
+
+function run1()
+	p = Param()
+	# x0 = get_starts(par=par)  # nlopt
+	r0 = nlsolve_starts(p=p)    # nlsolve
+	x0 = [r0.zero]
+
+	# if T == Urban
+	# 	x0[1] = x0[1][1:3]
+	# end
+
+	# (x1,p) = adapt_ϵ(x0[1],par=par)
+	# println("x0 = $(x0[1])")
+
+	setperiod!(p,1)  # go back to period 1
+	if p.ϵsmax == 0.0
+		# p.ϵs = 0.0
+		x1 = x0[1]
+		@assert p.ϵs == 0.0
+	else
+		(xt,p) = adapt_ϵ(T(p),p,x0[1])  # adaptive search for higher epsilon in center first period only
+		x1 = xt[1]
+	end
+
+	# if T == Urban
+	# 	x1[end] = x1[end][1:3]
+	# end
+	# println("x1 = $(x1[end])")
+
+	p.T = p.T[1:2]
+	x,M = get_solutions(Region,x1,p)  # get general model solutions
+
+	(x,M,p) # solutions, models, and parameter
+
 end

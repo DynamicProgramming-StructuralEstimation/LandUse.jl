@@ -9,6 +9,7 @@
 #'
 #' @export
 pipe <- function(overwrite = FALSE){
+    pop_1950_2(overwrite)
     cc = cropcities(overwrite)
     cm = measure_cities(overwrite)
     mm = combine_measures(overwrite)

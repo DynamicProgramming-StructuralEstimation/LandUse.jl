@@ -9,7 +9,7 @@
 %\renewcommand{\inserttotalframenumber}{57}
 \title{\textbf{Structural Change, Land Use and Urban Expansion}}
 \author{Nicolas Coeurdacier (SciencesPo \& CEPR)\\ \ \\Florian Oswald (SciencesPo) \\ \ \\ Marc Teignier (U. Barcelona)}
-\date{ESWC (Milano) 2020}
+\date{VMACS Junior Conference 2020}
 
 
 \frame{\titlepage}
@@ -92,13 +92,13 @@
 
 
 \begin{frame}
-\frametitle{Main Theoretical Mechanisms}
-\framesubtitle{Transitory dynamics with rising productivity and falling commuting costs}
+\frametitle{Preview of Main Mechanisms}
+\framesubtitle{Transitory Dynamics with Rising Productivity and Falling Commuting Costs}
 
 \begin{widei}
-\item \textbf{In Year 1866:} Land is scarce. High values of farmland with respect to income due to low productivity (`food problem'). Very small and dense, \emph{walkable} cities.
-\item \textbf{From 1866 to 1970:} Productivity and income increases, subsistence problems diminish. Workers move to cities and into industry. Farmland getting more abundant. Free up land for cities to expand, accommodating rising demand for housing. Cities getting large (in area) and much less dense \emph{without} a large increase in land values. Longer commutes.
-\item \textbf{From 1970 on} Reallocation of factors/land use slows down. Cities expand less and land prices increase more with rising productivity. Land particularly scarce in some locations.
+\item<1-> \textbf{In Year 1866:} Land is scarce. High values of farmland with respect to income due to low productivity (`food problem'). Very small and dense, \emph{walkable} cities.
+\item<2-> \textbf{From 1866 to 1970:} Productivity and income increases, subsistence problems diminish. Workers move to cities and into industry. Farmland getting more abundant. Free up land for cities to expand, accommodating rising demand for housing. Cities getting large (in area) and much less dense \emph{without} a large increase in land values. Longer commutes.
+\item<3-> \textbf{From 1970 on} Reallocation of factors/land use slows down. Cities expand less and land prices increase more with rising productivity. Land particularly scarce in some locations.
 \end{widei}
 \end{frame}
 
@@ -304,22 +304,40 @@ Sources:
 \end{frame}\end{v75mins}
 %those 30 cities account for about 23 millions people in 2015
 
+% \begin{frame}[label=density]
+% \frametitle{The Historical Fall in Urban Density}
+% \framesubtitle{Average across Top 30 French Urban Areas}
+% \begin{figure}
+% 	%\caption{Share of spending on food and drinks (1895-2015)}
+% 	%\label{fig:1}
+% 	\begin{center}
+% 		\includegraphics[scale=0.6]{\imgs/logdensity_weighted.pdf}
+% 	\end{center}
+% \end{figure}\hyperlink{Paris}{\beamergotobutton{Paris}}
+% \hyperlink{Lyon}{\beamergotobutton{Lyon}}
+% \hyperlink{Marseille}{\beamergotobutton{Marseille}}
+% \hyperlink{Reims}{\beamergotobutton{Reims}}
+% \hyperlink{world_sample_city}{\beamergotobutton{World sample 1990-2015}}\\
+% {\tiny Source: Carte Etat-Major, IGN and GHSL. Census}
+
+% \end{frame}
+
 \begin{frame}[label=density]
 \frametitle{The Historical Fall in Urban Density}
-\framesubtitle{Average across Top 30 French Urban Areas}
-\begin{figure}
-	%\caption{Share of spending on food and drinks (1895-2015)}
-	%\label{fig:1}
-	\begin{center}
-		\includegraphics[scale=0.6]{\imgs/logdensity_weighted.pdf}
-	\end{center}
-\end{figure}\hyperlink{Paris}{\beamergotobutton{Paris}}
-\hyperlink{Lyon}{\beamergotobutton{Lyon}}
-\hyperlink{Marseille}{\beamergotobutton{Marseille}}
-\hyperlink{Reims}{\beamergotobutton{Reims}}
-\hyperlink{world_sample_city}{\beamergotobutton{World sample 1990-2015}}\\
-{\tiny Source: Carte Etat-Major, IGN and GHSL. Census}
+\begin{columns}
+\begin{column}{0.9\textwidth}
+\includegraphics[width=0.9\textwidth]{\dataplots/densities-time-log.pdf}
+\end{column}
+\begin{column}{0.2\textwidth}
+\begin{itemize}
+\item[] \hyperlink{Paris}{\beamergotobutton{Paris}}
+\item[] \hyperlink{violins}{\beamergotobutton{Distribution}}
+\item[] \hyperlink{Top5}{\beamergotobutton{Top 5}}
+\item[] \hyperlink{world_sample_city}{\beamergotobutton{World}}
+\end{itemize}
+\end{column}
 
+\end{columns}
 \end{frame}
 
 
@@ -344,11 +362,43 @@ Sources:
 
 
 \begin{frame}
-\frametitle{The hockey-stick in housing prices}
-\framesubtitle{Real Housing Price Index in France (1870-2010): Knoll et al. (2017)}
-	\begin{center}
-		\includegraphics[scale=0.65]{\imgs/hpreal100_FRA.pdf}
-	\end{center}
+\frametitle{Hockey-stick in housing prices and Fall in Agricultural Value Share}
+	% \begin{adjustbox}{center}
+	% 	\includegraphics[scale=0.55]{\imgs/hpreal100_FRA.pdf}
+	% 	\includegraphics[scale=0.55]{\imgs/PikettyWealth_FRA.pdf}
+	% \end{adjustbox}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[scale=0.5]{\imgs/hpreal100_FRA.pdf}
+        \caption{Hockey Stick: Knoll et al. (2017)}
+        \label{fig:sub1}
+    \end{subfigure}\hskip 1mm%
+    \begin{subfigure}[t]{0.49\textwidth}
+        \centering
+        \includegraphics[scale=0.5]{\imgs/PikettyWealth_FRA.pdf}
+        \caption{Picketty and Zucman (2014)}
+        \label{fig:sub2}
+    \end{subfigure}
+\end{figure}
+% \begin{figure}[H]
+% \subfloat[Hockey Stick: Knoll et al. (2017)]{\begin{centering}
+% \includegraphics[scale=0.4]{\imgs/hpreal100_FRA.pdf}
+% \end{centering}
+% }
+% \hfill
+% \subfloat[Picketty and Zucman (2014)]{\begin{centering}
+% 		\includegraphics[scale=0.4]{\imgs/PikettyWealth_FRA.pdf}
+% \end{centering}
+% }
+
+% \caption{Facts about Density and House Prices in France 1866--2015: At a certain
+% point in the post second world war period, urban density stops to
+% fall, and house prices start to strongly increase. }
+% \end{figure}
+
 \end{frame}
 
 
@@ -430,7 +480,7 @@ where \re{$p$} the relative price of the rural good\\
 C(\ell)=\left( c_r(\ell)-\re{\underline{c}}\right)^{\nu(1-\gamma)} \left(c_u(\ell) + \re{\underline{s}}\right) ^{(1-\nu)(1-\gamma)}h(\ell)^\gamma,
 \end{equation*}
 $c_i(\ell)=$ consumption of $i=\{r,u\}$, housing consumption $h(\ell)$.\\
-\re{$\underline{c},\underline{s}$ subsistence consumption level} for the rural and urban goods, respectively.\\
+\re{$\underline{c},\underline{s}$ subsistence consumption and initial endowment of urban good}.\\
 %\small{Sensitivity. $C(\ell)=\left( c_r(\ell)-\re{\underline{c}}\right)^{\nu(1-\gamma)} (c_u(\ell)+\re{s}) ^{(1-\nu)(1-\gamma)}h(\ell)^\gamma$.}
 \item Budget constraint,
 \begin{equation*}
@@ -499,7 +549,7 @@ $\mathbf{r}$ land rents per capita, equally distributed.
 % \end{columns}
 % \end{frame}
 
-\begin{frame}{Spatial Structure: Wage Function $w(\ell)$}{Wages Net Of Commuting Costs}
+\begin{frame}{Spatial Structure: Wage Function $w(\ell)$}{Wages Net Of Commuting Costs in Spatial Equilibrium: $C(\ell) = \bar{U}$}
 \begin{columns}
 \begin{column}{0.7\textwidth}
 \input{tikz/urban-wage}
@@ -510,40 +560,40 @@ $\mathbf{r}$ land rents per capita, equally distributed.
 \item<2-> Urban production at $\ell=0$
 \item<2-> Residence at any $\ell \in[0,1]$
 \item<3-> $\tau(\ell)$: commuting cost from $\ell$
-\item<3-> $w_u(1-\tau(\ell))$ urban wage
+\item<3-> $w_u - \tau(\ell)$ urban wage
 \item<4-> {\color{red}{$\phi$}} denotes urban fringe.
 \end{mide}
 \end{column}
 \end{columns}
 \end{frame}
 
-\begin{frame}{Commuting Costs}
+\begin{frame}{Commuting Costs in units of numeraire good}{Based on DeSalvo and Huq (JUE 1996)}
 
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \begin{midi}
-\item $\tau(\ell)$ is composed of a fixed operating cost $o$ and time cost $t(\ell)$
+\item $\tau(\ell)$ is composed of a fixed operating cost $f$ and time cost $t(\ell)$
 \begin{equation*}
-\tau(\ell) = o + \zeta w_u t(\ell)
+\tau(\ell) = f + \zeta w_u t(\ell)
 \end{equation*}
-\item Commuting time with transport mode $m$ (speed): $\frac{\ell}{m}$
-\item Operating cost $o(\ell,m)$ is s.t. longer ($\uparrow \ell$) and faster ($\uparrow m$) commutes are more expensive.
-\item Train line vs horse-drawn carriage.
+% \item Commuting time with transport mode $m$ (speed): $\frac{\ell}{m}$
+\item Operating cost $f(\ell,m)$ is s.t. longer ($\uparrow \ell$) and faster ($\uparrow m$) commutes are more expensive.
+\item (e.g. Train line vs horse-drawn carriage.)
 \end{midi}
 \end{column}
 \pause
 \begin{column}{0.5\textwidth}
 \begin{midi}
-\item Assume $o(\ell,m) = \frac{c_\tau}{\eta_m} m^{\eta_m} \ell^{\eta_\ell}$ 
 \item Allows closed form optimal mode choice:
-\begin{equation*}
-m = \left( \frac{2 \zeta w_u}{c_\tau} \right)^\frac{1}{1+\eta_m} \ell^\frac{1-\eta_\ell}{1+\eta_m}
-\end{equation*}
+% \begin{equation*}
+% m = \left( \frac{2 \zeta w_u}{c_\tau} \right)^\frac{1}{1+\eta_m} \ell^\frac{1-\eta_\ell}{1+\eta_m}
+% \end{equation*}
 \begin{enumerate}
 \item Faster commutes for people further away.
 \item Speed increases with wage (opp. cost of time).
 \item Elasticity of $\tau(\ell)$ wrt wage is strictly less than unity% $\rightarrow$ people are willing to live further away as labor productivity increases.
 \end{enumerate}
+\item Menu of transport modes $m$ is fixed throughout. Higher incomes allow faster mode choices.
 \end{midi}
 
 \end{column}
@@ -708,8 +758,8 @@ see Baum-Snow and Huan (2019).  %important quantitatively but not qualitatively
 \frametitle{Housing Market Equilibrium}
 \framesubtitle{Housing market clearing in the city}
 \bi
-\item Within the city, $\ell \leq \phi$, density \re{$D(\ell)$} in location $\ell$.
-\item Housing market clearing, $H(\ell)=D(\ell)h(\ell)$, leads to
+% \item Within the city, $\ell \leq \phi$, density \re{$D(\ell)$} in location $\ell$.
+\item Housing market clearing, $H(\ell)=D(\ell)h(\ell)$, leads to density
 \begin{equation*}
 D(\ell)= \frac{\rho_r}{\gamma_{\ell}}(w(\phi)+\mathbf{r}-p\underline{c}+\underline{s}) ^{-1/\gamma_{\ell} } (w(\ell)+\mathbf{r}-p\underline{c}+\underline{s})^{1/\gamma_{\ell} -1},
 \end{equation*}
@@ -784,24 +834,25 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 \end{frame}
 
 
-\separator{Parameterization}
+\separator{Results}
 
 
 \subsection{Parameterization}
 
-\begin{frame}{Parameterization}{Productivity Series $\{\theta_{u,t}\},\{\theta_{r,t}$\}}
+\begin{frame}{Parameterization}{Productivity Series $\{\theta_{u,t}\},\{\theta_{r,t}\}$}
 
 \begin{columns}
 \begin{column}{0.3\textwidth}
 \begin{midi}
-\item We feed the model series $\theta_{u,t},\theta_{r,t}$
+\item We feed the model series $\{\theta_{u,t}\},\{\theta_{r,t}\}$
 \item We measure value added for rural and urban production in French Data.
-\item Applying our production functions, we can back out $\theta_{u,t},\theta_{r,t}$
+\item Applying our production functions, we can back out $\{\theta_{u,t}\},\{\theta_{r,t}\}$
 \end{midi}
-\end{column}
+\end{column}\pause
 \begin{column}{0.7\textwidth}
 \begin{adjustbox}{center}
-\includegraphics[width=\textwidth]{\modelplots/smooth-thetas.pdf}
+% \includegraphics[width=\textwidth]{\modelplots/smooth-thetas.pdf}
+\includegraphics[width=\textwidth]{\dataplots/Thetalong_FRA1815.pdf}
 \end{adjustbox}
 \end{column}
 \end{columns}
@@ -809,7 +860,7 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 \end{frame}
 
 \begin{frame}
-\frametitle{Parameter values}
+\frametitle{Main Parameter Values}
 
 \noindent \textbf{Technology}. $\alpha=0.75$, $\sigma=1$.\\
 \medskip
@@ -817,7 +868,7 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 Subsistence level $\underline{c}$ such that given initial $\theta$, slightly more than $50\%$ of workers in ($r$), $\underline{s} << \underline{c}$.
 
 \medskip
-\noindent \textbf{Commuting costs}. $\eta_\ell=0, \eta_m=1$, $\zeta = 0.5$.
+\noindent \textbf{Commuting costs}. $\eta_\ell=0, \eta_m=1.3$, $\zeta = 0.5$.
 
 \medskip
 \noindent \textbf{Housing supply elasticity.} Baseline with $\epsilon_{\ell} = \epsilon_r=4$. Version with lower $\epsilon_{\ell}$ at CBD.
@@ -834,15 +885,44 @@ Alternative. Rising population since 1860, roughly doubles.
 \begin{columns}
 \begin{column}{0.3\textwidth}
 \begin{mide}
-\item Rural population: 60\% $\rightarrow$ 2\%
-\item Rural spending share: 60\% $\rightarrow$ 5\%
-\item Urban Density: Falls by factor of 14.
-\item City size increases substantially.
+\item Rural population: 66\% $\rightarrow$ 5\%
+\item Rural spending share: 68\% $\rightarrow$ 5\%
+\item Urban Density: Falls by factor of 10.
+\item City size increases substantially: 0.002 $\rightarrow$ 0.075.
 \end{mide}
 \end{column}
 \begin{column}{0.7\textwidth}
 \begin{adjustbox}{center}
 \includegraphics[scale=0.5]{\modelplots/issue36-baseline.pdf}\end{adjustbox}
+\end{column}\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Results}
+\framesubtitle{Baseline Model: Hockey Stick and Falling Value Share}
+
+\begin{adjustbox}{center}
+\includegraphics[width=0.9\textwidth]{\modelplots/issue36-prices.pdf}
+\end{adjustbox}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Results}
+\framesubtitle{Baseline Model Commuting Patterns}
+
+\begin{columns}
+\begin{column}{0.3\textwidth}
+\begin{mide}
+\item People at fringe choose fastest commute.
+\item People in center ($\ell=0$) walk.
+\item Shorter commute in center ($\ell=0$).
+\item Longer commutes at fringe ($\ell=\phi$).
+\end{mide}
+\end{column}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[height=0.8\textheight]{\modelplots/issue36-commute.pdf}\end{adjustbox}
 \end{column}\end{columns}
 \end{frame}
 
@@ -891,7 +971,6 @@ Alternative. Rising population since 1860, roughly doubles.
 \begin{midi}
 \item Qualitatively correct implications.
 \item Rural productivity growth is key.
-\item Precise shape of moments (in particular density) also depends on moving cost.
 \end{midi}
 \end{column}
 \begin{column}{0.7\textwidth}
@@ -900,24 +979,7 @@ Alternative. Rising population since 1860, roughly doubles.
 \end{column}\end{columns}
 \end{frame}
 
-\begin{frame}
-\frametitle{Results}
-\framesubtitle{Baseline Model Commuting Patterns}
 
-\begin{columns}
-\begin{column}{0.3\textwidth}
-\begin{mide}
-\item People at fringe choose fastest commute.
-\item People in center ($\ell=0$) walk.
-\item Shorter commute in center ($\ell=0$).
-\item Longer commutes at fringe ($\ell=\phi$).
-\end{mide}
-\end{column}
-\begin{column}{0.7\textwidth}
-\begin{adjustbox}{center}
-\includegraphics[height=0.8\textheight]{\modelplots/issue36-commute.pdf}\end{adjustbox}
-\end{column}\end{columns}
-\end{frame}
 
 \begin{v75mins}
 \begin{frame}
@@ -1047,16 +1109,16 @@ Housing/Land values beyond rents.
 
 \beginbackup
 
-\begin{frame}[label=SatParis]
-\frametitle{The area of cities}
-\framesubtitle{Satellite measurement of Paris in 2015}
-\begin{figure}
-	\begin{center}
-	\includegraphics[height=0.65\textheight]{\imgs/SMOD_Paris.png}
-	\end{center}
-\end{figure}
-\hyperlink{AreaMeasure}{\beamergotobutton{back}}\\
-\end{frame}
+% \begin{frame}[label=SatParis]
+% \frametitle{The area of cities}
+% \framesubtitle{Satellite measurement of Paris in 2015}
+% \begin{figure}
+% 	\begin{center}
+% 	\includegraphics[height=0.65\textheight]{\imgs/SMOD_Paris.png}
+% 	\end{center}
+% \end{figure}
+% \hyperlink{AreaMeasure}{\beamergotobutton{back}}\\
+% \end{frame}
 
 \begin{frame}[label=Paris]
 \frametitle{The historical fall in urban density}
@@ -1068,7 +1130,22 @@ Housing/Land values beyond rents.
 \end{figure}
 \hspace{-1cm}
 \hyperlink{density}{\beamergotobutton{back}}\\
-{\tiny Source: Carte Etat-Major, IGN and GHSL. Census. Central Paris = Districts 1 to 6.}
+\end{frame}
+
+\begin{frame}[label=violins]
+\frametitle{The historical fall in urban density}
+	\begin{center}
+		\includegraphics[height=0.85\textheight]{\dataplots/densities-violins.pdf}
+	\end{center}
+\hyperlink{density}{\beamergotobutton{back}}
+\end{frame}
+
+\begin{frame}[label=Top5]
+\frametitle{The historical fall in urban density}
+	\begin{center}
+		\includegraphics[height=0.85\textheight]{\dataplots/densities-time-top5then-city.pdf}
+	\end{center}
+\hyperlink{density}{\beamergotobutton{back}}
 \end{frame}
 
 \begin{frame}[label=Lyon]

@@ -168,14 +168,14 @@ function i0()
 						pl= LandUse.ts_plots(M,p0,fixy = false)
 					elseif growthtype == 2
 						p0 = LandUse.Param(par = Dict(:θu_g => ugrowth,:θut => 1.0, :θrt => 1.0,
-											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etam, :ηl => etal,
+											 :θr_g => rgrowth,:ϵsmax => 0.0 ,  :ηm => etal, :ηl => etal,
 											 :cbar => cbar, :sbar => sbar, :cτ => taus))
 					    x,M,p = LandUse.run(LandUse.Region,p0)
 						# LandUse.plot_ts(M,p0)
 						pl= LandUse.ts_plots(M,p0,fixy = true)
 					end
 					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
-					plot(pl[:pop],pl[:spending],pl[:qbar],pl[:phi],pl[:densities], pl[:q0_qr], layout = (2,3),link = :x)
+					plot(pl[:pop],pl[:spending],pl[:qbar],pl[:phi],pl[:avdensity], pl[:q0_qr], layout = (2,3),link = :x)
 	end
 end
 

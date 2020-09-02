@@ -14,27 +14,57 @@ function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,m::Model,p::Param)
 	solve!(result,x,p,m)
 end
 
-function nlopt_solve(;p = Param(),x0=nothing)
-	fm = Region(p)
-	opt = Opt(:LN_COBYLA,4)
-	# opt = Opt(:LN_NELDERMEAD,4)
-	opt.lower_bounds = fill(0.001,4)
-	# opt.upper_bounds = [1.0,1.0,1.0,1.0]
+startval() = [0.24, 0.68, 1.1, 0.86]
+
+function nlopt_solve(m::Model,p::Param,x0::Vector{Float64})
+	opt = Opt(:LN_COBYLA,length(x0))
+	opt.lower_bounds = fill(0.001,length(x0))
 	f0(x::Vector, grad::Vector) = 1.0
 	opt.min_objective = f0  # fix at a constant function
-	equality_constraint!(opt,(r,x,g) -> NLopt_wrap(r,x,g,fm,p), fill(1e-9,4))
+	equality_constraint!(opt,(r,x,g) -> NLopt_wrap(r,x,g,m,p), fill(1e-9,length(x0)))
 	# m.r    = x[1]   # land rent
 	# m.Lr   = x[2]   # employment in rural sector
 	# m.pr   = x[3]   # relative price rural good
 	# m.Sr   = x[4]   # amount of land used in rural production
 	# (optf,optx,ret) = optimize(opt, [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S])
-	if isnothing(x0)
-		# x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]   # an almost arbitrary point in the interior domain.
-		x0 = [0.24, 0.68, 1.1, 0.86]   # an almost arbitrary point in the interior domain.
-	else
-		@assert length(x0) == ndims(opt)
-	end
+	opt.upper_bounds = [Inf,1.0,x0[3]*1.5,1.0]
+
 	(optf,optx,ret) = optimize(opt, x0)
+end
+#
+# function nlopt_solve(;p = Param(),x0=nothing)
+# 	fm = Region(p)
+# 	opt = Opt(:LN_COBYLA,4)
+# 	# opt = Opt(:LN_NELDERMEAD,4)
+# 	opt.lower_bounds = fill(0.001,4)
+# 	# opt.upper_bounds = [1.0,1.0,1.0,1.0]
+# 	f0(x::Vector, grad::Vector) = 1.0
+# 	opt.min_objective = f0  # fix at a constant function
+# 	equality_constraint!(opt,(r,x,g) -> NLopt_wrap(r,x,g,fm,p), fill(1e-9,4))
+# 	# m.r    = x[1]   # land rent
+# 	# m.Lr   = x[2]   # employment in rural sector
+# 	# m.pr   = x[3]   # relative price rural good
+# 	# m.Sr   = x[4]   # amount of land used in rural production
+# 	# (optf,optx,ret) = optimize(opt, [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S])
+# 	if isnothing(x0)
+# 		# x0 = [0.1 * p.S, 0.5 * p.L, 0.3775, 0.545 * p.S]   # an almost arbitrary point in the interior domain.
+# 		x0 = [0.24, 0.68, 1.1, 0.86]   # an almost arbitrary point in the interior domain.
+# 	else
+# 		@assert length(x0) == ndims(opt)
+# 		opt.upper_bounds = [Inf,1.0,x0[3]*1.5,1.0]
+#
+# 	end
+# 	(optf,optx,ret) = optimize(opt, x0)
+# end
+
+function nlsolve_starts(x0;p = Param())
+	m = Region(p)
+	r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m),
+							 x0,iterations = 10000,store_trace = p.trace, extended_trace = p.trace)
+	if !converged(r1)
+		error("no starting values found")
+	end
+	r1
 end
 
 
@@ -59,7 +89,7 @@ In year 1:
 function get_starts(p::Param)
 	# fm = LandUse.FModel(p)  # create a fixed elasticity model
 	# p = Param(par=par)
-	startvals = Vector{Float64}[]  # an empty array of vectors
+	starts = Vector{Float64}[]  # an empty array of vectors
 
 	# 2. For each time period
 	for it in 1:length(p.T)
@@ -67,10 +97,10 @@ function get_starts(p::Param)
 
 		# if first year
 		if it == 1
-			x0 = nlopt_solve(p=p)
+			x0 = nlopt_solve(startvals(),p=p)
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
-				push!(startvals, x0[2])
+				push!(starts, x0[2])
 				# println("rural market clears with $(Rmk(fm,p))")
 			else
 				# p1 = plot(fm.Ftrace',ylim = (-5,5),title = "Ftrace")
@@ -84,7 +114,7 @@ function get_starts(p::Param)
 			x0 = nlopt_solve(p=p,x0 = startvals[it-1])
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
-				push!(startvals, x0[2])
+				push!(starts, x0[2])
 				# println("rural market clears with $(Rmk(fm,p))")
 			else
 				print(x0)
@@ -92,7 +122,7 @@ function get_starts(p::Param)
 			end
 		end
 	end
-	return startvals
+	return starts
 end
 
 
