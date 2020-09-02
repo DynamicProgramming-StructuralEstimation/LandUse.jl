@@ -40,21 +40,24 @@ function ts_plots(M,p::Param;fixy = false)
 		 select(:year,:r, :y ,:iq) |>
 		 transform(r_y = 100*(:r ./ :y), ru_y = 100*(:iq ./ :y))
 	dd[:r_y] = @df df plot(:year, [:r_y, :ru_y], labels = ["Total" "Urban Only"],
-	            linewidth = 2, title = "Land Rents over Income (%)", marker = mmark, ylims = fixy ? (0,50) : false)
+	            linewidth = 2, title = "Rents over Income (%)", marker = mmark, ylims = fixy ? (0,50) : false)
 
 
-	dtemp = transform(select(d, :year, :r, :ρ0, :ρr, :q0, :qr, :hr, :Hr),
-	                  :r => ((x) -> 100*(x ./ x[7])) => :r,
-	                  :ρ0 => ((x) -> 100*(x ./ x[7])) => :ρ0,
-	                  :ρr => ((x) -> 100*(x ./ x[7])) => :ρr,
-	                  :q0 => ((x) -> 100*(x ./ x[7])) => :q0,
-	                  :hr => ((x) -> 100*(x ./ x[7])) => :hr,
-	                  :Hr => ((x) -> 100*(x ./ x[7])) => :Hr,
-	                  :qr => ((x) -> 100*(x ./ x[7])) => :qr
+	y1950 = findmin(abs.(d.year .- 1950))[2]
+	dtemp = transform(select(d, :year, :r, :ρ0, :ρr, :q0, :qr, :hr, :Hr, :qbar),
+	                  :r => ((x)  -> 100*(x ./ x[y1950])) => :r,
+	                  :ρ0 => ((x) -> 100*(x ./ x[y1950])) => :ρ0,
+	                  :ρr => ((x) -> 100*(x ./ x[y1950])) => :ρr,
+	                  :q0 => ((x) -> 100*(x ./ x[y1950])) => :q0,
+	                  :hr => ((x) -> 100*(x ./ x[y1950])) => :hr,
+	                  :Hr => ((x) -> 100*(x ./ x[y1950])) => :Hr,
+	                  :qbar => ((x) -> 100*(x ./ x[y1950])) => :qbar,
+	                  :qr => ((x) -> 100*(x ./ x[y1950])) => :qr
 					  )
 	dd[:r] = @df dtemp plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Land Rents (1945=100)", marker = mmark, ylims = fixy ? (95,500) : false)
 	dd[:r_rho] = @df dtemp plot(:year, [:r, :ρ0],linewidth = 2, lab = [L"r" L"\rho_0" ],
-	                           title = "Land Rents and Central Land Values (1945=100)",
+	                           ylab = "1950=100",
+							   title = "Rents and Land Value",
 							   leg = :topleft,
 							   marker = mmark, ylims = fixy ? (50,500) : false)
 
@@ -62,6 +65,8 @@ function ts_plots(M,p::Param;fixy = false)
 	                           title = "Central and Fringe House Prices (1945=100)",
 							   leg = :topleft,
 							   marker = mmark, ylims = fixy ? (85,150) : false)
+   dd[:qbar_100] = @df dtemp plot(:year, :qbar, linewidth = 2, color = "black", leg =false, title = "Average House Prices", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
+
 	# is missing density!
     # dd[:hr100] = @df dtemp plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand (1945=100)", marker = mmark)
     # dd[:Hr100] = @df dtemp plot(:year, :Hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Supply (1945=100)", marker = mmark)

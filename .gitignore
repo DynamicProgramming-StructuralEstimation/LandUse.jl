@@ -6,3 +6,6 @@ images/*.pdf
 /LandUseR/.Rproj.*
 /LandUseR/.Rbuildignore
 /LandUseR/.Rhistory
+.Rproj.user
+/tex/slides/*.pdf
+*.Rd
