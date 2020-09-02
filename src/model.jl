@@ -49,6 +49,8 @@ mutable struct Region <: Model
 	pcy  :: Float64  # per capita income
 	GDP  :: Float64  # GDP
 	y    :: Float64  # disposable income
+	Yu    :: Float64  # urban production
+	Yr    :: Float64  # rural production
 	mode0 :: Float64  # mode at center
 	modeϕ :: Float64  # mode at fringe
 	ctime0 :: Float64  # commute time at center
@@ -226,6 +228,8 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.pcy = pcy(m,p)
 	m.GDP = GDP(m,p)
 	m.y   = y(m,p)
+	m.Yu  = Yu(m,p)
+	m.Yr  = Yr(m,p)
 
 	m.ρ0_y = m.ρ0 / m.y
 
@@ -671,10 +675,23 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	# compute commuting cost at initial fringe in each period
 	initϕ = df.ϕ[1]
 	df.τ_ts = zeros(tt)
+	df.p_laspeyres = zeros(tt)
+	df.p_paasche = zeros(tt)
+	df.p_growth = zeros(tt)
+	df.p_index = zeros(tt)
+	df[1,:p_index] = M[1].pr
 	for i in 1:tt
 		setperiod!(p,i)
 		df[i, :τ_ts] = τ(initϕ, df[i, :ϕ] , p)
+		if i > 1
+			df[i, :p_laspeyres] = ( M[i].pr * M[i-1].Yr + M[i-1].Yu ) / ( M[i-1].pr *  M[i-1].Yr + M[i-1].Yu )
+			df[i, :p_paasche]   = ( M[i].pr * M[i].Yr + M[i].Yu ) / ( M[i-1].pr *  M[i].Yr + M[i].Yu )
+			df[i, :p_growth]   = sqrt(df[i, :p_paasche]) * sqrt(df[i, :p_laspeyres])
+			df[i, :p_index]      = df[i-1, :p_index] * df[i, :p_growth]
+
+		end
 	end
+	df[!,:r_real] = df[!,:r] ./ df[!, :p_index]
 
 	df
 end

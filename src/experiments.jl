@@ -476,7 +476,7 @@ function issue36( ; save=false)
                                 :phi => Dict(:from => M[1].ϕ, :to => M[end].ϕ ))
     r[1][:baseline] = plot(pl1[:pop],pl1[:spending],pl1[:avdensity],pl1[:phi],
                                 layout = (2,2),link = :x)
-    r[1][:prices] = LandUse.plot(pl1[:r_rho],pl1[:r_y], layout = (1,2),size = (900,400))
+    r[1][:prices] = LandUse.plot(pl1[:r_real],pl1[:r_y], layout = (1,2),size = (900,400))
 
 
     p2 = Param(par = Dict(:cbar => 0.0, :sbar => 1.0)) # low cbar and high sbar

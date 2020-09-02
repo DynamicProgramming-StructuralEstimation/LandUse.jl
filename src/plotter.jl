@@ -44,8 +44,9 @@ function ts_plots(M,p::Param;fixy = false)
 
 
 	y1950 = findmin(abs.(d.year .- 1950))[2]
-	dtemp = transform(select(d, :year, :r, :ρ0, :ρr, :q0, :qr, :hr, :Hr, :qbar),
+	dtemp = transform(select(d, :year, :r, :r_real, :ρ0, :ρr, :q0, :qr, :hr, :Hr, :qbar),
 	                  :r => ((x)  -> 100*(x ./ x[y1950])) => :r,
+	                  :r_real => ((x)  -> 100*(x ./ x[y1950])) => :r_real,
 	                  :ρ0 => ((x) -> 100*(x ./ x[y1950])) => :ρ0,
 	                  :ρr => ((x) -> 100*(x ./ x[y1950])) => :ρr,
 	                  :q0 => ((x) -> 100*(x ./ x[y1950])) => :q0,
@@ -54,7 +55,8 @@ function ts_plots(M,p::Param;fixy = false)
 	                  :qbar => ((x) -> 100*(x ./ x[y1950])) => :qbar,
 	                  :qr => ((x) -> 100*(x ./ x[y1950])) => :qr
 					  )
-	dd[:r] = @df dtemp plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Land Rents (1945=100)", marker = mmark, ylims = fixy ? (95,500) : false)
+	dd[:r] = @df dtemp plot(:year, :r, linewidth = 2, color = "black", leg =false, title = "Land Rents",ylab = "1950=100", marker = mmark, ylims = fixy ? (95,500) : false)
+	dd[:r_real] = @df dtemp plot(:year, :r_real, linewidth = 2, color = "black", leg =false, title = "Real Land Rents",ylab = "1950=100", marker = mmark, ylims = fixy ? (95,500) : false)
 	dd[:r_rho] = @df dtemp plot(:year, [:r, :ρ0],linewidth = 2, lab = [L"r" L"\rho_0" ],
 	                           ylab = "1950=100",
 							   title = "Rents and Land Value",
