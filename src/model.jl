@@ -15,6 +15,7 @@ mutable struct Region <: Model
 	ρ0   :: Float64     # land price in center of city
 	ρ0_y :: Float64     # land price in center of city over income
 	q0   :: Float64     # housing price in center of city
+	qq1   :: Float64     # housing price first quintile
 	qbar :: Float64     # average housing price in city
 	Lr   :: Float64   # employment in rural sector
 	Lu   :: Float64   # employment in urban sector
@@ -85,6 +86,7 @@ mutable struct Region <: Model
 		m.ρ0   = NaN
 		m.ρ0_y   = NaN
 		m.q0   = NaN
+		m.qq1   = NaN
 		m.qbar = NaN
 		m.Lr   = NaN
 		m.Lu   = NaN
@@ -192,6 +194,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.Srh  = Srh(p,m)
 	m.qr   = qr(p,m)
 	m.q0   = q(0.0,p,m)
+	m.qq1   = q(m.ϕ / 5,p,m)
 	m.ρ0   = ρ(0.0,p,m)
 	m.Hr   = H(m.ϕ,p,m)
 	m.hr   = h(m.ϕ,p,m)

@@ -175,7 +175,7 @@ function i0()
 						pl= LandUse.ts_plots(M,p0,fixy = true)
 					end
 					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
-					plot(pl[:pop],pl[:spending],pl[:qbar],pl[:phi],pl[:avdensity], pl[:q0_qr], layout = (2,3),link = :x)
+					plot(pl[:pop],pl[:spending],pl[:qbar],pl[:phi],pl[:avdensity], pl[:q0_qr_qq1], layout = (2,3),link = :x)
 	end
 end
 

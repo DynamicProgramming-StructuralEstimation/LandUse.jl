@@ -44,12 +44,13 @@ function ts_plots(M,p::Param;fixy = false)
 
 
 	y1950 = findmin(abs.(d.year .- 1950))[2]
-	dtemp = transform(select(d, :year, :r, :r_real, :ρ0, :ρr, :q0, :qr, :hr, :Hr, :qbar),
+	dtemp = transform(select(d, :year, :r, :r_real, :ρ0, :ρr, :q0, :qr, :hr, :Hr, :qbar, :qq1),
 	                  :r => ((x)  -> 100*(x ./ x[y1950])) => :r,
 	                  :r_real => ((x)  -> 100*(x ./ x[y1950])) => :r_real,
 	                  :ρ0 => ((x) -> 100*(x ./ x[y1950])) => :ρ0,
 	                  :ρr => ((x) -> 100*(x ./ x[y1950])) => :ρr,
 	                  :q0 => ((x) -> 100*(x ./ x[y1950])) => :q0,
+	                  :qq1 => ((x) -> 100*(x ./ x[y1950])) => :qq1,
 	                  :hr => ((x) -> 100*(x ./ x[y1950])) => :hr,
 	                  :Hr => ((x) -> 100*(x ./ x[y1950])) => :Hr,
 	                  :qbar => ((x) -> 100*(x ./ x[y1950])) => :qbar,
@@ -64,6 +65,10 @@ function ts_plots(M,p::Param;fixy = false)
 							   marker = mmark, ylims = fixy ? (50,500) : false)
 
     dd[:q0_qr] = @df dtemp plot(:year, [:q0, :qr],linewidth = 2, lab = [L"q_0" L"q_r"],
+	                           title = "Central and Fringe House Prices (1945=100)",
+							   leg = :topleft,
+							   marker = mmark, ylims = fixy ? (85,150) : false)
+   dd[:q0_qr_qq1] = @df dtemp plot(:year, [:q0, :qr , :qq1],linewidth = 2, lab = [L"q_0" L"q_r" L"q_q1"],
 	                           title = "Central and Fringe House Prices (1945=100)",
 							   leg = :topleft,
 							   marker = mmark, ylims = fixy ? (85,150) : false)
