@@ -302,6 +302,11 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 	pl = plot(pld, plm, layout = (1,2), link = :both, size = (800,400))
 	savefig(pl, joinpath(dbplots,"smooth-thetas.pdf"))
 
+
+	CSV.write(joinpath(dbtables,"thetas_data.csv"),select(x, Not([:m1913,:m1938])))
+	CSV.write(joinpath(dbtables,"thetas_model.csv"),DataFrame(year = dt,theta_u = ret[:θu],theta_r = ret[:θr]))
+
+
 	ret
 end
 
