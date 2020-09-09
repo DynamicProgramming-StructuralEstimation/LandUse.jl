@@ -51,7 +51,7 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 
 		# nlsolve solution
 		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
-			                     sols[it],iterations = 10000,store_trace = p.trace, extended_trace = p.trace)
+			                     sols[it],iterations = 100,store_trace = p.trace, extended_trace = p.trace)
 		# # r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m0),
 		# 	                                        [0.0,0.0,0.0,0.0],
 		# 	                                        [Inf,1.0,Inf,1.0],

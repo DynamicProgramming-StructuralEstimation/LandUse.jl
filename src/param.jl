@@ -22,9 +22,9 @@ mutable struct Param
 	ηl     :: Float64   # location elasticity of fixed cost
 	cτ     :: Float64   # efficiency of transport technology
 	ζ      :: Float64   # valuation of commuting time in terms of forgone wages
-	τ      :: Float64   # implied combination of above parameters
-	ew     :: Float64   # exponent on wu (equation 5 in commutingtech)
-	el     :: Float64   # exponent on l (equation 5 in commutingtech)
+	a      :: Float64   # implied combination of above parameters
+	# ew     :: Float64   # exponent on wu (equation 5 in commutingtech)
+	# el     :: Float64   # exponent on l (equation 5 in commutingtech)
 
 
 	α     :: Float64 # labor weight on farm sector production function
@@ -132,9 +132,10 @@ mutable struct Param
 		if this.ζ > 1.0 || this.ζ < 0.0 error("ζ ∈ (0,1) violated") end
 		if this.ηl > 1.0 || this.ηl < 0.0 error("ηl ∈ (0,1) violated") end
 		# derived parameters
-		this.τ = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))
-		this.ew = (-1)/(1+this.ηm)
-		this.el = (this.ηm + this.ηl)/(1+this.ηm)
+		this.a = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))
+		# this.ew = (-1)/(1+this.ηm)
+		# this.el = (this.ηm + this.ηl)/(1+this.ηm)
+		# as ηm goes to infinity the transport cost goes to 2 ζ w l
 
 
     	return this
@@ -192,7 +193,7 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      θu      : $(p.θu  )\n")
 	print(io,"      α       : $(p.α   )\n")
 	print(io,"      λ       : $(p.λ   )\n")
-	print(io,"      τ       : $(p.τ   )\n")
+	print(io,"      cτ       : $(p.cτ   )\n")
 	print(io,"      χr      : $(p.χr  )\n")
 	print(io,"      L       : $(p.L   )\n")
 	print(io,"      S       : $(p.S   )\n")

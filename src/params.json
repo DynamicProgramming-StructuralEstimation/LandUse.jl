@@ -29,7 +29,7 @@
 		"symbol" : "\\eta"
 	},
 	"ηm" : {
-		"value" : 1.3,
+		"value" : 5.3,
 		"description" : "elasticity of F commuting cost wrt mode",
 		"type" : "region",
 		"symbol" : "\\eta_m"
@@ -77,13 +77,13 @@
 		"symbol" : "\\Psi"
 	},
 	"cτ" : {
-		"value" : 10.0,
+		"value" : 12.0,
 		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
 		"symbol" : "c_\\tau"
 	},
 	"T" : {
-		"value" : [1855,5,2050],
+		"value" : [1855,1,2050],
 		"description" : "Start year, increments, end year",
 		"type" : "region",
 		"symbol" : "\\mathcal{T}"

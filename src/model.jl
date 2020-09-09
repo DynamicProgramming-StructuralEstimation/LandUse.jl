@@ -188,7 +188,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
 	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = 0.059
-	m.ϕ    = getfringe(m.wr / p.θu,p)
+	m.ϕ    = getfringe(p.θu, m.wr ,p)
 
 	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
@@ -418,7 +418,7 @@ function update!(m::FModel,p::Param,x::Vector{Float64})
 	# m.wr   = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2
 	# m.ρr   = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
 	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
-	m.ϕ = getfringe(m.wr / p.θu,p)
+	m.ϕ = getfringe(p.θu, m.wr ,p)
 
 	m.xsr  = m.wr + m.r - m.pr * p.cbar + p.sbar
 	# m.xsu = m.wu0 + m.r - m.pr * p.cbar - p.sbar
@@ -487,7 +487,7 @@ end
 function solve!(F,x,p::Param,m::Model)
 	# println(x)
 	if any( x .< 0 )
-		F[:] .= PEN
+		# F[:] .= PEN
 	else
 		update!(m,p,x)
 		if isa(m,FModel)
@@ -514,13 +514,13 @@ mode(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.�
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
-"commuting cost"
-τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * p.θu^(p.ew) * x^p.el
+"commuting cost: location x → cost"
+τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.ηm / (1+p.ηm)) * x^((p.ηm+p.ηl) / (1+p.ηm))
 
 
 
-"inverse commuting cost. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
-invτ(x::Float64,p::Param) = ( x / ( p.τ * p.θu^(p.ew)) )^(1/p.el)
+"inverse commuting cost. cost x → location. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
+invτ(x::Float64,p::Param) = ( x / ( p.a * p.θu^(p.ηm / (1+p.ηm))) )^((1+p.ηm) / (p.ηm+p.ηl))
 
 # old versions
 # invτ(x::Float64,p::Param) = ( x * p.θu^(p.ζ) / (p.τ) )^(1/p.τ1)
@@ -533,20 +533,21 @@ Get Fringe from indifference condition
 At the fringe ``\\phi`` we have the condition
 
 ```math
-w(0)(1 - \\tau(\\phi)) = w_r
+w(0) - \\tau(\\phi) = w_r
 ```
 
-which can be inverted to obtain a map from ``\\frac{w_r}{\\theta_u}`` to ``\\phi``.
+which can be rearranged to obtain a map from ``w(0) - w_r = \\tau(\\phi)``.
 
-The function takes ``\\frac{w_r}{\\theta_u}`` as argument `x`.
+The function takes ``w(0) - w_r`` as argument `x`. then we give ``\\tau(\\phi)``
+	to its inverse function to get back ``\\phi``
 """
-getfringe(x::Float64,p::Param) = (x > 1.0) ? 0.0 : invτ(1.0 - x,p)
+getfringe(w0::Float64,wr::Float64,p::Param) = invτ(w0 - wr,p)
 
 "urban wage at location ``l``"
-wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) * (1.0 .- τ(l,ϕ,p))
+wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(l,ϕ,p)
 
 "urban wage at location ``l``"
-wu(l::Float64,ϕ::Float64,p::Param) = wu0(p) * (1.0 .- τ(l,ϕ,p))
+wu(l::Float64,ϕ::Float64,p::Param) = wu0(p) .- τ(l,ϕ,p)
 
 "urban wage at center"
 wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
@@ -555,7 +556,7 @@ wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
 wu0(p::Param) = p.Ψ * p.θu
 
 "rural wage from indifference condition at ϕ. Eq (11)"
-wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p)*(1.0 .- τ(ϕ,ϕ,p))
+wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(ϕ,ϕ,p)
 
 "FOC of rural firm wrt labor Lr"
 foc_Lr(L_over_S::Float64,pr::Float64, p::Param) = p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0/ L_over_S )^((p.σ-1)/p.σ))^(1.0 / (p.σ-1))
@@ -565,7 +566,7 @@ foc_Sr(L_over_S::Float64,pr::Float64, p::Param) = (1-p.α)* pr * p.θr * (p.α *
 
 
 "rural wage from indifference condition at ϕ. Eq (11)"
-wr(ϕ::Float64,p::Param) = wu0(p)*(1.0 .- τ(ϕ,ϕ,p))
+wr(ϕ::Float64,p::Param) = wu0(p) .- τ(ϕ,ϕ,p)
 
 "wage at location ``l``"
 w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)
