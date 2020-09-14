@@ -3,6 +3,72 @@
 xtrace(x::NLsolve.SolverResults) = vcat([(x.trace[i].metadata["x"])' for i in 1:x.iterations]...)
 ftrace(x::NLsolve.SolverResults) = vcat([(x.trace[i].metadata["f(x)"])' for i in 1:x.iterations]...)
 
+
+function solve_once(p::Param,m0::Model,x0::Vector{Float64})
+	nlsolve((F,x) -> solve!(F,x,p,m0),x0,iterations = 100,store_trace = p.trace, extended_trace = p.trace)
+end	
+
+function reduce_θ_step!(p::Param)
+	# reduce step size
+	p.θstep -= 0.05
+	if p.θstep > 0 || error("reached neg step") end
+end
+
+
+
+"""
+in a given period and given a target param, this step-wise increases thetau
+"""
+function θstepper(p::Param,it::Int,m::Model,x0::Vector)
+
+	sols = Vector[]
+
+	push!(sols,x0)
+
+	# target thetas
+	if abs(p.θu - p.θr) > 0.78	
+		println("period $it")
+		println("diff=$(p.θu - p.θr)")
+		# go back to previous period, take p.θu, and set p.θu = p.θu_old + half the distance to the new obtained
+
+		θus = range(p.θut[it-1],stop = p.θu, length = p.nsteps)
+		θrs = range(p.θrt[it-1],stop = p.θr, length = p.nsteps)
+
+		for i in 1:length(θus)
+			p.θu = θus[i]
+			p.θr = θrs[i]
+			println("thetau = $(p.θu),thetar = $(p.θr)")
+			r1 = solve_once(p,m,sols[i])
+			if p.trace
+				traceplot(r1,it)
+			end
+			if converged(r1)
+				push!(sols, r1.zero)
+			else
+
+				error("adaptive searchrrrrrr not converged for thetau = $(p.θu),thetar = $(p.θr)")
+			end
+		end
+
+		# if that converges, go to final values
+
+		# else make step size smaller
+	else
+		r1 = solve_once(p,m,sols[1])
+		if p.trace
+			traceplot(r1,it)
+		end
+		if converged(r1)
+			push!(sols, r1.zero)
+		else
+			error("not converged")
+		end
+	end
+
+
+	return sols[end]
+end
+
 """
 	get_solutions()
 
@@ -49,27 +115,33 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 		# 	error("type $T Model not converged in period $it")
 		# end
 
+		x = θstepper(p,it,m0,sols[it])
+		push!(sols, x)
+		update!(m0,p,x)
+		push!(m,m0)
+
+
 		# nlsolve solution
-		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
-			                     sols[it],iterations = 100,store_trace = p.trace, extended_trace = p.trace)
+		# r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
+			                    #  sols[it],iterations = 100,store_trace = p.trace, extended_trace = p.trace)
 		# # r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m0),
 		# 	                                        [0.0,0.0,0.0,0.0],
 		# 	                                        [Inf,1.0,Inf,1.0],
 		# 	                                        sols[it],iterations = 10000,store_trace = p.trace, extended_trace = p.trace)
 
-		if p.trace
-			traceplot(r1,it)
-		end
-		if converged(r1)
-			push!(sols, r1.zero)
-			update!(m0,p,r1.zero)
-			# println("rmk = $(abs(Rmk(m0,p)))")
-			# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
-			push!(m,m0)
-		else
-			println(r1)
-			error("type $T Model not converged in period $it")
-		end
+		# if p.trace
+		# 	traceplot(r1,it)
+		# end
+		# if converged(r1)
+		# 	push!(sols, r1.zero)
+		# 	update!(m0,p,r1.zero)
+		# 	# println("rmk = $(abs(Rmk(m0,p)))")
+		# 	# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
+		# 	push!(m,m0)
+		# else
+		# 	println(r1)
+		# 	error("type $T Model not converged in period $it")
+		# end
 	end
 	return (sols, m)
 end

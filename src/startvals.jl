@@ -97,7 +97,7 @@ function get_starts(p::Param)
 
 		# if first year
 		if it == 1
-			x0 = nlopt_solve(startvals(),p=p)
+			x0 = nlopt_solve(startval(),p=p)
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
 				push!(starts, x0[2])

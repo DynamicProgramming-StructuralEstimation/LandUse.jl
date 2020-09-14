@@ -83,7 +83,7 @@
 		"symbol" : "c_\\tau"
 	},
 	"T" : {
-		"value" : [1855,1,2050],
+		"value" : [1855,5,2050],
 		"description" : "Start year, increments, end year",
 		"type" : "region",
 		"symbol" : "\\mathcal{T}"
@@ -148,11 +148,11 @@
 		"type" : "region",
 		"symbol" : "\\epsilon_s^*"
 	},
-	"ϵnsteps" : {
-		"value" : 10,
-		"description" : "Number of steps in elasticity search",
+	"nsteps" : {
+		"value" : 2,
+		"description" : "Number of steps in search",
 		"type" : "region",
-		"symbol" : "n_\\epsilon"
+		"symbol" : "n_steps"
 	},
 	"int_nodes" : {
 		"value" : 64,

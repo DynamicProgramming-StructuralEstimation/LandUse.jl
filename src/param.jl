@@ -3,7 +3,7 @@ mutable struct Param
 	ϵr     :: Float64 # housing supply elasticity in rural sector
 	ϵs    :: Float64  # current slope of elasticity function
 	ϵsmax :: Float64  # max slope of elasticity function
-	ϵnsteps :: Int  # num steps in elasticity search
+	nsteps :: Int  # num steps in thetau search
 	η     :: Float64 # agglomeration forces
 	ν     :: Float64 # weight of rural good consumption on consumption composite
 	cbar  :: Float64 # agr cons subsistence level (0.14 for thailand)
@@ -69,14 +69,14 @@ mutable struct Param
 			elseif v["type"] == "numerical"
 				setfield!(this,Symbol(k),v["value"])
 			end
-        end
+		end
 
 		# set some defaults
 		T = length(this.T)
 		this.t = 1
 		this.S = 1.0  # set default values for space and population
 		this.L = 1.0
-		thetas = smooth_θ(this.T, this.ma, this.mag)
+		thetas = smooth_θ(this.T, this.ma, this.mag)[1]
 		this.θut = thetas[:θu]
 		this.θrt = thetas[:θr]
 
@@ -184,7 +184,7 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      ϵr      : $(p.ϵr  )\n")
 	print(io,"      ϵs      : $(p.ϵs  )\n")
 	print(io,"      ϵsmax   : $(p.ϵsmax  )\n")
-	print(io,"      ϵnsteps : $(p.ϵnsteps  )\n")
+	print(io,"      nsteps : $(p.nsteps  )\n")
 	print(io,"      η       : $(p.η   )\n")
 	print(io,"      ν       : $(p.ν   )\n")
 	print(io,"      cbar    : $(p.cbar)\n")
@@ -308,7 +308,7 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 	CSV.write(joinpath(dbtables,"thetas_model.csv"),DataFrame(year = dt,theta_u = ret[:θu],theta_r = ret[:θr]))
 
 
-	ret
+	(ret, pl)
 end
 
 function plot_shares()
