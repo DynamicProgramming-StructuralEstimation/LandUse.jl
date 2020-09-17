@@ -76,9 +76,18 @@ mutable struct Param
 		this.t = 1
 		this.S = 1.0  # set default values for space and population
 		this.L = 1.0
-		thetas = smooth_θ(this.T, this.ma, this.mag)[1]
-		this.θut = thetas[:θu] .* 0.32
-		this.θrt = thetas[:θr] .* 0.32
+		# this smoothes thetas
+		# thetas = smooth_θ(this.T, this.ma, this.mag)[1]
+
+		# read from disk
+		thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+		# bring on scale we know that works
+		thetas.thetar .= thetas.thetar .* 0.32
+		thetas.thetau .= thetas.thetau .* 0.32
+		# pick out correct years
+		tt = thetas[ thetas.year .∈ Ref(this.T),  : ]
+		this.θut = tt.thetau
+		this.θrt = tt.thetar
 
 		# override parameters from dict par, if any
         if length(par) > 0
