@@ -177,18 +177,21 @@ area(m::Model) = m.ϕ + m.Sr + m.Srh
 update a single region a parameter vector at choices `x`.
 """
 function update!(m::Region,p::Param,x::Vector{Float64})
-	m.r    = x[1]   # land rent
-	m.Lr   = x[2]   # employment in rural sector
-	m.pr   = x[3]   # relative price rural good
-	m.Sr   = x[4]   # amount of land used in rural production
+	m.ρr    = x[1]
+	m.ϕ    = x[2]
+	m.r    = x[3]   # land rent
+	m.Lr   = x[4]   # employment in rural sector
+	m.pr   = x[5]   # relative price rural good
+	m.Sr   = x[6]   # amount of land used in rural production
 
 	# update equations
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
-	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
+	m.wr   = m.wu0 - τ(m.ϕ,m.ϕ,p)
+	# m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
+	# m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = 0.059
-	m.ϕ    = getfringe(p.θu, m.wr ,p)
+	# m.ϕ    = getfringe(p.θu, m.wr ,p)
 
 	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
@@ -332,19 +335,24 @@ end
 compute system of equations for the general (with flexible ϵ).
 """
 function Eqsys!(F::Vector{Float64},m::Region,p::Param)
-	# land market clearing: after equation (20)
-	F[1] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
-	# F[1] = m.ρr - 0.059
+
+	F[1] = m.wr - foc_Lr(m.Lr / m.Sr , m.pr, p)
+	F[2] = m.ρr - foc_Sr(m.Lr / m.Sr , m.pr, p)
 
 	# city size - Urban population relationship: equation (19)
-	F[2] = m.Lu - m.iDensity
+	F[3] = m.Lu - m.iDensity
 
 	#  total land rent per capita: equation (23)
-	F[3] = m.r * p.L - m.iq - m.ρr * (p.S - m.ϕ)
+	F[4] = m.r * p.L - m.iq - m.ρr * (m.Sr + m.Srh)
+
+	# land market clearing: after equation (20)
+	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
+	# F[1] = m.ρr - 0.059
+
 
 	# urban goods market clearing. equation before (25) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
-	F[4] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
+	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
 end
 
 
@@ -507,7 +515,7 @@ end
 
 
 
-# 
+#
 # Model Component Functions
 
 
@@ -623,7 +631,8 @@ end
 
 
 "housing demand at location ``l``"
-h(l::Float64,p::Param,m::Model) = (p.γ / m.qr) * xsu(l,p,m)^((p.γ-1)/p.γ) * m.xsr^(1/p.γ)
+# h(l::Float64,p::Param,m::Model) = (p.γ / m.qr) * xsu(l,p,m)^((p.γ-1)/p.γ) * m.xsr^(1/p.γ)
+h(l::Float64,p::Param,m::Model) = p.γ * (w(l,m.ϕ,p) + m.r - m.pr * p.cbar + p.sbar) / q(l,p,m)
 
 "housing supply at location ``l``"
 H(l::Float64,p::Param,m::Model) = χ(l,m.ϕ,p) * q(l,p,m).^ϵ(l,m.ϕ,p)

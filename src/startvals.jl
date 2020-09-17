@@ -3,7 +3,7 @@ function nocommute!(F::Vector,x::Vector,p::Param)
 	gamma2 = p.γ / (1 + p.ϵr)
 
 	ρ = x[1]
-	Lr = x[2]  
+	Lr = x[2]
 
 	Lu = p.L - Lr
 	wu = p.θu*Lu^p.η
@@ -11,8 +11,8 @@ function nocommute!(F::Vector,x::Vector,p::Param)
 	Sr = (((1 - p.α)/ p.α) * wr / ρ)^p.σ * Lr # farm land input
 	r  = ρ * (p.S - p.λ) / p.L
 	pr = wr / (p.α * p.θr) * (p.α + (1-p.α) * (Lr / Sr)^((1-p.σ)/p.σ))^(1/(1-p.σ))
-	ϕ  = gamma2 * (wu + r - pr * p.cbar + p.sbar ) * Lu / (ρ) 
-	Srh= gamma2 * (wr + r - pr * p.cbar + p.sbar ) * Lr / (ρ) 
+	ϕ  = gamma2 * (wu + r - pr * p.cbar + p.sbar ) * Lu / (ρ)
+	Srh= gamma2 * (wr + r - pr * p.cbar + p.sbar ) * Lr / (ρ)
 
 	F[1] = (1 - p.γ) * (1 - p.ν) * (wr + r - pr * p.cbar + p.sbar ) + p.ϵr * ρ * (Srh + ϕ) - p.sbar * p.L - Lu * p.θu
 	F[2] = Sr + Srh + ϕ - (p.S - p.λ)
@@ -25,17 +25,17 @@ function stmodel(p::Param)
 	gamma2 = p.γ / (1 + p.ϵr)
 
 	ρ  = x00.zero[1]
-	Lr = x00.zero[2]  
+	Lr = x00.zero[2]
 	Lu = p.L - Lr
 	wu = p.θu*Lu^p.η
 	wr = wu
 	Sr = (((1 - p.α)/ p.α) * wr / ρ)^p.σ * Lr # farm land input
 	r  = ρ * (p.S - p.λ) / p.L
 	pr = wr / (p.α * p.θr) * (p.α + (1-p.α) * (Lr / Sr)^((1-p.σ)/p.σ))^(1/(1-p.σ))
-	ϕ  = gamma2 * (wu + r - pr * p.cbar + p.sbar ) * Lu / (ρ) 
-	Srh= gamma2 * (wr + r - pr * p.cbar + p.sbar ) * Lr / (ρ) 
+	ϕ  = gamma2 * (wu + r - pr * p.cbar + p.sbar ) * Lu / (ρ)
+	Srh= gamma2 * (wr + r - pr * p.cbar + p.sbar ) * Lr / (ρ)
 
-	(r = r, Lr = Lr, pr = pr, Sr = Sr)
+	(ρ = ρ, ϕ = ϕ/10, r = r, Lr = Lr, pr = pr, Sr = Sr)
 
 end
 
