@@ -23,8 +23,8 @@ mutable struct Param
 	cτ     :: Float64   # efficiency of transport technology
 	ζ      :: Float64   # valuation of commuting time in terms of forgone wages
 	a      :: Float64   # implied combination of above parameters
-	# ew     :: Float64   # exponent on wu (equation 5 in commutingtech)
-	# el     :: Float64   # exponent on l (equation 5 in commutingtech)
+	taum     :: Float64   # exponent on wu (equation 5 in commutingtech)
+	taul     :: Float64   # exponent on l (equation 5 in commutingtech)
 
 
 	α     :: Float64 # labor weight on farm sector production function
@@ -77,8 +77,8 @@ mutable struct Param
 		this.S = 1.0  # set default values for space and population
 		this.L = 1.0
 		thetas = smooth_θ(this.T, this.ma, this.mag)[1]
-		this.θut = thetas[:θu]
-		this.θrt = thetas[:θr]
+		this.θut = thetas[:θu] .* 0.32
+		this.θrt = thetas[:θr] .* 0.32
 
 		# override parameters from dict par, if any
         if length(par) > 0
@@ -132,7 +132,13 @@ mutable struct Param
 		if this.ζ > 1.0 || this.ζ < 0.0 error("ζ ∈ (0,1) violated") end
 		if this.ηl > 1.0 || this.ηl < 0.0 error("ηl ∈ (0,1) violated") end
 		# derived parameters
-		this.a = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))
+		this.a = this.cτ
+		# this.a = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))
+		this.taum = 1.0
+		# this.taum = this.ηm / (1+this.ηm)
+		this.taul = (this.ηm+this.ηl) / (1+this.ηm)
+		println("taum = $(this.taum)")
+		println("taul = $(this.taul)")
 		# this.ew = (-1)/(1+this.ηm)
 		# this.el = (this.ηm + this.ηl)/(1+this.ηm)
 		# as ηm goes to infinity the transport cost goes to 2 ζ w l

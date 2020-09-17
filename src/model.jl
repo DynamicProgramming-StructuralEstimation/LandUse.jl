@@ -487,7 +487,7 @@ end
 function solve!(F,x,p::Param,m::Model)
 	# println(x)
 	if any( x .< 0 )
-		# F[:] .= PEN
+		F[:] .= PEN
 	else
 		update!(m,p,x)
 		if isa(m,FModel)
@@ -507,20 +507,23 @@ end
 
 
 
-
+# 
 # Model Component Functions
+
+
+
 
 mode(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm))
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
 "commuting cost: location x → cost"
-τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.ηm / (1+p.ηm)) * x^((p.ηm+p.ηl) / (1+p.ηm))
+τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.taul)
 
 
 
 "inverse commuting cost. cost x → location. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
-invτ(x::Float64,p::Param) = ( x / ( p.a * p.θu^(p.ηm / (1+p.ηm))) )^((1+p.ηm) / (p.ηm+p.ηl))
+invτ(x::Float64,p::Param) = ( x / ( p.a * p.θu^(p.taum)) )^(1.0/p.taul)
 
 # old versions
 # invτ(x::Float64,p::Param) = ( x * p.θu^(p.ζ) / (p.τ) )^(1/p.τ1)
@@ -541,7 +544,7 @@ which can be rearranged to obtain a map from ``w(0) - w_r = \\tau(\\phi)``.
 The function takes ``w(0) - w_r`` as argument `x`. then we give ``\\tau(\\phi)``
 	to its inverse function to get back ``\\phi``
 """
-getfringe(w0::Float64,wr::Float64,p::Param) = invτ(w0 - wr,p)
+getfringe(w0::Float64,wr::Float64,p::Param) = w0 > wr ? invτ(w0 - wr,p) : 0.0
 
 "urban wage at location ``l``"
 wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(l,ϕ,p)

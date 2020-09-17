@@ -579,7 +579,8 @@ function traceplot(x::NLsolve.SolverResults,it)
 	xt = xtrace(x)
 	p1 = plot(ft,title = "Ftrace $it",
 	         label = ["Land" "Citysize" "Rent" "Urban good"],
-			 xlabel = "iteration")
+			 xlabel = "iteration",
+			 legend = :bottomright)
 	p2 = plot(xt,title = "xtrace $it",label = ["r" "Lr" "pr" "Sr"], xlabel = "iteration")
 	# p2 = plot(xt[1:nrows,:],title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K)),xlabel = "iteration")
 	pl = plot(p1,p2,layout = (1,2))
