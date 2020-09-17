@@ -6,7 +6,7 @@ ftrace(x::NLsolve.SolverResults) = vcat([(x.trace[i].metadata["f(x)"])' for i in
 
 function solve_once(p::Param,m0::Model,x0::Vector{Float64})
 	nlsolve((F,x) -> solve!(F,x,p,m0),x0,iterations = 100,store_trace = p.trace, extended_trace = p.trace)
-end	
+end
 
 function reduce_θ_step!(p::Param)
 	# reduce step size
@@ -21,7 +21,7 @@ function x0grid(m,p,x0,it)
 	# m.pr   = x[3]   # relative price rural good
 	# m.Sr   = x[4]   # amount of land used in rural production
 
-	r1 = solve_once(p,m,x0)  
+	r1 = solve_once(p,m,x0)
 	if converged(r1)
 		return r1.zero
 	else
@@ -57,7 +57,7 @@ function trysolve(m,p,x0,it)
 	# targets
 	θr1 = p.θr
 	θu1 = p.θu
-	r1 = solve_once(p,m,solutions[end])  
+	r1 = solve_once(p,m,solutions[end])
 
 	if converged(r1)
 		return r1.zero
@@ -82,7 +82,7 @@ function trysolve(m,p,x0,it)
 						# println("thetau0 = $θu0")
 						# println("thetar0 = $θr0")
 						println("thetau = $(p.θu)")
-						r = solve_once(p,m,solutions[end])  
+						r = solve_once(p,m,solutions[end])
 						if converged(r)
 							push!(solutions,r.zero)
 							push!(ps,(p.θu,p.θr))
@@ -106,7 +106,7 @@ function trysolve(m,p,x0,it)
 						# println("thetau0 = $θu0")
 						# println("thetar0 = $θr0")
 						println("thetar = $(p.θr)")
-						r = solve_once(p,m,solutions[end])  
+						r = solve_once(p,m,solutions[end])
 						if converged(r)
 							push!(solutions,r.zero)
 							push!(ps,(p.θu,p.θr))
@@ -142,7 +142,7 @@ function θstepper(p::Param,it::Int,m::Model,x0::Vector)
 	push!(sols,x0)
 
 	# target thetas
-	if abs(p.θu - p.θr) > 0.78	
+	if abs(p.θu - p.θr) > 0.78
 		println("period $it")
 		println("diff=$(p.θu - p.θr)")
 		# go back to previous period, take p.θu, and set p.θu = p.θu_old + half the distance to the new obtained
@@ -266,7 +266,7 @@ function run(T::Type,p::Param)
 	# x0 = get_starts(par=par)
 	# x0 = get_starts(p)   # a T-array of starting vectors
 	# r0 = nlsolve_starts(startval(),p=p)   # a nlsolve result object
-	r0 = startval(p)   
+	r0 = startval(p)
 	x0 = [r0...]
 
 	# if T == Urban
