@@ -16,6 +16,61 @@ end
 
 
 
+function trysolve(m,p,x0,it)
+
+	# solution vector
+	solutions = Vector[]
+	push!(solutions,x0)
+	ps   = Tuple{Float64,Float64}[]
+
+
+	# targets
+	θr1 = p.θr
+	θu1 = p.θu
+	r1 = solve_once(p,m,solutions[end])  
+
+	if r1.converged
+		return r1.zero
+	else
+		# get previous values
+		setperiod!(p,it-1)
+		θr0 = p.θr
+		θu0 = p.θu
+
+		while θu0!=θu1 || θr0!=θr1
+			for current in (:urban, :rural)
+				# current tuple (thetau, thetar)
+				converged = false
+				step = 1.0
+				while !converged
+					if current == :urban
+						p.θu = θu0 + step*(θu1-θu0)
+						r = solve_once(p,m,solutions[end])  
+						if r.converged
+							push!(solutions,r.zero)
+							push!(ps,(p.θu,p.θr))
+							converged = true
+						end
+						step = step / 0.5
+					else
+						p.θr = θr0 + step*(θr1-θr0)
+						r = solve_once(p,m,solutions[end])  
+						if r.converged
+							push!(solutions,r.zero)
+							push!(ps,(p.θu,p.θr))
+							converged = true
+						end
+						step = step / 0.5
+					end
+				end
+				θu0,θr0 = ps[end]  # update lower bounds on thetas
+			end
+		end
+		return solutions[end]
+	end
+
+end
+
 """
 in a given period and given a target param, this step-wise increases thetau
 """
@@ -45,6 +100,7 @@ function θstepper(p::Param,it::Int,m::Model,x0::Vector)
 			if converged(r1)
 				push!(sols, r1.zero)
 			else
+				println("last solution: $(sols[end])")
 
 				error("adaptive searchrrrrrr not converged for thetau = $(p.θu),thetar = $(p.θr)")
 			end
