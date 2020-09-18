@@ -203,7 +203,8 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 	# update!(m[1],p,x0)
 
 	# 2. For all periods
-	for it in 1:length(p.T)
+	# for it in 1:length(p.T)
+	for it in 1:8
 	# for it in 1:20
 		println("period $it")
 		setperiod!(p, it)   # set period on param to it

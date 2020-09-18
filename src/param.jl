@@ -80,7 +80,7 @@ mutable struct Param
 		# thetas = smooth_θ(this.T, this.ma, this.mag)[1]
 
 		# read from disk
-		thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+		thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv")), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
 		# bring on scale we know that works
 		thetas.thetar .= thetas.thetar .* 0.32
 		thetas.thetau .= thetas.thetau .* 0.32

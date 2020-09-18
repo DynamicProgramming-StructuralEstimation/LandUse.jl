@@ -21,7 +21,6 @@ module LandUse
 	using LaTeXTabulars
 	using RollingFunctions
 
-
 	# constants
 	const PEN = 100.0  # penalty for nl solver
 	user = splitdir(homedir())[end]
