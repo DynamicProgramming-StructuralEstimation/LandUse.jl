@@ -44,6 +44,7 @@ mutable struct Param
 	ρrbar :: Float64  # fixed rural land value for urban model
 
 	trace :: Bool  # whether to trace solver
+	iters :: Int  # max iterations
 	ma    :: Int64  # moving average window size
 	mag    :: Float64  # assumed growth for extraploating producivities.
 
@@ -341,8 +342,7 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 	# savefig(pl, joinpath(dbplots,"smooth-thetas.pdf"))
 	#
 	#
-	# CSV.write(joinpath(dbtables,"thetas_data.csv"),select(x, Not([:m1913,:m1938])))
-	# CSV.write(joinpath(dbtables,"thetas_model.csv"),DataFrame(year = dt,theta_u = ret[:θu],theta_r = ret[:θr]))
+	CSV.write(joinpath(dbtables,"thetas_data.csv"),x)
 	#
 	#
 	# (ret, pl)

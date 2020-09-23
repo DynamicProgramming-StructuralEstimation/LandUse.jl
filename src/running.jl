@@ -5,7 +5,7 @@ ftrace(x::NLsolve.SolverResults) = vcat([(x.trace[i].metadata["f(x)"])' for i in
 
 
 function solve_once(p::Param,m0::Model,x0::Vector{Float64})
-	nlsolve((F,x) -> solve!(F,x,p,m0),x0,iterations = 100_000_000,store_trace = p.trace, extended_trace = p.trace)
+	nlsolve((F,x) -> solve!(F,x,p,m0),x0,iterations = p.iters,store_trace = p.trace, extended_trace = p.trace)
 end
 
 function reduce_θ_step!(p::Param)
