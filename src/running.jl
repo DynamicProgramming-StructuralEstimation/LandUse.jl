@@ -255,6 +255,7 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 			push!(m,m0)
 		else
 			println(r1)
+			display(vcat(sols'...))
 			error("not converged")
 		end
 	end
