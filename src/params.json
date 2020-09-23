@@ -185,7 +185,7 @@
 		"symbol" : "\\zeta"
 	},
 	"ma" : {
-		"value" : 3,
+		"value" : 15,
 		"description" : "moving average window size for theta smoother",
 		"type" : "numerical",
 		"symbol" : "ma"

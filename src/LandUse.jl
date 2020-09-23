@@ -19,7 +19,7 @@ module LandUse
 	using CSV
 	using SmoothingSplines
 	using LaTeXTabulars
-	using RollingFunctions
+	using QuantEcon: smooth
 
 
 	# constants
