@@ -197,7 +197,7 @@
 		"symbol" : "mag"
 	},
 	"iters" : {
-		"value" : 100,
+		"value" : 10000,
 		"description" : "max solver iterations",
 		"type" : "numerical",
 		"symbol" : "iters"

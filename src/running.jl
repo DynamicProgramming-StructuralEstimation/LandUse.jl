@@ -243,7 +243,7 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 
 
 		# nlsolve solution
-		r1 = solve_once(p,m0,sols[1])
+		r1 = solve_once(p,m0,sols[it])
 		if p.trace
 			traceplot(r1,it)
 		end
