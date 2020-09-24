@@ -495,7 +495,7 @@ end
 function solve!(F,x,p::Param,m::Model)
 	# println(x)
 	if any( x .< 0 )
-		F[:] .= PEN
+		# F[:] .= PEN
 	else
 		update!(m,p,x)
 		if isa(m,FModel)
