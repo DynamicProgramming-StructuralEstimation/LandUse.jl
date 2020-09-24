@@ -4,9 +4,14 @@
 		"description" : "Total Space",
 		"type" : "country",
 		"symbol" : "S"
-	},"L" : {
-		"value" : 1.0,
-		"description" : "Total Population",
+		},"L" : {
+			"value" : 1.0,
+			"description" : "Total Population in t",
+			"type" : "country",
+			"symbol" : "L"
+	},"Lt" : {
+		"value" : [1.0],
+		"description" : "Total Population by year",
 		"type" : "country",
 		"symbol" : "L"
 	},
@@ -29,7 +34,7 @@
 		"symbol" : "\\eta"
 	},
 	"cτ" : {
-		"value" : 0.65,
+		"value" : 2.5,
 		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
 		"symbol" : "c_\\tau"
@@ -53,13 +58,13 @@
 		"symbol" : "\\nu"
 	},
 	"cbar" : {
-		"value" : 0.2,
+		"value" : 0.754,
 		"description" : "Rural Consumption Good Subsistence Level",
 		"type" : "region",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.0,
+		"value" : 0.2154,
 		"description" : "Initial Urban Good Endowment",
 		"type" : "region",
 		"symbol" : "\\underline{s}"
@@ -83,7 +88,7 @@
 		"symbol" : "\\Psi"
 	},
 	"T" : {
-		"value" : [1815,5,2050],
+		"value" : [1815,15,2050],
 		"description" : "Start year, increments, end year",
 		"type" : "region",
 		"symbol" : "\\mathcal{T}"

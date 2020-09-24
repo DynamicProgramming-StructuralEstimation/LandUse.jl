@@ -8,6 +8,14 @@ function solve_once(p::Param,m0::Model,x0::Vector{Float64})
 	nlsolve((F,x) -> solve!(F,x,p,m0),x0,iterations = p.iters,store_trace = p.trace, extended_trace = p.trace)
 end
 
+function solve1(p::Param)
+	x = stmodel(p)
+	p.taum = 1
+	p.taul = 1
+	m = Region(p)
+	solve_once(p,m,[x...])
+end
+
 function reduce_θ_step!(p::Param)
 	# reduce step size
 	p.θstep -= 0.05
@@ -203,8 +211,8 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 	# update!(m[1],p,x0)
 
 	# 2. For all periods
-	# for it in 1:length(p.T)
-	for it in 1:8
+	for it in 1:length(p.T)
+	# for it in 1:8
 	# for it in 1:20
 		println("period $it")
 		setperiod!(p, it)   # set period on param to it
@@ -244,21 +252,58 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 
 
 		# nlsolve solution
-		r1 = solve_once(p,m0,sols[it])
-		if p.trace
-			traceplot(r1,it)
-		end
-		if converged(r1)
-			push!(sols, r1.zero)
-			update!(m0,p,r1.zero)
-			# println("rmk = $(abs(Rmk(m0,p)))")
-			# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
-			push!(m,m0)
-		else
-			println(r1)
-			display(vcat(sols'...))
-			error("not converged")
-		end
+		x = sols[it]
+
+		# if (it == 1) && ((p.taum != 1.0) || (p.taul != 1.0))
+		# 	taum = p.taum
+		# 	taul = p.taul
+		# 	im =range(1.0,taum,length = 5)
+		# 	il = range(1.0,taul,length = 5)
+		# 	for ix in 1:5
+		#
+		# 		p.taum = im[ix]
+		# 		p.taul = il[ix]
+		# 		println(p.taum)
+		# 		println(p.taul)
+		# 		r1 = solve_once(p,m0,x)
+		# 		if converged(r1)
+		# 			x = r1.zero
+		# 		else
+		# 			error("adapting not converged")
+		# 		end
+		# 	end
+		# 	if p.trace
+		# 		traceplot(r1,it)
+		# 	end
+		# 	if converged(r1)
+		# 		push!(sols, x)
+		# 		update!(m0,p,x)
+		# 		# println("rmk = $(abs(Rmk(m0,p)))")
+		# 		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
+		# 		push!(m,m0)
+		# 	else
+		# 		println(r1)
+		# 		display(vcat(sols'...))
+		# 		error("not converged")
+		# 	end
+		# else
+
+			r1 = solve_once(p,m0,sols[it])
+			if p.trace
+				traceplot(r1,it)
+			end
+			if converged(r1)
+				push!(sols, r1.zero)
+				update!(m0,p,r1.zero)
+				# println("rmk = $(abs(Rmk(m0,p)))")
+				# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
+				push!(m,m0)
+			else
+				println(r1)
+				display(vcat(sols'...))
+				error("not converged")
+			end
+		# end
 	end
 	return (sols, m)
 end

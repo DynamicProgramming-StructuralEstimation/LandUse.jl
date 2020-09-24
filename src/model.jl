@@ -177,6 +177,7 @@ area(m::Model) = m.ϕ + m.Sr + m.Srh
 update a single region a parameter vector at choices `x`.
 """
 function update!(m::Region,p::Param,x::Vector{Float64})
+	# println(x)
 	m.ρr    = x[1]
 	m.ϕ    = x[2]
 	m.r    = x[3]   # land rent
@@ -343,7 +344,7 @@ function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 	F[3] = m.Lu - m.iDensity
 
 	#  total land rent per capita: equation (23)
-	F[4] = m.r * p.L - m.iq - m.ρr * (m.Sr + m.Srh)
+	F[4] = m.iq + m.ρr * (m.Sr + m.Srh) - m.r * p.L
 
 	# land market clearing: after equation (20)
 	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
@@ -353,6 +354,8 @@ function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 	# urban goods market clearing. equation before (25) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
 	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
+
+	F[:] .*= 1000.0
 end
 
 
@@ -526,7 +529,8 @@ mode(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.�
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
 "commuting cost: location x → cost"
-τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.taul)
+# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.taul)
+τ(x::Float64,ϕ::Float64,p::Param) = p.a * p.θu^(p.taum) * x^(p.taul)
 
 
 

@@ -32,6 +32,7 @@ mutable struct Param
 	χr    :: Float64 # "easiness" to convert land into housing in rural sector
 	# χu    :: Float64 # "easiness" to convert land into housing in center of urban sector
 	L     :: Float64 # total population
+	Lt     :: Vector{Float64} # total population by year
 	T     :: StepRange{Int64,Int64}
 	t     :: Int64
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
@@ -76,16 +77,17 @@ mutable struct Param
 		T = length(this.T)
 		this.t = 1
 		this.S = 1.0  # set default values for space and population
-		this.L = 1.0
+		this.Lt = exp.(collect(range(log(1.0),log(1.92),length = T)))
+		this.L = this.Lt[1]
 		# this smoothes thetas
 		# thetas = smooth_θ(this.T, this.ma, this.mag)[1]
 
 		# read from disk
-		thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv")), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+		thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
 		# bring on scale we know that works
-		thetas.thetar .= thetas.thetar .* 0.32
-		thetas.thetau .= thetas.thetau .* 0.32
-		# pick out correct years
+		# thetas.thetar .= thetas.thetar .* 0.32
+		# thetas.thetau .= thetas.thetau .* 0.32
+		# # pick out correct years
 		tt = thetas[ thetas.year .∈ Ref(this.T),  : ]
 		this.θut = tt.thetau
 		this.θrt = tt.thetar
@@ -144,9 +146,10 @@ mutable struct Param
 		# derived parameters
 		this.a = this.cτ
 		# this.a = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))
-		this.taum = 1.0
+		this.taum = 0.55
 		# this.taum = this.ηm / (1+this.ηm)
 		this.taul = (this.ηm+this.ηl) / (1+this.ηm)
+		this.taul = 0.55
 		println("taum = $(this.taum)")
 		println("taul = $(this.taul)")
 		# this.ew = (-1)/(1+this.ηm)
@@ -223,7 +226,12 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 end
 
 
-function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
+function smooth_θ(p::Param; digits = 9)
+
+	dt = p.T
+	ma = p.ma
+	growth = p.mag
+
 	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
 	x = @linq d |>
 		where((:year .<= 2015)) |>    # rural data stops in 2015
@@ -271,6 +279,9 @@ function smooth_θ(dt::StepRange,ma::Int,growth::Float64)
 	x[:, :stheta_rural] .= ifelse.(x.year .> 2000,vcat(zeros(sum(x.year .<= 2000)),[x[x.year .== 2000,:stheta_rural] * growth^i for i in 1:sum(x.year .> 2000)]...),x.stheta_rural)
     x[:, :stheta_urban] .= ifelse.(x.year .> 2000,vcat(zeros(sum(x.year .<= 2000)),[x[x.year .== 2000,:stheta_urban] * growth^i for i in 1:sum(x.year .> 2000)]...),
    							   x.stheta_urban)
+
+    # round to 5 digits
+	x[:, [:stheta_rural, :stheta_urban]] .= mapcols(col -> round.(collect(skipmissing(col)),digits = digits),x[:, [:stheta_rural, :stheta_urban]])
 
     p1 = @df x plot(:year, [:theta_rural :stheta_rural],leg=:left, lw = 2)
 	savefig(p1, joinpath(dbplots,"smooth-theta-rural.pdf"))
@@ -380,6 +391,7 @@ function setperiod!(p::Param,i::Int)
 	setfield!(p, :θr, p.θrt[i])   # this will be constant across region.
 	setfield!(p, :θu, p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
 	# setfield!(p, :τ, p.τ0t[i])
+	setfield!(p, :L, p.Lt[i])
 
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
 	# setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.
