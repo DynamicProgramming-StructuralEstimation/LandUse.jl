@@ -40,7 +40,7 @@ function stmodel(p::Param)
 	ϕ  = gamma2 * (wu + r - pr * p.cbar + p.sbar ) * Lu / (ρ)
 	Srh= gamma2 * (wr + r - pr * p.cbar + p.sbar ) * Lr / (ρ)
 
-	(ρ = ρ, ϕ = ϕ/10, r = r, Lr = Lr, pr = pr, Sr = Sr)
+	(ρr = ρ, ϕ = ϕ/10, r = r, Lr = Lr, pr = pr, Sr = Sr)
 
 end
 

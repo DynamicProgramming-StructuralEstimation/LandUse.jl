@@ -530,7 +530,7 @@ mode(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.�
 
 "commuting cost: location x → cost"
 # τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.taul)
-τ(x::Float64,ϕ::Float64,p::Param) = p.a * p.θu^(p.taum) * x^(p.taul)
+τ(x::Float64,p::Param) = p.a * p.θu^(p.taum) * x^(p.taul)
 
 
 
