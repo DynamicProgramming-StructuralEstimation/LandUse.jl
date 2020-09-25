@@ -1,14 +1,34 @@
 
+using JuMP, GLPK
+
+function tt(a)
+
+	my_square(x) = x^2
+	my_f(x,y) = (x - 1)^2 + (y - 2)^2
+
+	model = Model(Ipopt.Optimizer)
+
+	register(model, :my_f, 2, my_f, autodiff=true)
+	register(model, :my_square, 1, my_square, autodiff=true)
+
+	@variable(model, x[1:2] >= 0.5)
+	@NLexpression(model, tt, my_f(x[1],x[2]))
+	@NLconstraint(model, tt <= a)
+	@NLobjective(model, Min, my_f(x[1], my_square(x[2])))
+	optimize!(model)
+	value.(x)
+
+end
 
 
-"""
-solve model at current paramter p and starting at point x0
-"""
 function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 
+	# p = LandUse.Param()
+	# mo = LandUse.Region(p)
+	# x0 = stmodel2(p)  # starting value
+
 	# setup Model object
-	m = JuMP.Model(Ipopt.Optimizer)
-	set_optimizer_attribute(m, MOI.Silent(), true)
+	m = Model(Ipopt.Optimizer)
 
 	# variables
 	@variable(m, 0.001 <= ρr , start = x0.ρr)
@@ -69,7 +89,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	# F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
 	@NLconstraint(m, Lr * cur + icu + Srh * cu_inputr + icu_input + wu0 * iτ ==  wu0 * (p.L - Lr))
 
-	JuMP.optimize!(m)
+	optimize!(m)
 
 	# check termination status
 	if termination_status(m) != MOI.LOCALLY_SOLVED
@@ -84,7 +104,9 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 		println("Sr   = $(value(Sr))")
 
 		(ρr = value(ρr), ϕ = value(ϕ), r = value(r), Lr = value(Lr), pr = value(pr), Sr = value(Sr))
+
 	end
+
 end
 
 function stmodel2(p::LandUse.Param)
@@ -142,4 +164,19 @@ function nocommute(p::LandUse.Param)
     else
         return (ρ = value(ρ), Lr = value(Lr))
     end
+end
+
+function param_test()
+    p = (a = 4.0,)
+    function f(x,a)
+        (x-a)^2
+    end
+
+    m = Model(Ipopt.Optimizer)
+    JuMP.register(m,:myf, 2, f, autodiff=true)
+
+    @variable(m,x)
+    @NLobjective(m, Min, myf(x,p.a))
+    optimize!(m)
+
 end

@@ -188,7 +188,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# update equations
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = m.wu0 - τ(m.ϕ,m.ϕ,p)
+	m.wr   = m.wu0 - τ(m.ϕ,p)
 	# m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = 0.059
@@ -287,7 +287,7 @@ function integrate!(m::Region,p::Param)
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icr       = (m.ϕ/2) * sum(m.iweights[i] * cr(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.qbar      = (m.ϕ/(m.Lu * 2)) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
@@ -559,10 +559,10 @@ The function takes ``w(0) - w_r`` as argument `x`. then we give ``\\tau(\\phi)``
 getfringe(w0::Float64,wr::Float64,p::Param) = w0 > wr ? invτ(w0 - wr,p) : 0.0
 
 "urban wage at location ``l``"
-wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(l,ϕ,p)
+wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(l,p)
 
 "urban wage at location ``l``"
-wu(l::Float64,ϕ::Float64,p::Param) = wu0(p) .- τ(l,ϕ,p)
+wu(l::Float64,ϕ::Float64,p::Param) = wu0(p) .- τ(l,p)
 
 "urban wage at center"
 wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
@@ -571,7 +571,7 @@ wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
 wu0(p::Param) = p.Ψ * p.θu
 
 "rural wage from indifference condition at ϕ. Eq (11)"
-wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(ϕ,ϕ,p)
+wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(ϕ,p)
 
 "FOC of rural firm wrt labor Lr"
 foc_Lr(L_over_S::Float64,pr::Float64, p::Param) = p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0/ L_over_S )^((p.σ-1)/p.σ))^(1.0 / (p.σ-1))
@@ -581,7 +581,7 @@ foc_Sr(L_over_S::Float64,pr::Float64, p::Param) = (1-p.α)* pr * p.θr * (p.α *
 
 
 "rural wage from indifference condition at ϕ. Eq (11)"
-wr(ϕ::Float64,p::Param) = wu0(p) .- τ(ϕ,ϕ,p)
+wr(ϕ::Float64,p::Param) = wu0(p) .- τ(ϕ,p)
 
 "wage at location ``l``"
 w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)

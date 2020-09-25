@@ -20,6 +20,8 @@ module LandUse
 	using SmoothingSplines
 	using LaTeXTabulars
 	using QuantEcon: smooth
+	using JuMP
+	using Ipopt
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
@@ -47,6 +49,7 @@ module LandUse
 	include("plotter.jl")
 	include("experiments.jl")
 	include("interact.jl")
+	include("jump.jl")
 
 
 

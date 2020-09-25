@@ -10,8 +10,8 @@ end
 
 function solve1(p::Param)
 	x = stmodel(p)
-	p.taum = 1
-	p.taul = 1
+	# p.taum = 1
+	# p.taul = 1
 	m = Region(p)
 	solve_once(p,m,[x...])
 end
@@ -200,9 +200,9 @@ end
 Compute general model solutions for all years. Starts from solution
 obtained for `t=1` and desired slope on elasticity function via [`adapt_ϵ`](@ref)
 """
-function get_solutions(T::Type,x0::Vector{Float64},p::Param)
+function get_solutions(x0::Vector{Float64},p::Param)
 	# m = [Region(p) for it in 1:length(p.T)] # create a general elasticity model for each period
-	m = T[]
+	m = Region[]
 	sols = Vector{Float64}[]  # an empty array of vectors
 	push!(sols, x0)  # first solution is obtained via `adapt_ϵ`
 
@@ -216,7 +216,7 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 	# for it in 1:20
 		println("period $it")
 		setperiod!(p, it)   # set period on param to it
-		m0 = T(p)
+		m0 = Region(p)
 		# println("tau = $(p.τ)")
 
 		# x0 = nlopt_solve(p=p,x0 = sols[it])
@@ -309,39 +309,28 @@ function get_solutions(T::Type,x0::Vector{Float64},p::Param)
 end
 
 
-# function run(;par = Dict())
-function run(T::Type,p::Param)
-	# x0 = get_starts(par=par)
-	# x0 = get_starts(p)   # a T-array of starting vectors
-	# r0 = nlsolve_starts(startval(),p=p)   # a nlsolve result object
-	r0 = startval(p)
-	x0 = [r0...]
+"""
+run model for all time periods
+"""
+function run(p::Param)
 
-	# if T == Urban
-	# 	x0[1] = x0[1][1:3]
-	# end
+	setperiod!(p,1)
+	x0 = startval(p)
+	sols = NamedTuple[]
+	push!(sols,x0)
+	M = Region[]
 
-	# (x1,p) = adapt_ϵ(x0[1],par=par)
-	# println("x0 = $(x0[1])")
+	for it in 1:length(p.T)
+		println(it)
+		setperiod!(p,it)
+		m = Region(p)
+		x = jm(p,m,sols[it])
+		push!(sols,x)
+		update!(m,p,[x...])
+		push!(M,m)
+	end
 
-	setperiod!(p,1)  # go back to period 1
-	# if p.ϵsmax == 0.0
-	# 	# p.ϵs = 0.0
-	# 	x1 = x0[1]
-	# 	@assert p.ϵs == 0.0
-	# else
-	# 	(xt,p) = adapt_ϵ(T(p),p,x0[1])  # adaptive search for higher epsilon in center first period only
-	# 	x1 = xt[1]
-	# end
-
-	# if T == Urban
-	# 	x1[end] = x1[end][1:3]
-	# end
-	# println("x1 = $(x1[end])")
-
-	x,M = get_solutions(T,x0,p)  # get general model solutions
-
-	(x,M,p) # solutions, models, and parameter
+	(sols,M,p) # solutions, models, and parameter
 
 end
 
@@ -383,6 +372,7 @@ function get_urban_sols(x0::Vector{Float64},p::Param)
 end
 
 function runm()
+
 	run(Region,Param())
 end
 
@@ -415,8 +405,8 @@ end
 function run1()
 	p = Param()
 	# x0 = get_starts(par=par)  # nlopt
-	r0 = nlsolve_starts(p=p)    # nlsolve
-	x0 = [r0.zero]
+	r0 = startval(p)    # nlsolve
+	x0 = [r0...]
 
 	# if T == Urban
 	# 	x0[1] = x0[1][1:3]
@@ -426,22 +416,22 @@ function run1()
 	# println("x0 = $(x0[1])")
 
 	setperiod!(p,1)  # go back to period 1
-	if p.ϵsmax == 0.0
-		# p.ϵs = 0.0
-		x1 = x0[1]
-		@assert p.ϵs == 0.0
-	else
-		(xt,p) = adapt_ϵ(T(p),p,x0[1])  # adaptive search for higher epsilon in center first period only
-		x1 = xt[1]
-	end
+	# if p.ϵsmax == 0.0
+	# 	# p.ϵs = 0.0
+	# 	x1 = x0[1]
+	# 	@assert p.ϵs == 0.0
+	# else
+	# 	(xt,p) = adapt_ϵ(T(p),p,x0[1])  # adaptive search for higher epsilon in center first period only
+	# 	x1 = xt[1]
+	# end
 
 	# if T == Urban
 	# 	x1[end] = x1[end][1:3]
 	# end
 	# println("x1 = $(x1[end])")
 
-	p.T = p.T[1:2]
-	x,M = get_solutions(Region,x1,p)  # get general model solutions
+	# p.T = p.T[1:2]
+	x,M = get_solutions(x0,p)  # get general model solutions
 
 	(x,M,p) # solutions, models, and parameter
 
