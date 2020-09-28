@@ -468,7 +468,7 @@ function issue36( ; save=false)
     r[1] = Dict()
 
     p1  = Param() # baseline param: high cbar and low sbar
-    x,M,p0  = run(Region,p1)
+    x,M,p0  = run(p1)
     pl1 = LandUse.ts_plots(M,p1)
 
     r[1][:baselinestats] = Dict(:ruralpop => Dict(:from => M[1].Lr, :to => M[end].Lr),
@@ -479,8 +479,8 @@ function issue36( ; save=false)
     r[1][:prices] = LandUse.plot(pl1[:r_real],pl1[:r_y], layout = (1,2),size = (900,400))
 
 
-    p2 = Param(par = Dict(:cbar => 0.0, :sbar => 1.0)) # low cbar and high sbar
-    x,M,p0  = run(Region,p2)
+    p2 = Param(par = Dict(:cbar => 0.3, :sbar => 0.7)) # low cbar and high sbar
+    x,M,p0  = run(p2)
     pl2 = LandUse.ts_plots(M,p2)
     r[1][:low_cbar] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:phi],
                                 layout = (2,2),link = :x)
@@ -490,18 +490,27 @@ function issue36( ; save=false)
     # i. u grows faster than r
     r[2] = Dict()
     p2 = LandUse.Param(par = Dict(:θu_g => 1.08,:θut => 1.0, :θrt => 1.0,:θr_g => 1.01))
-    x,M,p0  = LandUse.run(LandUse.Region,p2)
+    x,M,p0  = LandUse.run(p2)
     pl2 = LandUse.ts_plots(M,p2)
     r[2][:u_fast] = LandUse.plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],
                                 layout = (2,2),link = :x)
 
     p3 = LandUse.Param(par = Dict(:θu_g => 1.01,:θut => 1.0, :θrt => 1.0,:θr_g => 1.09))
-    x,M,p0  = LandUse.run(LandUse.Region,p3)
+    x,M,p0  = LandUse.run(p3)
     pl3 = LandUse.ts_plots(M,p3)
     r[2][:r_fast] = LandUse.plot(pl3[:pop],pl3[:spending],pl3[:avdensity],pl3[:productivity],
                                 layout = (2,2),link = :x)
 
     r[3] = plot(pl1[:mode],pl1[:ctime],layout = (2,1), link = :x)
+
+    # 4. constant growth in both sectors
+    r[4] = Dict()
+    p = LandUse.Param(par = Dict(:θu_g => 1.1,:θut => 1.0, :θrt => 1.0,:θr_g => 1.1))
+    x,M,p0  = LandUse.run(p)
+    pl2 = LandUse.ts_plots(M,p)
+    r[4] = LandUse.plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],
+                                layout = (2,2),link = :x)
+
 
     # save plots
     if save
@@ -510,6 +519,7 @@ function issue36( ; save=false)
         savefig(r[1][:prices], joinpath(dbplots,"issue36-prices.pdf"))
         savefig(r[2][:u_fast], joinpath(dbplots,"issue36-u-fast.pdf"))
         savefig(r[2][:r_fast], joinpath(dbplots,"issue36-r-fast.pdf"))
+        savefig(r[4], joinpath(dbplots,"issue36-constant.pdf"))
         savefig(r[3], joinpath(dbplots,"issue36-commute.pdf"))
     end
     return r

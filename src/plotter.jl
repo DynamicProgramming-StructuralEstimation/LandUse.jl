@@ -26,14 +26,17 @@ function ts_plots(M,p::Param;fixy = false)
 	ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
 	dd[:pop] = @df ds2 plot(:year, :value, group = :variable,
 					 linewidth = 2, title = "Population",
-					 ylims = (0,1), marker = mmark, legend = :right)
+					 ylims = (0,2), marker = mmark, legend = :right)
 
+	dd[:ρ0_real] = @df d plot(:year, :ρ0_real, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
 	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
 	dd[:qbar] = @df d plot(:year, :qbar, linewidth = 2, color = "black", leg =false, title = "Average House Prices", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
+	dd[:qbar_real] = @df d plot(:year, :qbar_real, linewidth = 2, color = "black", leg =false, title = "Average House Prices", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
 	dd[:ρ0_y] = @df d plot(:year, :ρ0_y, linewidth = 2, color = "black", leg =false, title = "Central Rents over Income", marker = mmark, ylims = fixy ? (0.0,200.0) : false )
  	dd[:ρr] = @df d plot(:year, :ρr, linewidth = 2, color = "black", leg =false, title = "Fringe Land Values", marker = mmark, ylims = fixy ? (0.19,0.36) : false )
  	dd[:q0] = @df d plot(:year, :q0, linewidth = 2, color = "black", leg =false, title = "Central House Prices", marker = mmark, ylims = fixy ? (0.0,5.0) : false )
  	dd[:qr] = @df d plot(:year, :qr, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices", marker = mmark, ylims = fixy ? (0.5,1.5) : false )
+ 	dd[:qr_real] = @df d plot(:year, :qr_real, linewidth = 2, color = "black", leg =false, title = "Fringe House Prices", marker = mmark, ylims = fixy ? (0.5,1.5) : false )
 	dd[:hr] = @df d plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand", marker = mmark, ylims = fixy ? (0.0,5.0) : false )
 
 	df = @linq d |>
@@ -110,7 +113,7 @@ function ts_plots(M,p::Param;fixy = false)
 	# ds4 = stack(select(d,:year,:pr), Not(:year))
 	df4 = @linq d |>
 		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
-		transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) )
+		transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,p),:ϕ) .* :ϕ) )
 		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
 
 	ds4 = stack(select(df4,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr, :avgd), Not(:year))
@@ -152,6 +155,20 @@ function ts_plots(M,p::Param;fixy = false)
 	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
 	dd
 end
+
+
+
+
+
+
+# archive
+
+
+
+
+
+
+
 
 
 "make separate time series plot for each region"

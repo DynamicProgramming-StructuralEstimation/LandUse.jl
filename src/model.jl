@@ -701,7 +701,7 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	df[1,:p_index] = M[1].pr
 	for i in 1:tt
 		setperiod!(p,i)
-		df[i, :τ_ts] = τ(initϕ, df[i, :ϕ] , p)
+		df[i, :τ_ts] = τ(initϕ, p)
 		if i > 1
 			df[i, :p_laspeyres] = ( M[i].pr * M[i-1].Yr + M[i-1].Yu ) / ( M[i-1].pr *  M[i-1].Yr + M[i-1].Yu )
 			df[i, :p_paasche]   = ( M[i].pr * M[i].Yr + M[i].Yu ) / ( M[i-1].pr *  M[i].Yr + M[i].Yu )
@@ -711,6 +711,9 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 		end
 	end
 	df[!,:r_real] = df[!,:r] ./ df[!, :p_index]
+	df[!,:qr_real] = df[!,:qr] ./ df[!, :p_index]
+	df[!,:qbar_real] = df[!,:qbar] ./ df[!, :p_index]
+	df[!,:ρ0_real] = df[!,:ρ0] ./ df[!, :p_index]
 
 	df
 end

@@ -146,10 +146,10 @@ mutable struct Param
 		# derived parameters
 		this.a = this.cτ
 		# this.a = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))
-		this.taum = 0.571
+		# this.taum = 0.571
 		# this.taum = this.ηm / (1+this.ηm)
-		this.taul = (this.ηm+this.ηl) / (1+this.ηm)
-		this.taul = 0.571
+		# this.taul = (this.ηm+this.ηl) / (1+this.ηm)
+		# this.taul = 0.571
 		# println("taum = $(this.taum)")
 		# println("taul = $(this.taul)")
 		# this.ew = (-1)/(1+this.ηm)

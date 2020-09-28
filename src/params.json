@@ -51,6 +51,18 @@
 		"type" : "region",
 		"symbol" : "\\eta_l"
 	},
+	"taum" : {
+		"value" : 0.571,
+		"description" : "elasticity of F commuting cost wrt location",
+		"type" : "region",
+		"symbol" : "taum"
+	},
+	"taul" : {
+		"value" : 0.571,
+		"description" : "elasticity of F commuting cost wrt location",
+		"type" : "region",
+		"symbol" : "taum"
+	},
 	"ν" : {
 		"value" : 0.015,
 		"description" : "Preference Weight for Rural Consumption Good",

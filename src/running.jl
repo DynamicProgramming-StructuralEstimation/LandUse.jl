@@ -8,6 +8,137 @@ function solve_once(p::Param,m0::Model,x0::Vector{Float64})
 	nlsolve((F,x) -> solve!(F,x,p,m0),x0,iterations = p.iters,store_trace = p.trace, extended_trace = p.trace)
 end
 
+
+"""
+run model for all time periods
+"""
+function run(p::Param; jump = true)
+
+	setperiod!(p,1)
+	x0 = startval(p)
+	sols = NamedTuple[]
+	push!(sols,x0)
+	M = Region[]
+
+	for it in 1:length(p.T)
+		# println(it)
+		setperiod!(p,it)
+		m = Region(p)
+		if jump
+			x = jm(p,m,sols[it])
+			push!(sols,x)
+			update!(m,p,[x...])
+		else
+			x = solve_once(p,m,[sols[it]...])
+			if converged(x)
+				push!(sols,(; zip(keys(x0), x.zero)...))
+				update!(m,p,x.zero)
+			else
+				error("nlsolve not converged in period $it")
+			end
+		end
+		push!(M,m)
+	end
+
+	(sols[2:end],M,p) # solutions, models, and parameter
+
+end
+
+function runm(; jump = true)
+	run(Param(), jump = jump)
+end
+
+
+
+
+# archive
+
+
+"""
+in a given period and given a target param, this step-wise increases thetau
+"""
+function θstepper(p::Param,it::Int,m::Model,x0::Vector)
+
+	sols = Vector[]
+
+	push!(sols,x0)
+
+	# target thetas
+	if abs(p.θu - p.θr) > 0.78
+		println("period $it")
+		println("diff=$(p.θu - p.θr)")
+		# go back to previous period, take p.θu, and set p.θu = p.θu_old + half the distance to the new obtained
+
+		θus = range(p.θut[it-1],stop = p.θu, length = p.nsteps)
+		θrs = range(p.θrt[it-1],stop = p.θr, length = p.nsteps)
+
+		for i in 1:length(θus)
+			p.θu = θus[i]
+			p.θr = θrs[i]
+			println("thetau = $(p.θu),thetar = $(p.θr)")
+			r1 = solve_once(p,m,sols[i])
+			if p.trace
+				traceplot(r1,it)
+			end
+			if converged(r1)
+				push!(sols, r1.zero)
+			else
+				println("last solution: $(sols[end])")
+
+				error("adaptive searchrrrrrr not converged for thetau = $(p.θu),thetar = $(p.θr)")
+			end
+		end
+
+		# if that converges, go to final values
+
+		# else make step size smaller
+	else
+		r1 = solve_once(p,m,sols[1])
+		if p.trace
+			traceplot(r1,it)
+		end
+		if converged(r1)
+			push!(sols, r1.zero)
+		else
+			error("not converged")
+		end
+	end
+
+
+	return sols[end]
+end
+
+
+
+
+
+function matlab_bm()
+	println("starting values at same parameter vector:")
+	display(vcat(LandUse.get_starts()'...))
+
+	println("timing full model run")
+	@time (x,M,p) = run();
+
+end
+
+function make_space_gif()
+	x,C,cpar,par = LandUse.runk()
+	anim_space(C,par)
+end
+
+function make_ts_space_gif()
+	x,C,cpar,par = LandUse.runk()
+	plot_ts_xsect(C,par,1)
+end
+
+function plotsingle()
+	p1  = Param() # baseline param: high cbar and low sbar
+	x,M,p0  = run(Region,p1)
+	LandUse.ts_plots(M,p1)
+end
+
+
+
 function solve1(p::Param)
 	x = stmodel(p)
 	# p.taum = 1
@@ -138,238 +269,4 @@ function trysolve(m,p,x0,it)
 		return solutions[end]
 	end
 
-end
-
-"""
-in a given period and given a target param, this step-wise increases thetau
-"""
-function θstepper(p::Param,it::Int,m::Model,x0::Vector)
-
-	sols = Vector[]
-
-	push!(sols,x0)
-
-	# target thetas
-	if abs(p.θu - p.θr) > 0.78
-		println("period $it")
-		println("diff=$(p.θu - p.θr)")
-		# go back to previous period, take p.θu, and set p.θu = p.θu_old + half the distance to the new obtained
-
-		θus = range(p.θut[it-1],stop = p.θu, length = p.nsteps)
-		θrs = range(p.θrt[it-1],stop = p.θr, length = p.nsteps)
-
-		for i in 1:length(θus)
-			p.θu = θus[i]
-			p.θr = θrs[i]
-			println("thetau = $(p.θu),thetar = $(p.θr)")
-			r1 = solve_once(p,m,sols[i])
-			if p.trace
-				traceplot(r1,it)
-			end
-			if converged(r1)
-				push!(sols, r1.zero)
-			else
-				println("last solution: $(sols[end])")
-
-				error("adaptive searchrrrrrr not converged for thetau = $(p.θu),thetar = $(p.θr)")
-			end
-		end
-
-		# if that converges, go to final values
-
-		# else make step size smaller
-	else
-		r1 = solve_once(p,m,sols[1])
-		if p.trace
-			traceplot(r1,it)
-		end
-		if converged(r1)
-			push!(sols, r1.zero)
-		else
-			error("not converged")
-		end
-	end
-
-
-	return sols[end]
-end
-
-"""
-	get_solutions()
-
-Compute general model solutions for all years. Starts from solution
-obtained for `t=1` and desired slope on elasticity function via [`adapt_ϵ`](@ref)
-"""
-function get_solutions(x0::Vector{Float64},p::Param)
-	# m = [Region(p) for it in 1:length(p.T)] # create a general elasticity model for each period
-	m = Region[]
-	sols = Vector{Float64}[]  # an empty array of vectors
-	push!(sols, x0)  # first solution is obtained via `adapt_ϵ`
-
-	# update t=1 model
-	# setperiod!(p, 1)   # set period on param to it=1
-	# update!(m[1],p,x0)
-
-	# 2. For all periods
-	for it in 1:length(p.T)
-	# for it in 1:8
-	# for it in 1:20
-		println("period $it")
-		setperiod!(p, it)   # set period on param to it
-		m0 = Region(p)
-		# println("tau = $(p.τ)")
-
-		# x0 = nlopt_solve(p=p,x0 = sols[it])
-		# if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
-		# 	push!(sols, x0[2])
-		# 	update!(m0,p,x0[2])
-		# 	push!(m,m0)
-		# else
-		# 	error("type $T Model not converged in period $it")
-		# end
-		# m.r    = x[1]   # land rent
-		# m.Lr   = x[2]   # employment in rural sector
-		# m.pr   = x[3]   # relative price rural good
-		# m.Sr   = x[4]   # amount of land used in rural production
-
-		# nlopt solution
-		# x0 = nlopt_solve(m0,p,sols[it])
-		# if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
-		# 	push!(sols, x0[2])
-		# 	update!(m0,p,x0[2])
-		# 	push!(m,m0)
-		# else
-		# 	error("type $T Model not converged in period $it")
-		# end
-
-		# x = θstepper(p,it,m0,sols[it])
-		# push!(sols, x)
-		# update!(m0,p,x)
-		# push!(m,m0)
-
-		# x = trysolve(m0,p,sols[it],it)
-		# x = x0grid(m0,p,sols[it],it)
-
-
-		# nlsolve solution
-		x = sols[it]
-
-		# if (it == 1) && ((p.taum != 1.0) || (p.taul != 1.0))
-		# 	taum = p.taum
-		# 	taul = p.taul
-		# 	im =range(1.0,taum,length = 5)
-		# 	il = range(1.0,taul,length = 5)
-		# 	for ix in 1:5
-		#
-		# 		p.taum = im[ix]
-		# 		p.taul = il[ix]
-		# 		println(p.taum)
-		# 		println(p.taul)
-		# 		r1 = solve_once(p,m0,x)
-		# 		if converged(r1)
-		# 			x = r1.zero
-		# 		else
-		# 			error("adapting not converged")
-		# 		end
-		# 	end
-		# 	if p.trace
-		# 		traceplot(r1,it)
-		# 	end
-		# 	if converged(r1)
-		# 		push!(sols, x)
-		# 		update!(m0,p,x)
-		# 		# println("rmk = $(abs(Rmk(m0,p)))")
-		# 		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
-		# 		push!(m,m0)
-		# 	else
-		# 		println(r1)
-		# 		display(vcat(sols'...))
-		# 		error("not converged")
-		# 	end
-		# else
-
-			r1 = solve_once(p,m0,sols[it])
-			if p.trace
-				traceplot(r1,it)
-			end
-			if converged(r1)
-				push!(sols, r1.zero)
-				update!(m0,p,r1.zero)
-				# println("rmk = $(abs(Rmk(m0,p)))")
-				# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
-				push!(m,m0)
-			else
-				println(r1)
-				display(vcat(sols'...))
-				error("not converged")
-			end
-		# end
-	end
-	return (sols, m)
-end
-
-
-"""
-run JuMP model for all time periods
-"""
-function run(p::Param; jump = true)
-
-	setperiod!(p,1)
-	x0 = startval(p)
-	sols = NamedTuple[]
-	push!(sols,x0)
-	M = Region[]
-
-	for it in 1:length(p.T)
-		# println(it)
-		setperiod!(p,it)
-		m = Region(p)
-		if jump
-			x = jm(p,m,sols[it])
-			push!(sols,x)
-			update!(m,p,[x...])
-		else
-			x = solve_once(p,m,[sols[it]...])
-			if converged(x)
-				push!(sols,(; zip(keys(x0), x.zero)...))
-				update!(m,p,x.zero)
-			else
-				error("nlsolve not converged in period $it")
-			end
-		end
-		push!(M,m)
-	end
-
-	(sols[2:end],M,p) # solutions, models, and parameter
-
-end
-
-function runm(; jump = true)
-	run(Param(), jump = jump)
-end
-
-
-function matlab_bm()
-	println("starting values at same parameter vector:")
-	display(vcat(LandUse.get_starts()'...))
-
-	println("timing full model run")
-	@time (x,M,p) = run();
-
-end
-
-function make_space_gif()
-	x,C,cpar,par = LandUse.runk()
-	anim_space(C,par)
-end
-
-function make_ts_space_gif()
-	x,C,cpar,par = LandUse.runk()
-	plot_ts_xsect(C,par,1)
-end
-
-function plotsingle()
-	p1  = Param() # baseline param: high cbar and low sbar
-	x,M,p0  = run(Region,p1)
-	LandUse.ts_plots(M,p1)
 end
