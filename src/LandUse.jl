@@ -19,8 +19,9 @@ module LandUse
 	using CSV
 	using SmoothingSplines
 	using LaTeXTabulars
-	using RollingFunctions
-
+	using QuantEcon: smooth
+	using JuMP
+	using Ipopt
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
@@ -48,6 +49,7 @@ module LandUse
 	include("plotter.jl")
 	include("experiments.jl")
 	include("interact.jl")
+	include("jump.jl")
 
 
 

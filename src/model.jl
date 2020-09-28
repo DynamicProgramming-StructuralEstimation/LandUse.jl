@@ -15,6 +15,7 @@ mutable struct Region <: Model
 	ρ0   :: Float64     # land price in center of city
 	ρ0_y :: Float64     # land price in center of city over income
 	q0   :: Float64     # housing price in center of city
+	qq1   :: Float64     # housing price first quintile
 	qbar :: Float64     # average housing price in city
 	Lr   :: Float64   # employment in rural sector
 	Lu   :: Float64   # employment in urban sector
@@ -85,6 +86,7 @@ mutable struct Region <: Model
 		m.ρ0   = NaN
 		m.ρ0_y   = NaN
 		m.q0   = NaN
+		m.qq1   = NaN
 		m.qbar = NaN
 		m.Lr   = NaN
 		m.Lu   = NaN
@@ -175,23 +177,28 @@ area(m::Model) = m.ϕ + m.Sr + m.Srh
 update a single region a parameter vector at choices `x`.
 """
 function update!(m::Region,p::Param,x::Vector{Float64})
-	m.r    = x[1]   # land rent
-	m.Lr   = x[2]   # employment in rural sector
-	m.pr   = x[3]   # relative price rural good
-	m.Sr   = x[4]   # amount of land used in rural production
+	# println(x)
+	m.ρr    = x[1]
+	m.ϕ    = x[2]
+	m.r    = x[3]   # land rent
+	m.Lr   = x[4]   # employment in rural sector
+	m.pr   = x[5]   # relative price rural good
+	m.Sr   = x[6]   # amount of land used in rural production
 
 	# update equations
 	m.Lu   = p.L - m.Lr   # employment in urban sector
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
-	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
+	m.wr   = m.wu0 - τ(m.ϕ,p)
+	# m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
+	# m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = 0.059
-	m.ϕ    = getfringe(m.wr / p.θu,p)
+	# m.ϕ    = getfringe(p.θu, m.wr ,p)
 
 	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
 	m.qr   = qr(p,m)
 	m.q0   = q(0.0,p,m)
+	m.qq1   = q(m.ϕ / 5,p,m)
 	m.ρ0   = ρ(0.0,p,m)
 	m.Hr   = H(m.ϕ,p,m)
 	m.hr   = h(m.ϕ,p,m)
@@ -280,7 +287,7 @@ function integrate!(m::Region,p::Param)
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icr       = (m.ϕ/2) * sum(m.iweights[i] * cr(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * (m.wu0 - w(m.Lu,m.nodes[i],m.ϕ,p)) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.qbar      = (m.ϕ/(m.Lu * 2)) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
@@ -329,19 +336,25 @@ end
 compute system of equations for the general (with flexible ϵ).
 """
 function Eqsys!(F::Vector{Float64},m::Region,p::Param)
-	# land market clearing: after equation (20)
-	F[1] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
-	# F[1] = m.ρr - 0.059
+
+	F[1] = m.wr - foc_Lr(m.Lr / m.Sr , m.pr, p)
+	F[2] = m.ρr - foc_Sr(m.Lr / m.Sr , m.pr, p)
 
 	# city size - Urban population relationship: equation (19)
-	F[2] = m.Lu - m.iDensity
+	F[3] = m.Lu - m.iDensity
 
 	#  total land rent per capita: equation (23)
-	F[3] = m.r * p.L - m.iq - m.ρr * (p.S - m.ϕ)
+	F[4] = m.iq + m.ρr * (m.Sr + m.Srh) - m.r * p.L
+
+	# land market clearing: after equation (20)
+	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
+	# F[1] = m.ρr - 0.059
+
 
 	# urban goods market clearing. equation before (25) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
-	F[4] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
+	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.iτ - wu0(m.Lu, p)*m.Lu
+
 end
 
 
@@ -415,7 +428,7 @@ function update!(m::FModel,p::Param,x::Vector{Float64})
 	# m.wr   = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2
 	# m.ρr   = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
 	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
-	m.ϕ = getfringe(m.wr / p.θu,p)
+	m.ϕ = getfringe(p.θu, m.wr ,p)
 
 	m.xsr  = m.wr + m.r - m.pr * p.cbar + p.sbar
 	# m.xsu = m.wu0 + m.r - m.pr * p.cbar - p.sbar
@@ -484,7 +497,7 @@ end
 function solve!(F,x,p::Param,m::Model)
 	# println(x)
 	if any( x .< 0 )
-		F[:] .= PEN
+		# F[:] .= PEN
 	else
 		update!(m,p,x)
 		if isa(m,FModel)
@@ -504,20 +517,24 @@ end
 
 
 
-
+#
 # Model Component Functions
+
+
+
 
 mode(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm))
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
-"commuting cost"
-τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.τ * p.θu^(p.ew) * x^p.el
+"commuting cost: location x → cost"
+# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.taul)
+τ(x::Float64,p::Param) = p.a * p.θu^(p.taum) * x^(p.taul)
 
 
 
-"inverse commuting cost. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
-invτ(x::Float64,p::Param) = ( x / ( p.τ * p.θu^(p.ew)) )^(1/p.el)
+"inverse commuting cost. cost x → location. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
+invτ(x::Float64,p::Param) = ( x / ( p.a * p.θu^(p.taum)) )^(1.0/p.taul)
 
 # old versions
 # invτ(x::Float64,p::Param) = ( x * p.θu^(p.ζ) / (p.τ) )^(1/p.τ1)
@@ -530,20 +547,21 @@ Get Fringe from indifference condition
 At the fringe ``\\phi`` we have the condition
 
 ```math
-w(0)(1 - \\tau(\\phi)) = w_r
+w(0) - \\tau(\\phi) = w_r
 ```
 
-which can be inverted to obtain a map from ``\\frac{w_r}{\\theta_u}`` to ``\\phi``.
+which can be rearranged to obtain a map from ``w(0) - w_r = \\tau(\\phi)``.
 
-The function takes ``\\frac{w_r}{\\theta_u}`` as argument `x`.
+The function takes ``w(0) - w_r`` as argument `x`. then we give ``\\tau(\\phi)``
+	to its inverse function to get back ``\\phi``
 """
-getfringe(x::Float64,p::Param) = (x > 1.0) ? 0.0 : invτ(1.0 - x,p)
+getfringe(w0::Float64,wr::Float64,p::Param) = w0 > wr ? invτ(w0 - wr,p) : 0.0
 
 "urban wage at location ``l``"
-wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) * (1.0 .- τ(l,ϕ,p))
+wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(l,p)
 
 "urban wage at location ``l``"
-wu(l::Float64,ϕ::Float64,p::Param) = wu0(p) * (1.0 .- τ(l,ϕ,p))
+wu(l::Float64,ϕ::Float64,p::Param) = wu0(p) .- τ(l,p)
 
 "urban wage at center"
 wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
@@ -552,7 +570,7 @@ wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
 wu0(p::Param) = p.Ψ * p.θu
 
 "rural wage from indifference condition at ϕ. Eq (11)"
-wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p)*(1.0 .- τ(ϕ,ϕ,p))
+wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(ϕ,p)
 
 "FOC of rural firm wrt labor Lr"
 foc_Lr(L_over_S::Float64,pr::Float64, p::Param) = p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0/ L_over_S )^((p.σ-1)/p.σ))^(1.0 / (p.σ-1))
@@ -562,7 +580,7 @@ foc_Sr(L_over_S::Float64,pr::Float64, p::Param) = (1-p.α)* pr * p.θr * (p.α *
 
 
 "rural wage from indifference condition at ϕ. Eq (11)"
-wr(ϕ::Float64,p::Param) = wu0(p)*(1.0 .- τ(ϕ,ϕ,p))
+wr(ϕ::Float64,p::Param) = wu0(p) .- τ(ϕ,p)
 
 "wage at location ``l``"
 w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)
@@ -616,7 +634,8 @@ end
 
 
 "housing demand at location ``l``"
-h(l::Float64,p::Param,m::Model) = (p.γ / m.qr) * xsu(l,p,m)^((p.γ-1)/p.γ) * m.xsr^(1/p.γ)
+# h(l::Float64,p::Param,m::Model) = (p.γ / m.qr) * xsu(l,p,m)^((p.γ-1)/p.γ) * m.xsr^(1/p.γ)
+h(l::Float64,p::Param,m::Model) = p.γ * (w(l,m.ϕ,p) + m.r - m.pr * p.cbar + p.sbar) / q(l,p,m)
 
 "housing supply at location ``l``"
 H(l::Float64,p::Param,m::Model) = χ(l,m.ϕ,p) * q(l,p,m).^ϵ(l,m.ϕ,p)

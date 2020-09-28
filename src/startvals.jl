@@ -1,4 +1,48 @@
 
+function nocommute!(F::Vector,x::Vector,p::Param)
+	gamma2 = p.γ / (1 + p.ϵr)
+
+	if any(x .< 0)
+		F[:] .= PEN
+	else
+		ρ = x[1]
+		Lr = x[2]
+		# println("rho = $ρ, Lr = $Lr")
+
+		Lu = p.L - Lr
+		wu = p.θu*Lu^p.η
+		wr = wu
+		Sr = (((1 - p.α)/ p.α) * wr / ρ)^p.σ * Lr # farm land input
+		r  = ρ * (p.S - p.λ) / p.L
+		pr = wr / (p.α * p.θr) * (p.α + (1-p.α) * (Lr / Sr)^((1-p.σ)/p.σ))^(1/(1-p.σ))
+		ϕ  = gamma2 * (wu + r - pr * p.cbar + p.sbar ) * Lu / (ρ)
+		Srh= gamma2 * (wr + r - pr * p.cbar + p.sbar ) * Lr / (ρ)
+
+		F[1] = (1 - p.γ) * (1 - p.ν) * (wr + r - pr * p.cbar + p.sbar ) + p.ϵr * ρ * (Srh + ϕ) - p.sbar * p.L - Lu * p.θu
+		F[2] = Sr + Srh + ϕ - (p.S - p.λ)
+
+	end
+end
+
+function stmodel(p::Param)
+	x0 = [1.0,0.5]
+	x00 = nlsolve((F,x) -> nocommute!(F,x,p),x0)
+	gamma2 = p.γ / (1 + p.ϵr)
+
+	ρ  = x00.zero[1]
+	Lr = x00.zero[2]
+	Lu = p.L - Lr
+	wu = p.θu*Lu^p.η
+	wr = wu
+	Sr = (((1 - p.α)/ p.α) * wr / ρ)^p.σ * Lr # farm land input
+	r  = ρ * (p.S - p.λ) / p.L
+	pr = wr / (p.α * p.θr) * (p.α + (1-p.α) * (Lr / Sr)^((1-p.σ)/p.σ))^(1/(1-p.σ))
+	ϕ  = gamma2 * (wu + r - pr * p.cbar + p.sbar ) * Lu / (ρ)
+	Srh= gamma2 * (wr + r - pr * p.cbar + p.sbar ) * Lr / (ρ)
+
+	(ρr = ρ, ϕ = ϕ/10, r = r, Lr = Lr, pr = pr, Sr = Sr)
+
+end
 
 # new strategy to find starting values:
 # use a constrained optimizer to avoid x < 0
@@ -14,7 +58,7 @@ function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,m::Model,p::Param)
 	solve!(result,x,p,m)
 end
 
-startval() = [0.24, 0.68, 1.1, 0.86]
+startval(p::Param) = stmodel(p)
 
 function nlopt_solve(m::Model,p::Param,x0::Vector{Float64})
 	opt = Opt(:LN_COBYLA,length(x0))
@@ -97,7 +141,7 @@ function get_starts(p::Param)
 
 		# if first year
 		if it == 1
-			x0 = nlopt_solve(startvals(),p=p)
+			x0 = nlopt_solve(startval(),p=p)
 			if (x0[3] == :ROUNDOFF_LIMITED) | (x0[3] == :SUCCESS)
 				# update2!(fm,p,x0[2])
 				push!(starts, x0[2])
