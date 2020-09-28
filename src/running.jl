@@ -310,9 +310,9 @@ end
 
 
 """
-run model for all time periods
+run JuMP model for all time periods
 """
-function run(p::Param)
+function run(p::Param; jump = true)
 
 	setperiod!(p,1)
 	x0 = startval(p)
@@ -321,59 +321,31 @@ function run(p::Param)
 	M = Region[]
 
 	for it in 1:length(p.T)
-		println(it)
+		# println(it)
 		setperiod!(p,it)
 		m = Region(p)
-		x = jm(p,m,sols[it])
-		push!(sols,x)
-		update!(m,p,[x...])
+		if jump
+			x = jm(p,m,sols[it])
+			push!(sols,x)
+			update!(m,p,[x...])
+		else
+			x = solve_once(p,m,[sols[it]...])
+			if converged(x)
+				push!(sols,(; zip(keys(x0), x.zero)...))
+				update!(m,p,x.zero)
+			else
+				error("nlsolve not converged in period $it")
+			end
+		end
 		push!(M,m)
 	end
 
-	(sols,M,p) # solutions, models, and parameter
+	(sols[2:end],M,p) # solutions, models, and parameter
 
 end
 
-function get_urban_sols(x0::Vector{Float64},p::Param)
-	# m = [Region(p) for it in 1:length(p.T)] # create a general elasticity model for each period
-	m = Region[]
-	sols = Vector{Float64}[]  # an empty array of vectors
-	push!(sols, x0)  # first solution is obtained via `adapt_ϵ`
-
-	# update t=1 model
-	# setperiod!(p, 1)   # set period on param to it=1
-	# update!(m[1],p,x0)
-
-	# 2. For all periods
-	for it in 1:length(p.T)
-		# println("period $it")
-		setperiod!(p, it)   # set period on param to it
-		m0 = Region(p)
-
-		r1 = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,p,m0),
-			                     sols[it],iterations = 1000)
-		# r1 = LandUse.mcpsolve((F,x) -> LandUse.solve!(F,x,p,m),
-		# 	                                        [0.01,0.01,0.01,0.01,0.01,0.01],
-		# 	                                        [Inf,1.0,Inf,1.0,Inf,1.0],
-		# 	                                        sols[it-1],iterations = 1000)
-		if converged(r1)
-			push!(sols, r1.zero)
-			update!(m0,p,r1.zero)
-			# println("rmk = $(abs(Rmk(m0,p)))")
-			@assert abs(Rmk(m0,p)) < 1e-7   # walras' law
-			push!(m,m0)
-		else
-			error("General Model not converged in period $it")
-		end
-	end
-	# final update
-
-	return (sols, m)
-end
-
-function runm()
-
-	run(Region,Param())
+function runm(; jump = true)
+	run(Param(), jump = jump)
 end
 
 
@@ -400,39 +372,4 @@ function plotsingle()
 	p1  = Param() # baseline param: high cbar and low sbar
 	x,M,p0  = run(Region,p1)
 	LandUse.ts_plots(M,p1)
-end
-
-function run1()
-	p = Param()
-	# x0 = get_starts(par=par)  # nlopt
-	r0 = startval(p)    # nlsolve
-	x0 = [r0...]
-
-	# if T == Urban
-	# 	x0[1] = x0[1][1:3]
-	# end
-
-	# (x1,p) = adapt_ϵ(x0[1],par=par)
-	# println("x0 = $(x0[1])")
-
-	setperiod!(p,1)  # go back to period 1
-	# if p.ϵsmax == 0.0
-	# 	# p.ϵs = 0.0
-	# 	x1 = x0[1]
-	# 	@assert p.ϵs == 0.0
-	# else
-	# 	(xt,p) = adapt_ϵ(T(p),p,x0[1])  # adaptive search for higher epsilon in center first period only
-	# 	x1 = xt[1]
-	# end
-
-	# if T == Urban
-	# 	x1[end] = x1[end][1:3]
-	# end
-	# println("x1 = $(x1[end])")
-
-	# p.T = p.T[1:2]
-	x,M = get_solutions(x0,p)  # get general model solutions
-
-	(x,M,p) # solutions, models, and parameter
-
 end

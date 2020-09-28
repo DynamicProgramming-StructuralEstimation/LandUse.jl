@@ -9,28 +9,32 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
 	set_optimizer_attribute(m, MOI.Silent(), true)
+	lbs = [x0...] .* 0.3
 
 	# variables
-	@variable(m, 0.001 <= ρr , start = x0.ρr)
-	@variable(m, 0.001 <= ϕ <= p.S , start = x0.ϕ )
-	@variable(m, 0.001 <= r  , start = x0.r )
-	@variable(m, 0.001 <= Lr <= p.L , start = x0.Lr)
-	@variable(m, 0.001 <= pr , start = x0.pr)
-	@variable(m, 0.001 <= Sr <= p.S , start = x0.Sr)
+	@variable(m, ρr >= lbs[1]        , start = x0.ρr)
+	@variable(m, lbs[2] <= ϕ <= p.S  , start = x0.ϕ )
+	@variable(m, r >= lbs[3]         , start = x0.r )
+	@variable(m, lbs[4] <= Lr <= p.L  , start = x0.Lr)
+	@variable(m, pr >= lbs[5]         , start = x0.pr)
+	@variable(m, lbs[6] <= Sr <= p.S  , start = x0.Sr)
 
 	# nonlinear expressions
 	@NLexpression(m, wu0, p.Ψ * p.θu * (p.L - Lr)^p.η)
-	@NLexpression(m, wr , wu0 - p.a * (p.θu^(p.taum)) * (ϕ^(p.taul)) )
+	@NLexpression(m, wr , wu0 - p.a * (wu0^(p.taum)) * (ϕ^(p.taul)) )
 	@NLexpression(m, qr , ((1+p.ϵr) * ρr)^(1.0/(1+p.ϵr)) )
 	@NLexpression(m, r_pr_csbar, r - pr * p.cbar + p.sbar )
 	@NLexpression(m, xsr, wr + r_pr_csbar )
-	@NLexpression(m, Srh, Lr * (xsr * p.γ / (1.0 + p.ϵr)) / ρr )
+	@NLexpression(m, hr, p.γ * xsr / qr )
+	@NLexpression(m, Hr, qr^p.ϵr )
+	# @NLexpression(m, Srh, Lr * (xsr * p.γ / (1.0 + p.ϵr)) / ρr )
+	@NLexpression(m, Srh, Lr * hr / Hr )
 	@NLexpression(m, cur, (1.0 - p.γ)*(1.0 - p.ν)*(wr + r_pr_csbar) - p.sbar)
 	@NLexpression(m, cu_inputr,  (qr^(1 + p.ϵr)) * p.ϵr / (1.0+p.ϵr) )
 
 	# expressions indexed at location l
 	@NLexpression(m, nodes[i = 1:p.int_nodes], ϕ / 2 + ϕ / 2 * mo.inodes[i] )
-	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * p.θu^(p.taum) * nodes[i]^(p.taul) )
+	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * wu0^(p.taum) * nodes[i]^(p.taul) )
 	@NLexpression(m, w[i = 1:p.int_nodes], wu0 - τ[i] )
 	@NLexpression(m, q[i = 1:p.int_nodes], qr * ((w[i] + r_pr_csbar) / xsr)^(1.0/p.γ))
 	@NLexpression(m, H[i = 1:p.int_nodes], q[i]^p.ϵr)
@@ -45,7 +49,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@NLexpression(m, iρ,        (ϕ/2) * sum(mo.iweights[i] * ρ[i] for i in 1:p.int_nodes))
 	@NLexpression(m, icu,       (ϕ/2) * sum(mo.iweights[i] * cu[i] * D[i] for i in 1:p.int_nodes))
 	@NLexpression(m, icu_input, (ϕ/2) * sum(mo.iweights[i] * cu_input[i] for i in 1:p.int_nodes))
-	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * τ[i] * D[i] for i in 1:p.int_nodes))
+	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * (wu0 - w[i]) * D[i] for i in 1:p.int_nodes))
 
 	# objective
 	@objective(m, Max, 1.0)
@@ -67,7 +71,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@NLconstraint(m, p.S - p.λ == ϕ + Sr + Srh)
 
 	# F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
-	@NLconstraint(m, Lr * cur + icu + Srh * cu_inputr + icu_input + wu0 * iτ ==  wu0 * (p.L - Lr))
+	@NLconstraint(m, Lr * cur + icu + Srh * cu_inputr + icu_input + iτ ==  wu0 * (p.L - Lr))
 
 	JuMP.optimize!(m)
 
@@ -76,12 +80,12 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 		println("Termination status: $(termination_status(m))")
 		error("model not locally solved")
 	else
-		println("rhor = $(value(ρr))")
-		println("ϕ    = $(value(ϕ ))")
-		println("r    = $(value(r ))")
-		println("Lr   = $(value(Lr))")
-		println("pr   = $(value(pr))")
-		println("Sr   = $(value(Sr))")
+		# println("rhor = $(value(ρr))")
+		# println("ϕ    = $(value(ϕ ))")
+		# println("r    = $(value(r ))")
+		# println("Lr   = $(value(Lr))")
+		# println("pr   = $(value(pr))")
+		# println("Sr   = $(value(Sr))")
 
 		(ρr = value(ρr), ϕ = value(ϕ), r = value(r), Lr = value(Lr), pr = value(pr), Sr = value(Sr))
 	end

@@ -16,7 +16,7 @@
 		"symbol" : "L"
 	},
 	"γ" : {
-		"value" : 0.25,
+		"value" : 0.33333333333333,
 		"description" : "Utility Weight of Housing",
 		"type" : "region",
 		"symbol" : "\\gamma"

@@ -287,7 +287,7 @@ function integrate!(m::Region,p::Param)
 	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icr       = (m.ϕ/2) * sum(m.iweights[i] * cr(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * τ(m.nodes[i],p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * (m.wu0 - w(m.Lu,m.nodes[i],m.ϕ,p)) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.qbar      = (m.ϕ/(m.Lu * 2)) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
@@ -353,9 +353,8 @@ function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 
 	# urban goods market clearing. equation before (25) but not in per capita terms
 	#      rural cu cons + urban cu cons + rural constr input + urban constr input + commuting - total urban production
-	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
+	F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.iτ - wu0(m.Lu, p)*m.Lu
 
-	F[:] .*= 1000.0
 end
 
 
