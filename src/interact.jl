@@ -148,8 +148,9 @@ function i0()
 	eta = 0.0:0.1:1.0
 	tau = 0.1:0.1:1.0
 	eta2 = 0.1:0.1:20.99
-	cbars = 0.0:0.1:0.7
+	cbars = 0.0:0.1:1.5
 	ctaus = 0.5:0.5:5.0
+	psis = 0.1:0.01:1.0
 	p1 = Param()
 
 	@manipulate for growthtype = OrderedDict("orig" => 1,"u-r const" => 2),
@@ -157,6 +158,7 @@ function i0()
 					rgrowth in slider(gfac,value = 1.2, label = "r-growthrate"),
 					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
+					psi in slider(psis, value = p1.Ψ, label = "psi"),
 					cτ in slider(ctaus, value = p1.a, label = "cτ"),
 					taum in slider(tau, value = p1.taum, label = "τm"),
 					taul in slider(tau, value = p1.taul, label = "τl")
@@ -164,7 +166,7 @@ function i0()
 					if growthtype == 1
 						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0,
 						                              :taum => taum, :taul => taul,
-													  :cbar => cbar, :sbar => sbar, :cτ => cτ))
+													  :cbar => cbar, :sbar => sbar, :cτ => cτ, :Ψ => psi))
 						x,M,p = LandUse.run(p0)
 						pl= LandUse.ts_plots(M,p0,fixy = false)
 					elseif growthtype == 2

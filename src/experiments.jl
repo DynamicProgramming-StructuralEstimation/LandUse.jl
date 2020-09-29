@@ -489,13 +489,15 @@ function issue36( ; save=false)
     # 2. implications of growth in either sector only
     # i. u grows faster than r
     r[2] = Dict()
-    p2 = LandUse.Param(par = Dict(:θu_g => 1.08,:θut => 1.0, :θrt => 1.0,:θr_g => 1.01))
+    p2 = LandUse.Param(par = Dict(:θrt => 1.0,:θr_g => 1.0))
+    # p2 = LandUse.Param(par = Dict(:θu_g => 1.08,:θut => 1.0, :θrt => 1.0,:θr_g => 1.01))
     x,M,p0  = LandUse.run(p2)
     pl2 = LandUse.ts_plots(M,p2)
     r[2][:u_fast] = LandUse.plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],
                                 layout = (2,2),link = :x)
 
-    p3 = LandUse.Param(par = Dict(:θu_g => 1.01,:θut => 1.0, :θrt => 1.0,:θr_g => 1.09))
+    # p3 = LandUse.Param(par = Dict(:θu_g => 1.01,:θut => 1.0, :θrt => 1.0,:θr_g => 1.09))
+    p3 = LandUse.Param(par = Dict(:θu_g => 1.0,:θut => 1.0))
     x,M,p0  = LandUse.run(p3)
     pl3 = LandUse.ts_plots(M,p3)
     r[2][:r_fast] = LandUse.plot(pl3[:pop],pl3[:spending],pl3[:avdensity],pl3[:productivity],
@@ -505,7 +507,7 @@ function issue36( ; save=false)
 
     # 4. constant growth in both sectors
     r[4] = Dict()
-    p = LandUse.Param(par = Dict(:θu_g => 1.1,:θut => 1.0, :θrt => 1.0,:θr_g => 1.1))
+    p = LandUse.Param(par = Dict(:θu_g => 1.25,:θut => 1.0, :θrt => 1.0,:θr_g => 1.25))
     x,M,p0  = LandUse.run(p)
     pl2 = LandUse.ts_plots(M,p)
     r[4] = LandUse.plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],

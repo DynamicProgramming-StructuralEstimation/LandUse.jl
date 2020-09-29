@@ -20,8 +20,8 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@variable(m, lbs[6] <= Sr <= p.S  , start = x0.Sr)
 
 	# nonlinear expressions
-	@NLexpression(m, wu0, p.Ψ * p.θu * (p.L - Lr)^p.η)
-	@NLexpression(m, wr , wu0 - p.a * (wu0^(p.taum)) * (ϕ^(p.taul)) )
+	@NLexpression(m, wu0, p.θu * (p.L - Lr)^p.η)
+	@NLexpression(m, wr , p.Ψ * (wu0 - p.a * (wu0^(p.taum)) * (ϕ^(p.taul))) )
 	@NLexpression(m, qr , ((1+p.ϵr) * ρr)^(1.0/(1+p.ϵr)) )
 	@NLexpression(m, r_pr_csbar, r - pr * p.cbar + p.sbar )
 	@NLexpression(m, xsr, wr + r_pr_csbar )

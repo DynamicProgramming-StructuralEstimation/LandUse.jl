@@ -238,7 +238,7 @@ function smooth_θ(p::Param; digits = 9)
 		select(:year, :theta_rural, :theta_urban)
 
 	# normalize year 1 to 1.0
-	x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
+	# x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
 
 
 	# fill in missings in 1914-1919 and 1939-1948 with straight lines
@@ -282,6 +282,10 @@ function smooth_θ(p::Param; digits = 9)
 
     # round to 5 digits
 	x[:, [:stheta_rural, :stheta_urban]] .= mapcols(col -> round.(collect(skipmissing(col)),digits = digits),x[:, [:stheta_rural, :stheta_urban]])
+
+	x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
+	x = transform(x, :stheta_rural => (x -> x ./ x[1]) => :stheta_rural, :stheta_urban => (x -> x ./ x[1]) => :stheta_urban)
+
 
     p1 = @df x plot(:year, [:theta_rural :stheta_rural],leg=:left, lw = 2)
 	savefig(p1, joinpath(dbplots,"smooth-theta-rural.pdf"))
