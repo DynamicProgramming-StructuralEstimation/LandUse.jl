@@ -234,7 +234,7 @@ function smooth_θ(p::Param; digits = 9)
 
 	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
 	x = @linq d |>
-		where((:year .<= 2015)) |>    # rural data stops in 2015
+		where((:year .<= 2015) .& (:year .>= dt.start)) |>    # rural data stops in 2015
 		select(:year, :theta_rural, :theta_urban)
 
 	# normalize year 1 to 1.0
@@ -395,7 +395,8 @@ function setperiod!(p::Param,i::Int)
 	setfield!(p, :θr, p.θrt[i])   # this will be constant across region.
 	setfield!(p, :θu, p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
 	# setfield!(p, :τ, p.τ0t[i])
-	setfield!(p, :L, p.Lt[i])
+	# setfield!(p, :L, p.Lt[i])
+	setfield!(p, :L, 1.0)
 
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
 	# setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.
