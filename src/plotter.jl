@@ -28,6 +28,9 @@ function ts_plots(M,p::Param;fixy = false)
 					 linewidth = 2, title = "Population",
 					 ylims = (0,2), marker = mmark, legend = :right)
 
+	dd[:Lr_data] = @df d plot(:year, :Lr, label = "model",marker = mmark)
+	plot!(dd[:Lr_data], p.moments.year, p.moments.Employment_rural, label = "data")
+
 	dd[:ρ0_real] = @df d plot(:year, :ρ0_real, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
 	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
 	dd[:qbar] = @df d plot(:year, :qbar, linewidth = 2, color = "black", leg =false, title = "Average House Prices", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
@@ -116,12 +119,20 @@ function ts_plots(M,p::Param;fixy = false)
 		transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,p),:ϕ) .* :ϕ) )
 		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
 
-	ds4 = stack(select(df4,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr, :avgd), Not(:year))
+    dens = select(df4,:year,:dq1, :dq2, :dq3, :dq4, :dr, :avgd)
+	ndens = mapcols(x -> x ./ x[1],select(dens, Not(:year)))
+	ndens[!,:year] .= dens.year
+	ds4 = stack(dens, Not(:year))
 	ds5 = stack(select(df4,:year,:avgd), Not(:year))
 	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
 	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Densities", leg = false, ylims = fixy ? (0,300) : false)
+					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false)
+
+	dd[:n_densities] = @df stack(ndens, Not(:year)) plot(:year, :value, group = :variable,
+ 					 linewidth = 2, title = "Normalized Densities", leg = :topright, ylims = fixy ? (0,300) : false)
+
+
     incdens = df4.avgd[1] / df4.avgd[end]
     diffdens = df4.avgd[1] - df4.avgd[end]
 	ancdens = df4.avgd[end] + 0.2 * diffdens
