@@ -50,6 +50,7 @@ mutable struct Param
 	mag    :: Float64  # assumed growth for extraploating producivities.
 
 	moments :: DataFrame
+	thetas :: DataFrame
 
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
@@ -85,14 +86,14 @@ mutable struct Param
 		# thetas = smooth_θ(this.T, this.ma, this.mag)[1]
 
 		# read from disk
-		thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+		this.thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
 		moments = CSV.read(joinpath(LandUse.dbtables,"data_moments.csv"), DataFrame)
 		this.moments = moments[ moments.year .∈ Ref(this.T), : ]
 		# bring on scale we know that works
 		# thetas.thetar .= thetas.thetar .* 0.32
 		# thetas.thetau .= thetas.thetau .* 0.32
 		# # pick out correct years
-		tt = thetas[ thetas.year .∈ Ref(this.T),  : ]
+		tt = this.thetas[ this.thetas.year .∈ Ref(this.T),  : ]
 		this.θut = tt.thetau
 		this.θrt = tt.thetar
 
