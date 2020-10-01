@@ -47,6 +47,10 @@ end
 function runm(; jump = true)
 	run(Param(), jump = jump)
 end
+function plot1()
+	x,M,p = run(Param())
+	ts_plots(M,p)
+end
 
 
 

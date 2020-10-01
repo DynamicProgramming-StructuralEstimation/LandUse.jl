@@ -49,6 +49,9 @@ mutable struct Param
 	ma    :: Int64  # moving average window size
 	mag    :: Float64  # assumed growth for extraploating producivities.
 
+	moments :: DataFrame
+	thetas :: DataFrame
+
 	function Param(;par=Dict())
         f = open(joinpath(dirname(@__FILE__),"params.json"))
         j = JSON.parse(f)
@@ -83,12 +86,14 @@ mutable struct Param
 		# thetas = smooth_θ(this.T, this.ma, this.mag)[1]
 
 		# read from disk
-		thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+		this.thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+		moments = CSV.read(joinpath(LandUse.dbtables,"data_moments.csv"), DataFrame)
+		this.moments = moments[ moments.year .∈ Ref(this.T), : ]
 		# bring on scale we know that works
 		# thetas.thetar .= thetas.thetar .* 0.32
 		# thetas.thetau .= thetas.thetau .* 0.32
 		# # pick out correct years
-		tt = thetas[ thetas.year .∈ Ref(this.T),  : ]
+		tt = this.thetas[ this.thetas.year .∈ Ref(this.T),  : ]
 		this.θut = tt.thetau
 		this.θrt = tt.thetar
 
@@ -233,9 +238,15 @@ function smooth_θ(p::Param; digits = 9)
 	growth = p.mag
 
 	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
-	x = @linq d |>
-		where((:year .<= 2015)) |>    # rural data stops in 2015
-		select(:year, :theta_rural, :theta_urban)
+	x0 = @linq d |>
+		where((:year .<= 2015) .& (:year .>= dt.start))   # rural data stops in 2015
+
+	x = select(x0, :year, :theta_rural, :theta_urban)
+	m = select(x0, :year, :Employment_rural, r"SpendingShare")
+
+	CSV.write(joinpath(dbtables,"data_moments.csv"),m)
+
+
 
 	# normalize year 1 to 1.0
 	# x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
@@ -396,6 +407,7 @@ function setperiod!(p::Param,i::Int)
 	setfield!(p, :θu, p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
 	# setfield!(p, :τ, p.τ0t[i])
 	setfield!(p, :L, p.Lt[i])
+	# setfield!(p, :L, 1.0)
 
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
 	# setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.
