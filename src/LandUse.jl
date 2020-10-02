@@ -22,6 +22,7 @@ module LandUse
 	using QuantEcon: smooth
 	using JuMP
 	using Ipopt
+	using Interpolations: interpolate, Gridded, Linear
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver

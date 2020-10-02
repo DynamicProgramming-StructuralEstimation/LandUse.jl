@@ -11,12 +11,6 @@ Description: What the package does (one paragraph).
 License: What license it uses
 Encoding: UTF-8
 LazyData: true
-Depends:
-    magrittr,
-    tibble,
-    data.table (>= 1.12.2),
-    ggplot2,
-    futile.logger
 Imports: 
     dplyr,
     raster,
@@ -29,5 +23,8 @@ Imports:
     googlesheets4,
     googledrive,
     progress,
-    rasterVis
+    rasterVis,
+    data.table,
+    magrittr,
+    ggplot2
 RoxygenNote: 7.1.1

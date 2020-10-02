@@ -80,15 +80,21 @@ mutable struct Param
 		T = length(this.T)
 		this.t = 1
 		this.S = 1.0  # set default values for space and population
-		this.Lt = exp.(collect(range(log(1.0),log(1.92),length = T)))
-		this.L = this.Lt[1]
 		# this smoothes thetas
 		# thetas = smooth_θ(this.T, this.ma, this.mag)[1]
 
-		# read from disk
+		# read data from disk
 		this.thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
 		moments = CSV.read(joinpath(LandUse.dbtables,"data_moments.csv"), DataFrame)
 		this.moments = moments[ moments.year .∈ Ref(this.T), : ]
+
+		Lt = CSV.read(joinpath(LandUse.dbtables,"population.csv"), DataFrame)
+		Lt = Lt[ Lt.year .∈ Ref(this.T), : ]
+		this.Lt = Lt.population ./ Lt.population[1]
+		this.L = this.Lt[1]
+
+		this.moments = join(this.moments, Lt, on = :year)
+
 		# bring on scale we know that works
 		# thetas.thetar .= thetas.thetar .* 0.32
 		# thetas.thetau .= thetas.thetau .* 0.32
@@ -231,7 +237,21 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 end
 
 
-function smooth_θ(p::Param; digits = 9)
+"""
+Takes raw csv data and prepares to be used in model.
+writes to csv input files.
+"""
+function prepare_data(p::Param; digits = 9)
+
+	# population data for each year (needs interpolation)
+	pop = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","France-population.csv")))
+	append!(pop, DataFrame(year = 2050, population = 74.0))  # https://www.insee.fr/fr/statistiques/2859843
+	itp = interpolate((pop.year,), pop.population, Gridded(Linear()))
+	popd = DataFrame(year = 1815:2050, population = itp(1815:2050))
+	CSV.write(joinpath(dbtables,"population.csv"),popd)
+
+
+	# productivity and employment moments
 
 	dt = p.T
 	ma = p.ma
@@ -245,8 +265,6 @@ function smooth_θ(p::Param; digits = 9)
 	m = select(x0, :year, :Employment_rural, r"SpendingShare")
 
 	CSV.write(joinpath(dbtables,"data_moments.csv"),m)
-
-
 
 	# normalize year 1 to 1.0
 	# x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
@@ -315,59 +333,6 @@ function smooth_θ(p::Param; digits = 9)
 	p6 = plot(p4,p5,layout = (2,1),size = (800,500))
 	savefig(p6, joinpath(dbplots,"smooth-thetas-data-model.pdf"))
 
-
-	# r = copy(x)
-	# r = r[completecases(r),:]
-	# p2 = @df r plot(:year, [:theta_rural :stheta_rural],leg=:bottomright)
-	# savefig(p2, joinpath(dbplots,"smooth-theta-data-nonmissing.pdf"))
-
-	# fill gaps in data with spline
-	# disallowmissing!(r)
-	# sr = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.stheta_rural, 250.0)
-	# su = SmoothingSplines.fit(SmoothingSpline, convert(Array{Float64},r.year), r.stheta_urban, 250.0)
-	# #
-	# pu = SmoothingSplines.predict(su,convert(Array{Float64},dt))
-	# pr = SmoothingSplines.predict(sr,convert(Array{Float64},dt))
-	# # pu = pu[1] > 1.0 ? pu .- (pu[1] - 1.0)  : pu .+ (1.0 - pu[1])
-	# # pr = pr[1] > 1.0 ? pr .- (pr[1] - 1.0) : pr .+ (1.0 - pr[1])
-	# # pr = pu
-	# # println("pu[1] = $(pu[1])")
-	# # println("pr[1] = $(pr[1])")
-
-	# plots checking return
-	# ret = Dict(:θr => pr, :θu => pu )
-	# ret[:θu] = ret[:θu] ./ ret[:θu][1]
-	# ret[:θr] = ret[:θr] ./ ret[:θr][1]
-	# # ret = Dict(:θr => x[x.year .∈ Rf(dt) , :stheta_rural], :θu => x[x.year .∈ Ref(dt) , :stheta_urban])
-	#
-	# plu = scatter(x.year, x.theta_urban ,title = "Urban Productivity",leg=false, ylabel = "$(dt.start) = 1")
-	# plot!(plu,dt,ret[:θu],m=(3,:auto,:red))
-	# savefig(plu, joinpath(dbplots,"smooth-thetau.pdf"))
-	#
-	# plr = scatter(x.year, x.theta_rural,title = "Rural Productivity",leg=false, ylabel = "$(dt.start) = 1")
-	# plot!(plr,dt,ret[:θr],m=(3,:auto,:red))
-	# savefig(plr, joinpath(dbplots,"smooth-thetar.pdf"))
-	#
-	# plm = plot(dt,[ret[:θr],ret[:θu]],m=(3,:auto), color = [:green :blue] ,
-	#             label = ["rural" "urban"],
-	# 			yscale = :log10,
-	# 			yformatter = x -> round(identity(x),digits = 1),
-	# 			legend = :topleft, title = "thetas in model")
-	# savefig(plm, joinpath(dbplots,"smooth-thetas-model.pdf"))
-	#
-	#
-	# pld = scatter(x.year,[x.theta_rural x.theta_urban],color = [:green :blue] ,
-	#             label = ["rural" "urban"],
-	# 			yscale = :log10,
-	# 			legend = :topleft, title = "thetas in data",
-	# 			yformatter = x -> round(identity(x),digits = 1))
-	# plot!(pld, x.year, [x.stheta_rural x.stheta_urban],color = [:green :blue], lab = "", linewidth = 2)
-	# savefig(pld, joinpath(dbplots,"smooth-thetas-data.pdf"))
-	#
-	# pl = plot(pld, plm, layout = (1,2), link = :both, size = (800,400))
-	# savefig(pl, joinpath(dbplots,"smooth-thetas.pdf"))
-	#
-	#
 	CSV.write(joinpath(dbtables,"thetas_data.csv"),x)
 	#
 	#
@@ -405,9 +370,7 @@ end
 function setperiod!(p::Param,i::Int)
 	setfield!(p, :θr, p.θrt[i])   # this will be constant across region.
 	setfield!(p, :θu, p.θut[i])   # in a country setting, we construct the growth rate differently for each region.
-	# setfield!(p, :τ, p.τ0t[i])
 	setfield!(p, :L, p.Lt[i])
-	# setfield!(p, :L, 1.0)
 
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
 	# setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.

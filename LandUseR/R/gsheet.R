@@ -100,7 +100,8 @@ census_add_toutain <- function(){
         full_join(toutain %>%
                        select(year, population)) %>%
         select(year, population, INSEE ) %>%
-        rename(toutain = population)
+        rename(toutain = population) %>%
+        arrange(year)
 
     pce = ce %>%
         tidyr::pivot_longer(toutain:INSEE)
