@@ -10,7 +10,6 @@ dataplots <- function(){file.path(outdir(),"data","plots")}
 entddir <- function(){file.path(datadir(),"ENTD")}
 
 outdir <- function(){file.path(dboxdir(),"output")}
-plotdir <- function(){file.path(outdir(),"plots")}
 
 gsheet <- function(){"https://docs.google.com/spreadsheets/d/1IotLzprM5Os-06MpfU895VOgHieYkQfY3WOLBBiTKZA/edit#gid=0"}
 
@@ -66,6 +65,57 @@ writepop <- function(){
 #' @export
 readpop <- function(){
     readRDS(file.path(datadir(),"base-pop-historiques-1876-2015.Rds"))
+}
+
+#' Complement Census Data with Toutain
+#'
+#' Tableau 1: Evolution de la Population des menages agricoles de 1789 a 1968
+census_add_toutain <- function(){
+    toutain = tribble(
+        ~year, ~population, ~rural_pop, ~menage_agricoles,
+        1700, 19, 16.1 , NA,
+        1789, 27, 20.9, 18.2,
+        1801, 27.5, 21.2,18.2,
+        1821, 30.5, 23.4, 18.9,
+        1846, 35.4, 26.8, 20.1,
+        1861, 37.4, 26.6, 19.9,
+        1872, 36.1, 24.0, 18.5,
+        1881, 37.7, 24.6, 18.2,
+        1891, 38.3, 24, 17.4,
+        1901, 38.9, 23, 16.1,
+        1911, 39.6, 22.1, 15.1,
+        1921, 39.2, 21, 13.8,
+        1931, 41.8, 20.4, 11.5,
+        1936, 41.9, 19.9, 10.6,
+        1946, 40.5, 19, 10.2,
+        1954, 42.8, 18.8, 9.5,
+        1962, 46.5, 18.8, 9.5,
+        1968, 49.8, 17.2, 7.3
+    )
+
+    ce = readpop() %>%
+        group_by(year) %>%
+        summarise(INSEE = sum(population, na.rm = TRUE) / 1000000) %>%
+        ungroup() %>%
+        full_join(toutain %>%
+                       select(year, population)) %>%
+        select(year, population, INSEE ) %>%
+        rename(toutain = population)
+
+    pce = ce %>%
+        tidyr::pivot_longer(toutain:INSEE)
+    ggplot(pce, aes(year,y = value, color = name)) + geom_line()
+    ggsave(file.path(dataplots(), "France-population-insee-toutain.pdf"))
+
+    cet = ce %>%
+        mutate(population = pmax(toutain,INSEE,na.rm=T))
+
+    cet %>%
+        select(year, population) %>%
+        readr::write_csv(path = file.path(datadir(), "France-population.csv"))
+
+    ggplot(cet, aes(year, y = population)) +geom_line()
+    ggsave(file.path(dataplots(), "France-population.pdf"))
 }
 
 

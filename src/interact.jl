@@ -149,7 +149,7 @@ function i0()
 	tau = 0.1:0.1:1.0
 	eta2 = 0.1:0.1:20.99
 	cbars = 0.0:0.1:1.5
-	ctaus = 0.5:0.5:5.0
+	ctaus = 0.5:0.5:10.0
 	psis = 0.1:0.01:1.0
 	p1 = Param()
 
@@ -178,7 +178,7 @@ function i0()
 						pl= LandUse.ts_plots(M,p0,fixy = true)
 					end
 					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
-					plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:phi],pl[:avdensity], pl[:densities], layout = (2,3),link = :x)
+					plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:phi],pl[:n_densities], pl[:densities], layout = (2,3),link = :x)
 	end
 end
 
