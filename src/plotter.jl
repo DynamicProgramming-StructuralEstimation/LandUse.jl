@@ -28,7 +28,7 @@ function ts_plots(M,p::Param;fixy = false)
 					 linewidth = 2, title = "Population",
 					 ylims = (0,2), marker = mmark, legend = :right)
 
-	dd[:Lr_data] = @df d plot(:year, :Lr, label = "model",marker = mmark)
+	dd[:Lr_data] = @df d plot(:year, :Lr ./ p.Lt, label = "model",marker = mmark)
 	plot!(dd[:Lr_data], p.moments.year, p.moments.Employment_rural, label = "data")
 
 	dd[:ρ0_real] = @df d plot(:year, :ρ0_real, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )

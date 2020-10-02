@@ -91,6 +91,7 @@ mutable struct Param
 		Lt = CSV.read(joinpath(LandUse.dbtables,"population.csv"), DataFrame)
 		Lt = Lt[ Lt.year .∈ Ref(this.T), : ]
 		this.Lt = Lt.population ./ Lt.population[1]
+		# this.Lt = exp.(collect(range(log(1.0),log(2.42),length = T)))
 		this.L = this.Lt[1]
 
 		this.moments = join(this.moments, Lt, on = :year)
