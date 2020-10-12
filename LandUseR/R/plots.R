@@ -46,7 +46,7 @@ plot_sat_vs_manual <- function(){
 plot_top100_densities <- function(save = FALSE,w=9,h=6){
     f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
     f[,density := pop / area]
-    ff = f[,list(LIBGEO,year,density,rank)]
+    ff = f[,list(LIBGEO,year,density,rank,pop)]
     ff = ff[complete.cases(ff)]
     p1 = ggplot(ff, aes(factor(year), y = density)) + geom_violin(draw_quantiles = 0.5) + scale_y_log10(labels = scales::comma, name = "population / km2") + ggtitle("Urban Density over time in France") + scale_x_discrete(name = "year") + theme_bw()
 
@@ -63,8 +63,9 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
 
 
     # aggregate time series
-    d4 = ff[,.(density = median(density)),by=year]
+    d4 = ff[,.(density = median(density),wdensity = weighted.mean(density, w = pop)),by=year]
     fall = d4[,round(max(density)/min(density),0)]
+    wfall = d4[,round(max(wdensity)/min(wdensity),0)]
     p$ts = ggplot(d4,aes(x=year, y = density)) +
         geom_point(size = 3) +
         scale_x_continuous(breaks = d4[,year]) +
@@ -73,6 +74,14 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
         ggtitle(paste0("Median Urban Density in France fell by Factor ",fall),subtitle = "Top 100 French cities") +
         theme(panel.grid.minor = element_blank())
 
+    p$ts_w = ggplot(d4,aes(x=year, y = wdensity)) +
+        geom_point(size = 3) +
+        scale_x_continuous(breaks = d4[,year]) +
+        scale_y_continuous(name = "weighted mean density (pop / km2)", breaks = c(3000,5000,10000,25000)) +
+        geom_path(size = 1.1) + theme_bw() +
+        ggtitle(paste0("Mean Urban Density in France fell by Factor ",wfall),subtitle = "Top 100 French cities") +
+        theme(panel.grid.minor = element_blank()) + labs(caption = "mean weighted by population")
+
     p$ts_log = ggplot(d4,aes(x=year, y = density)) +
         geom_point(size = 3) +
         scale_x_continuous(breaks = d4[,year]) +
@@ -80,6 +89,14 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
         geom_path(size = 1.1) + theme_bw() +
         ggtitle(paste0("Median Urban Density in France fell by Factor ",fall),subtitle = "Top 100 French cities") +
         theme(panel.grid.minor = element_blank())
+
+    p$ts_log_w = ggplot(d4,aes(x=year, y = wdensity)) +
+        geom_point(size = 3) +
+        scale_x_continuous(breaks = d4[,year]) +
+        scale_y_log10(name = "[log scale] weighted mean density (pop / km2)", breaks = c(3000,5000,10000,25000)) +
+        geom_path(size = 1.1) + theme_bw() +
+        ggtitle(paste0("Mean Urban Density in France fell by Factor ",wfall),subtitle = "Top 100 French cities") +
+        theme(panel.grid.minor = element_blank()) + labs(caption = "mean weighted by population")
 
 
 
@@ -106,6 +123,8 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
         ggsave(p$violin, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))
         ggsave(p$ts, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time.pdf"))
         ggsave(p$ts_log, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-log.pdf"))
+        ggsave(p$ts_w, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-wtd.pdf"))
+        ggsave(p$ts_log_w, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-log-wtd.pdf"))
         ggsave(p$tstop, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-top5now-city.pdf"))
         ggsave(p$tstopthen, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-top5then-city.pdf"))
 
