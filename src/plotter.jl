@@ -21,7 +21,7 @@ function ts_plots(M,p::Param;fixy = false)
 
 	dd[:spending] = @df ds plot(:year,:value, group = :variable,
 			   linewidth = 2, title = "Spending Shares",
-			   ylims = (0.0,0.85), marker = mmark, legend = :right)
+			   ylims = (0.0,1.0), marker = mmark, legend = :right)
 
 	ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
 	dd[:pop] = @df ds2 plot(:year, :value, group = :variable,

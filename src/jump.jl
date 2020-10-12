@@ -73,6 +73,8 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	# F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
 	@NLconstraint(m, Lr * cur + icu + Srh * cu_inputr + icu_input + iτ ==  wu0 * (p.L - Lr))
 
+	@NLconstraint(m, cur >= 0)
+
 	JuMP.optimize!(m)
 
 	# check termination status
