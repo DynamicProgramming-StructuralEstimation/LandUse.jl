@@ -691,6 +691,9 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	df.area = [area(M[it]) for it in 1:length(p.T)]
 	df.pop  = [pop(M[it]) for it in 1:length(p.T)]
 
+	# add rural land rents
+	df.rr = df.ρr .* (df.Sr .+ df.Srh)
+
 	# compute commuting cost at initial fringe in each period
 	initϕ = df.ϕ[1]
 	df.τ_ts = zeros(tt)
@@ -710,7 +713,9 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 
 		end
 	end
-	df[!,:r_real] = df[!,:r] ./ df[!, :p_index]
+	df[!,:r_real] = df[!,:r] .* df[!,:pop] ./ df[!, :p_index]
+	df[!,:rr_real] = df[!,:rr] ./ df[!, :p_index]
+	df[!,:ru_real] = df[!,:iq] ./ df[!, :p_index]
 	df[!,:qr_real] = df[!,:qr] ./ df[!, :p_index]
 	df[!,:qbar_real] = df[!,:qbar] ./ df[!, :p_index]
 	df[!,:ρ0_real] = df[!,:ρ0] ./ df[!, :p_index]

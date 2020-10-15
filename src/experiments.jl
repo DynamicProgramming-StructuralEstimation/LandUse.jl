@@ -471,36 +471,38 @@ function issue36( ; save=false)
     x,M,p0  = run(p1)
     pl1 = LandUse.ts_plots(M,p1)
 
-    r[1][:baselinestats] = Dict(:ruralpop => Dict(:from => M[1].Lr, :to => M[end].Lr),
+    r[1][:baselinestats] = Dict(:ruralpop => Dict(:from => M[1].Lr , :to => M[end].Lr / p1.Lt[end]),
                                 :rspend => Dict(:from => M[1].Cr / M[1].C, :to => M[end].Cr / M[end].C),
                                 :phi => Dict(:from => M[1].ϕ, :to => M[end].ϕ ))
-    r[1][:baseline] = plot(pl1[:pop],pl1[:spending],pl1[:avdensity],pl1[:phi],
+    r[1][:baseline] = plot(pl1[:pop],pl1[:spending],pl1[:avdensity],pl1[:r_y],
                                 layout = (2,2),link = :x)
-    r[1][:prices] = LandUse.plot(pl1[:r_real],pl1[:r_y], layout = (1,2),size = (900,400))
+    r[1][:prices] = LandUse.plot(pl1[:r_real],pl1[:r_y], layout = (1,2))
 
 
-    p2 = Param(par = Dict(:cbar => 0.3, :sbar => 0.7)) # low cbar and high sbar
+
+
+    p2 = Param(par = Dict(:cbar => 0.4, :sbar => 0.7)) # low cbar and high sbar
     x,M,p0  = run(p2)
     pl2 = LandUse.ts_plots(M,p2)
-    r[1][:low_cbar] = plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:phi],
+    r[1][:low_cbar] = plot(pl2[:Lr_data],pl2[:spending],pl2[:avdensity],pl2[:r_y],
                                 layout = (2,2),link = :x)
 
 
     # 2. implications of growth in either sector only
     # i. u grows faster than r
     r[2] = Dict()
-    p2 = LandUse.Param(par = Dict(:θrt => 1.0,:θr_g => 1.0))
+    p3 = LandUse.Param(par = Dict(:θrt => 1.0,:θr_g => 1.05))
     # p2 = LandUse.Param(par = Dict(:θu_g => 1.08,:θut => 1.0, :θrt => 1.0,:θr_g => 1.01))
-    x,M,p0  = LandUse.run(p2)
-    pl2 = LandUse.ts_plots(M,p2)
-    r[2][:u_fast] = LandUse.plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],
+    x,M,p0  = LandUse.run(p3)
+    pl3 = LandUse.ts_plots(M,p3)
+    r[2][:u_fast] = LandUse.plot(pl3[:Lr_data],pl3[:spending],pl3[:avdensity],pl3[:r_y],
                                 layout = (2,2),link = :x)
 
     # p3 = LandUse.Param(par = Dict(:θu_g => 1.01,:θut => 1.0, :θrt => 1.0,:θr_g => 1.09))
-    p3 = LandUse.Param(par = Dict(:θu_g => 1.0,:θut => 1.0))
-    x,M,p0  = LandUse.run(p3)
-    pl3 = LandUse.ts_plots(M,p3)
-    r[2][:r_fast] = LandUse.plot(pl3[:pop],pl3[:spending],pl3[:avdensity],pl3[:productivity],
+    p4 = LandUse.Param(par = Dict(:θu_g => 1.0,:θut => 1.0))
+    x,M,p0  = LandUse.run(p4)
+    pl4 = LandUse.ts_plots(M,p4)
+    r[2][:r_fast] = LandUse.plot(pl4[:Lr_data],pl4[:spending],pl4[:avdensity],pl4[:r_y],
                                 layout = (2,2),link = :x)
 
     r[3] = plot(pl1[:mode],pl1[:ctime],layout = (2,1), link = :x)
@@ -509,9 +511,10 @@ function issue36( ; save=false)
     r[4] = Dict()
     p = LandUse.Param(par = Dict(:θu_g => 1.25,:θut => 1.0, :θrt => 1.0,:θr_g => 1.25))
     x,M,p0  = LandUse.run(p)
-    pl2 = LandUse.ts_plots(M,p)
-    r[4] = LandUse.plot(pl2[:pop],pl2[:spending],pl2[:avdensity],pl2[:productivity],
+    pl5 = LandUse.ts_plots(M,p)
+    r[4] = LandUse.plot(pl5[:Lr_data],pl5[:spending],pl5[:avdensity],pl5[:r_y],
                                 layout = (2,2),link = :x)
+
 
 
     # save plots
@@ -523,7 +526,13 @@ function issue36( ; save=false)
         savefig(r[2][:r_fast], joinpath(dbplots,"issue36-r-fast.pdf"))
         savefig(r[4], joinpath(dbplots,"issue36-constant.pdf"))
         savefig(r[3], joinpath(dbplots,"issue36-commute.pdf"))
+        r[1][:baseline_fit] = plot(pl1[:Lr_data],pl1[:densities],pl1[:r_y],
+                                    layout = (1,3),size = (800,250))
+        savefig(r[1][:baseline_fit], joinpath(dbplots,"issue36-baseline-fit.pdf"))
+
     end
+    r[1][:baseline_fit] = plot(pl1[:Lr_data],pl1[:densities],pl1[:r_y],
+                                layout = (1,3),size = (800,250))
     return r
 
 end

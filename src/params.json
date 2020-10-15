@@ -34,7 +34,7 @@
 		"symbol" : "\\eta"
 	},
 	"cτ" : {
-		"value" : 6.5,
+		"value" : 7.0,
 		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
 		"symbol" : "c_\\tau"
@@ -52,13 +52,13 @@
 		"symbol" : "\\eta_l"
 	},
 	"taum" : {
-		"value" : 0.5,
+		"value" : 0.4,
 		"description" : "elasticity of F commuting cost wrt location",
 		"type" : "region",
 		"symbol" : "taum"
 	},
 	"taul" : {
-		"value" : 0.7,
+		"value" : 0.6,
 		"description" : "elasticity of F commuting cost wrt location",
 		"type" : "region",
 		"symbol" : "taum"

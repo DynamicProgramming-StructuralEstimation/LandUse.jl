@@ -19,17 +19,23 @@ function ts_plots(M,p::Param;fixy = false)
 	# marker
 	mmark = (:circle, 4)
 
+	# colors
+	rg = ["red" "green"]
+	brg = ["blue" "red" "green"]
+
 	dd[:spending] = @df ds plot(:year,:value, group = :variable,
 			   linewidth = 2, title = "Spending Shares",
-			   ylims = (0.0,1.0), marker = mmark, legend = :right)
+			   ylims = (0.0,0.83), marker = mmark, legend = :right, color = brg)
+
+    # dd[:spending_data] = plot!(dd[:spending], p.moments.year, p.moments[!,[:SpendingShare_Housing, :SpendingShare_Urban,:SpendingShare_Rural]], color = brg)
 
 	ds2 = stack(select(d,:year,:Lu, :Lr), Not(:year))
 	dd[:pop] = @df ds2 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Population",
-					 ylims = (0,2), marker = mmark, legend = :right)
+					 linewidth = 2, title = "Population", marker = mmark,
+					 legend = :right, color = rg)
 
-	dd[:Lr_data] = @df d plot(:year, :Lr ./ p.Lt, label = "model",marker = mmark)
-	plot!(dd[:Lr_data], p.moments.year, p.moments.Employment_rural, label = "data")
+	dd[:Lr_data] = @df d plot(:year, :Lr ./ p.Lt, label = "model",marker = mmark, color = "blue",linewidth = 2, title = "Rural Employment")
+	plot!(dd[:Lr_data], p.moments.year, p.moments.Employment_rural, label = "data", color = "red",linewidth = 2)
 
 	dd[:ρ0_real] = @df d plot(:year, :ρ0_real, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
 	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
@@ -43,10 +49,21 @@ function ts_plots(M,p::Param;fixy = false)
 	dd[:hr] = @df d plot(:year, :hr, linewidth = 2, color = "black", leg =false, title = "Fringe Housing Demand", marker = mmark, ylims = fixy ? (0.0,5.0) : false )
 
 	df = @linq d |>
-		 select(:year,:r, :y ,:iq) |>
-		 transform(r_y = 100*(:r ./ :y), ru_y = 100*(:iq ./ :y))
-	dd[:r_y] = @df df plot(:year, [:r_y, :ru_y], labels = ["Total" "Urban Only"],
-	            linewidth = 2, title = "Rents over Income (%)", marker = mmark, ylims = fixy ? (0,50) : false)
+		 select(:year,:rr,:r, :y ,:iq, :rr_real, :ru_real, :pop) |>
+		 transform(r_y = 100*(:r .* :pop ./ :y), rr_y = 100*(:rr ./ :y), ru_y = 100*(:iq ./ :y))
+	dd[:r_y] = @df df plot(:year, [:r_y, :ru_y,:rr_y], labels = ["Total" "Urban" "Rural"],
+	            linewidth = 2, title = "Rents as % of Income", marker = mmark,
+				ylims = fixy ? (0,50) : false, color = brg,legend = :left)
+
+	df = @linq d |>
+		 select(:year,:rr_real, :ru_real) |>
+		 transform(rr_real_1 = :rr_real ./ :rr_real[1], ru_real_1 = :ru_real ./ :ru_real[1])
+	dd[:rents_real] = @df df plot(:year, [:ru_real, :rr_real ], labels = ["Rural Rents" "Urban Rents"],
+	            linewidth = 2, title = "Real Rents", marker = mmark,
+				ylims = fixy ? (0,50) : false, legend = :left, color = rg)
+	dd[:rents_real_1] = @df df plot(:year, [:ru_real_1,:rr_real_1], labels = ["Rural Rents" "Urban Rents"],
+				linewidth = 2, title = "Real Rents", marker = mmark, ylims = fixy ? (0,50) : false,
+				legend = :left, color = rg)
 
 
 	y1950 = findmin(abs.(d.year .- 1950))[2]
@@ -123,7 +140,7 @@ function ts_plots(M,p::Param;fixy = false)
 	ndens = mapcols(x -> x ./ x[1],select(dens, Not(:year)))
 	ndens[!,:year] .= dens.year
 	ds4 = stack(dens, Not(:year))
-	ds5 = stack(select(df4,:year,:avgd), Not(:year))
+	ds5 = select(df4,:year,:avgd)
 	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
 	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
@@ -136,7 +153,7 @@ function ts_plots(M,p::Param;fixy = false)
     incdens = df4.avgd[1] / df4.avgd[end]
     diffdens = df4.avgd[1] - df4.avgd[end]
 	ancdens = df4.avgd[end] + 0.2 * diffdens
-	dd[:avdensity] = @df ds5 plot(:year, :value, group = :variable,
+	dd[:avdensity] = @df ds5 plot(:year, :avgd,
 					 linewidth = 2, title = "Avg Density", marker = mmark,
 					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (p.T.stop,ancdens,"$(round(incdens,digits = 1))x"))
 	dd[:tauphi] = @df ds6 plot(:year, :value, group = :variable,

@@ -177,6 +177,20 @@ function getgrowth(p::Param,s::Symbol,g::Float64)
 	[x[1] ; Float64[growθ(x[1], [g for i in 2:it]) for it in 2:length(p.T)]]
 end
 
+function backoutη(p::Param)
+	function eq!(F,x,p::Param)
+		#x = [ηm, ηl]
+		F[1] = p.taul - ((x[1] + x[2])/(1 + x[1]))
+		F[2] = p.taum - ((x[1])/(1 + x[1]))
+	end
+	r = nlsolve((F,x) -> eq!(F,x,p),ones(2))
+	if converged(r)
+		return(Dict(:ηm => r.zero[1], :ηl => r.zero[2]))
+	else
+		error("not converged")
+	end
+end
+
 
 "print default param to latex table"
 function latex_param()
