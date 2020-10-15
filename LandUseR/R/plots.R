@@ -8,12 +8,12 @@ plot_sat_built <- function(){
     for (ir in 1:nrow(ci)){
         cci = ci[ir,]
         # indices 1,2,3,4 are years
-        ss = stack(cc[[1]][[cci$CODGEO]]$built,cc[[2]][[cci$CODGEO]]$built,cc[[3]][[cci$CODGEO]]$built,cc[[4]][[cci$CODGEO]]$built)
+        ss = raster::stack(cc[[1]][[cci$CODGEO]]$built,cc[[2]][[cci$CODGEO]]$built,cc[[3]][[cci$CODGEO]]$built,cc[[4]][[cci$CODGEO]]$built)
         pngname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.png"))
         pdfname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.pdf"))
 
         # plot
-        out[[ir]] = levelplot(ss,xlab = NULL, ylab = NULL, scales=list(draw=FALSE), names.attr=paste0(cci$LIBGEO,' % built ', LandUseR:::GHS_years()))
+        out[[ir]] = rasterVis::levelplot(ss,xlab = NULL, ylab = NULL, scales=list(draw=FALSE), names.attr=paste0(cci$LIBGEO,' ', LandUseR:::GHS_years()))
 
         # write
         png(pngname,width = 1000, height=700, res = 175)
