@@ -9,7 +9,7 @@
 %\renewcommand{\inserttotalframenumber}{57}
 \title{\textbf{Structural Change, Land Use and Urban Expansion}}
 \author{Nicolas Coeurdacier (SciencesPo \& CEPR)\\ \ \\Florian Oswald (SciencesPo) \\ \ \\ Marc Teignier (U. Barcelona)}
-\date{HEC Firm Location and Economic Geography Sept 2020}
+\date{Urban Economics Association [Virtual] October 2020}
 
 
 \frame{\titlepage}
@@ -49,47 +49,71 @@
 \end{columns}
 \end{frame}
 
-
-
-\begin{frame}
-	\frametitle{This paper}
-	\medskip	
-	\hspace{-0.2cm}Spatial general equilibrium model of structural change and land use.
-	\medskip
-	\bi
-	\item Three sectors/goods: rural, urban, and housing.
-	\smallskip
-	\bi
-	\item Different intensity in the use of land as input.
-	\smallskip
-	\item Rival Land Use: Agricultural or Housing.	
-	\smallskip
-	\item Fixed Supply of Land.
-	\ei
-	\bigskip
-	\item Drivers of structural change:
-	\smallskip
-	\bi 
-	\item Non-homothetic preferences for the rural good.
-	\smallskip
-	\item Transitory dynamics with rising productivity.
-	\ei
-
-	\bigskip
-	\item Land reallocation.
-	\smallskip
-	\bi
-	\item City expands as rural employment falls.
-	\smallskip
-	\item Urban good produced at city center.
-	\smallskip
-	\item Commuting costs for urban workers.
-	%\item Perfect mobility of workers across sectors
-	\ei
-	\ei
+\begin{frame}{Motivation: Fall in Urban Density}{Top 100 Cities in France}
+\begin{adjustbox}{center}
+\includegraphics[height=0.8\paperheight]{\dataplots/areaversuspop.pdf}\end{adjustbox}
 \end{frame}
 
 
+% \begin{frame}
+% 	\frametitle{This paper}
+% 	\medskip	
+% 	\hspace{-0.2cm}Spatial general equilibrium model of structural change and land use.
+% 	\medskip
+% 	\bi
+% 	\item Three sectors/goods: rural, urban, and housing.
+% 	\smallskip
+% 	\bi
+% 	\item Different intensity in the use of land as input.
+% 	\smallskip
+% 	\item Rival Land Use: Agricultural or Housing.	
+% 	\smallskip
+% 	\item Fixed Supply of Land.
+% 	\ei
+% 	\bigskip
+% 	\item Drivers of structural change:
+% 	\smallskip
+% 	\bi 
+% 	\item Non-homothetic preferences for the rural good.
+% 	\smallskip
+% 	\item Transitory dynamics with rising productivity.
+% 	\ei
+
+% 	\bigskip
+% 	\item Land reallocation.
+% 	\smallskip
+% 	\bi
+% 	\item City expands as rural employment falls.
+% 	\smallskip
+% 	\item Urban good produced at city center.
+% 	\smallskip
+% 	\item Commuting costs for urban workers.
+% 	%\item Perfect mobility of workers across sectors
+% 	\ei
+% 	\ei
+% \end{frame}
+
+\begin{frame}{Urban Expansion: Competing Theories}
+
+\begin{widee}
+
+\item Urban Economics:
+\begin{midi}
+\item Decline in commuting cost over time allows residing further away from city centre.
+\item New technologies (like train) push city fringe outwards.
+\end{midi}
+
+\pause
+
+\item Structural Change: 
+\begin{midi}
+\item Food subsistence constraint is binding initially. No income left for bigger houses. (No need to commute to large suburban houses.)
+\item Agricultural productivity growth solves food problem, and puts downward pressure on land values. City can expand easily to accomodate greater housing demand.
+\end{midi}
+
+\end{widee}
+
+\end{frame}
 
 \begin{frame}
 \frametitle{Preview of Main Mechanisms}
@@ -130,10 +154,9 @@
 
 \small{\textbf{(Traditional) Macro and Land Values}}
 \begin{itemize}
-\item \footnotesize{Ricardo (1817), Nichols (1970), Grossman and Steger (2016). Measurement. Morris and Heathcote (2007), Piketty and Zucman (2014), Knoll, Schularick and Steger (2017).}
+\item \footnotesize{Ricardo (1817), Nichols (1970), Grossman and Steger (2016). Measurement. Morris and Heathcote (2007), Piketty and Zucman (2014), Knoll, Schularick and Steger (2017), Miles and Sefton (2020)}
 \end{itemize}
 
-\smallskip
 \small{\textbf{(Macro) Structural Change}}
 \begin{itemize}
 \item \footnotesize{Survey: Herrendorf, Rogerson and Valentinyi (2014). Theory: Kongsamut et al. (2001), Gollin et al. (2002), Boppart (2014), Acemoglu and Guerrieri (2008), Ngai and Pissarides (2007)...\\
@@ -142,7 +165,7 @@ Structural change and urbanization. Lewis (1954), Michaels et al. (2012). Eckert
 \item \footnotesize{Agricultural Productivity Gap.  Gollin et al. (2014), Lagakos and Waugh (2013), Young (2013), Restuccia et al. (2008).}
 \end{itemize}
 
-\smallskip
+
 \small{\textbf{Urban --- Size and Expansion of Cities}}
 \begin{itemize}
 \item \footnotesize{Theory. Alonso-Mills-Muth. Surveys by Duranton and Puga (2014, 2015). Brueckner (1990), Brueckner and Lall (2014), ... \\
@@ -256,7 +279,8 @@ Sources:
 
 \begin{column}{0.7\textwidth}
 	\begin{adjustbox}{center}
-	\includegraphics[height=0.85\textheight]{\dataplots/Reims-sat-area-2.png}\end{adjustbox}
+	% \includegraphics[height=0.85\textheight]{\dataplots/Lyon-sat-area-2.png}\end{adjustbox}
+	\includegraphics[height=0.85\textheight]{\dataplots/Toulouse-sat-area.png}\end{adjustbox}
 	\end{column}
 \begin{column}{0.3\textwidth}
 \begin{midi}
@@ -326,7 +350,7 @@ Sources:
 \frametitle{The Historical Fall in Urban Density}
 \begin{columns}
 \begin{column}{0.9\textwidth}
-\includegraphics[width=0.9\textwidth]{\dataplots/densities-time-log.pdf}
+\includegraphics[width=0.9\textwidth]{\dataplots/densities-time-log-wtd.pdf}
 \end{column}
 \begin{column}{0.2\textwidth}
 \begin{itemize}
@@ -868,14 +892,21 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 Subsistence level $\underline{c}$ such that given initial $\theta$, slightly more than $50\%$ of workers in ($r$), $\underline{s} << \underline{c}$.
 
 \medskip
-\noindent \textbf{Commuting costs}. $\eta_\ell=0, \eta_m=1.3$, $\zeta = 0.5$.
+\noindent \textbf{Commuting costs}. $\eta_\ell=\frac{1}{3}, \eta_m=\frac{2}{3}$, $\zeta = 0.5$.
 
 \medskip
 \noindent \textbf{Housing supply elasticity.} Baseline with $\epsilon_{\ell} = \epsilon_r=4$. Version with lower $\epsilon_{\ell}$ at CBD.
 
 \medskip
-\noindent \textbf{Population}. Baseline. $L=1$.\\
-Alternative. Rising population since 1860, roughly doubles.
+\noindent \textbf{Population}. Actual population growth data extrapolated to 2050 using central INSEE scenario.
+\end{frame}
+
+\begin{frame}{Baseline Model: Empirical Targets}{Work in Progress: Currently collecting density within largest cities to confront with central plot}
+
+\begin{adjustbox}{center}
+\includegraphics[width=1.0\textwidth]{\modelplots/issue36-baseline-fit.pdf}
+\end{adjustbox}
+
 \end{frame}
 
 \begin{frame}[label=res_laborland]
@@ -885,10 +916,10 @@ Alternative. Rising population since 1860, roughly doubles.
 \begin{columns}
 \begin{column}{0.3\textwidth}
 \begin{mide}
-\item Rural population: 66\% $\rightarrow$ 5\%
-\item Rural spending share: 68\% $\rightarrow$ 5\%
-\item Urban Density: Falls by factor of 10.
-\item City size increases substantially: 0.002 $\rightarrow$ 0.075.
+\item Rural population: 78\% $\rightarrow$ 2\%
+\item Rural spending share: 77\% $\rightarrow$ 1.8\%
+\item Urban Density: Falls by factor of 8.
+\item Evolution of Land Rent Shares $\rightarrow$ Piketty.
 \end{mide}
 \end{column}
 \begin{column}{0.7\textwidth}
@@ -897,34 +928,26 @@ Alternative. Rising population since 1860, roughly doubles.
 \end{column}\end{columns}
 \end{frame}
 
-\begin{frame}
-\frametitle{Results}
-\framesubtitle{Baseline Model: Hockey Stick and Falling Value Share}
 
-\begin{adjustbox}{center}
-\includegraphics[width=0.9\textwidth]{\modelplots/issue36-prices.pdf}
-\end{adjustbox}
 
-\end{frame}
+% \begin{frame}
+% \frametitle{Results}
+% \framesubtitle{Baseline Model Commuting Patterns}
 
-\begin{frame}
-\frametitle{Results}
-\framesubtitle{Baseline Model Commuting Patterns}
-
-\begin{columns}
-\begin{column}{0.3\textwidth}
-\begin{mide}
-\item People at fringe choose fastest commute.
-\item People in center ($\ell=0$) walk.
-\item Shorter commute in center ($\ell=0$).
-\item Longer commutes at fringe ($\ell=\phi$).
-\end{mide}
-\end{column}
-\begin{column}{0.7\textwidth}
-\begin{adjustbox}{center}
-\includegraphics[height=0.8\textheight]{\modelplots/issue36-commute.pdf}\end{adjustbox}
-\end{column}\end{columns}
-\end{frame}
+% \begin{columns}
+% \begin{column}{0.3\textwidth}
+% \begin{mide}
+% \item People at fringe choose fastest commute.
+% \item People in center ($\ell=0$) walk.
+% \item Shorter commute in center ($\ell=0$).
+% \item Longer commutes at fringe ($\ell=\phi$).
+% \end{mide}
+% \end{column}
+% \begin{column}{0.7\textwidth}
+% \begin{adjustbox}{center}
+% \includegraphics[height=0.8\textheight]{\modelplots/issue36-commute.pdf}\end{adjustbox}
+% \end{column}\end{columns}
+% \end{frame}
 
 \begin{frame}
 \frametitle{Results}
@@ -944,16 +967,14 @@ Alternative. Rising population since 1860, roughly doubles.
 \end{column}\end{columns}
 \end{frame}
 
-\begin{frame}
-\frametitle{Results}
-\framesubtitle{Counterfactual 2: High Urban Productivity Growth}
+\begin{frame}{Counterfactual 2: High Urban Productivity Growth Only}{Commuting Costs are Declining with Rising Incomes!}
 
 \begin{columns}
 \begin{column}{0.3\textwidth}
 \begin{midi}
-\item Population reallocation is too slow.
-\item Spending shares evolution dampened.
-\item Huge fall in urban density.
+\item Rural employment too high throughout.
+\item City density does not fall enough. Why?
+\item $\Rightarrow$ Because rural land rents increase!
 \end{midi}
 \end{column}
 \begin{column}{0.7\textwidth}
@@ -962,15 +983,15 @@ Alternative. Rising population since 1860, roughly doubles.
 \end{column}\end{columns}
 \end{frame}
 
-\begin{frame}
-\frametitle{Results}
-\framesubtitle{Counterfactual 3: High Rural Productivity Growth}
+\begin{frame}{Counterfactual 3: High Rural Productivity Growth Only}{Commuting Costs are \emph{not} declining (urban income does not rise)!}
 
 \begin{columns}
 \begin{column}{0.3\textwidth}
 \begin{midi}
-\item Qualitatively correct implications.
-\item Rural productivity growth is key.
+\item Rural \emph{push} gets labor allocation right.
+\item No urban growth means no fall in commuting cost. 
+\item City gets increasingly dense.
+\item Spending on housing gets very high.
 \end{midi}
 \end{column}
 \begin{column}{0.7\textwidth}
