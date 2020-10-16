@@ -93,7 +93,7 @@
 % 	\ei
 % \end{frame}
 
-\begin{frame}{Urban Expansion: Competing Theories}
+\begin{frame}{Urban Expansion: Different Views}
 
 \begin{widee}
 
@@ -107,7 +107,7 @@
 
 \item Structural Change: 
 \begin{midi}
-\item Food subsistence constraint is binding initially. No income left for bigger houses. (No need to commute to large suburban houses.)
+\item Food subsistence constraint is binding initially. High land values. No income left for bigger houses. (No need to commute to large suburban houses.)
 \item Agricultural productivity growth solves food problem, and puts downward pressure on land values. City can expand easily to accomodate greater housing demand.
 \end{midi}
 
@@ -120,9 +120,9 @@
 \framesubtitle{Transitory Dynamics with Rising Productivity and Falling Commuting Costs}
 
 \begin{widei}
-\item<1-> \textbf{In Year 1866:} Land is scarce. High values of farmland with respect to income due to low productivity (`food problem'). Very small and dense, \emph{walkable} cities.
-\item<2-> \textbf{From 1866 to 1970:} Productivity and income increases, subsistence problems diminish. Workers move to cities and into industry. Farmland getting more abundant. Free up land for cities to expand, accommodating rising demand for housing. Cities getting large (in area) and much less dense \emph{without} a large increase in land values. Longer commutes.
-\item<3-> \textbf{From 1970 on} Reallocation of factors/land use slows down. Cities expand less and land prices increase more with rising productivity. Land particularly scarce in some locations.
+\item<1-> \textbf{Before Ind. Revolution:} Land is scarce. High values of farmland with respect to income due to low productivity (`food problem'). Small homes, low opportunity cost of time. Very small and dense, \emph{walkable} cities.
+\item<2-> \textbf{Transition:} Productivity and income increases, subsistence problems diminish. Workers move to cities. Farmland getting more abundant. Free up land for cities to expand, accommodating rising demand for housing. Opp. cost of time is increasing, people have faster commutes. Cities getting large (in area) and much less dense \emph{without} a large increase in land values.
+\item<3-> \textbf{Nowadays:} Reallocation of factors/land use slows down. Cities expand less and land prices increase more with rising productivity.
 \end{widei}
 \end{frame}
 
@@ -901,17 +901,24 @@ Subsistence level $\underline{c}$ such that given initial $\theta$, slightly mor
 \noindent \textbf{Population}. Actual population growth data extrapolated to 2050 using central INSEE scenario.
 \end{frame}
 
-\begin{frame}{Baseline Model: Empirical Targets}{Work in Progress: Currently collecting density within largest cities to confront with central plot}
+\begin{frame}{Baseline Model: Empirical Targets}
 
-\begin{adjustbox}{center}
-\includegraphics[width=1.0\textwidth]{\modelplots/issue36-baseline-fit.pdf}
-\end{adjustbox}
+\begin{columns}
+\begin{column}{0.3\textwidth}
+\begin{widee}
+\item Top row: Structural Change moments
+\item Bottom row: City structure moments
+\item Work in Progress (missing \emph{data} lines...)
+\end{widee}
+\end{column}
+\begin{column}{0.7\textwidth}
+\includegraphics[width=1\textwidth]{\modelplots/issue36-baseline-fit.pdf}
+\end{column}\end{columns}
 
 \end{frame}
 
 \begin{frame}[label=res_laborland]
-\frametitle{Results}
-\framesubtitle{Baseline Model}
+\frametitle{More Results in Baseline Model}
 
 \begin{columns}
 \begin{column}{0.3\textwidth}
@@ -949,33 +956,35 @@ Subsistence level $\underline{c}$ such that given initial $\theta$, slightly mor
 % \end{column}\end{columns}
 % \end{frame}
 
-\begin{frame}
-\frametitle{Results}
-\framesubtitle{Counterfactual 1: Low $\underline{c}$, high $\underline{s}$. Too little reallocation!}
+% \begin{frame}
+% \frametitle{Results}
+% \framesubtitle{Counterfactual 1: Low $\underline{c}$, high $\underline{s}$. Too little reallocation!}
+
+% \begin{columns}
+% \begin{column}{0.3\textwidth}
+% \begin{midi}
+% \item High preference for urban good does not deliver.
+% \item Too little population reallocation.
+% \item Spending shares are wrong.
+% \end{midi}
+% \end{column}
+% \begin{column}{0.7\textwidth}
+% \begin{adjustbox}{center}
+% \includegraphics[scale=0.5]{\modelplots/issue36-low-cbar.pdf}\end{adjustbox}
+% \end{column}\end{columns}
+% \end{frame}
+
+\begin{frame}{Counterfactual 1: High Urban Productivity Growth Only}
 
 \begin{columns}
 \begin{column}{0.3\textwidth}
-\begin{midi}
-\item High preference for urban good does not deliver.
-\item Too little population reallocation.
-\item Spending shares are wrong.
-\end{midi}
-\end{column}
-\begin{column}{0.7\textwidth}
-\begin{adjustbox}{center}
-\includegraphics[scale=0.5]{\modelplots/issue36-low-cbar.pdf}\end{adjustbox}
-\end{column}\end{columns}
-\end{frame}
-
-\begin{frame}{Counterfactual 2: High Urban Productivity Growth Only}{Commuting Costs are Declining with Rising Incomes!}
-
-\begin{columns}
-\begin{column}{0.3\textwidth}
-\begin{midi}
-\item Rural employment too high throughout.
-\item City density does not fall enough. Why?
-\item $\Rightarrow$ Because rural land rents increase!
-\end{midi}
+Rural productivity is very low. Hence:
+\begin{mide}
+\item Need too many rural workers.
+\item High price of food. 
+\item High value of farmland. 
+\item City people live in small houses.
+\end{mide}
 \end{column}
 \begin{column}{0.7\textwidth}
 \begin{adjustbox}{center}
@@ -983,15 +992,31 @@ Subsistence level $\underline{c}$ such that given initial $\theta$, slightly mor
 \end{column}\end{columns}
 \end{frame}
 
-\begin{frame}{Counterfactual 3: High Rural Productivity Growth Only}{Commuting Costs are \emph{not} declining (urban income does not rise)!}
+\begin{frame}{Counterfactual 1: High Urban Productivity Growth Only}
+
+\begin{columns}
+\begin{column}{0.3\textwidth}
+Meanwhile, Urban growth is high:
+\begin{mide}
+\item The opportunity cost of commute is rising ($w_u$ is rising).
+\item Average density is falling.
+\item But relatively more in center than at fringe!
+\end{mide}
+\end{column}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[width=\textwidth]{\modelplots/issue36-u-fast2.pdf}\end{adjustbox}
+\end{column}\end{columns}
+\end{frame}
+
+\begin{frame}{Counterfactual 2: High Rural Productivity Growth Only}
 
 \begin{columns}
 \begin{column}{0.3\textwidth}
 \begin{midi}
 \item Rural \emph{push} gets labor allocation right.
-\item No urban growth means no fall in commuting cost. 
-\item City gets increasingly dense.
-\item Spending on housing gets very high.
+\item Relative price dynamics qualitatively correct.
+\item Spend quite a lot on housing though. What's going on?
 \end{midi}
 \end{column}
 \begin{column}{0.7\textwidth}
@@ -1000,6 +1025,22 @@ Subsistence level $\underline{c}$ such that given initial $\theta$, slightly mor
 \end{column}\end{columns}
 \end{frame}
 
+\begin{frame}{Counterfactual 2: High Rural Productivity Growth Only}
+
+\begin{columns}
+\begin{column}{0.3\textwidth}
+\begin{midi}
+\item No urban growth $\Rightarrow$ opportunity cost of commute constant.
+\item People have no strong incentive for faster commute.
+\item Rural land value $\downarrow$ $\Rightarrow$ fringe density $\downarrow$...
+\item ... but $\tau(\ell) / w_u \approx$ constant $\Rightarrow$ central density $\uparrow$...
+\end{midi}
+\end{column}
+\begin{column}{0.7\textwidth}
+\begin{adjustbox}{center}
+\includegraphics[width=1\textwidth]{\modelplots/issue36-r-fast2.pdf}\end{adjustbox}
+\end{column}\end{columns}
+\end{frame}
 
 
 \begin{v75mins}

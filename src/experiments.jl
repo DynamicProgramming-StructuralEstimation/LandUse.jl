@@ -462,6 +462,9 @@ end
 function issue36( ; save=false)
     r = Dict()
 
+    emptyplot = plot(legend=false,grid=false,foreground_color_subplot=:white)
+    size1by2 = (800,400)
+
     # 1. same growth in sectors
     #     i. high cbar vs low sbar: show implied city density time series to see that only that config works
     #     ii. show falling housing spending share as well
@@ -474,9 +477,14 @@ function issue36( ; save=false)
     r[1][:baselinestats] = Dict(:ruralpop => Dict(:from => M[1].Lr , :to => M[end].Lr / p1.Lt[end]),
                                 :rspend => Dict(:from => M[1].Cr / M[1].C, :to => M[end].Cr / M[end].C),
                                 :phi => Dict(:from => M[1].ϕ, :to => M[end].ϕ ))
-    r[1][:baseline] = plot(pl1[:pop],pl1[:spending],pl1[:avdensity],pl1[:r_y],
-                                layout = (2,2),link = :x)
+    r[1][:baseline1] = plot(pl1[:Lr_data],pl1[:pop],pl1[:n_densities],pl1[:r_y],
+                                layout = (2,2))
+    r[1][:baseline2] = plot(pl1[:avdensity_pop],pl1[:n_densities],layout = (1,2),
+                            size = size1by2)
+
     r[1][:prices] = LandUse.plot(pl1[:r_real],pl1[:r_y], layout = (1,2))
+    r[1][:baseline_fit] = plot(pl1[:Lr_data],pl1[:spending],pl1[:n_densities],pl1[:avdensity],
+                                layout = (2,2)) #
 
 
 
@@ -495,15 +503,19 @@ function issue36( ; save=false)
     # p2 = LandUse.Param(par = Dict(:θu_g => 1.08,:θut => 1.0, :θrt => 1.0,:θr_g => 1.01))
     x,M,p0  = LandUse.run(p3)
     pl3 = LandUse.ts_plots(M,p3)
-    r[2][:u_fast] = LandUse.plot(pl3[:Lr_data],pl3[:spending],pl3[:avdensity],pl3[:r_y],
-                                layout = (2,2),link = :x)
+    r[2][:u_fast1] = LandUse.plot(pl3[:Lr_data],pl3[:spending],pl3[:r_y],emptyplot,
+                                layout = (2,2))
+    r[2][:u_fast2] = LandUse.plot(pl3[:avdensity_pop],plot(pl3[:n_densities],leg = :bottomleft),layout = (1,2),
+                            size = size1by2)
 
     # p3 = LandUse.Param(par = Dict(:θu_g => 1.01,:θut => 1.0, :θrt => 1.0,:θr_g => 1.09))
     p4 = LandUse.Param(par = Dict(:θu_g => 1.0,:θut => 1.0))
     x,M,p0  = LandUse.run(p4)
     pl4 = LandUse.ts_plots(M,p4)
-    r[2][:r_fast] = LandUse.plot(pl4[:Lr_data],pl4[:spending],pl4[:avdensity],pl4[:r_y],
-                                layout = (2,2),link = :x)
+    r[2][:r_fast1] = LandUse.plot(pl4[:Lr_data],pl4[:spending],pl4[:r_y],emptyplot,
+                                layout = (2,2))
+    r[2][:r_fast2] = LandUse.plot(pl4[:avdensity_pop],plot(pl4[:n_densities],leg = :bottomleft),layout = (1,2),
+                            size = size1by2)
 
     r[3] = plot(pl1[:mode],pl1[:ctime],layout = (2,1), link = :x)
 
@@ -519,20 +531,24 @@ function issue36( ; save=false)
 
     # save plots
     if save
-        savefig(r[1][:baseline], joinpath(dbplots,"issue36-baseline.pdf"))
-        savefig(r[1][:low_cbar], joinpath(dbplots,"issue36-low-cbar.pdf"))
-        savefig(r[1][:prices], joinpath(dbplots,"issue36-prices.pdf"))
-        savefig(r[2][:u_fast], joinpath(dbplots,"issue36-u-fast.pdf"))
-        savefig(r[2][:r_fast], joinpath(dbplots,"issue36-r-fast.pdf"))
-        savefig(r[4], joinpath(dbplots,"issue36-constant.pdf"))
-        savefig(r[3], joinpath(dbplots,"issue36-commute.pdf"))
-        r[1][:baseline_fit] = plot(pl1[:Lr_data],pl1[:densities],pl1[:r_y],
-                                    layout = (1,3),size = (800,250))
+        savefig(r[1][:baseline1], joinpath(dbplots,"issue36-baseline.pdf"))
         savefig(r[1][:baseline_fit], joinpath(dbplots,"issue36-baseline-fit.pdf"))
 
+        savefig(r[1][:low_cbar], joinpath(dbplots,"issue36-low-cbar.pdf"))
+        savefig(r[1][:prices], joinpath(dbplots,"issue36-prices.pdf"))
+        savefig(r[2][:u_fast1], joinpath(dbplots,"issue36-u-fast.pdf"))
+        savefig(r[2][:r_fast1], joinpath(dbplots,"issue36-r-fast.pdf"))
+        savefig(r[4], joinpath(dbplots,"issue36-constant.pdf"))
+        savefig(r[3], joinpath(dbplots,"issue36-commute.pdf"))
+
+        # changing size
+        savefig(r[1][:baseline2], joinpath(dbplots,"issue36-baseline2.pdf"))
+        savefig(r[2][:u_fast2], joinpath(dbplots,"issue36-u-fast2.pdf"))
+        savefig(r[2][:r_fast2], joinpath(dbplots,"issue36-r-fast2.pdf"))
+
+
+
     end
-    r[1][:baseline_fit] = plot(pl1[:Lr_data],pl1[:densities],pl1[:r_y],
-                                layout = (1,3),size = (800,250))
     return r
 
 end

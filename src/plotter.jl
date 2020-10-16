@@ -53,7 +53,7 @@ function ts_plots(M,p::Param;fixy = false)
 		 transform(r_y = 100*(:r .* :pop ./ :y), rr_y = 100*(:rr ./ :y), ru_y = 100*(:iq ./ :y))
 	dd[:r_y] = @df df plot(:year, [:r_y, :ru_y,:rr_y], labels = ["Total" "Urban" "Rural"],
 	            linewidth = 2, title = "Rents as % of Income", marker = mmark,
-				ylims = fixy ? (0,50) : false, color = brg,legend = :left)
+				ylims = fixy ? (0,50) : false, color = brg,legend = :bottomright)
 
 	df = @linq d |>
 		 select(:year,:rr_real, :ru_real) |>
@@ -136,7 +136,8 @@ function ts_plots(M,p::Param;fixy = false)
 		transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,p),:ϕ) .* :ϕ) )
 		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
 
-    dens = select(df4,:year,:dq1, :dq2, :dq3, :dq4, :dr, :avgd)
+    # dens = select(df4,:year,:d0,:dq1, :dq2, :dq3, :dq4, :dr, :avgd)
+    dens = select(df4,:year, :avgd => (x-> x ./ p.Lt) => :average,:d0 => (x-> x ./ p.Lt) =>  :center, :dr => (x-> x ./ p.Lt) =>  :fringe)
 	ndens = mapcols(x -> x ./ x[1],select(dens, Not(:year)))
 	ndens[!,:year] .= dens.year
 	ds4 = stack(dens, Not(:year))
@@ -147,7 +148,8 @@ function ts_plots(M,p::Param;fixy = false)
 					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false)
 
 	dd[:n_densities] = @df stack(ndens, Not(:year)) plot(:year, :value, group = :variable,
- 					 linewidth = 2, title = "Normalized Densities", leg = :topright, ylims = fixy ? (0,300) : false)
+ 					 linewidth = 2, title = "Normalized Densities", color = brg,
+					 leg = :topright, ylims = fixy ? (0,300) : false, linestyle = reshape([:dash,[:solid for i in 1:(ncol(ndens)-2)]...],1,ncol(ndens)-1))
 
 
     incdens = df4.avgd[1] / df4.avgd[end]
@@ -156,6 +158,13 @@ function ts_plots(M,p::Param;fixy = false)
 	dd[:avdensity] = @df ds5 plot(:year, :avgd,
 					 linewidth = 2, title = "Avg Density", marker = mmark,
 					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (p.T.stop,ancdens,"$(round(incdens,digits = 1))x"))
+
+	incdens  = dens.average[1] / dens.average[end]
+	diffdens = dens.average[1] - dens.average[end]
+	ancdens  = dens.average[end] + 0.2 * diffdens
+	dd[:avdensity_pop] = @df ds5 plot(:year, :avgd ./ p.Lt,
+	 				 linewidth = 2, title = "Avg Urban over Total Density", marker = mmark,
+	 				 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (p.T.stop,ancdens,"$(round(incdens,digits = 1))x"))
 	dd[:tauphi] = @df ds6 plot(:year, :value, group = :variable,
 					  linewidth = 2, title = "1 - tau(phi)",leg = false)
     dss = stack(select(d,:year,:mode0,:modeϕ,:imode), Not(:year))
