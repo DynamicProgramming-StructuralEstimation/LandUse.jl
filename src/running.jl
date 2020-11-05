@@ -135,13 +135,6 @@ function make_ts_space_gif()
 	plot_ts_xsect(C,par,1)
 end
 
-function plotsingle()
-	p1  = Param() # baseline param: high cbar and low sbar
-	x,M,p0  = run(Region,p1)
-	LandUse.ts_plots(M,p1)
-end
-
-
 
 function solve1(p::Param)
 	x = stmodel(p)
