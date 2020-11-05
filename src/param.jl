@@ -84,8 +84,10 @@ mutable struct Param
 		# thetas = smooth_θ(this.T, this.ma, this.mag)[1]
 
 		# read data from disk
-		this.thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
-		moments = CSV.read(joinpath(LandUse.dbtables,"data_moments.csv"), DataFrame)
+		# this.thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+		moments = CSV.read(joinpath(LandUse.dbtables,"data-moments.csv"), DataFrame)
+		this.thetas = select(moments, :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+
 		this.moments = moments[ moments.year .∈ Ref(this.T), : ]
 
 		Lt = CSV.read(joinpath(LandUse.dbtables,"population.csv"), DataFrame)
@@ -94,7 +96,7 @@ mutable struct Param
 		# this.Lt = exp.(collect(range(log(1.0),log(2.42),length = T)))
 		this.L = this.Lt[1]
 
-		this.moments = join(this.moments, Lt, on = :year)
+		this.moments = innerjoin(this.moments, Lt, on = :year)
 
 		# bring on scale we know that works
 		# thetas.thetar .= thetas.thetar .* 0.32
@@ -252,6 +254,16 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 end
 
 
+function smooth_p_check(periods)
+	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
+	d = d[.!ismissing.(d.P_rural),:]
+	return d
+	z = transform(d[!,[:year,:P_rural]], :P_rural => (y -> LandUse.smooth(collect(skipmissing(y)),periods)))
+	@df z plot(:year, [:P_rural , :P_rural_function], seriestype = [:path],lw = 2,
+			   title = "smoothing over $periods periods",
+			   labels = ["" "Smoothed"])
+end
+
 """
 Takes raw csv data and prepares to be used in model.
 writes to csv input files.
@@ -273,51 +285,69 @@ function prepare_data(p::Param; digits = 9)
 	growth = p.mag
 
 	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
+	# @df d plot(:year, :P_rural)
+
+	# plot(d.year, d.theta_rural)
+	# plot(rand(10))
 	x0 = @linq d |>
 		where((:year .<= 2015) .& (:year .>= dt.start))   # rural data stops in 2015
 
-	x = select(x0, :year, :theta_rural, :theta_urban)
-	m = select(x0, :year, :Employment_rural, r"SpendingShare")
 
-	CSV.write(joinpath(dbtables,"data_moments.csv"),m)
+
+	x = select(x0, :year, :theta_rural, :theta_urban,:Employment_rural, r"SpendingShare", :P_rural)
+
 
 	# normalize year 1 to 1.0
 	# x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
 
+	#impute
+	Impute.interp!(x)
+
 
 	# fill in missings in 1914-1919 and 1939-1948 with straight lines
-	insertcols!(x, :m1913 => ((x.year .> 1913) .& (x.year .< 1920)))
-	insertcols!(x, :m1938 => ((x.year .> 1938) .& (x.year .< 1949)))
-	y1913 = x[x.year .== 1913,[:theta_urban,:theta_rural]]
-	y1920 = x[x.year .== 1920,[:theta_urban,:theta_rural]]
-	y1938 = x[x.year .== 1938,[:theta_urban,:theta_rural]]
-	y1949 = x[x.year .== 1949,[:theta_urban,:theta_rural]]
-
-	# slopes
-	sr1913 = (y1920.theta_rural[1] - y1913.theta_rural[1]) / (1920 - 1913)
-	su1913 = (y1920.theta_urban[1] - y1913.theta_urban[1]) / (1920 - 1913)
-	sr1938 = (y1949.theta_rural[1] - y1938.theta_rural[1]) / (1949 - 1938)
-	su1938 = (y1949.theta_urban[1] - y1938.theta_urban[1]) / (1949 - 1938)
-
-	x[x.m1913,:theta_rural] .= collect(y1913.theta_rural[1] .+ sr1913 .* (1:length(1914:1919)))
-	x[x.m1913,:theta_urban] .= collect(y1913.theta_urban[1] .+ su1913 .* (1:length(1914:1919)))
-
-	x[x.m1938,:theta_rural] .= collect(y1938.theta_rural[1] .+ sr1938 .* (1:length(1939:1948)))
-	x[x.m1938,:theta_urban] .= collect(y1938.theta_urban[1] .+ su1938 .* (1:length(1939:1948)))
+	# insertcols!(x, :m1913 => ((x.year .> 1913) .& (x.year .< 1920)))
+	# insertcols!(x, :m1938 => ((x.year .> 1938) .& (x.year .< 1949)))
+	# y1913 = x[x.year .== 1913,[:theta_urban,:theta_rural]]
+	# y1920 = x[x.year .== 1920,[:theta_urban,:theta_rural]]
+	# y1938 = x[x.year .== 1938,[:theta_urban,:theta_rural]]
+	# y1949 = x[x.year .== 1949,[:theta_urban,:theta_rural]]
+	#
+	# # slopes
+	# sr1913 = (y1920.theta_rural[1] - y1913.theta_rural[1]) / (1920 - 1913)
+	# su1913 = (y1920.theta_urban[1] - y1913.theta_urban[1]) / (1920 - 1913)
+	# sr1938 = (y1949.theta_rural[1] - y1938.theta_rural[1]) / (1949 - 1938)
+	# su1938 = (y1949.theta_urban[1] - y1938.theta_urban[1]) / (1949 - 1938)
+	#
+	# x[x.m1913,:theta_rural] .= collect(y1913.theta_rural[1] .+ sr1913 .* (1:length(1914:1919)))
+	# x[x.m1913,:theta_urban] .= collect(y1913.theta_urban[1] .+ su1913 .* (1:length(1914:1919)))
+	#
+	# x[x.m1938,:theta_rural] .= collect(y1938.theta_rural[1] .+ sr1938 .* (1:length(1939:1948)))
+	# x[x.m1938,:theta_urban] .= collect(y1938.theta_urban[1] .+ su1938 .* (1:length(1939:1948)))
 
 
 	# moving average smoother
 	transform!(x, :theta_rural => (y -> smooth(collect(skipmissing(y)),ma)) => :stheta_rural,
-	              :theta_urban => (y -> smooth(collect(skipmissing(y)),ma)) => :stheta_urban)
+	              :theta_urban => (y -> smooth(collect(skipmissing(y)),ma)) => :stheta_urban,
+	              :P_rural => (y -> LandUse.smooth(collect(skipmissing(y)),61)) => :sP_rural)
+
 
   	# drop temp columns
-  	select!(x, :year, :theta_rural, :theta_urban, :stheta_rural, :stheta_urban)
+  	select!(x, :year, :theta_rural, :theta_urban, :stheta_rural, :stheta_urban,:sP_rural)
 
-	# append the future to end of data
-	allowmissing!(x)
 	if maximum(x.year) < dt.stop
-		append!(x, DataFrame(year = 2016:dt.stop, theta_rural = missing, theta_urban = missing, stheta_rural = missing, stheta_urban = missing))
+		# append the future to end of data
+		x1 = vcat([DataFrame(Dict(zip(names(x), [missing for i in 1:length(names(x))]))) for i in 1:length(2016:dt.stop)]...)
+		x1.year = 2016:dt.stop
+		allowmissing!(x)
+		append!(x,x1)
+		append!(x, DataFrame(year = 2016:dt.stop, theta_rural = missing, theta_urban = missing, stheta_rural = missing, stheta_urban = missing, sP_rural = missing))
+
+			# interpolate forward
+			Impute.locf!(x)
 	end
+	# m = select(x, :year, :Employment_rural, r"SpendingShare", :s_rural)
+	#
+	# CSV.write(joinpath(dbtables,"data_moments.csv"),m)
 
 	# from year 2000 onwards, replace rural with `growth` percent growth
 	x[:, :stheta_rural] .= ifelse.(x.year .> 2000,vcat(zeros(sum(x.year .<= 2000)),[x[x.year .== 2000,:stheta_rural] * growth^i for i in 1:sum(x.year .> 2000)]...),x.stheta_rural)
@@ -348,7 +378,7 @@ function prepare_data(p::Param; digits = 9)
 	p6 = plot(p4,p5,layout = (2,1),size = (800,500))
 	savefig(p6, joinpath(dbplots,"smooth-thetas-data-model.pdf"))
 
-	CSV.write(joinpath(dbtables,"thetas_data.csv"),x)
+	CSV.write(joinpath(dbtables,"data-moments.csv"),x)
 	#
 	#
 	# (ret, pl)

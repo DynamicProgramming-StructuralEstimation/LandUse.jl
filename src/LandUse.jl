@@ -23,6 +23,7 @@ module LandUse
 	using JuMP
 	using Ipopt
 	using Interpolations: interpolate, Gridded, Linear
+	using Impute
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
