@@ -4,25 +4,33 @@ using LinearAlgebra
 
 ENV["GKSwstype"] = "100"  # hack to make GR run on gitlab CI
 
+# not running tests for proper CI setup at the moment
+# compiling all required packages takes too long.
+# instead: https://discourse.julialang.org/t/running-package-tests-really-slow/46587/5
+# 1. make sure using Revise
+# 2. includet("test/runtests.jl")
+# 3. modify test functions in this file and keep running those.
+
+
 function t1()
 	p = LandUse.Param()   # flat epsilon slope, so closed form solutions apply
 	# s = LandUse.get_starts(p)
-	r0 = LandUse.nlsolve_starts(LandUse.startval(),p=p)
+	x0 = LandUse.startval(p)
 
 	# use m0 values as starting values
 	m = LandUse.Region(p)
-	LandUse.update!(m,p,LandUse.startval())
+	LandUse.update!(m,p,[x0...])
 	
 	l = rand()
 	
 	# commuting cost
-	@test LandUse.τ(0.4,0.5,p) > 0
-	@test LandUse.τ(0.5,0.5,p) > 0
-	@test LandUse.τ(0.0,m.ϕ,p) == 0
+	@test LandUse.τ(0.4,p) > 0
+	@test LandUse.τ(0.5,p) > 0
+	@test LandUse.τ(0.0,p) == 0.0
 	
 	
 	# test wage function
-	@test LandUse.w(m.ϕ/2,m.ϕ,p) == p.θu - LandUse.τ(m.ϕ/2,m.ϕ,p)
+	@test LandUse.w(m.ϕ/2,m.ϕ,p) == p.θu - LandUse.τ(m.ϕ/2,p)
 	@test LandUse.w(m.Lu,0.0,m.ϕ,p) > LandUse.w(m.Lu,m.ϕ,m.ϕ,p)
 	@test LandUse.w(m.Lu,0.0,m.ϕ,p) > LandUse.w(m.Lu,1.0,m.ϕ,p)
 	@test LandUse.w(m.Lu,m.ϕ-eps(),m.ϕ,p) > LandUse.wu(m.Lu,m.ϕ,m.ϕ,p)
@@ -76,20 +84,20 @@ function t2()
 	@test p.ϵs == 10.0
 
 	p = LandUse.Param()
-	r0 = LandUse.nlsolve_starts(LandUse.startval(),p=p)
+	x0 = LandUse.startval(p)
 
 	# s = LandUse.get_starts(p)
 
 	# use m0 values as starting values
 	m = LandUse.Region(p)
-	LandUse.update!(m,p,r0.zero)
+	LandUse.update!(m,p,[x0...])
 
 	l = rand()
 
 	# commuting cost
-	@test LandUse.τ(0.4,0.5,p) > 0
-	@test LandUse.τ(0.5,0.5,p) > 0
-	@test LandUse.τ(0.0,m.ϕ,p) == 0
+	@test LandUse.τ(0.4,p) > 0
+	@test LandUse.τ(0.5,p) > 0
+	@test LandUse.τ(0.0,p) == 0
 
 
 	# test wage function
@@ -136,10 +144,10 @@ function t2()
 end
 
 
-function t4()
+function t3()
 	p = LandUse.Param(par = Dict( :ηm => 1.1 ))
 	
-	x,M,p = LandUse.run(LandUse.Region,p)
+	x,M,p = LandUse.run(p)
 
 	tol =  p.S == 1 ? 0.02 : 0.02
 	# rutol = 1.0e-2
@@ -170,7 +178,7 @@ function t4()
 			# test per capita income formulation - equivalent in both formulations
 			# pcy(m,p) = M[it].r + wr(M[it].Lu,M[it].ϕ,p) * M[it].Lr / p.L + M[it].iy / p.L
 			@testset "per capita aggregate income" begin
-				@test LandUse.τ(M[it].ϕ,M[it].ϕ,p) > 0.0
+				@test LandUse.τ(M[it].ϕ,p) > 0.0
 				# @test isapprox( LandUse.pcy(M[it],p) , M[it].ρr / p.L + M[it].wu0 * (1.0 - LandUse.τ(M[it].ϕ,M[it].ϕ,p) * M[it].Lr / p.L), atol = tol)
 			end
 
@@ -199,6 +207,11 @@ function t4()
 	end
 end
 
+function tall()
+	t1()
+	t2()
+	t3()
+end
 
 # @testset "LandUse.jl" begin
 # 	include("model_test.jl")
