@@ -35,6 +35,7 @@ mutable struct Param
 	Lt     :: Vector{Float64} # total population by year
 	T     :: StepRange{Int64,Int64}
 	t     :: Int64
+	it     :: Int64
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
 	c0    :: Float64  # construction cost function intercept
 	c1    :: Float64  # construction cost function gradient
@@ -78,7 +79,8 @@ mutable struct Param
 
 		# set some defaults
 		T = length(this.T)
-		this.t = 1
+		this.t = 1815
+		this.it = 1
 		this.S = 1.0  # set default values for space and population
 		# this smoothes thetas
 		# thetas = smooth_θ(this.T, this.ma, this.mag)[1]
@@ -328,11 +330,11 @@ function prepare_data(p::Param; digits = 9)
 	# moving average smoother
 	transform!(x, :theta_rural => (y -> smooth(collect(skipmissing(y)),ma)) => :stheta_rural,
 	              :theta_urban => (y -> smooth(collect(skipmissing(y)),ma)) => :stheta_urban,
-	              :P_rural => (y -> LandUse.smooth(collect(skipmissing(y)),61)) => :sP_rural)
+	              :P_rural => (y -> LandUse.smooth(collect(skipmissing(y)),61)) => :P_rural)
 
 
   	# drop temp columns
-  	select!(x, :year, :theta_rural, :theta_urban, :stheta_rural, :stheta_urban,:sP_rural)
+  	# select!(x, :year, :theta_rural, :theta_urban, :stheta_rural, :stheta_urban,:P_rural)
 
 	if maximum(x.year) < dt.stop
 		# append the future to end of data
@@ -340,10 +342,10 @@ function prepare_data(p::Param; digits = 9)
 		x1.year = 2016:dt.stop
 		allowmissing!(x)
 		append!(x,x1)
-		append!(x, DataFrame(year = 2016:dt.stop, theta_rural = missing, theta_urban = missing, stheta_rural = missing, stheta_urban = missing, sP_rural = missing))
 
-			# interpolate forward
-			Impute.locf!(x)
+
+		# interpolate forward
+		Impute.locf!(x)
 	end
 	# m = select(x, :year, :Employment_rural, r"SpendingShare", :s_rural)
 	#
@@ -420,6 +422,7 @@ function setperiod!(p::Param,i::Int)
 	# setfield!(p, :θr, i == 1 ? p.θr0 : growθ(p.θr0,p.θrg[1:(i-1)]))   # this will be constant across region.
 	# setfield!(p, :θu, i == 1 ? p.θu0 : growθ(p.θu0,p.θug[1:(i-1)]))   # in a country setting, we construct the growth rate differently for each region.
 	setfield!(p,  :t , p.T[i] )
+	setfield!(p,  :it , i )
 end
 
 growθ(θ0,g::Vector{Float64}) = θ0 * prod(g)

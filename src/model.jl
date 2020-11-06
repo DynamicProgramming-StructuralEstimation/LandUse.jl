@@ -184,6 +184,11 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.Lr   = x[4]   # employment in rural sector
 	m.pr   = x[5]   # relative price rural good
 	m.Sr   = x[6]   # amount of land used in rural production
+	p.θu   = x[7]   # keep theta as partof param vector for simplicity
+	p.θr   = x[8]
+	p.θrt[p.it] = p.θr  # fill out time series
+	p.θut[p.it] = p.θu  # fill out time series
+
 
 	# update equations
 	m.Lu   = p.L - m.Lr   # employment in urban sector
