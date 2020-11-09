@@ -16,6 +16,12 @@ function run(p::Param; jump = true)
 
 	setperiod!(p,1)
 	x0 = startval(p)
+
+	# m = Region(p)
+	# x = jm(p,m,x0)
+	# px = x0.pr / p.moments[1,:P_rural]
+	# transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
+
 	sols = NamedTuple[]
 	push!(sols,x0)
 	M = Region[]
@@ -38,6 +44,12 @@ function run(p::Param; jump = true)
 			end
 		end
 		push!(M,m)
+		if it == 1
+			# adjust relative price in data to first period solution
+			px = x.pr / p.moments[1,:P_rural]
+			transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
+		end
+
 	end
 
 	(sols[2:end],M,p) # solutions, models, and parameter

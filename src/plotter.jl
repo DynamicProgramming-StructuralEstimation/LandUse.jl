@@ -37,6 +37,10 @@ function ts_plots(M,p::Param;fixy = false)
 	dd[:Lr_data] = @df d plot(:year, :Lr ./ p.Lt, label = "model",marker = mmark, color = "blue",linewidth = 2, title = "Rural Employment")
 	plot!(dd[:Lr_data], p.moments.year, p.moments.Employment_rural, label = "data", color = "red",linewidth = 2)
 
+	dd[:pr_data] = @df d plot(:year, :pr, label = "model",marker = mmark, color = "blue",linewidth = 2, title = "Rural Price")
+	plot!(dd[:pr_data], p.moments.year, p.moments.P_rural, label = "data", color = "red",linewidth = 2)
+
+
 	dd[:ρ0_real] = @df d plot(:year, :ρ0_real, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
 	dd[:ρ0] = @df d plot(:year, :ρ0, linewidth = 2, color = "black", leg =false, title = "Central Land Values", marker = mmark, ylims = fixy ? (0.0,29.0) : false )
 	dd[:qbar] = @df d plot(:year, :qbar, linewidth = 2, color = "black", leg =false, title = "Average House Prices", marker = mmark, ylims = fixy ? (0.0,29.0) : false )

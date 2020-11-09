@@ -18,13 +18,13 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@variable(m, lbs[4] <= Lr <= p.L  , start = x0.Lr)
 	@variable(m, pr >= lbs[5]         , start = x0.pr)
 	@variable(m, lbs[6] <= Sr <= p.S  , start = x0.Sr)
-	if p.it == 1
-		@variable(m, θu == x0.θu)
-		@variable(m, θr == x0.θr)
-	else
+	# if p.it == 1
+	# 	@variable(m, θu == x0.θu)
+	# 	@variable(m, θr == x0.θr)
+	# else
 		@variable(m, θu , start = x0.θu)
 		@variable(m, θr , start = x0.θr)
-	end
+	# end
 
 	# nonlinear expressions
 	@NLexpression(m, wu0, θu * (p.L - Lr)^p.η)
@@ -59,7 +59,11 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * (wu0 - w[i]) * D[i] for i in 1:p.int_nodes))
 
 	# objective
-	@objective(m, Min, (Lr - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
+	# if p.it == 1
+		# @objective(m, Min, (Lr - p.moments[p.it,:Employment_rural])^2)
+	# else
+		@objective(m, Min, (Lr - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
+	# end
 
 	# nonlinear constraints (they are actually linear but contain nonlinear expressions - which means we need the nonlinear setup)
 	# F[1] = m.wr - foc_Lr(m.Lr / m.Sr , m.pr, p)
