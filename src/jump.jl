@@ -8,16 +8,16 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
-	set_optimizer_attribute(m, MOI.Silent(), true)
-	lbs = [x0...] .* 0.3
+	# set_optimizer_attribute(m, MOI.Silent(), true)
+	# lbs = [x0...] .* 0.3
 
 	# variables
-	@variable(m, ρr >= lbs[1]        , start = x0.ρr)
-	@variable(m, lbs[2] <= ϕ <= p.S  , start = x0.ϕ )
-	@variable(m, r >= lbs[3]         , start = x0.r )
-	@variable(m, lbs[4] <= Lr <= p.L  , start = x0.Lr)
-	@variable(m, pr >= lbs[5]         , start = x0.pr)
-	@variable(m, lbs[6] <= Sr <= p.S  , start = x0.Sr)
+	@variable(m, ρr >=         0.01 * x0.ρr  , start = x0.ρr)
+	@variable(m, 0.01 * x0.ϕ <= ϕ <= p.S     , start = x0.ϕ )
+	@variable(m, r >=      0.1 * x0.r       , start = x0.r )
+	@variable(m, 0.1 * x0.Lr <= Lr <= p.L   , start = x0.Lr)
+	@variable(m, pr >=        0.05 * x0.pr  , start = x0.pr)
+	@variable(m, 0.05 * x0.Sr <= Sr <= p.S   , start = x0.Sr)
 	#
 	# @variable(m, ρr       , start = x0.ρr)
 	# @variable(m,  ϕ   , start = x0.ϕ )
@@ -29,8 +29,9 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@variable(m, θr , start = x0.θr)
 
 	# nonlinear expressions
+
 	@NLexpression(m, wu0, θu * (p.L - Lr)^p.η)
-	@NLexpression(m, wr , p.Ψ * (wu0 - p.a * (wu0^(p.taum)) * (ϕ^(p.taul))) )
+	@NLexpression(m, wr , p.Ψ * (wu0 - p.a * (wu0^(p.tauw)) * (ϕ^(p.taul))) )
 	@NLexpression(m, qr , ((1+p.ϵr) * ρr)^(1.0/(1+p.ϵr)) )
 	@NLexpression(m, r_pr_csbar, r - pr * p.cbar + p.sbar )
 	@NLexpression(m, xsr, wr + r_pr_csbar )
@@ -43,7 +44,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 
 	# expressions indexed at location l
 	@NLexpression(m, nodes[i = 1:p.int_nodes], ϕ / 2 + ϕ / 2 * mo.inodes[i] )
-	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * wu0^(p.taum) * nodes[i]^(p.taul) )
+	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * wu0^(p.tauw) * nodes[i]^(p.taul) )
 	@NLexpression(m, w[i = 1:p.int_nodes], wu0 - τ[i] )
 	@NLexpression(m, q[i = 1:p.int_nodes], qr * ((w[i] + r_pr_csbar) / xsr)^(1.0/p.γ))
 	@NLexpression(m, H[i = 1:p.int_nodes], q[i]^p.ϵr)
@@ -105,6 +106,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 
 	# check termination status
 	if termination_status(m) != MOI.LOCALLY_SOLVED
+		println("error in period $(p.it)")
 		println("Termination status: $(termination_status(m))")
 		println("rhor = $(value(ρr))")
 		println("ϕ    = $(value(ϕ ))")
@@ -116,6 +118,18 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 		println("θu   = $(value(θu))")
 		error("model not locally solved")
 	else
+		if p.it == 1
+			println("period $(p.it) solution")
+
+			println("rhor = $(value(ρr))")
+			println("ϕ    = $(value(ϕ ))")
+			println("r    = $(value(r ))")
+			println("Lr   = $(value(Lr))")
+			println("pr   = $(value(pr))")
+			println("Sr   = $(value(Sr))")
+			println("θr   = $(value(θr))")
+			println("θu   = $(value(θu))")
+		end
 
 
 		(ρr = value(ρr), ϕ = value(ϕ), r = value(r), Lr = value(Lr), pr = value(pr), Sr = value(Sr), θu = value(θu), θr = value(θr))

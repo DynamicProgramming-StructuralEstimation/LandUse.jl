@@ -180,3 +180,20 @@ function param_test()
     optimize!(m)
 
 end
+
+
+function j_test(a)
+
+
+    m = Model(Ipopt.Optimizer)
+	@variable(m,x >= 1.0)
+	@variable(m,y)
+
+	@NLexpression(m, q, x^a + log(x + a) )
+
+    @NLobjective(m, Min, y^2 + q)
+    optimize!(m)
+
+	(x = value(x), y = value(y))
+
+end

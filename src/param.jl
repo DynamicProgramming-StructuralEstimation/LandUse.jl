@@ -20,10 +20,11 @@ mutable struct Param
 	# commuting cost setup
 	ηm     :: Float64   # speed elasticity of fixed cost
 	ηl     :: Float64   # location elasticity of fixed cost
+	ηw     :: Float64   # wage elasticity of fixed cost
 	cτ     :: Float64   # efficiency of transport technology
 	ζ      :: Float64   # valuation of commuting time in terms of forgone wages
 	a      :: Float64   # implied combination of above parameters
-	taum     :: Float64   # exponent on wu (equation 5 in commutingtech)
+	tauw     :: Float64   # exponent on wu (equation 5 in commutingtech)
 	taul     :: Float64   # exponent on l (equation 5 in commutingtech)
 
 
@@ -163,8 +164,8 @@ mutable struct Param
 		this.a = this.cτ
 		# this.a = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))
 		# this.taum = 0.571
-		# this.taum = this.ηm / (1+this.ηm)
-		# this.taul = (this.ηm+this.ηl) / (1+this.ηm)
+		this.tauw = (this.ηm + this.ηw) / (1+this.ηm)
+		this.taul = (this.ηm + this.ηl) / (1+this.ηm)
 		# this.taul = 0.571
 		# println("taum = $(this.taum)")
 		# println("taul = $(this.taul)")
@@ -216,6 +217,7 @@ function latex_param()
 	   getline(j["ν"]),
 	   getline(j["cbar"]),
 	   getline(j["sbar"]),
+	   getline(j["ηw"]),
 	   getline(j["ηl"]),
 	   getline(j["ηm"]),
 	   getline(j["cτ"]),

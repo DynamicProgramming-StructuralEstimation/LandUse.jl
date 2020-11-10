@@ -536,12 +536,12 @@ mode(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.�
 
 "commuting cost: location x → cost"
 # τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.taul)
-τ(x::Float64,p::Param) = p.a * p.θu^(p.taum) * x^(p.taul)
+τ(x::Float64,p::Param) = p.a * p.θu^(p.tauw) * x^(p.taul)
 
 
 
 "inverse commuting cost. cost x → location. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
-invτ(x::Float64,p::Param) = ( x / ( p.a * p.θu^(p.taum)) )^(1.0/p.taul)
+invτ(x::Float64,p::Param) = ( x / ( p.a * p.θu^(p.tauw)) )^(1.0/p.taul)
 
 # old versions
 # invτ(x::Float64,p::Param) = ( x * p.θu^(p.ζ) / (p.τ) )^(1/p.τ1)

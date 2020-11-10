@@ -34,40 +34,35 @@
 		"symbol" : "\\eta"
 	},
 	"cτ" : {
-		"value" : 7.0,
+		"value" : 3.0,
 		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
 		"symbol" : "c_\\tau"
 	},
 	"ηm" : {
-		"value" : 100000.0,
+		"value" : 0.7,
 		"description" : "elasticity of F commuting cost wrt mode",
 		"type" : "region",
 		"symbol" : "\\eta_m"
 	},
 	"ηl" : {
-		"value" : 1.0,
+		"value" : 0.0,
 		"description" : "elasticity of F commuting cost wrt location",
 		"type" : "region",
 		"symbol" : "\\eta_l"
 	},
-	"taum" : {
-		"value" : 0.7,
+	"ηw" : {
+		"value" : 0.2,
 		"description" : "elasticity of F commuting cost wrt location",
 		"type" : "region",
-		"symbol" : "taum"
-	},
-	"taul" : {
-		"value" : 0.6,
-		"description" : "elasticity of F commuting cost wrt location",
-		"type" : "region",
-		"symbol" : "taum"
+		"symbol" : "\\eta_l"
 	},
 	"ν" : {
 		"value" : 0.015,
 		"description" : "Preference Weight for Rural Consumption Good",
 		"type" : "region",
 		"symbol" : "\\nu"
+
 	},
 	"cbar" : {
 		"value" : 0.8,

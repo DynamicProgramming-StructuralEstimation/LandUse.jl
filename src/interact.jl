@@ -147,7 +147,7 @@ function i0()
 	gfac = 1.00:0.05:2.0
 	eta = 0.0:0.1:1.0
 	tau = 0.1:0.1:1.0
-	eta2 = 0.1:0.1:20.99
+	eta2 = 0.1:0.1:3.0
 	cbars = 0.0:0.1:1.5
 	ctaus = 0.5:0.5:10.0
 	psis = 0.1:0.01:1.0
@@ -160,18 +160,19 @@ function i0()
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					psi in slider(psis, value = p1.Ψ, label = "psi"),
 					cτ in slider(ctaus, value = p1.a, label = "cτ"),
-					taum in slider(tau, value = p1.taum, label = "τm"),
-					taul in slider(tau, value = p1.taul, label = "τl")
+					etam in slider(eta2, value = p1.ηm, label = "ηm"),
+					etal in slider(eta, value = p1.ηl, label = "ηl"),
+					etaw in slider(eta, value = p1.ηw, label = "ηw")
 
 					if growthtype == 1
 						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0,
-						                              :taum => taum, :taul => taul,
+						                              :ηm => etam, :ηl => etal, :ηw => etaw,
 													  :cbar => cbar, :sbar => sbar, :cτ => cτ, :Ψ => psi))
 						x,M,p = LandUse.run(p0)
 						pl= LandUse.ts_plots(M,p0,fixy = false)
 					elseif growthtype == 2
 						p0 = LandUse.Param(par = Dict(:θu_g => ugrowth,:θut => 1.0, :θrt => 1.0,
-											 :θr_g => rgrowth,:ϵsmax => 0.0 , :taum => taum, :taul => taul,
+											 :θr_g => rgrowth,:ϵsmax => 0.0 ,:ηm => etam, :ηl => etal, :ηw => etaw,
 											 :cbar => cbar, :sbar => sbar, :cτ => cτ))
 					    x,M,p = LandUse.run(p0)
 						# LandUse.plot_ts(M,p0)
