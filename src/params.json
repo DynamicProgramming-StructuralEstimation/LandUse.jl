@@ -52,7 +52,7 @@
 		"symbol" : "\\eta_l"
 	},
 	"taum" : {
-		"value" : 0.4,
+		"value" : 0.7,
 		"description" : "elasticity of F commuting cost wrt location",
 		"type" : "region",
 		"symbol" : "taum"

@@ -18,13 +18,15 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@variable(m, lbs[4] <= Lr <= p.L  , start = x0.Lr)
 	@variable(m, pr >= lbs[5]         , start = x0.pr)
 	@variable(m, lbs[6] <= Sr <= p.S  , start = x0.Sr)
-	# if p.it == 1
-	# 	@variable(m, θu == x0.θu)
-	# 	@variable(m, θr == x0.θr)
-	# else
-		@variable(m, θu , start = x0.θu)
-		@variable(m, θr , start = x0.θr)
-	# end
+	#
+	# @variable(m, ρr       , start = x0.ρr)
+	# @variable(m,  ϕ   , start = x0.ϕ )
+	# @variable(m, r       , start = x0.r )
+	# @variable(m, Lr  , start = x0.Lr)
+	# @variable(m, pr          , start = x0.pr)
+	# @variable(m,  Sr   , start = x0.Sr)
+	@variable(m, θu , start = x0.θu)
+	@variable(m, θr , start = x0.θr)
 
 	# nonlinear expressions
 	@NLexpression(m, wu0, θu * (p.L - Lr)^p.η)
@@ -59,11 +61,11 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * (wu0 - w[i]) * D[i] for i in 1:p.int_nodes))
 
 	# objective
-	# if p.it == 1
-		# @objective(m, Min, (Lr - p.moments[p.it,:Employment_rural])^2)
-	# else
-		@objective(m, Min, (Lr - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
-	# end
+	if p.it == 1
+		@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2)
+	else
+		@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
+	end
 
 	# nonlinear constraints (they are actually linear but contain nonlinear expressions - which means we need the nonlinear setup)
 	# F[1] = m.wr - foc_Lr(m.Lr / m.Sr , m.pr, p)
@@ -86,6 +88,10 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 
 	@NLconstraint(m, cur >= 0)
 
+	if p.it == 1
+		@constraint(m, θu == θr)
+	end
+
 	JuMP.optimize!(m)
 
 	# println("rhor = $(value(ρr))")
@@ -100,6 +106,14 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	# check termination status
 	if termination_status(m) != MOI.LOCALLY_SOLVED
 		println("Termination status: $(termination_status(m))")
+		println("rhor = $(value(ρr))")
+		println("ϕ    = $(value(ϕ ))")
+		println("r    = $(value(r ))")
+		println("Lr   = $(value(Lr))")
+		println("pr   = $(value(pr))")
+		println("Sr   = $(value(Sr))")
+		println("θr   = $(value(θr))")
+		println("θu   = $(value(θu))")
 		error("model not locally solved")
 	else
 

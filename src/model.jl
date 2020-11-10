@@ -14,6 +14,7 @@ mutable struct Region <: Model
 	qr   :: Float64     # housing price in rural sector
 	ρ0   :: Float64     # land price in center of city
 	ρ0_y :: Float64     # land price in center of city over income
+	ρr_y :: Float64     # land price in center of city over income
 	q0   :: Float64     # housing price in center of city
 	qq1   :: Float64     # housing price first quintile
 	qbar :: Float64     # average housing price in city
@@ -244,6 +245,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.Yr  = Yr(m,p)
 
 	m.ρ0_y = m.ρ0 / m.y
+	m.ρr_y = m.ρr / m.y
 
 	# compute aggregate Consumption shares
 	m.Cu = m.icu + m.Lr * cur(p,m)  # urban cons inside city plus total urban cons in rural
