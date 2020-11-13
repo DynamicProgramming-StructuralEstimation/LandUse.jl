@@ -189,6 +189,9 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	p.θr   = x[8]
 	p.θrt[p.it] = p.θr  # fill out time series
 	p.θut[p.it] = p.θu  # fill out time series
+	m.θr = p.θr  # fill out time series
+	m.θu = p.θu  # fill out time series
+
 
 
 	# update equations

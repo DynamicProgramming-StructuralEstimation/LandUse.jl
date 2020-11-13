@@ -8,7 +8,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
-	# set_optimizer_attribute(m, MOI.Silent(), true)
+	set_optimizer_attribute(m, MOI.Silent(), true)
 	# lbs = [x0...] .* 0.3
 
 	# variables
@@ -46,13 +46,16 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@NLexpression(m, nodes[i = 1:p.int_nodes], ϕ / 2 + ϕ / 2 * mo.inodes[i] )
 	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * wu0^(p.tauw) * nodes[i]^(p.taul) )
 	@NLexpression(m, w[i = 1:p.int_nodes], wu0 - τ[i] )
-	@NLexpression(m, q[i = 1:p.int_nodes], qr * ((w[i] + r_pr_csbar) / xsr)^(1.0/p.γ))
+	@warn "hard coding abs() for q function" maxlog=1
+	@NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
 	@NLexpression(m, H[i = 1:p.int_nodes], q[i]^p.ϵr)
 	@NLexpression(m, h[i = 1:p.int_nodes], p.γ * (w[i] + r_pr_csbar) / q[i])
 	@NLexpression(m, ρ[i = 1:p.int_nodes], (q[i]^(1.0 + p.ϵr)) / (1.0 + p.ϵr) )
 	@NLexpression(m, cu[i = 1:p.int_nodes], (1.0 - p.γ)*(1.0 - p.ν)*(w[i] + r_pr_csbar) - p.sbar)
 	@NLexpression(m, D[i = 1:p.int_nodes] , H[i] / h[i])
 	@NLexpression(m, cu_input[i = 1:p.int_nodes], q[i] * H[i] * p.ϵr / (1.0+p.ϵr) )
+
+
 
 	# integrals
 	@NLexpression(m, iDensity,  (ϕ/2) * sum(mo.iweights[i] * D[i] for i in 1:p.int_nodes))
@@ -88,12 +91,22 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@NLconstraint(m, Lr * cur + icu + Srh * cu_inputr + icu_input + iτ ==  wu0 * (p.L - Lr))
 
 	@NLconstraint(m, cur >= 0)
+	# @NLconstraint(m, cui[i = 1:p.int_nodes], cu[i] >= 0)
+	# @NLconstraint(m, xsr >= 0)
+
 
 	if p.it == 1
 		@constraint(m, θu == θr)
 	end
 
 	JuMP.optimize!(m)
+		# println("qr = $(value(qr))")
+		# println("q = $(value(q[1]))")
+		# println("wr         = $(value(wr        ))")
+		# println("qr         = $(value(qr        ))")
+		# println("r_pr_csbar = $(value(r_pr_csbar))")
+		# println("xsr        = $(value(xsr       ))")
+		# println("hr         = $(value(hr        ))")
 
 	# println("rhor = $(value(ρr))")
 	# println("ϕ    = $(value(ϕ ))")
@@ -118,18 +131,18 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 		println("θu   = $(value(θu))")
 		error("model not locally solved")
 	else
-		if p.it == 1
-			println("period $(p.it) solution")
-
-			println("rhor = $(value(ρr))")
-			println("ϕ    = $(value(ϕ ))")
-			println("r    = $(value(r ))")
-			println("Lr   = $(value(Lr))")
-			println("pr   = $(value(pr))")
-			println("Sr   = $(value(Sr))")
-			println("θr   = $(value(θr))")
-			println("θu   = $(value(θu))")
-		end
+		# if p.it == 1
+			# println("period $(p.it) solution")
+			#
+			# println("rhor = $(value(ρr))")
+			# println("ϕ    = $(value(ϕ ))")
+			# println("r    = $(value(r ))")
+			# println("Lr   = $(value(Lr))")
+			# println("pr   = $(value(pr))")
+			# println("Sr   = $(value(Sr))")
+			# println("θr   = $(value(θr))")
+			# println("θu   = $(value(θu))")
+		# end
 
 
 		(ρr = value(ρr), ϕ = value(ϕ), r = value(r), Lr = value(Lr), pr = value(pr), Sr = value(Sr), θu = value(θu), θr = value(θr))
