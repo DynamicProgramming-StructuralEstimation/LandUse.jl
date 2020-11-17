@@ -63,3 +63,12 @@ function plot1()
 	x,M,p = run(Param())
 	ts_plots(M,p)
 end
+function export_thetas()
+	x,M,p = runm()
+	latex_param()
+	d = DataFrame(thetau = p.θut, thetar = p.θrt, pr = [M[it].pr for it in 1:length(M)])
+	CSV.write(joinpath(dbtables,"export_theta_pr.csv"),d)
+
+	x0 = LandUse.startval(Param())
+	CSV.write(joinpath(dbtables,"export_x0.csv"),DataFrame([x0]))
+end

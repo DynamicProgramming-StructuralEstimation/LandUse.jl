@@ -71,7 +71,7 @@
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.3,
+		"value" : 0.2,
 		"description" : "Initial Urban Good Endowment",
 		"type" : "region",
 		"symbol" : "\\underline{s}"

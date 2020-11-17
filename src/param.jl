@@ -222,6 +222,7 @@ function latex_param()
 	   getline(j["ηm"]),
 	   getline(j["cτ"]),
 	   getline(j["ζ"]),
+	   getline(j["ϵr"]),
        Rule(:bottom)
 	   ]
 	)
