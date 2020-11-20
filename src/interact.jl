@@ -145,9 +145,9 @@ end
 
 function i0()
 	gfac = 1.00:0.05:2.0
-	eta = 0.0:0.1:1.0
+	eta = 1.0:0.1:8.0
 	tau = 0.1:0.1:1.0
-	eta2 = 0.1:0.1:3.0
+	eta2 = 0.0:0.1:1.0
 	cbars = 0.0:0.1:1.5
 	ctaus = 0.5:0.5:10.0
 	psis = 0.1:0.01:1.0
@@ -161,8 +161,8 @@ function i0()
 					psi in slider(psis, value = p1.Ψ, label = "psi"),
 					cτ in slider(ctaus, value = p1.a, label = "cτ"),
 					etam in slider(eta2, value = p1.ηm, label = "ηm"),
-					etal in slider(eta, value = p1.ηl, label = "ηl"),
-					etaw in slider(eta, value = p1.ηw, label = "ηw")
+					etal in slider(eta2, value = p1.ηl, label = "ηl"),
+					etaw in slider(eta2, value = p1.ηw, label = "ηw")
 
 					if growthtype == 1
 						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0,
