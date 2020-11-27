@@ -16,7 +16,7 @@
 		"symbol" : "L"
 	},
 	"γ" : {
-		"value" : 0.3,
+		"value" : 0.22,
 		"description" : "Utility Weight of Housing",
 		"type" : "region",
 		"symbol" : "\\gamma"
@@ -34,19 +34,19 @@
 		"symbol" : "\\eta"
 	},
 	"cτ" : {
-		"value" : 0.5,
+		"value" : 1.4,
 		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
 		"symbol" : "c_\\tau"
 	},
 	"ηm" : {
-		"value" : 0.7,
+		"value" : 1.0,
 		"description" : "elasticity of F commuting cost wrt mode",
 		"type" : "region",
 		"symbol" : "\\eta_m"
 	},
 	"ηl" : {
-		"value" : 0.0,
+		"value" : 0.2,
 		"description" : "elasticity of F commuting cost wrt location",
 		"type" : "region",
 		"symbol" : "\\eta_l"
@@ -65,13 +65,13 @@
 
 	},
 	"cbar" : {
-		"value" : 0.8,
+		"value" : 0.9,
 		"description" : "Rural Consumption Good Subsistence Level",
 		"type" : "region",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.0,
+		"value" : 0.2,
 		"description" : "Initial Urban Good Endowment",
 		"type" : "region",
 		"symbol" : "\\underline{s}"

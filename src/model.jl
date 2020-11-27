@@ -533,7 +533,7 @@ end
 
 
 
-mode(l::Float64,p::Param) = ((2*p.ζ * p.θu)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm))
+mode(l::Float64,p::Param) = ((2*p.ζ)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm))  * (p.θu)^((1 - p.ηw)/(1+p.ηm))
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 

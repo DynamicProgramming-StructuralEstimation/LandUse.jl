@@ -168,14 +168,20 @@ function ts_plots(M,p::Param;fixy = false)
 	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
 	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
 
-	dd[:mode] = @df dss plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "mode", leg = :left, ylims = fixy ? (0,1.4) : false , marker = mmark)
-    dss = stack(select(d,:year,:ctime0,:ctimeϕ,:ictime), Not(:year))
-	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
-	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
-	dd[:ctime] = @df dss plot(:year, :value, group = :variable,
+	dss = [d[!,:year] mapcols(x -> x ./ x[1],select(d,:mode0,:modeϕ,:imode,:ctime0,:ctimeϕ,:ictime))]
+	rename!(dss, :x1 => :year)
+	dmode = stack(select(dss,:year,:mode0,:modeϕ,:imode) , Not(:year))
+
+	dd[:mode] = @df dmode plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "mode increase", leg = :left, ylims = fixy ? (0,1.4) : false , marker = mmark)
+    # dss = stack(select(d,:year,:ctime0,:ctimeϕ,:ictime), Not(:year))
+	# facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
+	# labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
+
+	dtime = stack(select(dss,:year,:ctime0,:ctimeϕ,:ictime) , Not(:year))
+	dd[:ctime] = @df dtime plot(:year, :value, group = :variable,
 					 # linewidth = 2, title = "commute time", leg = :topleft, labels = reshape(labs,1,3) )
-					 linewidth = 2, title = "commute time", leg = :topleft, marker = mmark)
+					 linewidth = 2, title = "ctime increase", leg = :topleft, marker = mmark)
 
 
     # to time vs distancne in 2005

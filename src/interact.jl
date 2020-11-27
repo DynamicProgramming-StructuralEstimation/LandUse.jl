@@ -145,42 +145,40 @@ end
 
 function i0()
 	gfac = 1.00:0.05:2.0
-	eta = 1.0:0.1:8.0
+	eta = 0.5:0.01:2.0
 	tau = 0.1:0.1:1.0
-	eta2 = 0.0:0.1:1.0
-	cbars = 0.0:0.1:1.5
-	ctaus = 0.5:0.5:10.0
+	eta2 = 0.0:0.01:1.0
+	cbars = 0.0:0.01:1.5
+	ctaus = 0.0:0.01:4.0
 	psis = 0.1:0.01:1.0
 	p1 = Param()
 
-	@manipulate for growthtype = OrderedDict("orig" => 1,"u-r const" => 2),
-					ugrowth in slider(gfac,value = 1.2, label = "u-growthrate"),
-					rgrowth in slider(gfac,value = 1.2, label = "r-growthrate"),
-					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
+	@manipulate for cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
-					psi in slider(psis, value = p1.Ψ, label = "psi"),
+					gamma in slider(psis, value = p1.γ, label = "gamma"),
 					cτ in slider(ctaus, value = p1.a, label = "cτ"),
-					etam in slider(eta2, value = p1.ηm, label = "ηm"),
+					etam in slider(eta, value = p1.ηm, label = "ηm"),
 					etal in slider(eta2, value = p1.ηl, label = "ηl"),
 					etaw in slider(eta2, value = p1.ηw, label = "ηw")
 
-					if growthtype == 1
-						p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0,
-						                              :ηm => etam, :ηl => etal, :ηw => etaw,
-													  :cbar => cbar, :sbar => sbar, :cτ => cτ, :Ψ => psi))
+					p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0,
+					                              :ηm => etam, :ηl => etal, :ηw => etaw,
+												  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma))
+					try
 						x,M,p = LandUse.run(p0)
 						pl= LandUse.ts_plots(M,p0,fixy = false)
-					elseif growthtype == 2
-						p0 = LandUse.Param(par = Dict(:θu_g => ugrowth,:θut => 1.0, :θrt => 1.0,
-											 :θr_g => rgrowth,:ϵsmax => 0.0 ,:ηm => etam, :ηl => etal, :ηw => etaw,
-											 :cbar => cbar, :sbar => sbar, :cτ => cτ))
-					    x,M,p = LandUse.run(p0)
-						# LandUse.plot_ts(M,p0)
-						pl= LandUse.ts_plots(M,p0,fixy = true)
+						plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
+						     pl[:n_densities], pl[:avdensity], pl[:mode], pl[:ctime],
+							 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
+							 layout = (3,4),link = :x,size = (1200,600))
+					catch e
+						wdg = alert("Error!")
+						print(wdg())
 					end
+
 					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
 					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
-					plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
+
 	end
 end
 
