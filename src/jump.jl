@@ -59,11 +59,11 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 
 
 	# integrals
-	@NLexpression(m, iDensity,  (ϕ/2) * sum(mo.iweights[i] * D[i] for i in 1:p.int_nodes))
-	@NLexpression(m, iρ,        (ϕ/2) * sum(mo.iweights[i] * ρ[i] for i in 1:p.int_nodes))
-	@NLexpression(m, icu,       (ϕ/2) * sum(mo.iweights[i] * cu[i] * D[i] for i in 1:p.int_nodes))
-	@NLexpression(m, icu_input, (ϕ/2) * sum(mo.iweights[i] * cu_input[i] for i in 1:p.int_nodes))
-	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * (wu0 - w[i]) * D[i] for i in 1:p.int_nodes))
+	@NLexpression(m, iDensity,  (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * D[i] for i in 1:p.int_nodes))
+	@NLexpression(m, iρ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * ρ[i] for i in 1:p.int_nodes))
+	@NLexpression(m, icu,       (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * cu[i] * D[i] for i in 1:p.int_nodes))
+	@NLexpression(m, icu_input, (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * cu_input[i] for i in 1:p.int_nodes))
+	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * (wu0 - w[i]) * D[i] for i in 1:p.int_nodes))
 
 	# objective
 	if p.it == 1
@@ -86,7 +86,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@NLconstraint(m, iρ + ρr * (Sr + Srh) == r * p.L)
 
 	# F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
-	@NLconstraint(m, p.S - p.λ == ϕ + Sr + Srh)
+	@NLconstraint(m, p.S - p.λ == ϕ^2 * π + Sr + Srh)
 
 	# F[6] = m.Lr * cur(p,m) + m.icu + m.Srh * cu_input(m.ϕ,p,m) + m.icu_input + m.wu0 * m.iτ - wu0(m.Lu, p)*m.Lu
 	@NLconstraint(m, Lr * cur + icu + Srh * cu_inputr + icu_input + iτ ==  wu0 * (p.L - Lr))

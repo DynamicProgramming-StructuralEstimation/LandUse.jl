@@ -43,7 +43,9 @@ mutable struct Region <: Model
 	cr1  :: Float64   # cons of rural at fringe
 	cu0  :: Float64   # cons of urban in center
 	cu1  :: Float64   # cons of urban at fringe
-	ϕ    :: Float64   # size of the city
+	ϕ    :: Float64   # radius of the city
+	cityarea    :: Float64   # area of the city
+	citydensity    :: Float64   # average density of the city
 	xsr  :: Float64  # excess subsistence rural worker
 	U    :: Float64  # common utility level
 	θu   :: Float64  # current productivity
@@ -111,6 +113,8 @@ mutable struct Region <: Model
 		m.dq4   = NaN
 		m.dq5   = NaN
 		m.ϕ    = NaN
+		m.cityarea    = NaN
+		m.citydensity = NaN
 		m.xsr  = NaN
 		m.θu   = p.θu
 		m.θr   = p.θr
@@ -150,6 +154,7 @@ function show(io::IO, ::MIME"text/plain", m::Model)
     print(io,"    θu    : $(m.θu  ) \n")
     print(io,"    θr    : $(m.θr  ) \n")
     print(io,"    ϕ    : $(m.ϕ  ) \n")
+    print(io,"    cityarea    : $(m.cityarea  ) \n")
     print(io,"    Sr   : $(m.Sr ) \n")
     print(io,"    Srh  : $(m.Srh) \n")
     print(io,"    ρr   : $(m.ρr ) \n")
@@ -169,7 +174,8 @@ end
 
 
 pop(m::Model) = m.Lu + m.Lr
-area(m::Model) = m.ϕ + m.Sr + m.Srh
+cityarea(m::Model) = m.ϕ^2 * π
+area(m::Model) = cityarea(m) + m.Sr + m.Srh
 
 
 """
@@ -202,6 +208,9 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = 0.059
 	# m.ϕ    = getfringe(p.θu, m.wr ,p)
+
+	m.cityarea = cityarea(m)
+	m.citydensity = m.Lu / m.cityarea
 
 	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
@@ -266,68 +275,20 @@ doing a matmul on it? have to allocate memory though.
 """
 function integrate!(m::Region,p::Param)
 
-	# each variable to integrate has a column in a matrix imat
-	# each column can be filled in parallel
-	# when done, do simple matrix multiplication with weights
+	two_π_l     = 2π .* m.nodes
+	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.icr       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cr(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * (m.wu0 - w(m.Lu,m.nodes[i],m.ϕ,p)) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
-	#
-	# nodes = m.nodes
-	# DM = [D(m.nodes[i],p,m) for i in 1:p.int_nodes]
-	# qM = [q(m.nodes[i],p,m) for i in 1:p.int_nodes]
-	#
-	# Threads.@threads for i in 1:p.int_nodes
-	# 	dm = DM[i] # current density value
-	# 	qm = qM[i] # current q value
-	# 	m.imat[i,1] = cu_input(m.nodes[i],p,m)    # will end up in m.icu_input
-	# 	m.imat[i,2] = dm
-	# 	m.imat[i,3] = cu(m.nodes[i],p,m) * dm
-	# 	m.imat[i,4] = cr(m.nodes[i],p,m) * dm
-	# 	m.imat[i,5] = τ(m.nodes[i],m.ϕ,p) * dm
-	# 	m.imat[i,6] = ρ(m.nodes[i],p,m)
-	# 	m.imat[i,7] = w(m.Lu,m.nodes[i],m.ϕ,p) * dm
-	# 	m.imat[i,8] = qm * dm
-	# 	m.imat[i,9] = m.imat[i,8] * h(m.nodes[i],p,m)
-	# 	m.imat[i,10] = mode(m.nodes[i],p) * dm
-	# 	m.imat[i,11] = (m.nodes[i] / mode(m.nodes[i],p)) * dm
-	# end
-	#
-	# integrals = (m.ϕ/2) * m.iweights' * m.imat   # matmul
-
-	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.icr       = (m.ϕ/2) * sum(m.iweights[i] * cr(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * (m.wu0 - w(m.Lu,m.nodes[i],m.ϕ,p)) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iq        = (m.ϕ/2) * sum(m.iweights[i] * ρ(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.qbar      = (m.ϕ/(m.Lu * 2)) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	m.imode     = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	m.ictime    = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	# #
-	# @assert m.icu_input ≈ integrals[1]
-	# @assert m.iDensity  ≈ integrals[2]
-	# @assert m.icu       ≈ integrals[3]
-	# @assert m.icr       ≈ integrals[4]
-	# @assert m.iτ        ≈ integrals[5]
-	# @assert m.iq        ≈ integrals[6]
-	# @assert m.iy        ≈ integrals[7]
-	# @assert m.qbar      ≈ integrals[8] / m.Lu
-	# @assert m.ihexp     ≈ integrals[9]
-	# @assert m.imode     ≈ integrals[10] / m.Lu
-	# @assert m.ictime    ≈ integrals[11] / m.Lu
-
-	# m.icu_input = integrals[1]
-	# m.iDensity  = integrals[2]
-	# m.icu       = integrals[3]
-	# m.icr       = integrals[4]
-	# m.iτ        = integrals[5]
-	# m.iq        = integrals[6]
-	# m.iy        = integrals[7]
-	# m.qbar      = integrals[8] / m.Lu
-	# m.ihexp     = integrals[9]
-	# m.imode     = integrals[10] / m.Lu
-	# m.ictime    = integrals[11] / m.Lu
+	# averages
+	m.qbar      = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.imode     = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.ictime    = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
 	# println("asserts passed")
 	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
@@ -357,7 +318,7 @@ function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 	F[4] = m.iq + m.ρr * (m.Sr + m.Srh) - m.r * p.L
 
 	# land market clearing: after equation (20)
-	F[5] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
+	F[5] = p.S - p.λ - m.cityarea - m.Sr - m.Srh
 	# F[1] = m.ρr - 0.059
 
 
@@ -533,7 +494,7 @@ end
 
 
 
-mode(l::Float64,p::Param) = ((2*p.ζ)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm))  * (p.θu)^((1 - p.ηw)/(1+p.ηm))
+mode(l::Float64,p::Param) = ((2*p.ζ)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm)) * (p.θu)^((1 - p.ηw)/(1+p.ηm))
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
