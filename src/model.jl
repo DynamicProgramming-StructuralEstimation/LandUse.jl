@@ -222,7 +222,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.hr   = h(m.ϕ,p,m)
 	m.H0   = H(0.0,p,m)
 	m.h0   = h(0.0,p,m)
-	m.dbar   = m.Lu / m.ϕ
+	m.dbar   = NaN
 	m.d0   = D(0.0,p,m)
 	m.dq100   = D(m.ϕ / 100,p,m)
 	m.dq1   = D(m.ϕ / 5,p,m)

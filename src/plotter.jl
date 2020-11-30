@@ -23,9 +23,15 @@ function ts_plots(M,p::Param;fixy = false)
 	rg = ["red" "green"]
 	brg = ["blue" "red" "green"]
 
+
+	t1900 = findmin(abs.(collect(p.T) .- 1900))[2]
+	h1900 = df[t1900,:h]
+	hend = df[end,:h]
 	dd[:spending] = @df ds plot(:year,:value, group = :variable,
 			   linewidth = 2, title = "Spending Shares",
-			   ylims = (0.0,0.83), marker = mmark, legend = :right, color = brg)
+			   ylims = (0.0,0.83), marker = mmark, legend = :right, color = brg,
+			   annotations = ([p.T[t1900],p.T.stop],[h1900-0.1, hend-0.1],["$(round(h1900,digits = 2))","$(round(hend,digits = 2))"]))
+
 
     # dd[:spending_data] = plot!(dd[:spending], p.moments.year, p.moments[!,[:SpendingShare_Housing, :SpendingShare_Urban,:SpendingShare_Rural]], color = brg)
 
@@ -136,18 +142,18 @@ function ts_plots(M,p::Param;fixy = false)
 				  linewidth = 2, color = "black",title = "Agricultural Land",
 				  leg = false, marker = mmark, ylims = fixy ? (0.6,1.0) : false)
 	# ds4 = stack(select(d,:year,:pr), Not(:year))
-	df4 = @linq d |>
-		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
-		transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,p),:ϕ) .* :ϕ) )
+	# df4 = @linq d |>
+	# 	# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
+	# 	transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,p),:ϕ) .* :ϕ) )
 		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
 
     # dens = select(df4,:year,:d0, :dq1, :dq2, :dq3, :dq4, :dr, :avgd)
-    dens = select(df4,:year,:d0,  :dr, :avgd)
+    dens = select(d,:year,:d0,  :dr, :citydensity => :avgd)
+	df4 = dens
 	ndens = mapcols(x -> x ./ x[1],select(dens, Not(:year)))
 	ndens[!,:year] .= dens.year
 	ds4 = stack(dens, Not(:year))
-	ds5 = select(df4,:year,:avgd)
-	ds6 = stack(select(df4,:year,:tauphi), Not(:year))
+	ds5 = select(dens,:year,:avgd)
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
 	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
 					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false)
@@ -162,8 +168,7 @@ function ts_plots(M,p::Param;fixy = false)
 	dd[:avdensity] = @df ds5 plot(:year, :avgd,
 					 linewidth = 2, title = "Avg Density", marker = mmark,
 					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (p.T.stop,ancdens,"$(round(incdens,digits = 1))x"))
-	dd[:tauphi] = @df ds6 plot(:year, :value, group = :variable,
-					  linewidth = 2, title = "1 - tau(phi)",leg = false)
+
     dss = stack(select(d,:year,:mode0,:modeϕ,:imode), Not(:year))
 	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
 	labs = String.(facs.variable) .* " : " .* string.(round.(facs.factor,digits=1))  .* "x"
