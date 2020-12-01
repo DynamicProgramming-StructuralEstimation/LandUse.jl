@@ -128,8 +128,8 @@ function ts_plots(M,p::Param;fixy = false)
 
 	ds3 = stack(d3, Not(:year))
 	dd[:productivity] = @df ds3 plot(:year, :value, group = :variable,
-					  linewidth = 2, title = "Productivity", ylims = fixy ? (0,20) : false, marker = mmark,
-					  legend = :left)
+					  linewidth = 2, title = "Log Productivity", ylims = fixy ? (0,20) : false, marker = mmark,
+					  legend = :left, yscale = :log)
 	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	ds4 = select(d,:year,:ϕ)
 	incphi = d.ϕ[end] / d.ϕ[1]
