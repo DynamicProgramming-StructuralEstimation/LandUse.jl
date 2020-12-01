@@ -12,7 +12,7 @@ end
 """
 run model for all time periods
 """
-function run(p::Param; jump = true)
+function run(p::Param; jump = true, estimateθ = true)
 
 	setperiod!(p,1)
 	x0 = startval(p)
@@ -31,7 +31,7 @@ function run(p::Param; jump = true)
 		setperiod!(p,it)
 		m = Region(p)
 		if jump
-			x = jm(p,m,sols[it])
+			x = jm(p,m,sols[it], estimateθ = estimateθ)
 			push!(sols,x)
 			update!(m,p,[x...])
 		else
@@ -56,8 +56,8 @@ function run(p::Param; jump = true)
 
 end
 
-function runm(; jump = true)
-	run(Param(), jump = jump)
+function runm(; jump = true, estimateθ = true)
+	run(Param(), jump = jump,estimateθ = estimateθ)
 end
 function plot1()
 	x,M,p = run(Param())

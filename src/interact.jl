@@ -153,7 +153,8 @@ function i0()
 	psis = 0.1:0.01:1.0
 	p1 = Param()
 
-	@manipulate for cbar in slider(cbars, value = p1.cbar, label = "cbar"),
+	@manipulate for estimate in Dict("estimate θ" => true, "θ from data" => false),
+					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					gamma in slider(psis, value = p1.γ, label = "gamma"),
 					cτ in slider(ctaus, value = p1.a, label = "cτ"),
@@ -165,7 +166,7 @@ function i0()
 					                              :ηm => etam, :ηl => etal, :ηw => etaw,
 												  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma))
 					try
-						x,M,p = LandUse.run(p0)
+						x,M,p = LandUse.run(p0, estimateθ = estimate)
 						pl= LandUse.ts_plots(M,p0,fixy = false)
 						plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
 						     pl[:n_densities], pl[:avdensity], pl[:mode], pl[:ctime],

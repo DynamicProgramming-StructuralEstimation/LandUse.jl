@@ -4,7 +4,7 @@
 """
 solve model at current paramter p and starting at point x0
 """
-function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
+function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = true)
 
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
@@ -25,8 +25,13 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	# @variable(m, Lr  , start = x0.Lr)
 	# @variable(m, pr          , start = x0.pr)
 	# @variable(m,  Sr   , start = x0.Sr)
-	@variable(m, θu , start = x0.θu)
-	@variable(m, θr , start = x0.θr)
+	if estimateθ
+		@variable(m, θu , start = x0.θu)
+		@variable(m, θr , start = x0.θr)
+	else
+		θu = p.θu
+		θr = p.θr
+	end
 
 	# nonlinear expressions
 
@@ -66,10 +71,12 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * (wu0 - w[i]) * D[i] for i in 1:p.int_nodes))
 
 	# objective
-	if p.it == 1
-		@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2)
-	else
-		@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
+	if estimateθ
+		if p.it == 1
+			@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2)
+		else
+			@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
+		end
 	end
 
 	# nonlinear constraints (they are actually linear but contain nonlinear expressions - which means we need the nonlinear setup)
@@ -96,7 +103,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 	# @NLconstraint(m, xsr >= 0)
 
 
-	if p.it == 1
+	if p.it == 1 && estimateθ
 		@constraint(m, θu == θr)
 	end
 
@@ -146,7 +153,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple)
 		# end
 
 
-		(ρr = value(ρr), ϕ = value(ϕ), r = value(r), Lr = value(Lr), pr = value(pr), Sr = value(Sr), θu = value(θu), θr = value(θr))
+		(ρr = value(ρr), ϕ = value(ϕ), r = value(r), Lr = value(Lr), pr = value(pr), Sr = value(Sr), θu = estimateθ ? value(θu) : θu, θr = estimateθ ? value(θr) : θr)
 	end
 end
 
