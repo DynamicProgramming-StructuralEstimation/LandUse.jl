@@ -64,7 +64,7 @@ function ts_plots(M,p::Param;fixy = false)
 		 transform(r_y = 100*(:r .* :pop ./ :y), rr_y = 100*(:rr ./ :y), ru_y = 100*(:iq ./ :y))
 	dd[:r_y] = @df df plot(:year, [:r_y, :ru_y,:rr_y], labels = ["Total" "Urban" "Rural"],
 	            linewidth = 2, title = "Rents as % of Income", marker = mmark,
-				ylims = fixy ? (0,50) : false, color = brg,legend = :left)
+				ylims = fixy ? (0,50) : false, color = brg,legend = :bottomright)
 
 	df = @linq d |>
 		 select(:year,:rr_real, :ru_real) |>
@@ -159,7 +159,8 @@ function ts_plots(M,p::Param;fixy = false)
 					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false)
 
 	dd[:n_densities] = @df stack(ndens, Not(:year)) plot(:year, :value, group = :variable,
- 					 linewidth = 2, title = "Normalized Densities", leg = :topright, ylims = fixy ? (0,300) : false)
+ 					 linewidth = 2, title = "Normalized Densities", color = brg,
+					 leg = :topright, ylims = fixy ? (0,300) : false, linestyle = reshape([:dash,[:solid for i in 1:(ncol(ndens)-2)]...],1,ncol(ndens)-1))
 
 
     incdens = df4.avgd[1] / df4.avgd[end]
