@@ -160,7 +160,7 @@ function ts_plots(M,p::Param;fixy = false)
 
 	dd[:n_densities] = @df stack(ndens, Not(:year)) plot(:year, :value, group = :variable,
  					 linewidth = 2, title = "Normalized Densities", color = brg,
-					 leg = :topright, ylims = fixy ? (0,300) : false, linestyle = reshape([:dash,[:solid for i in 1:(ncol(ndens)-2)]...],1,ncol(ndens)-1))
+					 leg = :topright, ylims = fixy ? (0,300) : false)
 
 
     incdens = df4.avgd[1] / df4.avgd[end]
