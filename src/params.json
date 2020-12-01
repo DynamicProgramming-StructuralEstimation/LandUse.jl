@@ -95,7 +95,7 @@
 		"symbol" : "\\Psi"
 	},
 	"T" : {
-		"value" : [1815,15,2010],
+		"value" : [1815,15,2050],
 		"description" : "Start year, increments, end year",
 		"type" : "region",
 		"symbol" : "\\mathcal{T}"
