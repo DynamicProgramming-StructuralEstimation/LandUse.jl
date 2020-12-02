@@ -34,7 +34,7 @@
 		"symbol" : "\\eta"
 	},
 	"cτ" : {
-		"value" : 2.13,
+		"value" : 1.75,
 		"description" : "Commuting Costs Base Parameter",
 		"type" : "region",
 		"symbol" : "c_\\tau"
@@ -71,7 +71,7 @@
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.2,
+		"value" : 0.28,
 		"description" : "Initial Urban Good Endowment",
 		"type" : "region",
 		"symbol" : "\\underline{s}"

@@ -71,13 +71,13 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = tru
 	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * (wu0 - w[i]) * D[i] for i in 1:p.int_nodes))
 
 	# objective
-	if estimateθ
+	# if estimateθ
 		if p.it == 1
 			@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2)
 		else
 			@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
 		end
-	end
+	# end
 
 	# nonlinear constraints (they are actually linear but contain nonlinear expressions - which means we need the nonlinear setup)
 	# F[1] = m.wr - foc_Lr(m.Lr / m.Sr , m.pr, p)

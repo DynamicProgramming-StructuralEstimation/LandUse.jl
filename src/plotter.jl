@@ -30,7 +30,7 @@ function ts_plots(M,p::Param;fixy = false)
 	dd[:spending] = @df ds plot(:year,:value, group = :variable,
 			   linewidth = 2, title = "Spending Shares",
 			   ylims = (0.0,0.83), marker = mmark, legend = :right, color = brg,
-			   annotations = ([p.T[t1900],p.T.stop],[h1900-0.1, hend-0.1],["$(round(h1900,digits = 2))","$(round(hend,digits = 2))"]))
+			   annotations = ([p.T[t1900],p.T.stop],[h1900-0.1, hend-0.1],["$(round(h1900,digits = 3))","$(round(hend,digits = 3))"]))
 
 
     # dd[:spending_data] = plot!(dd[:spending], p.moments.year, p.moments[!,[:SpendingShare_Housing, :SpendingShare_Urban,:SpendingShare_Rural]], color = brg)
@@ -131,10 +131,10 @@ function ts_plots(M,p::Param;fixy = false)
 					  linewidth = 2, title = "Log Productivity", ylims = fixy ? (0,20) : false, marker = mmark,
 					  legend = :left, yscale = :log10)
 	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
-	ds4 = select(d,:year,:ϕ)
-	incphi = d.ϕ[end] / d.ϕ[1]
+	ds4 = select(d,:year,:cityarea)
+	incphi = d.cityarea[end] / d.cityarea[1]
 
-	dd[:phi] = @df d plot(:year, :ϕ,
+	dd[:phi] = @df d plot(:year, :cityarea,
 					 linewidth = 2, title = "City Size", color = "black",
 					 leg = fixy ? :topleft : false, marker = mmark, label = fixy ? "$(round(incphi,digits=1))x" : nothing,
 					 ylims = fixy ? (0.0,0.15) : false)

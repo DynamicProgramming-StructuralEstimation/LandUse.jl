@@ -153,7 +153,7 @@ function i0()
 	psis = 0.1:0.01:1.0
 	p1 = Param()
 
-	@manipulate for estimate in Dict("estimate θ" => true, "θ from data" => false),
+	@manipulate for est in OrderedDict("estimate θ" => 1, "from data θ" => 2, "from estimation θ" => 3),
 					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					gamma in slider(psis, value = p1.γ, label = "gamma"),
@@ -163,10 +163,12 @@ function i0()
 					etaw in slider(eta2, value = p1.ηw, label = "ηw")
 
 					p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0,
-					                              :ηm => etam, :ηl => etal, :ηw => etaw,
-												  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma))
+				                              :ηm => etam, :ηl => etal, :ηw => etaw,
+											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma),
+									   use_estimatedθ = est == 3)
+
 					try
-						x,M,p = LandUse.run(p0, estimateθ = estimate)
+						x,M,p = LandUse.run(p0, estimateθ = est == 1)
 						pl= LandUse.ts_plots(M,p0,fixy = false)
 						plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
 						     pl[:n_densities], pl[:avdensity], pl[:mode], pl[:ctime],
