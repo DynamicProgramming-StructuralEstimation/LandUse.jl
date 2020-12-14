@@ -153,7 +153,7 @@ function i0()
 	psis = 0.1:0.01:1.0
 	p1 = Param()
 
-	@manipulate for cbar in slider(cbars, value = p1.cbar, label = "cbar"),
+	mp = @manipulate for cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					gamma in slider(psis, value = p1.γ, label = "gamma"),
 					cτ in slider(ctaus, value = p1.a, label = "cτ"),
@@ -180,6 +180,9 @@ function i0()
 					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
 
 	end
+	@layout! mp vbox(hbox(:sbar, :cbar,:gamma),
+	                 hbox(:cτ, :etam, :etal, :etaw),
+					 observe(_))
 end
 
 

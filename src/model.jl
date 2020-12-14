@@ -290,15 +290,6 @@ function integrate!(m::Region,p::Param)
 	m.imode     = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	m.ictime    = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
-	# println("asserts passed")
-	# @debug "integrate!" icu_input=m.icu_input iDensity=m.iDensity icu=m.icu iτ=m.iτ iq=m.iq phi=m.ϕ
-	# @assert m.icu_input > 0
-	# @assert m.iDensity > 0
-	# @assert m.icu      > 0
-	# @assert m.icr      > 0
-	# @assert m.iτ       > 0
-	# @assert m.iq       > 0
-	# @assert m.iy       > 0
 end
 
 """
@@ -329,152 +320,16 @@ function Eqsys!(F::Vector{Float64},m::Region,p::Param)
 end
 
 
-
-"""
-Model with linear commuting cost and fixed supply elasticity.
-This model admits closed form integrals.
-"""
-mutable struct FModel <: Model
-	ρr      :: Float64   # land price in rural sector
-	qr      :: Float64     # housing price in rural sector
-	Lr      :: Float64   # employment in rural sector
-	Lu      :: Float64   # employment in urban sector
-	wu0     :: Float64   # wage in urban sector (at center)
-	wr      :: Float64   # wage in rural sector
-	Sr      :: Float64   # Amount of land used in rural production
-	Srh     :: Float64   # Amount of land used for rural housing
-	r       :: Float64   # per capita land rental income
-	pr      :: Float64   # relative price of rural good
-	ϕ       :: Float64   # size of the city
-	xsr      :: Float64  # excess subsistence rural worker
-	U        :: Float64  # common utility level
-	cr01     :: Tuple{Float64,Float64}  # consumption at locations 0 and 1. temps to check.
-	cu01     :: Tuple{Float64,Float64} # consumption at locations 0 and 1. temps to check.
-	# Ftrace :: Matrix{Float64}
-	# xtrace :: Matrix{Float64}
-	function FModel(p::Param)
-		# creates a model fill with NaN
-		m     = new()
-		m.ρr  = NaN
-		m.qr  = NaN
-		m.Lr  = NaN
-		m.Lu  = NaN
-		m.wu0 = NaN
-		m.wr  = NaN
-		m.Sr  = NaN
-		m.Srh = NaN
-		m.r   = NaN
-		m.pr  = NaN
-		m.ϕ   = NaN
-		# m.xsr  = NaN
-		# m.U    = NaN
-		m.xsr    = NaN
-		# m.Ftrace = zeros(6,1)
-		# m.xtrace = zeros(6,1)
-		return m
-	end
-end
-
-"""
-	update!(m::FModel,p::Param,x::Vector{Float64})
-
-update a `Fmodel` from a choice vector x
-"""
-function update!(m::FModel,p::Param,x::Vector{Float64})
-	m.r    = x[1]   # land rent
-	m.Lr   = x[2]   # employment in rural sector
-	m.pr   = x[3]   # relative price rural good
-	m.Sr   = x[4]   # amount of land used in rural production
-
-	# update params
-	σ1 = (p.σ-1)/p.σ
-	σ2 = 1.0 / (p.σ-1)
-	γ2 = p.γ / (1 + p.ϵr)
-
-
-	# update equations
-	m.Lu   = p.L - m.Lr   # employment in urban sector
-	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
-	# m.wr   = p.α * m.pr * p.θr * (p.α + (1-p.α)*(m.Sr / m.Lr)^σ1)^σ2
-	# m.ρr   = (1-p.α)*m.pr * p.θr * (p.α * (m.Lr / m.Sr)^σ1 + (1-p.α))^σ2
-	m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
-	m.ϕ = getfringe(p.θu, m.wr ,p)
-
-	m.xsr  = m.wr + m.r - m.pr * p.cbar + p.sbar
-	# m.xsu = m.wu0 + m.r - m.pr * p.cbar - p.sbar
-	m.Srh  = ( γ2 / m.ρr ) * m.xsr * m.Lr
-	m.qr   = qr(p,m)
-
-end
-
-"""
-	Eqsys!(F::Vector{Float64},m::FModel,p::Param)
-
-compute system of equations for fixed elasticities. uses closed form solutions
-	for integrals.
-"""
-function Eqsys!(F::Vector{Float64},m::FModel,p::Param)
-	σ1 = (p.σ-1)/p.σ
-	σ2 = 1.0 / (p.σ-1)
-	γ2 = p.γ / (1 + p.ϵr)
-
-	# land market clearing: after equation (18)
-	F[1] = p.S - p.λ - m.ϕ - m.Sr - m.Srh
-
-
-	# city size - Urban population relationship: analytic integral solution to equation (16)
-	w2 = p.θu * m.Lu^p.η
-	τϕ = 1-p.τ * m.ϕ
-	w1 = p.Ψ * w2 * τϕ
-	uu = w2+m.r - m.pr * p.cbar + p.sbar
-	ur = w1+m.r - m.pr * p.cbar + p.sbar
-	xx = m.r - m.pr * p.cbar + p.sbar
-
-
-	F[2] = 1+p.τ * w2 * m.Lu/(m.ρr)-(uu/(w2*(1-p.τ*m.ϕ)+m.r-m.pr*p.cbar+p.sbar))^(1/γ2)
-
-	#  total land rent per capita: closed form solution
-	F[3] = m.ρr * m.Sr + m.ρr * m.Srh +
-	       γ2 * m.ρr/(p.τ*(1+γ2)*w2)*(uu^(1/γ2+1)/((w2*τϕ+m.r-m.pr * p.cbar+p.sbar)^(1/γ2)) -
-		   (w2*(1-p.τ * m.ϕ)+m.r-m.pr * p.cbar+p.sbar)) - m.r*p.L
-
-
-	# urban goods market clearing.
-	chi2 = 1.0
-
-	F[4] = m.Lr * (1-p.γ)*(1-p.ν)* ur +
-	chi2*(1-p.γ)*(1-p.ν)*m.ρr/((1+γ2)*w2*p.τ)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) +
-	chi2*γ2*m.ρr/((1+γ2)*p.τ*w2)*(((w2+xx)^(1/γ2+1))/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
-	m.ϕ*chi2*m.ρr +
-	p.ϵr *m.ρr*m.Srh +
-	p.ϵr *chi2*γ2*m.ρr/(p.τ*(1+γ2)*w2)*((w2+xx)^(1/γ2+1)/((w2*τϕ+xx)^(1/γ2))-(w2*τϕ+xx)) -
-	p.sbar*p.L -
-	p.θu*m.Lu^(1+p.η)
-
-	# record function values
-	# m.Ftrace = hcat(m.Ftrace,F)
-
-	# cr = (1.0 - p.γ) * p.ν * ur + m.pr * p.cbar
-	# println("cr - p.cbar = $(cr - p.cbar * p.cbar)")
-	# F[7] = minerr < 0.0 ? minerr^2 : 0.0
-	# F[7] = cr - p.cbar * p.cbar > 0 ? 0.0 : 2*exp(cr - p.cbar * p.cbar)
-	# F[7] = 0.0
-	# println("penalty = $(F[7])")
-
-	# F[7] = 0.0
-end
-
 function solve!(F,x,p::Param,m::Model)
 	# println(x)
 	if any( x .< 0 )
 		# F[:] .= PEN
 	else
 		update!(m,p,x)
-		if isa(m,FModel)
-			# m.xtrace = hcat(m.xtrace,x)
-		end
-		# try
+		# if isa(m,FModel)
+		# 	# m.xtrace = hcat(m.xtrace,x)
+		# end
+		# # try
 			Eqsys!(F,m,p)
 		# catch
 		# 	@warn "error in eqsys"
