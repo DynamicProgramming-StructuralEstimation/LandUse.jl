@@ -27,24 +27,23 @@ mutable struct Param
 	tauw     :: Float64   # exponent on wu (equation 5 in commutingtech)
 	taul     :: Float64   # exponent on l (equation 5 in commutingtech)
 
-
 	α     :: Float64 # labor weight on farm sector production function
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
-	χr    :: Float64 # "easiness" to convert land into housing in rural sector
-	# χu    :: Float64 # "easiness" to convert land into housing in center of urban sector
 	L     :: Float64 # total population
 	Lt     :: Vector{Float64} # total population by year
 	T     :: StepRange{Int64,Int64}
 	t     :: Int64
 	it     :: Int64
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
-	c0    :: Float64  # construction cost function intercept
-	c1    :: Float64  # construction cost function gradient
-	c2    :: Float64  # construction cost function quadratic term
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
 	S     :: Float64  # area of region
-	ρrbar :: Float64  # fixed rural land value for urban model
+
+	# Country setup
+	K :: Int # number of regions
+	kshare :: Vector{Float64} # share of space of each region
+	kθu :: Dict  # collection of θu's for each region for each period
+	kθr :: Dict
 
 	trace :: Bool  # whether to trace solver
 	iters :: Int  # max iterations
@@ -62,7 +61,7 @@ mutable struct Param
 
 		# read data from json file
         for (k,v) in j
-			if v["type"] == "region"
+			# if v["type"] == "region"
 	            if v["value"] isa Vector{Any}
 	                if k == "T"
 	                	vv = v["value"]
@@ -73,9 +72,9 @@ mutable struct Param
 	            else
 	                setfield!(this,Symbol(k),v["value"])
 	            end
-			elseif v["type"] == "numerical"
-				setfield!(this,Symbol(k),v["value"])
-			end
+			# elseif v["type"] == "numerical"
+			# 	setfield!(this,Symbol(k),v["value"])
+			# end
 		end
 
 		# set some defaults
@@ -83,8 +82,11 @@ mutable struct Param
 		this.t = 1815
 		this.it = 1
 		this.S = 1.0  # set default values for space and population
-		# this smoothes thetas
-		# thetas = smooth_θ(this.T, this.ma, this.mag)[1]
+
+		# country setup
+		this.kθu = Dict( )
+		this.kθr = Dict( )
+
 
 		# read data from disk
 		# this.thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
@@ -250,16 +252,12 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      α       : $(p.α   )\n")
 	print(io,"      λ       : $(p.λ   )\n")
 	print(io,"      cτ       : $(p.cτ   )\n")
-	print(io,"      χr      : $(p.χr  )\n")
 	print(io,"      L       : $(p.L   )\n")
 	print(io,"      S       : $(p.S   )\n")
 	print(io,"      T       : $(p.T   )\n")
 	print(io,"      t       : $(p.t   )\n")
 	print(io,"      σ       : $(p.σ   )\n")
-	print(io,"      c0      : $(p.c0  )\n")
-	print(io,"      c1      : $(p.c1  )\n")
-	print(io,"      c2      : $(p.c2  )\n")
-	print(io,"      Ψ       : $(p.Ψ   )\n")
+	print(io,"      K       : $(p.K  )\n")
 end
 
 
@@ -312,36 +310,10 @@ function prepare_data(p::Param; digits = 9)
 	#impute
 	Impute.interp!(x)
 
-
-	# fill in missings in 1914-1919 and 1939-1948 with straight lines
-	# insertcols!(x, :m1913 => ((x.year .> 1913) .& (x.year .< 1920)))
-	# insertcols!(x, :m1938 => ((x.year .> 1938) .& (x.year .< 1949)))
-	# y1913 = x[x.year .== 1913,[:theta_urban,:theta_rural]]
-	# y1920 = x[x.year .== 1920,[:theta_urban,:theta_rural]]
-	# y1938 = x[x.year .== 1938,[:theta_urban,:theta_rural]]
-	# y1949 = x[x.year .== 1949,[:theta_urban,:theta_rural]]
-	#
-	# # slopes
-	# sr1913 = (y1920.theta_rural[1] - y1913.theta_rural[1]) / (1920 - 1913)
-	# su1913 = (y1920.theta_urban[1] - y1913.theta_urban[1]) / (1920 - 1913)
-	# sr1938 = (y1949.theta_rural[1] - y1938.theta_rural[1]) / (1949 - 1938)
-	# su1938 = (y1949.theta_urban[1] - y1938.theta_urban[1]) / (1949 - 1938)
-	#
-	# x[x.m1913,:theta_rural] .= collect(y1913.theta_rural[1] .+ sr1913 .* (1:length(1914:1919)))
-	# x[x.m1913,:theta_urban] .= collect(y1913.theta_urban[1] .+ su1913 .* (1:length(1914:1919)))
-	#
-	# x[x.m1938,:theta_rural] .= collect(y1938.theta_rural[1] .+ sr1938 .* (1:length(1939:1948)))
-	# x[x.m1938,:theta_urban] .= collect(y1938.theta_urban[1] .+ su1938 .* (1:length(1939:1948)))
-
-
 	# moving average smoother
 	transform!(x, :theta_rural => (y -> smooth(collect(skipmissing(y)),ma)) => :stheta_rural,
 	              :theta_urban => (y -> smooth(collect(skipmissing(y)),ma)) => :stheta_urban,
 	              :P_rural => (y -> LandUse.smooth(collect(skipmissing(y)),61)) => :P_rural)
-
-
-  	# drop temp columns
-  	# select!(x, :year, :theta_rural, :theta_urban, :stheta_rural, :stheta_urban,:P_rural)
 
 	if maximum(x.year) < dt.stop
 		# append the future to end of data
@@ -354,9 +326,6 @@ function prepare_data(p::Param; digits = 9)
 		# interpolate forward
 		Impute.locf!(x)
 	end
-	# m = select(x, :year, :Employment_rural, r"SpendingShare", :s_rural)
-	#
-	# CSV.write(joinpath(dbtables,"data_moments.csv"),m)
 
 	# from year 2000 onwards, replace rural with `growth` percent growth
 	x[:, :stheta_rural] .= ifelse.(x.year .> 2000,vcat(zeros(sum(x.year .<= 2000)),[x[x.year .== 2000,:stheta_rural] * growth^i for i in 1:sum(x.year .> 2000)]...),x.stheta_rural)
@@ -410,15 +379,6 @@ function plot_shares()
 
 
 end
-
-
-# function theta_rec(x::Float64,cp::CParam,i::Int)
-# 	if i==1
-# 		cp.θg[i] * x
-# 	else
-# 		theta_rec(x,cp,i-1)
-# 	end
-# end
 
 # set period specific values
 function setperiod!(p::Param,i::Int)
@@ -481,6 +441,7 @@ A Country-wide Parameter struct
 """
 mutable struct CParam
 	L     :: Float64 # total population
+	Lt     :: Vector{Float64} # total population
 	S     :: Float64 # total space
 	K     :: Int  # number of Regions
 	kshare    :: Vector{Float64}  # region k's share of total space

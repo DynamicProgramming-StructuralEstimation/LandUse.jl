@@ -1,7 +1,21 @@
 
 
+"""
+	Country
+
+A `Country` is a collection of single `Regions`. There is free migration
+across regions (same utilty everywhere). What characterises a Region
+are different θs.
+
+## shared characteristics
+
+* total population
+* rural wage
+* rent and food price
+"""
 mutable struct Country
 	R  :: Vector{Region}   # a set of regions
+	pp  :: Vector{Param}   # a set of Params
 	K  :: Int              # number of regions
 	wr :: Float64          # a global rural wage
 	pr :: Float64          # a global price of rural good
@@ -11,20 +25,37 @@ mutable struct Country
 	Sk :: Vector{Float64}  # total space for each region
 	L  :: Float64  # total population
 	S  :: Float64 # total space
-	T     :: StepRange{Int64,Int64}
+	T  :: StepRange{Int64,Int64}
 
-	function Country(cp::CParam,p::Vector{Param})
+	"""
+		Country constructor
+
+	want to give single p and get back
+	differnet theta series for each country
+	"""
+	function Country(p::Param; factors = [1.0,1.01])
 		this = new()
-		this.R = [Region(pp) for pp in p]
-		this.K = length(this.R)
+		@assert p.K == length(factors)
+		@assert p.K == length(p.kshare)
+		this.K = p.K
+
+		# create K copies of parameter
+		this.pp = Param[p for _ in 1:p.K]
+		this.R = [Region(p) for _ in 1:p.K]
+
+		# modify θus for each
+		for ik in 1:p.K
+			this.pp[ik].θut =  this.pp[1].θut .* factors[ik]
+		end
+
 		this.pr = NaN
 		this.ρr = NaN
 		this.r  = NaN
 		this.LS  = NaN
-		this.L  = cp.L
-		this.S  = cp.S
-		this.Sk  = cp.kshare .* cp.S
-		this.T = p[1].T
+		this.L  = 1.0 # first period
+		this.S  = p.S # total spacke
+		this.Sk  = p.kshare .* p.S
+		this.T = p.T
 		return this
 	end
 end
