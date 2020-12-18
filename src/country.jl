@@ -164,7 +164,8 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].qr   = qr(p[ik],c.R[ik])
 		c.R[ik].q0   = q(0.0,p[ik],c.R[ik])
 		c.R[ik].ρ0   = ρ(0.0,p[ik],c.R[ik])
-		c.R[ik].dbar   = c.R[ik].Lu / c.R[ik].ϕ
+		c.R[ik].cityarea   = cityarea(c.R[ik])
+		c.R[ik].citydensity = c.R[ik].Lu / cityarea(c.R[ik])
 		c.R[ik].d0   = D(0.0,p[ik],c.R[ik])
 		c.R[ik].dr   = D(c.R[ik].ϕ,p[ik],c.R[ik])
 		c.R[ik].Hr   = H(c.R[ik].ϕ,p[ik],c.R[ik])
@@ -178,6 +179,11 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].pcy = pcy(c.R[ik],p[ik])
 		c.R[ik].GDP = GDP(c.R[ik],p[ik])
 		c.R[ik].y   =   y(c.R[ik],p[ik])
+
+		c.R[ik].mode0 = mode(0.01 * c.R[ik].ϕ,p)
+		c.R[ik].ctime0 = 0.01 * c.R[ik].ϕ / c.R[ik].mode0
+		c.R[ik].modeϕ = mode(c.R[ik].ϕ,p)
+		c.R[ik].ctimeϕ = c.R[ik].ϕ / c.R[ik].modeϕ
 	end
 end
 
@@ -212,7 +218,12 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	urban_prod = sum(Yu(C.R[ik],p[ik]) for ik in 1:K)
 	fi += 1
 	m = C.R
-	F[fi] = urban_prod - sum( m[ik].Lr * cur(p[ik],m[ik]) + m[ik].icu + m[ik].Srh * cu_input(m[ik].ϕ,p[ik],m[ik]) + m[ik].icu_input + m[ik].wu0 * m[ik].iτ for ik in 1:K)
+	F[fi] = urban_prod -
+	         sum( m[ik].Lr * cur(p[ik],m[ik]) +
+			      m[ik].icu +
+				  m[ik].Srh * cu_input(m[ik].ϕ,p[ik],m[ik]) +
+				  m[ik].icu_input +
+				  m[ik].wu0 * m[ik].iτ for ik in 1:K)
 
 	# K + 3 equations up to here
 
@@ -221,7 +232,7 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 		fi += 1
 		F[fi] = m[ik].Lu - m[ik].iDensity
 	end
-	push!(Ftrace,copy(F))
+	# push!(Ftrace,copy(F))
 
 end
 
