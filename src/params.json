@@ -137,6 +137,11 @@
 		"description" : "Region k's share of Total Space",
 		"symbol" : "\\pi_k"
 	},
+	"factors" : {
+		"value" : [1.0],
+		"description" : "Region k's growth offset",
+		"symbol" : "factor_k"
+	},
 	"ζ" : {
 		"value" : 0.5,
 		"description" : "Valuation of commuting time in terms of wages",

@@ -42,8 +42,9 @@ mutable struct Param
 	# Country setup
 	K :: Int # number of regions
 	kshare :: Vector{Float64} # share of space of each region
-	kθu :: Dict  # collection of θu's for each region for each period
-	kθr :: Dict
+	factors :: Vector{Float64} # growth factor offsets
+	# kθu :: Dict  # collection of θu's for each region for each period
+	# kθr :: Dict
 
 	trace :: Bool  # whether to trace solver
 	iters :: Int  # max iterations
@@ -82,10 +83,6 @@ mutable struct Param
 		this.t = 1815
 		this.it = 1
 		this.S = 1.0  # set default values for space and population
-
-		# country setup
-		this.kθu = Dict( )
-		this.kθr = Dict( )
 
 
 		# read data from disk

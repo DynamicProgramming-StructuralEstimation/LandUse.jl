@@ -649,7 +649,19 @@ function traceplot(x::NLsolve.SolverResults,it)
 	pl = plot(p1,p2,layout = (1,2))
 	savefig(pl,joinpath(@__DIR__,"..","images","solver_trace$it.pdf"))
 end
+function countrytraceplot(x::NLsolve.SolverResults,it)
 
+	ft = f_trace(x)
+	xt = x_trace(x)
+	p1 = plot(ft,title = "Ftrace $it",
+	         label = ["wr" "rhor" "Citysize" "Rent" "Land clear" "Urban good"],
+			 xlabel = "iteration",
+			 legend = :bottomright)
+	p2 = plot(xt,title = "xtrace $it",label = ["rho" "phi" "r" "Lr" "pr" "Sr"], xlabel = "iteration",leg = :left)
+	# p2 = plot(xt[1:nrows,:],title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K)),xlabel = "iteration")
+	pl = plot(p1,p2,layout = (1,2))
+	savefig(pl,joinpath(@__DIR__,"..","images","country_trace$it.pdf"))
+end
 
 function plotsol(x)
 	K = Int((length(x[1])-3)/2)
