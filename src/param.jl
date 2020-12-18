@@ -54,7 +54,7 @@ mutable struct Param
 	moments :: DataFrame
 	thetas :: DataFrame
 
-	function Param(;par=Dict())
+	function Param(;par=Dict(),use_estimatedθ = false)
         f = open(joinpath(dirname(@__FILE__),"params.json"))
         j = JSON.parse(f)
         close(f)
@@ -90,6 +90,10 @@ mutable struct Param
 		# this.thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
 		moments = CSV.read(joinpath(LandUse.dbtables,"data-moments.csv"), DataFrame)
 		this.thetas = select(moments, :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+
+		if use_estimatedθ
+			this.thetas = CSV.read(joinpath(dbtables,"export_theta_pr.csv"), DataFrame)
+		end
 
 		this.moments = moments[ moments.year .∈ Ref(this.T), : ]
 
