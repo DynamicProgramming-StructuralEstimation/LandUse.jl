@@ -46,6 +46,7 @@ mutable struct Country
 		# modify θus for each
 		for ik in 1:p.K
 			this.pp[ik].θut =  this.pp[1].θut .* factors[ik]
+			this.pp[ik].θu =  this.pp[ik].θut[1]   # set first period
 		end
 
 		this.pr = NaN
@@ -193,7 +194,7 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 	# 2. land market clearing in each region K
 	for ik in 1:K
 		fi += 1
-		F[fi] = C.Sk[ik] - C.R[ik].Sr - C.R[ik].ϕ - C.R[ik].Srh
+		F[fi] = C.Sk[ik] - C.R[ik].Sr - C.R[ik].ϕ^2 * π - C.R[ik].Srh
 	end
 
 	# # 3. rural labor/land ratio is constant across K (and equal to region 1)

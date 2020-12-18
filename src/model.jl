@@ -5,7 +5,7 @@ abstract type Model end
 """
 Region type
 
-Urban expansion dodel with flexible commuting cost and differential supply elasticity.
+Urban expansion model with flexible commuting cost and differential supply elasticity.
 This represents a single region. A region contains one potential urban area, and a rural area.
 A `Region` can be part of a wider `Country`.
 """
