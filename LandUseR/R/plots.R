@@ -120,13 +120,23 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
         theme_bw() + theme(panel.grid.minor = element_blank())
 
     if (save) {
-        ggsave(p$violin, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))
-        ggsave(p$ts, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time.pdf"))
-        ggsave(p$ts_log, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-log.pdf"))
-        ggsave(p$ts_w, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-wtd.pdf"))
-        ggsave(p$ts_log_w, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-log-wtd.pdf"))
-        ggsave(p$tstop, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-top5now-city.pdf"))
+        ggsave(p$violin,    width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))
+        ggsave(p$ts,        width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time.pdf"))
+        ggsave(p$ts_log,    width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-log.pdf"))
+        ggsave(p$ts_w,      width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-wtd.pdf"))
+        ggsave(p$ts_log_w,  width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-log-wtd.pdf"))
+        ggsave(p$tstop,     width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-top5now-city.pdf"))
         ggsave(p$tstopthen, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-top5then-city.pdf"))
+
+        # by default print more square version as well
+        ggsave(p$violin,    width = 6, height = 5,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins_square.pdf"))
+        ggsave(p$ts,        width = 6, height = 5,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time_square.pdf"))
+        ggsave(p$ts_log,    width = 6, height = 5,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-log_square.pdf"))
+        ggsave(p$ts_w,      width = 6, height = 5,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-wtd_square.pdf"))
+        ggsave(p$ts_log_w,  width = 6, height = 5,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-log-wtd_square.pdf"))
+        ggsave(p$tstop,     width = 6, height = 5,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-top5now-city_square.pdf"))
+        ggsave(p$tstopthen, width = 6, height = 5,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-top5then-city_square.pdf"))
+
 
     }
 
