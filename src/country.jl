@@ -299,13 +299,15 @@ function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.01])
 	end
 	for it in 2:length(pp.T)
 		println(it)
+		# reset tried global
+		C_TRIED = [0]
 		# display(hcat(sols...)')
 		setperiod!(pp, it)   # set param to it - in particular θs
 		# println(pp.θu)
 		# if it > 12
 		# 	C0,x = adapt_θ(cp,pp,sols[it-1],it,do_traceplot=true)
 		# else
-			C0,x = step_country(sols[it-1],pp,it,do_traceplot=true)
+			C0,x = step_country(sols[it-1],pp,it,do_traceplot=pp.trace)
 		# end
        	push!(sols,x)
        	push!(C,C0)
@@ -318,7 +320,7 @@ function step_country(x0::Vector{Float64},pp::Param,it::Int; do_traceplot = true
 	# println("period $it")
 	# println("params $(C0.pp[1].θu)")
 	# println("params $(C0.pp[2].θu)")
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,C0),x0,iterations = 100, store_trace=true)
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,C0),x0,iterations = 100, store_trace=do_traceplot, extended_trace = do_traceplot)
 
 	# r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 1000,
 	# 						show_trace=false,
@@ -327,6 +329,7 @@ function step_country(x0::Vector{Float64},pp::Param,it::Int; do_traceplot = true
 	# 						autoscale = true,ftol = 0.000004)
 							# method = :newton,
 							# linesearch = LineSearches.BackTracking(order=3))
+
 	if converged(r)
 		# push!(sols, r1.zero)
 		update!(C0,r.zero)
@@ -338,11 +341,18 @@ function step_country(x0::Vector{Float64},pp::Param,it::Int; do_traceplot = true
 		# global Ftrace = Vector{Float64}[]
 		return C0, r.zero
 	else
-		if do_traceplot
-			traceplot(r,it)
+		if C_TRIED < CTRY_MAXTRY
+			x0 = x0 .+ (randn(length(x0)) .* 0.01 .* x0)
+			println("starting at $x0")
+			C_TRIED[1] = C_TRIED[1] + 1
+			step_country(x0,pp,it, do_traceplot = do_traceplot)
+			if do_traceplot
+				countrytraceplot(r,it)
+			end
+		else
+			println(r)
+			error("Country not converged in period $it after $CTRY_MAXTRY trials")
 		end
-		println(r)
-		error("Country not converged in period $it")
 	end
 end
 

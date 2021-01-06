@@ -33,13 +33,13 @@ module LandUse
 	const dbplots = joinpath(dbpath,"output","model","plots")
 	const dbdataplots = joinpath(dbpath,"output","data","plots")
 	const dbtables = joinpath(dbpath,"output","model","tables")
+	const CTRY_MAXTRY = 100
 
 	# imports
 	import Base.show, Base.convert
 
 	# globals
-	Xtrace = Vector{Float64}[]
-	Ftrace = Vector{Float64}[]
+	C_TRIED = [0]
 
 	# our code
 	include("param.jl")
