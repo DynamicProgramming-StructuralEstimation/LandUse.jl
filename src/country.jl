@@ -45,8 +45,8 @@ mutable struct Country
 		# modify θus for each
 		for ik in 1:p.K
 			this.pp[ik].θu =  p.θu .* p.factors[ik]
-			# println("modifying $ik")
-			# println(this.pp[ik].θu)
+			println("modifying $ik")
+			println(this.pp[ik].θu)
 		end
 
 		this.R = [Region(this.pp[ik]) for ik in 1:p.K]
@@ -56,8 +56,8 @@ mutable struct Country
 		this.ρr = NaN
 		this.r  = NaN
 		this.LS  = NaN
-		this.L  = p.Lt[p.it]
-		this.S  = p.S # total spacke
+		this.L  = p.Lt[p.it] * p.K
+		this.S  = p.S * p.K # total space
 		this.Sk  = p.kshare .* p.S
 		this.T = p.T
 		return this
@@ -70,13 +70,13 @@ Rmk(C::Country) = sum(C.R[ik].icr + C.R[ik].Lr * cr(C.R[ik].ϕ,C.pp[ik],C.R[ik])
 
 
 "Obtain a Time Series from an array of Country as a DataFrame"
-function dataframe(C::Vector{Country})
+function dataframe(C::Vector{Country},p::Param)
 	K = length(C[1].R)
 	# cols = setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
 	# region 1
 	tt = C[1].T
 	ir = 1
-	df = dataframe([C[it].R[1] for it in 1:length(tt)],tt)
+	df = dataframe([C[it].R[1] for it in 1:length(tt)],p)
 	# df = DataFrame(year = C[1].T, region = ir)
 	df.region = [ir for i in 1:length(tt)]
 	# for fi in cols
@@ -85,7 +85,7 @@ function dataframe(C::Vector{Country})
 	# other regions
 	if K > 1
 		for ir in 2:K
-			df2 = dataframe([C[it].R[ir] for it in 1:length(tt)],tt)
+			df2 = dataframe([C[it].R[ir] for it in 1:length(tt)],p)
 			df2.region = [ir for i in 1:length(tt)]
 
 
@@ -255,7 +255,7 @@ function solve!(F,x,C::Country)
 	end
 end
 
-function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.01]))
+function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0]))
 
 	C = LandUse.Country[]
    	sols = Vector{Float64}[]  # an empty array of vectors
@@ -266,10 +266,15 @@ function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.01])
 	# pp = convert(cp,par = par)  # create Lk and Sk for each region. if par is not zero, then first level index (Int) is region.
 
 	# 1. run a single region model
-	Mk,p0 = LandUse.runm()
+	x0,Mk,p0 = LandUse.runm()
 
 	# 2. all regions in one country now. starting values for Sr from Mk.
 	push!(C,LandUse.Country(pp))  # create that country
+
+	# 3. make sure all countries start at θu[1] = 1
+	for ik in 1:K
+		C[1].pp[ik].θu = 1.0
+	end
 
 	# starting values.
 	# 1. b: ratio of labor to land in region 1
@@ -283,7 +288,7 @@ function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.01])
 	x0[3] = Mk[1].pr
 	for ik in 1:K
 		x0[3 + ik] = Mk[ik].Sr
-		x0[K + 3 + ik] = pp.kshare[ik] * pp.L
+		x0[K + 3 + ik] = Mk[1].Lu
 	end
 
 	# scale_factors = ones(length(pp[1].T))
@@ -297,6 +302,7 @@ function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.01])
 		println(r)
 		error("Country not converged")
 	end
+	# for it in 2:6
 	for it in 2:length(pp.T)
 		println(it)
 		# reset tried global
@@ -312,7 +318,7 @@ function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.01])
        	push!(sols,x)
        	push!(C,C0)
    end
-   sols, C, pp
+   sols, C
 end
 
 function step_country(x0::Vector{Float64},pp::Param,it::Int; do_traceplot = true)
@@ -341,18 +347,18 @@ function step_country(x0::Vector{Float64},pp::Param,it::Int; do_traceplot = true
 		# global Ftrace = Vector{Float64}[]
 		return C0, r.zero
 	else
-		if C_TRIED < CTRY_MAXTRY
-			x0 = x0 .+ (randn(length(x0)) .* 0.01 .* x0)
-			println("starting at $x0")
-			C_TRIED[1] = C_TRIED[1] + 1
-			step_country(x0,pp,it, do_traceplot = do_traceplot)
-			if do_traceplot
-				countrytraceplot(r,it)
-			end
-		else
+		# if C_TRIED[1] < CTRY_MAXTRY
+		# 	x0 = x0 .+ (randn(length(x0)) .* 0.01 .* x0)
+		# 	println("starting at $x0")
+		# 	C_TRIED[1] = C_TRIED[1] + 1
+		# 	step_country(x0,pp,it, do_traceplot = do_traceplot)
+		# 	if do_traceplot
+		# 		countrytraceplot(r,it)
+		# 	end
+		# else
 			println(r)
 			error("Country not converged in period $it after $CTRY_MAXTRY trials")
-		end
+		# end
 	end
 end
 
@@ -390,14 +396,14 @@ function adapt_ϵ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_tr
 	return C[end], sols[end]
 end
 
-function adapt_θ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_traceplot = true,maxstep = 0.1)
+function adapt_θ(C::Country,x0::Vector{Float64},it::Int; do_traceplot = true,maxstep = 0.1)
 
-	# how many steps to take
-	step = p[1].Θu[it] - p[1].Θu[it-1]
+	# how many steps to take by looking at coutnry 1
+	step = C.pp[1].Θu[it] - C[1].pp.Θu[it-1]
 	s = Int(fld(step,maxstep)) + 1
 
 	# range of values to achieve next step
-	θs = range(p[1].θu - step, stop = p[1].θu, length = s+1)[2:end]   # first one is done already
+	θs = [range(C[k].pp.θu - step, stop = C[k].pp.θu, length = s+1)[2:end]  for k in 1:C.K] # first one is done already
 	sols = Vector{Float64}[]
 	cs = Country[]
 	push!(sols,x0)
