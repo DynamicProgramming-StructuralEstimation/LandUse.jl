@@ -122,7 +122,8 @@ mutable struct Region <: Model
 		m.pcy    = NaN
 		m.GDP    = NaN
 		m.y    = NaN
-		m.inodes, m.iweights = gausslegendre(p.int_nodes)
+		m.inodes = p.inodes
+		m.iweights = p.iweights
 		m.nodes = zeros(p.int_nodes)
 		m.imat = zeros(p.int_nodes,11)
 		m.icu_input = NaN
@@ -169,7 +170,7 @@ end
 
 function show(io::IO, m::Model)
     # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
-    @printf(io,"Region: θu=%1.3f, θr=%1.3f, ϕ=%1.3f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m))
+    @printf(io,"Region: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m))
 end
 
 

@@ -37,6 +37,8 @@ mutable struct Param
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
+	iweights :: Vector{Float64}  # int weights
+	inodes    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ])
 	S     :: Float64  # area of region
 
 	# Country setup
@@ -169,6 +171,7 @@ mutable struct Param
 		# this.taum = 0.571
 		this.tauw = (this.ηm + this.ηw) / (1+this.ηm)
 		this.taul = (this.ηm + this.ηl) / (1+this.ηm)
+		this.inodes, this.iweights = gausslegendre(this.int_nodes)
 		# this.taul = 0.571
 		# println("taum = $(this.taum)")
 		# println("taul = $(this.taul)")

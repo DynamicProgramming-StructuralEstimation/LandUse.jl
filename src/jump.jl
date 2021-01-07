@@ -157,6 +157,69 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = tru
 	end
 end
 
+
+"""
+solve a `Country` at point x0
+"""
+function jc(C::Country,x0::Vector)
+
+	pp = C.pp   # vector of params
+	p  = pp[1]   # param of region 1
+	K = C.K
+
+	# setup Model object
+	m = JuMP.Model(Ipopt.Optimizer)
+	set_optimizer_attribute(m, MOI.Silent(), true)
+	# lbs = [x0...] .* 0.3
+
+	# variables
+	@variable(m, LS >=  0.01 * x0[1]  , start = x0[1])
+	@variable(m, r  >=   0.1 * x0[2]  , start = x0[2])
+	@variable(m, pr >=  0.05 * x0[3]  , start = x0[3])
+	@variable(m, 0.05 * x0[3 + ik]   <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
+	@variable(m, 0.05 * x0[3+K + ik] <= Lu[ik = 1:K] <= C.L     , start = x0[3+K + ik])
+
+	# all θs are in p[ik].θ
+	# global implications
+	σ1 = (p.σ - 1) / p.σ
+	σ2 = 1 / (p.σ - 1)
+	# rural land price
+	@NLexpression(m, ρr , (1-p.α)* pr * p.θr * (p.α * (LS)^(σ1) + (1-p.α))^σ2)
+
+	# rural wage
+	@NLexpression(m, wr , p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
+
+	# rural pop
+	@expression(m, Lr[ik = 1:K], LS * Sr[ik])
+
+	# get fringe for each region
+	@NLexpression(m, ϕ[ik = 1:K], ( (pp[ik].θu - wr) / (p.a * pp[ik].θu^(p.tauw)) )^(1.0/p.taul))
+
+	# integration nodes
+	@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] )
+
+	return m
+
+end
+
+function jjc()
+	m = runm()
+	x0 = m[2][1]
+	C = country()
+	x = Float64[]
+	push!(x, x0.Lr / x0.Sr)
+	push!(x, x0.r)
+	push!(x, x0.pr)
+	for ik in 1:C.K
+		push!(x,x0.Sr)
+	end
+	for ik in 1:C.K
+		push!(x,x0.Lu)
+	end
+	jc(C,x)
+end
+
+
 function stmodel2(p::LandUse.Param)
 	x00 = nocommute(p)
 	# x00 = nlsolve((F,x) -> nocommute!(F,x,p),x0)

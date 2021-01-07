@@ -45,8 +45,8 @@ mutable struct Country
 		# modify θus for each
 		for ik in 1:p.K
 			this.pp[ik].θu =  p.θu .* p.factors[ik]
-			println("modifying $ik")
-			println(this.pp[ik].θu)
+			# println("modifying $ik")
+			# println(this.pp[ik].θu)
 		end
 
 		this.R = [Region(this.pp[ik]) for ik in 1:p.K]
@@ -58,9 +58,20 @@ mutable struct Country
 		this.LS  = NaN
 		this.L  = p.Lt[p.it] * p.K
 		this.S  = p.S * p.K # total space
-		this.Sk  = p.kshare .* p.S
+		this.Sk  = p.kshare .* this.S
 		this.T = p.T
 		return this
+	end
+end
+
+country(; par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0])) = Country(Param(par = par))
+
+function show(io::IO, C::Country)
+    # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
+	for ik in 1:C.K
+		m = C.R[ik]
+    	@printf(io,"Region %d: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",ik,m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m))
+    	@printf(io,"\n")
 	end
 end
 
@@ -271,9 +282,9 @@ function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0]))
 	# 2. all regions in one country now. starting values for Sr from Mk.
 	push!(C,LandUse.Country(pp))  # create that country
 
-	# 3. make sure all countries start at θu[1] = 1
-	for ik in 1:K
-		C[1].pp[ik].θu = 1.0
+	# 3. make sure all countries start at θu[1]
+	for ik in 2:K
+		C[1].pp[ik].θu = C[1].pp[1].θu
 	end
 
 	# starting values.
@@ -302,8 +313,8 @@ function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0]))
 		println(r)
 		error("Country not converged")
 	end
-	# for it in 2:6
-	for it in 2:length(pp.T)
+	for it in 2:5
+	# for it in 2:length(pp.T)
 		println(it)
 		# reset tried global
 		C_TRIED = [0]
