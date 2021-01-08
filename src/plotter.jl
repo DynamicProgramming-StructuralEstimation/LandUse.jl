@@ -250,17 +250,17 @@ end
 
 function impl_plot_slopes(C::Vector{Country})
 	d = dataframe(C)
-	d.lϕ = log.(d.ϕ)
+	d.larea = log.(d.cityarea)
 	d.lu = log.(d.Lu)
 	gd = groupby(d,:year)
-	gd = combine(gd, AsTable([:lϕ, :lu]) => (x -> round.(diff(vcat(extrema(x.lϕ)...)) ./ diff(vcat(extrema(x.lu)...)),digits = 1)) => :slope)
+	gd = combine(gd, AsTable([:larea, :lu]) => (x -> round.(diff(vcat(extrema(x.larea)...)) ./ diff(vcat(extrema(x.lu)...)),digits = 1)) => :slope)
 	d  = innerjoin(d,gd,on = :year)
 	transform!(d, AsTable([:year, :slope]) => (x -> string.(x.year) .* ": slope=" .* string.(x.slope) ) => :year_s)
 
 	cols = range(colorant"red",colorant"blue",length = length(unique(d.year)))
-	dd = select(d, :year_s, :region, :lϕ, :lu)
-	pl2 = @df dd plot(:lu,:lϕ,group = :year_s,
-					ylab = L"\log \phi",
+	dd = select(d, :year_s, :region, :larea, :lu)
+	pl2 = @df dd plot(:lu,:larea,group = :year_s,
+					ylab = L"\log area",
 					xlab = L"\log L_u",
 					marker = (:circle, 4),
 					colour = cols',
@@ -268,7 +268,9 @@ function impl_plot_slopes(C::Vector{Country})
 					# ylims = (-3.8,-2.7),
 					# xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
 					)
-	pl2
+	pl3 = @df d plot(:Lu, :cityarea, group = :region, xlab = "Lu", ylab = "area",m = :circle)
+	pl4 = @df d plot(:Lu, :citydensity, group = :region, xlab = "Lu", ylab = "density",m = :circle)
+	(pl2,pl3,pl4)
 end
 
 "time series showing all regions together"

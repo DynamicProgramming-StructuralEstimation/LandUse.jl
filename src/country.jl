@@ -71,7 +71,9 @@ function show(io::IO, C::Country)
 	for ik in 1:C.K
 		m = C.R[ik]
     	@printf(io,"Region %d: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",ik,m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m))
-    	@printf(io,"\n")
+    	if ik < C.K
+			@printf(io,"\n ")
+		end
 	end
 end
 
@@ -81,12 +83,13 @@ Rmk(C::Country) = sum(C.R[ik].icr + C.R[ik].Lr * cr(C.R[ik].ϕ,C.pp[ik],C.R[ik])
 
 
 "Obtain a Time Series from an array of Country as a DataFrame"
-function dataframe(C::Vector{Country},p::Param)
+function dataframe(C::Vector{Country})
 	K = length(C[1].R)
 	# cols = setdiff(fieldnames(LandUse.Region),(:cr01,:cu01,:inodes,:iweights,:nodes))
 	# region 1
 	tt = C[1].T
 	ir = 1
+	p = C[1].pp[1]
 	df = dataframe([C[it].R[1] for it in 1:length(tt)],p)
 	# df = DataFrame(year = C[1].T, region = ir)
 	df.region = [ir for i in 1:length(tt)]
