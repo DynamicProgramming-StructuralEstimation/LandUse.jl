@@ -266,7 +266,7 @@ function solve!(F,x,C::Country)
 	end
 end
 
-function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0]))
+function runk_archive(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0]))
 
 	C = LandUse.Country[]
    	sols = Vector{Float64}[]  # an empty array of vectors

@@ -170,7 +170,7 @@ end
 
 function show(io::IO, m::Model)
     # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
-    @printf(io,"Region: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m))
+    @printf(io,"Region: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f, pr=%1.3f",m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m),m.pr)
 end
 
 

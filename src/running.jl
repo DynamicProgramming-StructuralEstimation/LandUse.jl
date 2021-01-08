@@ -10,7 +10,7 @@ end
 
 
 """
-run model for all time periods
+run Single region model for all time periods
 """
 function run(p::Param; jump = true, estimateθ = true)
 
@@ -53,6 +53,54 @@ function run(p::Param; jump = true, estimateθ = true)
 	end
 
 	(sols[2:end],M,p) # solutions, models, and parameter
+
+end
+
+"""
+run Multi-region model for all time periods
+"""
+function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0]))
+
+	# get single city solution in first period
+	p = LandUse.Param(par = par, use_estimatedθ = true)
+	@assert p.K > 1
+
+	setperiod!(p,1)
+	x0 = startval(p)
+	m = Region(p)
+	x0 = jm(p,m,x0)
+	update!(m,p,[x0...])
+
+
+	# starting value for country solution
+	x = Float64[]
+	push!(x, m.Lr / m.Sr)
+	push!(x, m.r)
+	push!(x, m.pr)
+	for ik in 1:p.K
+		push!(x,m.Sr)
+	end
+	for ik in 1:p.K
+		push!(x,m.Lu)
+	end
+
+	sols = Vector{Float64}[]  # an empty array of solutions
+	push!(sols,x)
+
+	C = Country[]  # an emtpy array of countries
+
+	for it in 1:length(p.T)
+		# println(it)
+		setperiod!(p,it)
+		c = Country(p)
+		x = jc(c,sols[it])
+		push!(sols,x)
+		update!(c,x)
+
+		push!(C,c)
+	end
+
+	(sols,C,p) # solutions, models, and parameter
 
 end
 
