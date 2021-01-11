@@ -192,11 +192,11 @@ end
 function ik()
 	p1 = Param()
 	gfac = 1.00:0.05:2.0
-	eta = 0.5:0.01:2.0
+	eta = 0.5:0.01:3.0
 	tau = 0.1:0.1:1.0
 	eta2 = 0.0:0.01:1.0
 	cbars = 0.0:0.01:1.5
-	ctaus = 0.0:0.01:4.0
+	ctaus = 0.0:0.01:6.0
 	psis = 0.1:0.01:1.0
 	mp = @manipulate for cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
