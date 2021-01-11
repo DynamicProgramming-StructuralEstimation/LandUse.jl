@@ -158,13 +158,13 @@ function i0()
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					gamma in slider(psis, value = p1.γ, label = "gamma"),
 					cτ in slider(ctaus, value = p1.a, label = "cτ"),
+					es in slider(0.0:0.1:10.0, value = 0.0, label = "ϵs"),
 					etam in slider(eta, value = p1.ηm, label = "ηm"),
 					etal in slider(eta2, value = p1.ηl, label = "ηl"),
 					etaw in slider(eta2, value = p1.ηw, label = "ηw")
 
-					p0 = LandUse.Param(par = Dict(:ϵsmax => 0.0,
-				                              :ηm => etam, :ηl => etal, :ηw => etaw,
-											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma),
+					p0 = LandUse.Param(par = Dict(:ηm => etam, :ηl => etal, :ηw => etaw,
+											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es),
 									   use_estimatedθ = est == 3)
 
 					try
@@ -184,9 +184,52 @@ function i0()
 
 	end
 	@layout! mp vbox(hbox(:est),
-	                 hbox(:sbar, :cbar,:gamma),
+	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:cτ, :etam, :etal, :etaw),
 					 observe(_))
+end
+
+function ik()
+	p1 = Param()
+	gfac = 1.00:0.05:2.0
+	eta = 0.5:0.01:2.0
+	tau = 0.1:0.1:1.0
+	eta2 = 0.0:0.01:1.0
+	cbars = 0.0:0.01:1.5
+	ctaus = 0.0:0.01:4.0
+	psis = 0.1:0.01:1.0
+	mp = @manipulate for cbar in slider(cbars, value = p1.cbar, label = "cbar"),
+					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
+					gamma in slider(psis, value = p1.γ, label = "gamma"),
+					cτ in slider(ctaus, value = p1.a, label = "cτ"),
+					es in slider(0.0:0.1:10.0, value = 0.0, label = "ϵs"),
+					g2 in slider(1.0:0.01:1.1, value = 1.02, label = "g2"),
+					etam in slider(eta, value = p1.ηm, label = "ηm"),
+					etal in slider(eta2, value = p1.ηl, label = "ηl"),
+					etaw in slider(eta2, value = p1.ηw, label = "ηw")
+
+					try
+						x,C,p = runk(par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,g2],
+						                        :ηm => etam, :ηl => etal, :ηw => etaw,
+												  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es))
+						x = impl_plot_slopes(C)
+						plot(x[1],x[2],x[3],
+							 layout = (1,3),size = (1200,600))
+					catch e
+						wdg = alert("Error!")
+						print(wdg())
+					end
+
+					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
+					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
+
+	end
+	@layout! mp vbox(hbox(:g2),
+	                 hbox(:sbar, :cbar,:gamma,:es),
+	                 hbox(:cτ, :etam, :etal, :etaw),
+					 observe(_))
+
+
 end
 
 

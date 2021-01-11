@@ -59,7 +59,7 @@ end
 """
 run Multi-region model for all time periods
 """
-function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0]))
+function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.05]))
 
 	# get single city solution in first period
 	p = LandUse.Param(par = par, use_estimatedθ = true)
@@ -102,6 +102,11 @@ function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0]))
 
 	(sols,C,p) # solutions, models, and parameter
 
+end
+
+function k1()
+	x,C,p = runk()
+	x,C,p = impl_plot_slopes(C)
 end
 
 function runm(; jump = true, estimateθ = true)

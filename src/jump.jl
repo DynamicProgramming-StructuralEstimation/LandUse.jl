@@ -49,17 +49,18 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = tru
 
 	# expressions indexed at location l
 	@NLexpression(m, nodes[i = 1:p.int_nodes], ϕ / 2 + ϕ / 2 * mo.inodes[i] )
+	@NLexpression(m, ϵ[i = 1:p.int_nodes], p.ϵr * exp(-p.ϵs * (ϕ-nodes[i])))
 	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * wu0^(p.tauw) * nodes[i]^(p.taul) )
 	@NLexpression(m, w[i = 1:p.int_nodes], wu0 - τ[i] )
 	# @warn "hard coding abs() for q function" maxlog=1
 	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
 	@NLexpression(m, q[i = 1:p.int_nodes], qr * ((w[i] + r_pr_csbar) / xsr)^(1.0/p.γ))
-	@NLexpression(m, H[i = 1:p.int_nodes], q[i]^p.ϵr)
+	@NLexpression(m, H[i = 1:p.int_nodes], q[i]^ϵ[i])
 	@NLexpression(m, h[i = 1:p.int_nodes], p.γ * (w[i] + r_pr_csbar) / q[i])
-	@NLexpression(m, ρ[i = 1:p.int_nodes], (q[i]^(1.0 + p.ϵr)) / (1.0 + p.ϵr) )
+	@NLexpression(m, ρ[i = 1:p.int_nodes], (q[i]^(1.0 + ϵ[i])) / (1.0 + ϵ[i]) )
 	@NLexpression(m, cu[i = 1:p.int_nodes], (1.0 - p.γ)*(1.0 - p.ν)*(w[i] + r_pr_csbar) - p.sbar)
 	@NLexpression(m, D[i = 1:p.int_nodes] , H[i] / h[i])
-	@NLexpression(m, cu_input[i = 1:p.int_nodes], q[i] * H[i] * p.ϵr / (1.0+p.ϵr) )
+	@NLexpression(m, cu_input[i = 1:p.int_nodes], q[i] * H[i] * ϵ[i] / (1.0+ϵ[i]) )
 
 
 
@@ -208,17 +209,18 @@ function jc(C::Country,x0::Vector)
 
 	# expressions indexed at location l in each k
 	@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] )
+	@NLexpression(m, ϵ[i = 1:p.int_nodes, ik = 1:K], p.ϵr * exp(-p.ϵs * (ϕ[ik]-nodes[i,ik])))
 	@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], p.a * pp[ik].θu^(p.tauw) * nodes[i,ik]^(p.taul) )
 	@NLexpression(m, w[i = 1:p.int_nodes,ik = 1:K], pp[ik].θu - τ[i,ik] )
 	# @warn "hard coding abs() for q function" maxlog=1
 	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
 	@NLexpression(m,        q[i = 1:p.int_nodes,ik = 1:K], qr * ((w[i,ik] + r_pr_csbar) / xsr)^(1.0/p.γ))
-	@NLexpression(m,        H[i = 1:p.int_nodes,ik = 1:K], q[i,ik]^p.ϵr)
+	@NLexpression(m,        H[i = 1:p.int_nodes,ik = 1:K], q[i,ik]^ϵ[i,ik])
 	@NLexpression(m,        h[i = 1:p.int_nodes,ik = 1:K], p.γ * (w[i,ik] + r_pr_csbar) / q[i,ik])
-	@NLexpression(m,        ρ[i = 1:p.int_nodes,ik = 1:K], (q[i,ik]^(1.0 + p.ϵr)) / (1.0 + p.ϵr) )
+	@NLexpression(m,        ρ[i = 1:p.int_nodes,ik = 1:K], (q[i,ik]^(1.0 + ϵ[i,ik])) / (1.0 + ϵ[i,ik]) )
 	@NLexpression(m,       cu[i = 1:p.int_nodes,ik = 1:K], (1.0 - p.γ)*(1.0 - p.ν)*(w[i,ik] + r_pr_csbar) - p.sbar)
 	@NLexpression(m,        D[i = 1:p.int_nodes,ik = 1:K] , H[i,ik] / h[i,ik])
-	@NLexpression(m, cu_input[i = 1:p.int_nodes,ik = 1:K], q[i,ik] * H[i,ik] * p.ϵr / (1.0+p.ϵr) )
+	@NLexpression(m, cu_input[i = 1:p.int_nodes,ik = 1:K], q[i,ik] * H[i,ik] * ϵ[i,ik] / (1.0+ϵ[i,ik]) )
 
 	# integrals for each region ik
 	@NLexpression(m, iDensity[ik = 1:K],  (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * D[i,ik] for i in 1:p.int_nodes))
