@@ -4,7 +4,7 @@
 """
 solve model at current paramter p and starting at point x0
 """
-function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = true)
+function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = false)
 
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
@@ -73,11 +73,12 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = tru
 
 	# objective
 	# if estimateθ
-		if p.it == 1
-			@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2)
-		else
-			@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
-		end
+		# if p.it == 1
+			# @objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2)
+		# else
+			@objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
+			# @objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
+		# end
 	# end
 
 	# nonlinear constraints (they are actually linear but contain nonlinear expressions - which means we need the nonlinear setup)

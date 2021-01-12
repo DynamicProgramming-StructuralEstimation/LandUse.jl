@@ -78,7 +78,7 @@
 		"symbol" : "\\Psi"
 	},
 	"T" : {
-		"value" : [1815,15,2050],
+		"value" : [1840,15,2050],
 		"description" : "Start year, increments, end year",
 		"symbol" : "\\mathcal{T}"
 	},
@@ -103,7 +103,7 @@
 		"symbol" : "\\theta_{r,i,t}"
 	},
 	"ϵr" : {
-		"value" : 4.0,
+		"value" : 5.0,
 		"description" : "H Supply Elasticity Function in Rural sector",
 		"symbol" : "\\epsilon_r"
 	},

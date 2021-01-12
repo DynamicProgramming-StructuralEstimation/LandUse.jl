@@ -12,7 +12,7 @@ end
 """
 run Single region model for all time periods
 """
-function run(p::Param; jump = true, estimateθ = true)
+function run(p::Param; jump = true, estimateθ = false)
 
 	setperiod!(p,1)
 	x0 = startval(p)
@@ -47,7 +47,7 @@ function run(p::Param; jump = true, estimateθ = true)
 		if it == 1
 			# adjust relative price in data to first period solution
 			px = x.pr / p.moments[1,:P_rural]
-			transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
+			# transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
 		end
 
 	end

@@ -153,7 +153,7 @@ function i0()
 	psis = 0.1:0.01:1.0
 	p1 = Param()
 
-	mp = @manipulate for est in OrderedDict("estimate θ" => 1, "from data θ" => 2, "from estimation θ" => 3),
+	mp = @manipulate for est in OrderedDict("from data θ" => 1, "estimate θ" => 2, "from estimation θ" => 3),
 					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					gamma in slider(psis, value = p1.γ, label = "gamma"),
@@ -168,10 +168,10 @@ function i0()
 									   use_estimatedθ = est == 3)
 
 					try
-						x,M,p = LandUse.run(p0, estimateθ = est == 1)
+						x,M,p = LandUse.run(p0, estimateθ = est == 2)
 						pl= LandUse.ts_plots(M,p0,fixy = false)
 						plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
-						     pl[:n_densities], pl[:avdensity], pl[:mode], pl[:ctime],
+						     pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
 							 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
 							 layout = (3,4),link = :x,size = (1200,600))
 					catch e
