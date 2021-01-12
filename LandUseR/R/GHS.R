@@ -753,11 +753,7 @@ IDF_smod <- function(cutoff = 20){
     return(l)
 }
 
-write_paris_areas <- function(){
-  sh = sf::st_read(file.path("~/git/intro-to-r/data","CONTOURS-IRIS","1_DONNEES_LIVRAISON_2018-06-00105","CONTOURS-IRIS_2-1_SHP_LAMB93_FXX-2017","CONTOURS-IRIS.shp"),stringsAsFactors=FALSE)
-  a=sh %>% filter(INSEE_COM > 75100 & INSEE_COM < 75121) %>% group_by(INSEE_COM) %>% summarise(n=n()) %>% mutate(area = units::set_units(sf::st_area(.), km^2), CODGEO = INSEE_COM) %>% sf::st_set_geometry(NULL) %>% dplyr::select(CODGEO,area)
-  saveRDS(a, file.path(LandUseR:::datadir(),"paris-areas.Rds"))
-}
+
 
 paris_box <- function(){
     if (!file.exists(file.path(datadir(),"paris-box.Rds"))){

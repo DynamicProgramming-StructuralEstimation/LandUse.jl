@@ -238,7 +238,7 @@ get_paris_pop_1950 <- function(p){
 
     p92 = p %>%
         dplyr::filter(DEP == 92, year == 1954)
-    p92 %<>% dplyr::filter(haute_seine_92 %in% LIBGEO)
+    p92 = p92 %>% dplyr::filter(haute_seine_92 %in% LIBGEO)
     stopifnot(nrow(p92) == length(haute_seine_92))
 
     # list of communes to take out of paris
@@ -250,7 +250,7 @@ get_paris_pop_1950 <- function(p){
 
     p94 = p %>%
         dplyr::filter(DEP == 94, year == 1954)
-    p94 %<>% dplyr::filter(val_de_marne_94 %in% LIBGEO)
+    p94 = p94 %>% dplyr::filter(val_de_marne_94 %in% LIBGEO)
     stopifnot(nrow(p94) == length(val_de_marne_94))
 
     # list of communes to take out of paris

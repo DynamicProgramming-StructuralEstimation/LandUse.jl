@@ -133,6 +133,35 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
     p
 }
 
+
+write_paris_areas <- function(){
+    sh = sf::st_read(file.path("~/git/intro-to-r/data","CONTOURS-IRIS","1_DONNEES_LIVRAISON_2018-06-00105","CONTOURS-IRIS_2-1_SHP_LAMB93_FXX-2017","CONTOURS-IRIS.shp"),stringsAsFactors=FALSE)
+    a=sh %>% filter(INSEE_COM > 75100 & INSEE_COM < 75121) %>% group_by(INSEE_COM) %>% summarise(n=n()) %>% mutate(area = units::set_units(sf::st_area(.), km^2), CODGEO = INSEE_COM) %>% sf::st_set_geometry(NULL) %>% dplyr::select(CODGEO,area)
+    saveRDS(a, file.path(LandUseR:::datadir(),"paris-areas.Rds"))
+}
+
+plot_paris_densities <- function(){
+    a = readRDS(file.path(LandUseR:::datadir(),"paris-areas.Rds"))
+    p = readpop() %>%
+        filter(DEP == "75") %>%
+        left_join(a, by = "CODGEO") %>%
+        mutate(density = population / as.numeric(area)) %>%
+        mutate(center = if_else(as.integer(CODGEO) < 75107, TRUE, FALSE)) %>%
+        group_by(year, center) %>%
+        summarise(density = mean(density), population = sum(population))
+    out = ggplot(p, aes(year,density,color = center)) +
+        geom_point(aes(size = population)) +
+        geom_line() + theme_bw() +
+        ggtitle("Paris Central vs Fringe Density", subtitle = "Center: Arrondissements 1-6. Constant geography of 2021 Arrondissement boundaries.") +
+        labs(caption = "Each point corresponds to a Census counts by arrondissement") +
+        scale_y_continuous("population / km2")
+    ggsave(plot = out, filename = file.path(LandUseR:::outdir(),"data","plots","paris-densities.pdf"))
+    out
+
+
+}
+
+
 plot_sat_densities <- function(){
     z = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
     x = z[type == "satellite" ,list(year,p50,p90,p10,CODGEO,LIBGEO,rank,area,logarea=log(area),pop,logpop = log(pop))]
