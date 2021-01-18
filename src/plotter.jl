@@ -7,6 +7,45 @@ function setup_color(l::Int)
     return colors
 end
 
+"single spatial cross sections region"
+function cs_plots(m::Region,p::Param,it::Int; fixy = false)
+
+	lvec = collect(range(0.,m.ϕ,length=100))  # space for region ik
+	setperiod!(p,it)  # set time on parameter!
+	ti = p.T[it]  # acutal year for printing
+	d = Dict()
+
+	# get data
+	ϵd = [ϵ(i,m.ϕ,p) for i in lvec]
+	Dd = [D(i,p,m) for i in lvec]
+	Hd = [H(i,p,m) for i in lvec]
+	ρd = [ρ(i,p,m) for i in lvec]
+	qd = [q(i,p,m) for i in lvec]
+
+	# get ratio first over last point
+	ϵg = round(ϵd[1]/ϵd[end],digits =1)
+	Dg = round(Dd[1]/Dd[end],digits =1)
+	Hg = round(Hd[1]/Hd[end],digits =1)
+	ρg = round(ρd[1]/ρd[end],digits =1)
+	qg = round(qd[1]/qd[end],digits =1)
+
+	if fixy
+		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))") , ylims = (2    , 4.1) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
+		d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")         , ylims = (-3   , 60)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Dd) , "$(Dg)x"))
+		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")         , ylims = (-0.1 , 15)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
+		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")     , ylims = (-0.1 , 10)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
+		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")         , ylims = (0.5  , 5.5) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
+	else
+		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
+		d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Dd) , "$(Dg)x"))
+		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
+		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
+		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
+	end
+	d
+end
+
+
 function ts_plots(M,p::Param;fixy = false)
 	d = dataframe(M,p)
 	dd = Dict()
@@ -132,11 +171,11 @@ function ts_plots(M,p::Param;fixy = false)
 					  legend = :left, yscale = :log10)
 	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	ds4 = select(d,:year,:cityarea)
-	incphi = d.cityarea[end] / d.cityarea[1]
+	incphi = round(d.cityarea[end] / d.cityarea[1],digits = 1)
 
 	dd[:phi] = @df d plot(:year, :cityarea,
 					 linewidth = 2, title = "City Size", color = "black",
-					 leg = fixy ? :topleft : false, marker = mmark, label = fixy ? "$(round(incphi,digits=1))x" : nothing,
+					 leg = fixy ? :topleft : false, marker = mmark, annotate = (p.T[end],0.2*maximum(d.cityarea),"$(round(incphi,digits=1))x"),
 					 ylims = fixy ? (0.0,0.15) : false)
     dd[:Sr] = @df d plot(:year, :Sr,
 				  linewidth = 2, color = "black",title = "Agricultural Land",
@@ -155,9 +194,6 @@ function ts_plots(M,p::Param;fixy = false)
 	ds4 = stack(dens, Not(:year))
 	ds5 = select(dens,:year,:avgd)
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
-	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false)
-
 	dd[:n_densities] = @df stack(ndens, Not(:year)) plot(:year, :value, group = :variable,
  					 linewidth = 2, title = "Normalized Densities", color = brg,
 					 leg = :topright, ylims = fixy ? (0,300) : false)
@@ -169,6 +205,10 @@ function ts_plots(M,p::Param;fixy = false)
 	dd[:avdensity] = @df ds5 plot(:year, :avgd,
 					 linewidth = 2, title = "Avg Density", marker = mmark,
 					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (p.T.stop,ancdens,"$(round(incdens,digits = 1))x"))
+
+	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false,annotations = (p.T[2],0.2*maximum(ds4.value),"$(round(incdens,digits = 1))x"))
+
 
     dss = stack(select(d,:year,:mode0,:modeϕ,:imode), Not(:year))
 	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)

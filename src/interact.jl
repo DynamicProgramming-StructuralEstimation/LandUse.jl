@@ -153,7 +153,8 @@ function i0()
 	psis = 0.1:0.01:1.0
 	p1 = Param()
 
-	mp = @manipulate for est in OrderedDict("from data θ" => 1, "estimate θ" => 2, "from estimation θ" => 3),
+	# mp = @manipulate for est in OrderedDict("from data θ" => 1, "estimate θ" => 2, "from estimation θ" => 3),
+	mp = @manipulate for it in slider(1:length(p1.T), value = length(p1.T), label = "period"),
 					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					gamma in slider(psis, value = p1.γ, label = "gamma"),
@@ -165,15 +166,17 @@ function i0()
 
 					p0 = LandUse.Param(par = Dict(:ηm => etam, :ηl => etal, :ηw => etaw,
 											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es),
-									   use_estimatedθ = est == 3)
+									   use_estimatedθ = false)
 
 					try
-						x,M,p = LandUse.run(p0, estimateθ = est == 2)
-						pl= LandUse.ts_plots(M,p0,fixy = false)
+						x,M,p = LandUse.run(p0, estimateθ = false)
+						pl = LandUse.ts_plots(M,p0,fixy = false)
+						pc = LandUse.cs_plots(M[it], p0, it)
 						plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
 						     pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
 							 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
-							 layout = (3,4),link = :x,size = (1200,600))
+							 pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
+							 layout = (4,4),size = (1200,800))
 					catch e
 						wdg = alert("Error!")
 						print(wdg())
@@ -183,7 +186,7 @@ function i0()
 					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
 
 	end
-	@layout! mp vbox(hbox(:est),
+	@layout! mp vbox(hbox(:it),
 	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:cτ, :etam, :etal, :etaw),
 					 observe(_))
