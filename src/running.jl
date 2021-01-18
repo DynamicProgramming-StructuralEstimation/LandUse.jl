@@ -59,10 +59,10 @@ end
 """
 run Multi-region model for all time periods
 """
-function runk(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.05]))
+function runk(;par = Dict(:K => 2,:ϵr => 4.0, :kshare => [0.5,0.5], :factors => [1.0,1.05]))
 
 	# get single city solution in first period
-	p = LandUse.Param(par = par, use_estimatedθ = true)
+	p = LandUse.Param(par = par, use_estimatedθ = false)
 	@assert p.K > 1
 
 	setperiod!(p,1)
