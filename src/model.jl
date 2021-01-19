@@ -249,7 +249,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# println("neg cons")
 	# end
 	# display(m)
-	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
+	m.nodes[:]        .= m.ϕ  / 2 .+ (m.ϕ / 2)  .* m.inodes   # maps [-1,1] into [0,ϕ]
 	m.nodes_center[:] .= p.ϕ1 / 2 .+ (p.ϕ1 / 2) .* m.inodes   # maps [-1,1] into [0,ϕ1]
 	integrate!(m,p)
 	# m.d0   = D(p.ϕ1,p,m)
@@ -288,9 +288,10 @@ function integrate!(m::Region,p::Param)
 
 	two_π_l     = 2π .* m.nodes
 	two_π_lcenter     = 2π .* m.nodes_center
-	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iDensity   = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iDensity_center  = (p.ϕ1/2) * sum(m.iweights[i] * two_π_lcenter[i] * D(m.nodes_center[i],p,m) for i in 1:p.int_nodes)[1]
+
+	m.icu_input       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iDensity        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i]        * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iDensity_center = (p.ϕ1/2) * sum(m.iweights[i] * two_π_lcenter[i] * D(m.nodes_center[i],p,m) for i in 1:p.int_nodes)[1]/(p.ϕ1^2 * π)
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icr       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cr(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * (m.wu0 - w(m.Lu,m.nodes[i],m.ϕ,p)) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
@@ -304,6 +305,8 @@ function integrate!(m::Region,p::Param)
 	m.ictime    = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
 end
+
+
 
 """
 	Eqsys!(F::Vector{Float64},m::Region,p::Param)

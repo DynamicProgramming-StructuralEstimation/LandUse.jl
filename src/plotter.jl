@@ -500,11 +500,7 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 
 end
 
-function doit()
-	p = Param()
-	x,M,p = run(p)
-	plot_ts_xsect(M,p,1)
-end
+
 
 function plot_ts(M::Vector{Region},p::Param,it::Int)
 	df = dataframe(M,p)
