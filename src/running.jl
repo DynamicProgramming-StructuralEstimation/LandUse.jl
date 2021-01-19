@@ -12,7 +12,7 @@ end
 """
 run Single region model for all time periods
 """
-function run(p::Param; jump = true, estimateθ = false)
+function run(p::Param; estimateθ = false)
 
 	setperiod!(p,1)
 	x0 = startval(p)
@@ -30,19 +30,13 @@ function run(p::Param; jump = true, estimateθ = false)
 		# println(it)
 		setperiod!(p,it)
 		m = Region(p)
-		if jump
-			x = jm(p,m,sols[it], estimateθ = estimateθ)
-			push!(sols,x)
-			update!(m,p,[x...])
-		else
-			x = solve_once(p,m,[sols[it]...])
-			if converged(x)
-				push!(sols,(; zip(keys(x0), x.zero)...))
-				update!(m,p,x.zero)
-			else
-				error("nlsolve not converged in period $it")
-			end
+		x = jm(p,m,sols[it], estimateθ = estimateθ)
+		push!(sols,x)
+		if it == 1
+			p.ϕ1 = x.ϕ * p.ϕ1x
 		end
+		update!(m,p,[x...])
+
 		push!(M,m)
 		if it == 1
 			# adjust relative price in data to first period solution
@@ -109,8 +103,8 @@ function k1()
 	x,C,p = impl_plot_slopes(C)
 end
 
-function runm(; jump = true, estimateθ = true)
-	run(Param(), jump = jump,estimateθ = estimateθ)
+function runm()
+	run(Param())
 end
 function plot1()
 	x,M,p = run(Param())

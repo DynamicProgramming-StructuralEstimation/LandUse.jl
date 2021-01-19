@@ -78,7 +78,7 @@
 		"symbol" : "\\Psi"
 	},
 	"T" : {
-		"value" : [1840,15,2050],
+		"value" : [1840,15,2020],
 		"description" : "Start year, increments, end year",
 		"symbol" : "\\mathcal{T}"
 	},

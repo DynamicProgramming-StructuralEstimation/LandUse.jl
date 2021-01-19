@@ -31,7 +31,8 @@ mutable struct Region <: Model
 	h0   :: Float64   # housing demand at center
 	hr   :: Float64   # housing demand at fringe
 	dbar :: Float64   # total avg density
-	d0   :: Float64   # density at center
+	d0   :: Float64   # density in central area from 0 to first period fringe
+	d0_   :: Float64   # density at point zero
 	dq100  :: Float64   # density at quantile q of fringe
 	dq1  :: Float64   # density at quantile q of fringe
 	dq2  :: Float64   # density at quantile q of fringe
@@ -68,11 +69,13 @@ mutable struct Region <: Model
 	inodes   :: Vector{Float64}  # theoretical integration nodes
 	iweights :: Vector{Float64}  # int weights
 	nodes    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ])
+	nodes_center    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ1])
 	imat     :: Matrix{Float64}
 
 	# resulting integrals from [0,ϕ]
 	icu_input :: Float64   # ∫ cu_input(l) dl
 	iDensity  :: Float64   # ∫ D(l) dl
+	iDensity_center  :: Float64   # ∫ D(l) dl for l ∈ [0,ϕ1]
 	icu       :: Float64   # ∫ cu(l) D(l) dl
 	icr       :: Float64   # ∫ cr(l) D(l) dl
 	iτ        :: Float64   # ∫ τ(l) D(l) dl
@@ -105,6 +108,7 @@ mutable struct Region <: Model
 		m.h0   = NaN
 		m.dr   = NaN
 		m.dbar   = NaN
+		m.d0_   = NaN
 		m.d0   = NaN
 		m.dq100   = NaN
 		m.dq1   = NaN
@@ -125,9 +129,11 @@ mutable struct Region <: Model
 		m.inodes = p.inodes
 		m.iweights = p.iweights
 		m.nodes = zeros(p.int_nodes)
+		m.nodes_center = zeros(p.int_nodes)
 		m.imat = zeros(p.int_nodes,11)
 		m.icu_input = NaN
 		m.iDensity  = NaN
+		m.iDensity_center  = NaN
 		m.icu       = NaN
 		m.iτ        = NaN
 		m.iq        = NaN
@@ -224,7 +230,7 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.H0   = H(0.0,p,m)
 	m.h0   = h(0.0,p,m)
 	m.dbar   = NaN
-	m.d0   = D(0.0,p,m)
+	m.d0_   = D(0.0,p,m)
 	m.dq100   = D(m.ϕ / 100,p,m)
 	m.dq1   = D(m.ϕ / 5,p,m)
 	m.dq2   = D(2 * m.ϕ / 5,p,m)
@@ -244,7 +250,11 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# end
 	# display(m)
 	m.nodes[:] .= m.ϕ / 2 .+ (m.ϕ / 2) .* m.inodes   # maps [-1,1] into [0,ϕ]
+	m.nodes_center[:] .= p.ϕ1 / 2 .+ (p.ϕ1 / 2) .* m.inodes   # maps [-1,1] into [0,ϕ1]
 	integrate!(m,p)
+	# m.d0   = D(p.ϕ1,p,m)
+	m.d0   = m.iDensity_center
+
 	m.mode0 = mode(0.01 * m.ϕ,p)
 	m.ctime0 = 0.01 * m.ϕ / m.mode0
 	m.modeϕ = mode(m.ϕ,p)
@@ -277,8 +287,10 @@ doing a matmul on it? have to allocate memory though.
 function integrate!(m::Region,p::Param)
 
 	two_π_l     = 2π .* m.nodes
+	two_π_lcenter     = 2π .* m.nodes_center
 	m.icu_input = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
-	m.iDensity  = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iDensity   = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
+	m.iDensity_center  = (p.ϕ1/2) * sum(m.iweights[i] * two_π_lcenter[i] * D(m.nodes_center[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icr       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cr(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * (m.wu0 - w(m.Lu,m.nodes[i],m.ϕ,p)) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]

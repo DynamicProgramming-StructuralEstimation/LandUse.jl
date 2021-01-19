@@ -155,6 +155,7 @@ function i0()
 
 	# mp = @manipulate for est in OrderedDict("from data θ" => 1, "estimate θ" => 2, "from estimation θ" => 3),
 	mp = @manipulate for it in slider(1:length(p1.T), value = length(p1.T), label = "period"),
+					ϕx in slider(0.05:0.05:1.0, value = 1.0, label = "ϕ1x"),
 					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					gamma in slider(psis, value = p1.γ, label = "gamma"),
@@ -165,7 +166,8 @@ function i0()
 					etaw in slider(eta2, value = p1.ηw, label = "ηw")
 
 					p0 = LandUse.Param(par = Dict(:ηm => etam, :ηl => etal, :ηw => etaw,
-											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es),
+											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es, :ϵs => es,
+											  :ϕ1x => ϕx),
 									   use_estimatedθ = false)
 
 					try
@@ -186,7 +188,7 @@ function i0()
 					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
 
 	end
-	@layout! mp vbox(hbox(:it),
+	@layout! mp vbox(hbox(:it, :ϕx),
 	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:cτ, :etam, :etal, :etaw),
 					 observe(_))

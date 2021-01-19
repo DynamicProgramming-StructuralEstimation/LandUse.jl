@@ -40,6 +40,8 @@ mutable struct Param
 	iweights :: Vector{Float64}  # int weights
 	inodes    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ])
 	S     :: Float64  # area of region
+	ϕ1  :: Float64   # first period fringe
+	ϕ1x  :: Float64   # fraction of first fringe that defines "center"
 
 	# Country setup
 	K :: Int # number of regions
@@ -85,6 +87,8 @@ mutable struct Param
 		this.t = 1815
 		this.it = 1
 		this.S = 1.0  # set default values for space and population
+		this.ϕ1 = NaN
+		this.ϕ1x = 0.5
 
 
 		# read data from disk
@@ -172,6 +176,9 @@ mutable struct Param
 		this.tauw = (this.ηm + this.ηw) / (1+this.ηm)
 		this.taul = (this.ηm + this.ηl) / (1+this.ηm)
 		this.inodes, this.iweights = gausslegendre(this.int_nodes)
+
+		if (isnan(this.ϕ1x) || (this.ϕ1x <= 0)) error("invalid value for ϕ1x: $(this.ϕ1x)") end
+
 		# this.taul = 0.571
 		# println("taum = $(this.taum)")
 		# println("taul = $(this.taul)")
