@@ -21,7 +21,7 @@
 GHS_years <- function() c(1975,1990,2000,2015)
 
 
-cropcities <- function(overwrite = FALSE){
+cropboxes <- function(overwrite = FALSE){
   if (overwrite){
     x = LandUseR:::pop_1950_2()
     lgs = x[,unique(CODGEO)]
@@ -32,7 +32,8 @@ cropcities <- function(overwrite = FALSE){
 
       yr = GHS_years()[iy]
       flog.info("cropping year %d",yr)
-      r = LandUseR:::loadRasters(yr)
+      r = loadRasters(yr = yr)
+
       pb <- progress::progress_bar$new(total = 100)
       for (lg in lgs){
 
@@ -42,9 +43,9 @@ cropcities <- function(overwrite = FALSE){
 
     }
     names(L) <- paste(GHS_years())
-    saveRDS(L,file.path(outdir(),"data","france_cropped.Rds"))
+    saveRDS(L,file.path(outdir(),"data","france-cropped-boxes.Rds"))
   } else {
-    L = readRDS(file.path(outdir(),"data","france_cropped.Rds"))
+    L = readRDS(file.path(outdir(),"data","france-cropped-boxes.Rds"))
   }
   L
 }
@@ -54,7 +55,10 @@ cropcities <- function(overwrite = FALSE){
 measure_cities <- function(overwrite = FALSE, cutoff = 30){
     if (overwrite){
         # get list of cities
-        L = readRDS(file.path(LandUseR:::outdir(),"data","france_cropped.Rds"))
+        L = readRDS(file.path(LandUseR:::outdir(),"data","france-cropped-boxes.Rds"))
+
+        # get centers
+        ct = merge_centers(overwrite = FALSE)
 
         # output list
         OL = list()
@@ -80,6 +84,16 @@ measure_cities <- function(overwrite = FALSE, cutoff = 30){
                 citymask = copy(cc)
                 raster::values(citymask) <- (raster::values(cc) == whichc)
                 raster::values(citymask)[!raster::values(citymask)] = NA  # set FALSE to NA
+
+                # store final cut out areas for populaiton and built up back on list
+                L[[iy]][[ic]]$built_cut = cityb[citymask, drop = FALSE]
+                L[[iy]][[ic]]$pop_cut = cityp[citymask, drop = FALSE]
+
+                # store city center on list
+                L[[iy]][[ic]]$center = ct[CODGEO == ic, c(center_x, center_y)]
+                L[[iy]][[ic]]$cityname = ct[CODGEO == ic, LIBGEO]
+
+
 
                 # inverse mask
                 # imask = citymask
@@ -110,12 +124,51 @@ measure_cities <- function(overwrite = FALSE, cutoff = 30){
         }
         names(OL) <- names(L)
         saveRDS(OL,file.path(LandUseR:::outdir(),"data","france_measured.Rds"))
+        saveRDS( L,file.path(LandUseR:::outdir(),"data","france-cropped-cities.Rds"))
 
     } else {
         OL = readRDS(file.path(LandUseR:::outdir(),"data","france_measured.Rds"))
+        L = readRDS(file.path(LandUseR:::outdir(),"data","france-cropped-cities.Rds"))
     }
-    return(OL)
+    return(list(OL,L))
 }
+
+dist_from_center <- function(overwrite = FALSE, ndists = 50){
+
+    if (overwrite) {
+        # read cut out city list
+        L = measure_cities()[[2]]
+        OL = list()
+
+        d0 = data.table()
+        # for each year and each city
+        for (iy in 1:length(L)){
+            yr = GHS_years()[iy]
+
+            OL[[iy]] <- list()
+            flog.info("measuring distances in year %d",yr)
+
+            for (ic in names((L[[iy]]))){
+
+                dists = distanceFromPoints(L[[iy]][[ic]]$pop_cut, L[[iy]][[ic]]$center)
+                dists = dists[!is.na(L[[iy]][[ic]]$pop_cut),drop = FALSE]  # keep only cells that are not NA
+                md = raster::cellStats(dists, "max",na.rm = T)
+                dt = seq(0,md,length.out = ndists)
+                rc = cut(values(dists), breaks = dt, label = FALSE)
+                # now compute density at each quantile
+                d = data.table(quantile = rc, d = values(L[[iy]][[ic]]$pop_cut) )
+                d <- d[,list(density = mean(d,na.rm=T)),by = quantile]
+                d[, c("distance", "CODGEO", "LIBGEO","year") := list(dt[quantile], ic, L[[iy]][[ic]]$cityname, yr)]
+                d0 = rbind(d0,d)
+            }
+        }
+        saveRDS(d0,file.path(LandUseR:::outdir(),"data","density-distance.Rds"))
+        return(d0)
+    } else {
+        readRDS(file.path(LandUseR:::outdir(),"data","density-distance.Rds"))
+    }
+}
+
 
 
 combine_measures <- function(overwrite = FALSE,cutoff = 30){
@@ -403,181 +456,15 @@ crop_rasters <- function(r,e){
 #   m
 # }
 
-#' List of French cities in study
+
+
+#' get CRS of raster data
 #'
-#' @export
-french_cities <- function(){
-  f = france()
-  unique(f$city)
+#' hoping they are all in the same CRS.
+get_raster_CRS <- function(){
+  pop <- raster::raster(file.path(LandUseR:::datadir(),paste0("GHS/GHS_POP_E",1975,"_GLOBE_R2019A_54009_250_V1_0_18_3/GHS_POP_E",1975,"_GLOBE_R2019A_54009_250_V1_0_18_3",".tif")))
+  crs(pop)
 }
-
-
-# plot_france <- function(y,outcome = "density",fname = "densities-1975-FRA",dotted = FALSE){
-#   others = "Paris|Lyon|Marseille|Montpellier"
-#   y[city %like% others,lines :=  "Paris"]
-#   y[!(city %like% others),lines :=  "Other"]
-#   years = y[,unique(year)]
-#   setkey(y,city,year)
-#   topn = y[,length(unique(city))]
-#   linet = grep(others,y[,unique(city)]) # indices of dashed lines
-#   linev = rep("solid",topn)
-#   if (dotted){
-#     linev[linet] <- "dotted"
-#   }
-#
-#
-#   pl = ggplot2::ggplot(y,ggplot2::aes(x = year,y = .data[[outcome]],color = city,linetype = city)) +
-#     ggplot2::geom_line() +
-#     ggplot2::geom_point() +
-#     ggplot2::theme_bw() +
-#     ggplot2::scale_color_hue(name = "City") +
-#     ggplot2::scale_linetype_manual(name = "City", values = linev) +
-#     ggplot2::scale_x_continuous(breaks = years) +
-#     ggplot2::scale_y_continuous(name = outcome, labels = scales::comma)
-#   if (outcome == "density") {
-#     pl = pl + ggplot2::labs(title = paste0("France ",outcome," over time"),
-#                            caption = "density = number of people / total built up surface (in km2)")
-#   } else {
-#     pl = pl + ggplot2::labs(title = paste0("France ",outcome," over time"))
-#   }
-#
-#   ggplot2::ggsave(plot = pl, filename = file.path(outdir(),"plots",paste0(fname,".pdf")),width = 10, height = 6)
-#   ggplot2::ggsave(plot = pl, filename = file.path(outdir(),"plots",paste0(fname,".png")),width = 10, height = 6)
-#   pl
-# }
-
-
-#' Get French Boudning Boxes
-#'
-#' @export
-bboxes <- function(){
-    bb = LandUseR:::france()
-    bb <- bb[year == 1975]
-
-    bn = data.table(city = bb[,city], extent = vector("list", length = nrow(bb)))
-
-    bn[city == "Lille [FRA]; Mouscron [BEL]",  extent := raster::extent(c(2.944861, 3.298341 , 50.543319, 50.778156))]
-    bn[city == "Lille [FRA]; Mouscron [BEL]",  extent := raster::extent(c(2.2145981, 2.414104 ,49.847181 , 49.959225))]
-    bn[city == "Amiens [FRA]",                 extent := raster::extent(c(2.2145981, 2.414104 ,49.847181 , 49.959225))]
-    bn[city == "Le Havre [FRA]",               extent := raster::extent(c(0.033290, 0.362656 ,49.454226 , 49.558283))]
-    bn[city == "Rouen [FRA]",                  extent := raster::extent(c(0.940602, 1.183368 ,49.283603 , 49.520694))]
-    bn[city == "Reims [FRA]",                  extent := raster::extent(c(3.943876, 4.132186 ,49.193367 , 49.310117))]
-    bn[city == "Caen [FRA]",                   extent := raster::extent(c(-0.489701, -0.270721 ,49.142144 , 49.243900))]
-    bn[city == "Metz [FRA]",                   extent := raster::extent(c(6.059380, 6.270723 ,49.055194 , 49.175658))]
-    bn[city == "Nancy [FRA]",                  extent := raster::extent(c(6.038759, 6.395210 ,48.574603 , 48.781997))]
-    bn[city == "Paris [FRA]",                  extent := raster::extent(c(1.61, 3.08 ,48.46 , 49.118))]
-    bn[city == "Strasbourg [FRA]; Kehl [DEU]", extent := raster::extent(c(7.642639,7.853926 ,48.484619 , 48.672193))]
-    # bn[city == "Brest [FRA]",                extent := raster::extent(c(-4.601281,-4.360628 ,48.352529 , 48.468810))]
-    bn[city == "Dunkerque [FRA]",              extent := raster::extent(c(2.179341,2.517408, 50.979502, 51.056436))]
-    bn[city == "Perpignan [FRA]",              extent := raster::extent(c(2.799684, 2.989531, 42.629930,42.761191))]
-    # bn[city == "Rennes [FRA]",               extent := raster::extent(c(-1.778073,-1.574094 ,48.046103 , 48.173615))]
-    bn[city == "Le Mans [FRA]",                extent := raster::extent(c(0.091035,0.281172 ,47.917295 , 48.062800))]
-    bn[city == "Orleans [FRA]",                extent := raster::extent(c(1.767287,2.073181 ,47.796967 , 47.971889))]
-    bn[city == "Mulhouse [FRA]",               extent := raster::extent(c(7.204776,7.403701 ,47.697986 ,47.842130))]
-    bn[city == "Angers [FRA]",                 extent := raster::extent(c(-0.655981,-0.447919 ,47.404412 ,47.544447))]
-    bn[city == "Tours [FRA]",                  extent := raster::extent(c(0.591164,0.798459 ,47.325082 ,47.483604))]
-    bn[city == "Dijon [FRA]",                  extent := raster::extent(c(4.951104,5.166130 ,47.230547 ,47.384402))]
-    # bn[city == "Nantes [FRA]",               extent := raster::extent(c(-1.691281,-1.419254 ,47.131828 ,47.309569))]
-    bn[city == "Nantes [FRA]",                 extent := raster::extent(c(-1.691281,-1.419254 ,47.131828 ,47.309569))]
-    bn[city == "Limoges [FRA]",                extent := raster::extent(c(1.145045,1.358150 ,45.771763 ,45.909983))]
-    bn[city == "Clermont-Ferrand [FRA]",       extent := raster::extent(c(3.000352,3.223957 ,45.701680 ,45.847506))]
-    bn[city == "Lyon [FRA]",                   extent := raster::extent(c(4.682204,5.052525 ,45.628088 ,45.836050))]
-    bn[city == "Saint-Etienne [FRA]",          extent := raster::extent(c(4.215847,4.480892 ,45.369009 ,45.503158))]
-    bn[city == "Grenoble [FRA]",               extent := raster::extent(c(5.605581,5.887174 ,45.068137 ,45.261293))]
-    bn[city == "Bordeaux [FRA]",               extent := raster::extent(c(-0.830520,-0.377359 ,44.671694 ,44.967807))]
-    bn[city == "Montpellier [FRA]",            extent := raster::extent(c(3.649175,4.095652 ,43.447040 ,43.701412))]
-    bn[city == "Nice-Cannes [FRA]",            extent := raster::extent(c(6.861982,7.399601 ,43.522038 ,43.764086))]
-    bn[city == "Toulouse [FRA]",               extent := raster::extent(c(1.216777,1.655748 ,43.397305 ,43.738317))]
-    bn[city == "Marseille [FRA]",              extent := raster::extent(c(5.256408,5.606574 ,43.221860 ,43.393227))]
-    bn[city == "Toulon [FRA]",                 extent := raster::extent(c(5.746459,6.189482 ,43.051562 ,43.208111))]
-    bn[city == "Pau [FRA]",                    extent := raster::extent(c(-0.483260,-0.273838,43.276050 ,43.391593))]
-
-    bn
-}
-
-
-# plot_france_UCDB <- function(topn = 30){
-#   y = france(topn)
-#   plot_france(y)
-# }
-
-# overlay_GHSPOP_UDB <- function(){
-#   # paris city database
-#   x = UCDB()
-#   pa = x %>% dplyr::filter(grepl("Paris",UC_NM_MN))
-#   ma = x %>% dplyr::filter(grepl("Marseille",UC_NM_MN))
-#
-#   for (yr in paste(c(1975, 1990, 2000, 2015))){
-#
-#     pop <- raster::raster(file.path(datadir(),paste0("GHS/GHS_POP_E",yr,"_GLOBE_R2019A_54009_250_V1_0_18_3/GHS_POP_E",yr,"_GLOBE_R2019A_54009_250_V1_0_18_3.tif")))
-#     if(yr==2015){
-#       built <- raster::raster(file.path(datadir(),paste0("GHS/GHS_BUILT_LDS2014_GLOBE_R2018A_54009_250_V2_0_18_3/GHS_BUILT_LDS2014_GLOBE_R2018A_54009_250_V2_0_18_3.tif")))
-#     } else {
-#       built <- raster::raster(file.path(datadir(),paste0("GHS/GHS_BUILT_LDS",yr,"_GLOBE_R2018A_54009_250_V2_0_18_3/GHS_BUILT_LDS",yr,"_GLOBE_R2018A_54009_250_V2_0_18_3.tif")))
-#     }
-#
-#
-#
-#     # same crs
-#     pat = sf::st_transform(pa, raster::projection(pop))
-#
-#     # crop raster to shape of border
-#     pop_paris = raster::crop(pop,raster::extent(pat))
-#     built_paris = raster::crop(built,raster::extent(pat))
-#
-#     # plot
-#     png(file.path(outdir(),paste0("plots/UCDB-paris-",yr,".png")),width = 19,height=8,units = "in",res = 200)
-#     par(mfcol=c(1,2))
-#     raster::plot(pop_paris,main = paste0("Paris Population ",yr," overlaid with city boundary 2015"), legend=FALSE, axes=FALSE)
-#     raster::plot(pop_paris,legend.only=TRUE,horizontal = TRUE,
-#                                 legend.args=list(text='Number of People',side=1,line = 2))
-#     plot(sf::st_geometry(pat),add = TRUE, fill = NA, border = "red", lw = 2)
-#     raster::plot(built_paris,main = paste0("Paris Built ",yr), legend=FALSE, axes=FALSE)
-#     raster::plot(built_paris,legend.only=TRUE,horizontal = TRUE,
-#                  legend.args=list(text='Percent Built Up',side=1,line = 2))
-#     plot(sf::st_geometry(pat),add = TRUE, fill = NA, border = "red", lw = 2)
-#     dev.off()
-#   }
-#   # https://cran.r-project.org/web/packages/magick/vignettes/intro.html
-#   img <- magick::image_read(grep("UCDB-paris-",list.files(file.path(outdir(),"plots"),full.names = TRUE),value = TRUE))
-#   # ani <- magick::image_animate(img,fps = 0.5)
-#   magick::image_write_gif(img, file.path(outdir(),paste0("plots/UCDB-paris.gif")),delay = 2)
-#   # magick::image_convert(grep("UCDB-paris-",list.files(file.path(outdir(),"plots"),full.names = TRUE),value = TRUE))
-# }
-#
-# GHS_L2 <- function(){
-#     data.frame(ID = c(10,11,12,13,21,22,23,30), label = c("Water","Uninhabited","Rural Dispersed","Village","Suburbs","Semi-Dense Town","Dense Town","City"))
-# }
-# GHS_LS_scale <- function(){
-#     d = data.frame(ID = c(10,11,12,13,21,22,23,30), color =
-#     c(rgb(122, 182, 245, maxColorValue = 255),
-#       rgb(205, 245, 122, maxColorValue = 255),
-#       rgb(171, 205, 102, maxColorValue = 255),
-#       rgb(55, 86, 35, maxColorValue = 255),
-#       rgb(255, 255, 0, maxColorValue = 255),
-#       rgb(168, 112, 0, maxColorValue = 255),
-#       rgb(115, 38, 0, maxColorValue = 255),
-#       rgb(255, 0, 0, maxColorValue = 255)
-#       )
-#     )
-#     d$color = as.character(d$color)
-#     d
-# }
-#
-# rayt <- function(){
-#     el = matrix(raster::extract(pop_paris, raster::extent(pop_paris)),nrow = ncol(pop_paris), ncol = nrow(pop_paris))
-#     el %>% sphere_shade(texture = "imhof4") %>%   add_shadow(ray_shade(el, zscale = 15, maxsearch = 300), 0.5) %>%  add_shadow(ambmat, 0.5) %>% plot_3d(el, zscale = 10, fov = 0, theta = 135, zoom = 0.75, phi = 45, windowsize = c(1000, 800))
-#
-#
-#     phivechalf = 30 + 60 * 1/(1 + exp(seq(-7, 20, length.out = 180)/2))
-#     phivecfull = c(phivechalf, rev(phivechalf))
-#     thetavec = -90 + 60 * sin(seq(0,359,length.out = 360) * pi/180)
-#     zoomvec = 0.45 + 0.2 * 1/(1 + exp(seq(-5, 20, length.out = 180)))
-#     zoomvecfull = c(zoomvec, rev(zoomvec))
-#
-#     render_movie(filename = "paris-movie", type = "custom",
-#                              frames = 360,  phi = phivecfull, zoom = zoomvecfull, theta = thetavec)
-# }
 
 
 

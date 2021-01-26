@@ -7,7 +7,7 @@
 pop_1950_2 <- function(overwrite = FALSE){
     if (overwrite){
         x = get_manuals()   # get manual area measurements for top 100 cities in france
-        r=bboxes_top100() #get raster values
+        r = merge_centers(overwrite = FALSE) # get extent and centers of each city
         x=merge(x,r,by=c("LIBGEO","CODGEO")) #Merge by name of city
         p0 = readpop() # get census population counts 1860-2016
         p = as.data.table(p0)  # get census population counts 1860-2016
@@ -278,7 +278,11 @@ get_paris_pop_1950 <- function(p){
 }
 
 
-
+#' top 100 city bounding boxes
+#'
+#' manually defines bounding boxes for areas containing the
+#' top 100 french cities in WGS84 lat-lon (google maps) CRS.
+#' Also adds the centre for Paris (notre dame) manually in WGS84 lat-lon.
 bboxes_top100 <- function(){
     bn = LandUseR:::get_manuals()[,list(LIBGEO,CODGEO)]
     bn[ , extent := vector("list", length = 100) ]
@@ -384,6 +388,37 @@ bboxes_top100 <- function(){
     bn[LIBGEO == "Vannes",                 extent := raster::extent(c(-2.812036,-2.691376,47.633021,47.703814))]
     bn[LIBGEO == "Saint-Nazaire",          extent := raster::extent(c(-2.296981,-2.112192,47.233045,47.339467))]
     bn
+}
+
+#' add center of cities to bounding boxes
+#'
+#' all except paris (which has center of each arrondissement instead)
+merge_centers <- function(overwrite = FALSE){
+    if (overwrite) {
+        bb = bboxes_top100()
+        raster_crs = get_raster_CRS()
+        cl = sf::st_read(file.path(datadir(), "IGN-chef-lieux", "ign_metropole_adminexpress_chefs_lieux_z.shp"))
+        cl = cl %>%
+            filter(insee_com %in% bb[LIBGEO != "Paris", CODGEO]) %>%
+            sf::st_transform(raster_crs) %>%
+            select(nom_chf, insee_com)
+        cc = cl %>% sf::st_coordinates()
+        cl = cl %>%
+            mutate(center_x = cc[ ,"X"], center_y = cc[ ,"Y"]) %>%
+            sf::st_set_geometry(NULL)
+
+
+        bb_cl = merge(bb, cl, by.x = "CODGEO", by.y = "insee_com", all.x = FALSE)
+        paris = sf::st_as_sf(data.frame(x = 2.349020, y = 48.853481),coords = c("x","y"), crs = 4326) %>%
+            sf::st_transform(raster_crs) %>%
+            sf::st_coordinates()
+        bb_cl = rbind(bb_cl,bb[LIBGEO == "Paris",list(LIBGEO,CODGEO,extent, center_x = paris[,"X"], center_y = paris[,"Y"],nom_chf = "Notre Dame")] )
+        saveRDS(bb_cl, file.path(datadir(), "IGN-chef-lieux.RDS"))
+        bb_cl
+
+    } else {
+        readRDS(file.path(datadir(), "IGN-chef-lieux.RDS"))
+    }
 }
 
 # archive

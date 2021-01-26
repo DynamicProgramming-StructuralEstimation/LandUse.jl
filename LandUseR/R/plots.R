@@ -1,5 +1,54 @@
 
 
+
+#' Plot distance from center
+#'
+#' usign GHS grid data, plot average density at a certain distance
+#' from the center of a city
+plot_density_center <- function(city_name = c("Paris","Lyon")){
+    d0 = dist_from_center()
+    d0[, distance := distance / 1000]
+    l = list()
+    lnls = list()
+    for (ic in city_name){
+        d = d0[LIBGEO == ic & !is.na(distance)]
+
+        # estimate nls model of exponential decay
+        # https://douglas-watson.github.io/post/2018-09_exponential_curve_fitting/
+        fit <- nls(density ~ SSasymp(distance, yf, y0, log_alpha), data = d)
+        fitted <- d %>%
+            tidyr::nest(-year) %>%
+            mutate(
+                fit = purrr::map(data, ~nls(density ~ SSasymp(distance, yf, y0, log_alpha), data = .)),
+                tidied = purrr::map(fit, tidy),
+                augmented = purrr::map(fit, augment)
+            )
+
+        tab = fitted %>%
+                tidyr::unnest(tidied) %>%
+                dplyr::select(year, term, estimate) %>%
+                tidyr::spread(term, estimate) %>%
+                mutate(lambda = exp(log_alpha))
+
+        augmented <- fitted %>%
+            tidyr::unnest(augmented)
+
+        l[[ic]] = ggplot(data = augmented, aes(x=distance,y = density, color = factor(year))) +
+            geom_point() +
+            geom_line(aes(y = .fitted)) +
+            labs(caption = paste("Data: Average density at",d[,max(quantile,na.rm=TRUE)],"points"),
+                 subtitle = paste("Avg exponential parameter:",round(mean(tab$lambda),5))) +
+            ggtitle(paste("Density over time in",ic)) +
+            scale_x_continuous(name = "Distance to Center in km")
+
+
+
+        ggsave(l[[ic]], filename = file.path(dataplots(),paste0("density-center-",ic,".pdf")))
+    }
+    l
+}
+
+
 plot_sat_built <- function(){
     cc = LandUseR:::cropcities()  # first index level is years
 

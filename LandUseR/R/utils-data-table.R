@@ -11,4 +11,5 @@
 #' @import data.table
 #' @import dplyr
 #' @import ggplot2
+#' @import futile.logger
 NULL

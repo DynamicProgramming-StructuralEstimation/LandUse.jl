@@ -26,5 +26,7 @@ Imports:
     rasterVis,
     data.table,
     magrittr,
-    ggplot2
+    ggplot2,
+    futile.logger,
+    purrr
 RoxygenNote: 7.1.1
