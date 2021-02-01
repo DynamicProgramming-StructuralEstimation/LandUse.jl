@@ -33,18 +33,14 @@ mutable struct Region <: Model
 	dbar :: Float64   # total avg density
 	d0   :: Float64   # density in central area from 0 to first period fringe
 	d0_   :: Float64   # density at point zero
-	dq100  :: Float64   # density at quantile q of fringe
-	dq1  :: Float64   # density at quantile q of fringe
-	dq2  :: Float64   # density at quantile q of fringe
-	dq3  :: Float64   # density at quantile q of fringe
-	dq4  :: Float64   # density at quantile q of fringe
-	dq5  :: Float64   # density at quantile q of fringe
 	dr   :: Float64   # density at fringe
 	cr0  :: Float64   # cons of rural in center
 	cr1  :: Float64   # cons of rural at fringe
 	cu0  :: Float64   # cons of urban in center
 	cu1  :: Float64   # cons of urban at fringe
 	ϕ    :: Float64   # radius of the city
+	ϕ10    :: Float64   # 0.1 of radius
+	ϕ90    :: Float64   # 0.9 of radius
 	cityarea    :: Float64   # area of the city
 	citydensity    :: Float64   # average density of the city
 	xsr  :: Float64  # excess subsistence rural worker
@@ -70,6 +66,8 @@ mutable struct Region <: Model
 	iweights :: Vector{Float64}  # int weights
 	nodes    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ])
 	nodes_center    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ1])
+	nodes_10    :: Vector{Float64}  
+	nodes_90    :: Vector{Float64}  
 	imat     :: Matrix{Float64}
 
 	# resulting integrals from [0,ϕ]
@@ -84,6 +82,9 @@ mutable struct Region <: Model
 	ihexp       :: Float64   # ∫ q(l) h(l) D(l) dl
 	imode       :: Float64   # ∫ mode(l) D(l) dl
 	ictime       :: Float64   # ∫ ctime(l) D(l) dl
+	iDensity_q10  :: Float64   # ∫ D(l) 2π dl for l ∈ [0,q10]
+	iDensity_q90  :: Float64   # ∫ D(l) 2π dl for l ∈ [q10,q90]
+
 	function Region(p::Param)
 		# creates a model fill with NaN
 		m      = new()
@@ -104,36 +105,36 @@ mutable struct Region <: Model
 		m.pr   = NaN
 		m.Hr   = NaN
 		m.H0   = NaN
-		m.hr   = NaN
-		m.h0   = NaN
-		m.dr   = NaN
-		m.dbar   = NaN
-		m.d0_   = NaN
-		m.d0   = NaN
-		m.dq100   = NaN
-		m.dq1   = NaN
-		m.dq2   = NaN
-		m.dq3   = NaN
-		m.dq4   = NaN
-		m.dq5   = NaN
-		m.ϕ    = NaN
+		m.hr          = NaN
+		m.h0          = NaN
+		m.dr          = NaN
+		m.dbar        = NaN
+		m.d0_         = NaN
+		m.d0          = NaN
+		m.ϕ           = NaN
+		m.ϕ10           = NaN
+		m.ϕ90           = NaN
 		m.cityarea    = NaN
 		m.citydensity = NaN
-		m.xsr  = NaN
-		m.θu   = p.θu
-		m.θr   = p.θr
-		m.U    = NaN
-		m.pcy    = NaN
-		m.GDP    = NaN
-		m.y    = NaN
+		m.xsr         = NaN
+		m.θu          = p.θu
+		m.θr          = p.θr
+		m.U           = NaN
+		m.pcy         = NaN
+		m.GDP         = NaN
+		m.y           = NaN
 		m.inodes = p.inodes
 		m.iweights = p.iweights
 		m.nodes = zeros(p.int_nodes)
 		m.nodes_center = zeros(p.int_nodes)
+		m.nodes_10 = zeros(p.int_nodes)
+		m.nodes_90 = zeros(p.int_nodes)
 		m.imat = zeros(p.int_nodes,11)
 		m.icu_input = NaN
 		m.iDensity  = NaN
 		m.iDensity_center  = NaN
+		m.iDensity_q10        = NaN
+		m.iDensity_q90        = NaN
 		m.icu       = NaN
 		m.iτ        = NaN
 		m.iq        = NaN
@@ -205,6 +206,9 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.θr = p.θr  # fill out time series
 	m.θu = p.θu  # fill out time series
 
+	m.ϕ10 = m.ϕ * 0.1
+	m.ϕ90 = m.ϕ * 0.9
+
 
 
 	# update equations
@@ -231,11 +235,6 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.h0   = h(0.0,p,m)
 	m.dbar   = NaN
 	m.d0_   = D(0.0,p,m)
-	m.dq100   = D(m.ϕ / 100,p,m)
-	m.dq1   = D(m.ϕ / 5,p,m)
-	m.dq2   = D(2 * m.ϕ / 5,p,m)
-	m.dq3   = D(3 * m.ϕ / 5,p,m)
-	m.dq4   = D(4 * m.ϕ / 5,p,m)
 	m.dr   = D(m.ϕ,p,m)
 	# compute consumption at locations 0 and 1 to check both positive in both sectors.
 	m.cr0 = cr(0.0,p,m)
@@ -249,8 +248,10 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# println("neg cons")
 	# end
 	# display(m)
-	m.nodes[:]        .= m.ϕ  / 2 .+ (m.ϕ / 2)  .* m.inodes   # maps [-1,1] into [0,ϕ]
-	m.nodes_center[:] .= p.ϕ1 / 2 .+ (p.ϕ1 / 2) .* m.inodes   # maps [-1,1] into [0,ϕ1]
+	m.nodes[:]        .= (m.ϕ   - 0.0) / 2 .+ (m.ϕ / 2)   .* m.inodes   # maps [-1,1] into [0,ϕ]
+	m.nodes_center[:] .= (p.ϕ1  - 0.0) / 2 .+ (p.ϕ1 / 2)  .* m.inodes   # maps [-1,1] into [0,ϕ1]
+	m.nodes_10[:]     .= (m.ϕ10 - 0.0) / 2 .+ (m.ϕ10 / 2) .* m.inodes   # maps [-1,1] into [0,ϕ/10]
+	m.nodes_90[:]     .= (m.ϕ  + m.ϕ90) / 2 .+ (m.ϕ - m.ϕ90) / 2 .* m.inodes   # maps [-1,1] into [9ϕ/10, ϕ]
 	integrate!(m,p)
 	# m.d0   = D(p.ϕ1,p,m)
 	m.d0   = m.iDensity_center
@@ -286,12 +287,16 @@ doing a matmul on it? have to allocate memory though.
 """
 function integrate!(m::Region,p::Param)
 
-	two_π_l     = 2π .* m.nodes
-	two_π_lcenter     = 2π .* m.nodes_center
+	two_π_l       = 2π .* m.nodes
+	two_π_lcenter = 2π .* m.nodes_center
+	two_π_l10     = 2π .* m.nodes_10
+	two_π_l90     = 2π .* m.nodes_90
 
 	m.icu_input       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu_input(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iDensity        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i]        * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iDensity_center = (p.ϕ1/2) * sum(m.iweights[i] * two_π_lcenter[i] * D(m.nodes_center[i],p,m) for i in 1:p.int_nodes)[1]/(p.ϕ1^2 * π)
+	m.iDensity_q10    = (m.ϕ10 / 2) * sum(m.iweights[i] * two_π_l10[i] * D(m.nodes_10[i],p,m) for i in 1:p.int_nodes)[1]/(m.ϕ10^2 * π)
+	m.iDensity_q90    = ((m.ϕ - m.ϕ90) / 2) * sum(m.iweights[i] * two_π_l90[i] * D(m.nodes_90[i],p,m) for i in 1:p.int_nodes)[1]/((m.ϕ - m.ϕ90)^2 * π)
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icr       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cr(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * (m.wu0 - w(m.Lu,m.nodes[i],m.ϕ,p)) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]

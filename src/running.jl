@@ -110,6 +110,10 @@ function plot1()
 	x,M,p = run(Param())
 	ts_plots(M,p)
 end
+function plot1cs(it)
+	x,M,p = run(Param())
+	cs_plots(M[it],p,it)
+end
 function export_thetas()
 	x,M,p = runm()
 	latex_param()
