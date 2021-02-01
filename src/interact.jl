@@ -192,6 +192,8 @@ function i0()
 	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:cτ, :etam, :etal, :etaw),
 					 observe(_))
+	w = Window()
+	body!(w,mp)
 end
 
 function ik()
@@ -233,7 +235,9 @@ function ik()
 	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:cτ, :etam, :etal, :etaw),
 					 observe(_))
-
+	w = Window()
+	body!(w,mp)
+				 
 
 end
 

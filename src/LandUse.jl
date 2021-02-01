@@ -24,6 +24,7 @@ module LandUse
 	using Ipopt
 	using Interpolations: interpolate, Gridded, Linear
 	using Impute
+	using Blink
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
