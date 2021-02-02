@@ -43,8 +43,9 @@ mutable struct Country
 		this.pp = Param[deepcopy(p) for _ in 1:p.K]
 
 		# modify θus for each
+		@warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
 		for ik in 1:p.K
-			this.pp[ik].θu =  p.θu .* p.factors[ik]
+			this.pp[ik].θu =  max(p.θu .* p.factors[ik], 1.0)  
 			# println("modifying $ik")
 			# println(this.pp[ik].θu)
 		end

@@ -160,7 +160,7 @@ function i0()
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					gamma in slider(psis, value = p1.γ, label = "gamma"),
 					cτ in slider(ctaus, value = p1.a, label = "cτ"),
-					es in slider(0.0:0.1:10.0, value = 0.0, label = "ϵs"),
+					es in slider(0.0:0.1:10.0, value = p1.ϵs	, label = "ϵs"),
 					etam in slider(eta, value = p1.ηm, label = "ηm"),
 					etal in slider(eta2, value = p1.ηl, label = "ηl"),
 					etaw in slider(eta2, value = p1.ηw, label = "ηw")

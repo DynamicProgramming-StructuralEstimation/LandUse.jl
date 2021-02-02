@@ -171,15 +171,16 @@ function jc(C::Country,x0::Vector)
 
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
-	set_optimizer_attribute(m, MOI.Silent(), true)
+	# set_optimizer_attribute(m, MOI.Silent(), true)
 	# lbs = [x0...] .* 0.3
 
 	# variables
-	@variable(m, LS >=  0.01 * x0[1]  , start = x0[1])
+	@variable(m, LS >=  0.1 * x0[1]  , start = x0[1])
 	@variable(m, r  >=   0.1 * x0[2]  , start = x0[2])
 	@variable(m, pr >=  0.05 * x0[3]  , start = x0[3])
-	@variable(m, 0.05 * x0[3 + ik]   <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
+	@variable(m, 0.1 * x0[3 + ik]   <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
 	@variable(m, 0.05 * x0[3+K + ik] <= Lu[ik = 1:K] <= C.L     , start = x0[3+K + ik])
+	# @variable(m, minimum([pp[ik].θu for ik in 1:K]) >= wr >= 0.0)
 
 	# all θs are in p[ik].θ
 	σ1 = (p.σ - 1) / p.σ
@@ -231,6 +232,8 @@ function jc(C::Country,x0::Vector)
 	@NLexpression(m, iτ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * (pp[ik].θu - w[i,ik]) * D[i,ik] for i in 1:p.int_nodes))
 
 	# constraints
+	# @NLconstraint(m, aux_con_wr, wr == p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
+	# @NLconstraint(m, aux_con_Srh[ik = 1:K], Srh[ik] >= 0.001 )
 	@NLconstraint(m, C.L == sum(Lr[ik] + Lu[ik] for ik in 1:K))   # agg labor market clearing
 	@NLconstraint(m, land_clearing[ik = 1:K], C.Sk[ik] == Sr[ik] + ϕ[ik]^2 * π + Srh[ik])   # land market clearing in each region
 	@NLconstraint(m, r * C.L == sum(iρ[ik] + ρr * (Sr[ik] + Srh[ik]) for ik in 1:K))   # agg land rent definition
@@ -258,6 +261,11 @@ function jc(C::Country,x0::Vector)
 		end
 		return out
 	else
+		println(termination_status(m))
+		for ik in 1:K
+			println("k = $ik")
+			println("pp[ik].θu=$(pp[ik].θu),xx=$(pp[ik].θu - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
+		end
 	    error("The model was not solved correctly.")
 	end
 end

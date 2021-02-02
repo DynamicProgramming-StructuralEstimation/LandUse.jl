@@ -53,7 +53,7 @@ end
 """
 run Multi-region model for all time periods
 """
-function runk(;par = Dict(:K => 2,:ϵr => 4.0, :kshare => [0.5,0.5], :factors => [1.0,1.05]))
+function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 
 	# get single city solution in first period
 	p = LandUse.Param(par = par, use_estimatedθ = false)
@@ -62,7 +62,7 @@ function runk(;par = Dict(:K => 2,:ϵr => 4.0, :kshare => [0.5,0.5], :factors =>
 	setperiod!(p,1)
 	x0 = startval(p)
 	m = Region(p)
-	x0 = jm(p,m,x0)
+	x0 = jm(p,m,x0, estimateθ = false)
 	update!(m,p,[x0...])
 
 
@@ -84,7 +84,7 @@ function runk(;par = Dict(:K => 2,:ϵr => 4.0, :kshare => [0.5,0.5], :factors =>
 	C = Country[]  # an emtpy array of countries
 
 	for it in 1:length(p.T)
-		# println(it)
+		println(it)
 		setperiod!(p,it)
 		c = Country(p)
 		x = jc(c,sols[it])
