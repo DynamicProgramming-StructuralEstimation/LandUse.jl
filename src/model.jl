@@ -248,10 +248,10 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	# println("neg cons")
 	# end
 	# display(m)
-	m.nodes[:]        .= (m.ϕ   - 0.0) / 2 .+ (m.ϕ / 2)   .* m.inodes   # maps [-1,1] into [0,ϕ]
-	m.nodes_center[:] .= (p.ϕ1  - 0.0) / 2 .+ (p.ϕ1 / 2)  .* m.inodes   # maps [-1,1] into [0,ϕ1]
-	m.nodes_10[:]     .= (m.ϕ10 - 0.0) / 2 .+ (m.ϕ10 / 2) .* m.inodes   # maps [-1,1] into [0,ϕ/10]
-	m.nodes_90[:]     .= (m.ϕ  + m.ϕ90) / 2 .+ (m.ϕ - m.ϕ90) / 2 .* m.inodes   # maps [-1,1] into [9ϕ/10, ϕ]
+	m.nodes[:]        .= (m.ϕ   + 0.0) / 2 .+ (m.ϕ / 2)   .* m.inodes   # maps [-1,1] into [0,ϕ]
+	m.nodes_center[:] .= (p.ϕ1  + 0.0) / 2 .+ (p.ϕ1 / 2)  .* m.inodes   # maps [-1,1] into [0,ϕ1]
+	m.nodes_10[:]     .= (m.ϕ10 + 0.0) / 2 .+ (m.ϕ10 / 2) .* m.inodes   # maps [-1,1] into [0,ϕ/10]
+	m.nodes_90[:]     .= (m.ϕ90 + m.ϕ) / 2 .+ ((m.ϕ - m.ϕ90) / 2 .* m.inodes)   # maps [-1,1] into [9ϕ/10, ϕ]
 	integrate!(m,p)
 	# m.d0   = D(p.ϕ1,p,m)
 	m.d0   = m.iDensity_center
@@ -296,7 +296,8 @@ function integrate!(m::Region,p::Param)
 	m.iDensity        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i]        * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iDensity_center = (p.ϕ1/2) * sum(m.iweights[i] * two_π_lcenter[i] * D(m.nodes_center[i],p,m) for i in 1:p.int_nodes)[1]/(p.ϕ1^2 * π)
 	m.iDensity_q10    = (m.ϕ10 / 2) * sum(m.iweights[i] * two_π_l10[i] * D(m.nodes_10[i],p,m) for i in 1:p.int_nodes)[1]/(m.ϕ10^2 * π)
-	m.iDensity_q90    = ((m.ϕ - m.ϕ90) / 2) * sum(m.iweights[i] * two_π_l90[i] * D(m.nodes_90[i],p,m) for i in 1:p.int_nodes)[1]/((m.ϕ - m.ϕ90)^2 * π)
+	ring90 = (m.ϕ )^2 * π - (m.ϕ90)^2 * π
+	m.iDensity_q90    = ((m.ϕ - m.ϕ90) / 2) * sum(m.iweights[i] * two_π_l90[i] * D(m.nodes_90[i],p,m) for i in 1:p.int_nodes)[1]/ring90
 	m.icu       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cu(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.icr       = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * cr(m.nodes[i],p,m) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.iτ        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * (m.wu0 - w(m.Lu,m.nodes[i],m.ϕ,p)) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]

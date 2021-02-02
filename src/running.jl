@@ -84,7 +84,7 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 	C = Country[]  # an emtpy array of countries
 
 	for it in 1:length(p.T)
-		println(it)
+		# println(it)
 		setperiod!(p,it)
 		c = Country(p)
 		x = jc(c,sols[it])

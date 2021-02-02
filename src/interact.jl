@@ -209,8 +209,8 @@ function ik()
 					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
 					gamma in slider(psis, value = p1.γ, label = "gamma"),
 					cτ in slider(ctaus, value = p1.a, label = "cτ"),
-					es in slider(0.0:0.1:10.0, value = 0.0, label = "ϵs"),
-					g2 in slider(1.0:0.01:1.1, value = 1.02, label = "g2"),
+					es in slider(0.0:0.1:10.0, value = p1.ϵs, label = "ϵs"),
+					g2 in slider(1.0:0.01:1.1, value = 1.05, label = "g2"),
 					etam in slider(eta, value = p1.ηm, label = "ηm"),
 					etal in slider(eta2, value = p1.ηl, label = "ηl"),
 					etaw in slider(eta2, value = p1.ηw, label = "ηw")
@@ -221,7 +221,7 @@ function ik()
 												  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es))
 						x = impl_plot_slopes(C)
 						plot(x[1],x[2],x[3],
-							 layout = (1,3),size = (1200,600))
+							 layout = (1,3),size = (1200,400))
 					catch e
 						wdg = alert("Error!")
 						print(wdg())
@@ -297,6 +297,73 @@ function i1()
 					end
 	end
 end
+
+
+
+function i0k()
+	gfac = 1.00:0.05:2.0
+	eta = 0.5:0.01:2.0
+	tau = 0.1:0.1:1.0
+	eta2 = 0.0:0.01:1.0
+	cbars = 0.0:0.01:1.5
+	ctaus = 0.0:0.01:6.0
+	psis = 0.1:0.01:1.0
+
+	p1 = Param()
+
+	# mp = @manipulate for est in OrderedDict("from data θ" => 1, "estimate θ" => 2, "from estimation θ" => 3),
+	mp = @manipulate for it in slider(1:length(p1.T), value = length(p1.T), label = "period"),
+					ϕx in slider(0.05:0.05:1.0, value = 1.0, label = "ϕ1x"),
+					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
+					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
+					gamma in slider(psis, value = p1.γ, label = "gamma"),
+					cτ in slider(ctaus, value = p1.a, label = "cτ"),
+					es in slider(0.0:0.1:10.0, value = p1.ϵs	, label = "ϵs"),
+					etam in slider(eta, value = p1.ηm, label = "ηm"),
+					etal in slider(eta2, value = p1.ηl, label = "ηl"),
+					g2 in slider(1.0:0.01:1.1, value = 1.05, label = "g2"),
+					etaw in slider(eta2, value = p1.ηw, label = "ηw")
+
+					p0 = LandUse.Param(par = Dict(:ηm => etam, :ηl => etal, :ηw => etaw,
+											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es, :ϵs => es,
+											  :ϕ1x => ϕx),
+									   use_estimatedθ = false)
+
+					try
+						x,M,p = LandUse.run(p0, estimateθ = false)
+						pl = LandUse.ts_plots(M,p0,fixy = false)
+						pc = LandUse.cs_plots(M[it], p0, it)
+
+						# multi country	
+						x,C,p = runk(par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,g2],
+												:ηm => etam, :ηl => etal, :ηw => etaw,
+													:cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es))
+						x = impl_plot_slopes(C)
+						pl1 = plot(x[1])
+
+						pl2 = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
+						     pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
+							 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
+							 pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
+							 layout = (4,4))
+						plot(pl2, pl1, size = (1600,700), layout = @layout [a{0.7w} b{0.3w}])
+					catch e
+						wdg = alert("Error!")
+						print(wdg())
+					end
+
+					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
+					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
+
+	end
+	@layout! mp vbox(hbox(:it, :ϕx, :g2),
+	                 hbox(:sbar, :cbar,:gamma,:es),
+	                 hbox(:cτ, :etam, :etal, :etaw),
+					 observe(_))
+	w = Window()
+	body!(w,mp)
+end
+
 
 function interact1()
 	K = 2

@@ -171,7 +171,7 @@ function jc(C::Country,x0::Vector)
 
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
-	# set_optimizer_attribute(m, MOI.Silent(), true)
+	set_optimizer_attribute(m, MOI.Silent(), true)
 	# lbs = [x0...] .* 0.3
 
 	# variables

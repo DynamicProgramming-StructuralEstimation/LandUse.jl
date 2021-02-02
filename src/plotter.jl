@@ -30,18 +30,18 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 	qg = round(qd[1]/qd[end],digits =1)
 
 	# get 90/10 ratio of density
-	d9010 = round(m.iDensity_q10 / m.iDensity_q90, digits = 1)
+	d1090 = round(m.iDensity_q10 / m.iDensity_q90, digits = 1)
 
 	if fixy
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))") , ylims = (2    , 4.1) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))                   
-		d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")         , ylims = (-3   , 60)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d9010)"]))
+		d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")         , ylims = (-3   , 60)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d1090)"]))
 		vline!(d[:D],[m.ϕ10, m.ϕ90], color = :red,leg = false)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")         , ylims = (-0.1 , 15)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")     , ylims = (-0.1 , 10)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")         , ylims = (0.5  , 5.5) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
 	else
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
-		d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d9010)"]))
+		d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d1090)"]))
 		vline!(d[:D],[m.ϕ10, m.ϕ90], color = :red,leg = false)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
