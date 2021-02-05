@@ -8,23 +8,6 @@
 
 
 
-function works()
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.99, :ζ => 0.1)))
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.99, :ζ => 0.2)))
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.99, :ζ => 0.3)))
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.99, :ζ => 0.4)))
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.98, :ζ => 0.5)))
-
-
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.4, :ζ => 0.2)))
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.5, :ζ => 0.2)))
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.6, :ζ => 0.2)))
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.7, :ζ => 0.2)))
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.8, :ζ => 0.2)))
-
-
-	LandUse.run(LandUse.Region,LandUse.Param(par = Dict(:τ1 => 0.9, :ζ => 0.3)))
-end
 
 function iccost()
 	sbs = 0.0:0.05:0.5

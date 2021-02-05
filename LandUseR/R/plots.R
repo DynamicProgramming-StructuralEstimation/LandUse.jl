@@ -1,5 +1,15 @@
 
 
+#' Plot density vs population
+#'
+#'
+plot_density_pop <- function(){
+    d0 = dist_from_center()
+    d0[, distance := distance / 1000]
+    f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds") )
+    f
+}
+
 
 #' Plot distance from center
 #'
@@ -88,6 +98,14 @@ plot_sat_vs_manual <- function(){
     p
 }
 
+WIPfunc <- function(){
+    d = ff[, list(pop = median(pop), density = median(density)) , by = list(year,small)]
+    ggplot(d, aes(x = pop, y = density, color = small)) + geom_point() + geom_line()
+    ggplot(d, aes(x = pop, y = density, color = year)) + geom_point() + geom_line()
+    ggplot(d, aes(x = pop, y = density, color = factor(year))) + geom_point() + geom_line()
+}
+
+
 #' plot top 100 cities densities over time
 #' https://github.com/floswald/LandUse.jl/issues/42
 #'
@@ -167,6 +185,14 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
         scale_x_continuous(breaks = dtthen[,year]) +
         ggtitle(paste0("Urban Density by City"),subtitle = "Top 5 cities in 1866") +
         theme_bw() + theme(panel.grid.minor = element_blank())
+
+
+    # cross section
+    p$xsect <- list()
+    p$xsect[[1]] <- ggplot(ff[LIBGEO %in% c("Paris", "Lyon")], aes(x = log(pop), y = density, color = LIBGEO)) + geom_point() + geom_line()
+    p$xsect[[2]] <- ggplot(ff[LIBGEO %in% c("Toulouse", "Lille")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
+    p$xsect[[3]] <- ggplot(ff[LIBGEO %in% c("Nantes", "Lyon")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
+    p$xsect[[4]] <- ggplot(ff[LIBGEO %in% c("Toulouse", "Saint-Malo")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
 
     if (save) {
         ggsave(p$violin, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))

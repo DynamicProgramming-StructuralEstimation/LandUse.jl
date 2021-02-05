@@ -314,7 +314,7 @@ function impl_plot_slopes(C::Vector{Country})
 					# xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
 					)
 	pl3 = @df d plot(:Lu, :cityarea, group = :region, xlab = "Lu", ylab = "area",m = :circle)
-	pl4 = @df d plot(:Lu, :citydensity, group = :region, xlab = "Lu", ylab = "density",m = :circle)
+	pl4 = @df d plot(:Lu, :citydensity, group = :region, xlab = "Lu", ylab = "density",m = :circle, series_annotation = Plots.text.(:year, 8, :right))
 	(pl2,pl3,pl4)
 end
 
