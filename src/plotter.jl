@@ -248,6 +248,26 @@ function ts_plots(M,p::Param;fixy = false)
 end
 
 
+function plot_i0k(di::Dict;it = 19)
+
+	p0 = LandUse.Param(par = di, use_estimatedθ = false)
+
+	x,M,p = LandUse.run(p0, estimateθ = false)
+	pl = LandUse.ts_plots(M,p0,fixy = false)
+	pc = LandUse.cs_plots(M[it], p0, it)
+
+						# multi country	
+	x,C,p = runk(par = merge(Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.05]),di))
+	x = impl_plot_slopes(C)
+	pl1 = plot(x[3])
+
+	pl2 = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
+						     pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
+							 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
+							 pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
+							 layout = (4,4))
+	plot(pl2, pl1, size = (1600,700), layout = @layout [a{0.7w} b{0.3w}])	
+end
 
 
 

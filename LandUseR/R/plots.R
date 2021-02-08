@@ -1,16 +1,4 @@
 
-
-#' Plot density vs population
-#'
-#'
-plot_density_pop <- function(){
-    d0 = dist_from_center()
-    d0[, distance := distance / 1000]
-    f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds") )
-    f
-}
-
-
 #' Plot distance from center
 #'
 #' usign GHS grid data, plot average density at a certain distance
@@ -193,6 +181,9 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
     p$xsect[[2]] <- ggplot(ff[LIBGEO %in% c("Toulouse", "Lille")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
     p$xsect[[3]] <- ggplot(ff[LIBGEO %in% c("Nantes", "Lyon")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
     p$xsect[[4]] <- ggplot(ff[LIBGEO %in% c("Toulouse", "Saint-Malo")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
+
+    # small vs large cities
+    ff[, small := pop < rep(.SD[year == 1786, median(pop)])]
 
     if (save) {
         ggsave(p$violin, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))

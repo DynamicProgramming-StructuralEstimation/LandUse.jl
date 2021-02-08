@@ -545,6 +545,7 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	# compute commuting cost at initial fringe in each period
 	initϕ = df.ϕ[1]
 	df.τ_ts = zeros(tt)
+	df.rural_emp_model = zeros(tt)
 	df.p_laspeyres = zeros(tt)
 	df.p_paasche = zeros(tt)
 	df.p_growth = zeros(tt)
@@ -553,6 +554,7 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	for i in 1:tt
 		setperiod!(p,i)
 		df[i, :τ_ts] = τ(initϕ, p)
+		df[i, :rural_emp_model] = M[i].Lr / p.L
 		if i > 1
 			df[i, :p_laspeyres] = ( M[i].pr * M[i-1].Yr + M[i-1].Yu ) / ( M[i-1].pr *  M[i-1].Yr + M[i-1].Yu )
 			df[i, :p_paasche]   = ( M[i].pr * M[i].Yr + M[i].Yu ) / ( M[i-1].pr *  M[i].Yr + M[i].Yu )

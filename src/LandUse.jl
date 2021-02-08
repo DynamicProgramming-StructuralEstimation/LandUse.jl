@@ -25,6 +25,8 @@ module LandUse
 	using Interpolations: interpolate, Gridded, Linear
 	using Impute
 	using Blink
+	using BlackBoxOptim
+	using OrderedCollections
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
