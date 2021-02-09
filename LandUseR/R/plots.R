@@ -183,7 +183,11 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
     p$xsect[[4]] <- ggplot(ff[LIBGEO %in% c("Toulouse", "Saint-Malo")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
 
     # small vs large cities
-    ff[, small := pop < rep(.SD[year == 1786, median(pop)])]
+    ff[, small := rep(.SD[year == 1876, pop < median(pop)], 6)]
+    d = ff[, list(pop = median(pop), density = median(density)) , by = list(year,small)]
+    p$xsect[[5]] = ggplot(d, aes(x = pop, y = density, color = small)) + geom_point() + geom_line()
+    p$xsect[[6]] = ggplot(d, aes(x = pop, y = density, color = factor(year))) + geom_point() + geom_line()
+    p$xsect[[7]] =
 
     if (save) {
         ggsave(p$violin, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))

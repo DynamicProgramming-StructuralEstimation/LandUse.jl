@@ -26,13 +26,13 @@ module LandUse
 	using Impute
 	using Blink
 	using BlackBoxOptim
-	using OrderedCollections
+	using Serialization
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
 	user = splitdir(homedir())[end]
 	isflo = (user == "florian.oswald") || (user == "74097")
-	const dbpath = isflo ? joinpath(ENV["HOME"],"Dropbox","research","LandUse") : error("Marc: put your dropbox path here")
+	const dbpath = isflo ? joinpath(ENV["HOME"],"Dropbox","research","LandUse") : "/home/oswald/LandUseDropbox"
 	const dbplots = joinpath(dbpath,"output","model","plots")
 	const dbdataplots = joinpath(dbpath,"output","data","plots")
 	const dbtables = joinpath(dbpath,"output","model","tables")

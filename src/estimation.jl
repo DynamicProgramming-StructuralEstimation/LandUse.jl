@@ -1,3 +1,21 @@
+function post_slack(job)
+	txt = "payload={'text': '$job'}"
+	# println(txt)
+	# println(ENV["MIG_SLACK"])
+	if haskey(ENV,"SLACK_HOOK")
+		Base.run(`curl -X POST --data-urlencode $txt $(ENV["SLACK_HOOK"])`) 
+		return nothing
+	else
+		error("you need a webhook into slack as environment variable SLACK_HOOK to post a message")
+	end
+end
+function post_slack()
+	haskey(ENV,"SLACK_HOOK") || error("you need a webhook into slack as environment variable SLACK_HOOK to post a message")
+end
+
+
+
+
 
 """
 returns a dict of empirical targets for the model
@@ -5,7 +23,7 @@ returns a dict of empirical targets for the model
 function targets(p::Param)
 
     # vector-value moments: time varying stuff
-    m = OrderedDict()
+    m = Dict()
     m[:rural_empl] = DataFrame(moment = ["rural_emp_" .* string(i) for i in p.moments.year], 
                data = p.moments.Employment_rural,
                model = zeros(length(p.moments.year)))
@@ -28,7 +46,7 @@ function targets(p::Param)
     
 end
 
-function dicts2df(d::OrderedDict)
+function dicts2df(d::Dict)
     df = copy(d[:rural_empl])
     for (k,v) in d
         if k != :rural_empl
@@ -54,7 +72,7 @@ end
 """
 moment objective function for an optimizer
 """
-function objective(x)
+function objective(x; moments = false)
     # unpack X
     di = x2dict(x)
 
@@ -105,18 +123,63 @@ function objective(x)
         append!(da, ta[:pop_vs_density_1876])
         append!(da, ta[:pop_vs_density_2015])
 
-        sum(da.weights .* (da.data .- da.model).^2)
+        if moments
+            return (sum(da.weights .* (da.data .- da.model).^2) , da)
+        else
+            return sum(da.weights .* (da.data .- da.model).^2)
+        end
+
+        
     catch 
         # @info "error at $(di)"
         return 999.9
     end
 end
 
-function runestim()
-    x = bboptimize(
-        objective, 
-        SearchRange = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.3, 8.0), (3.5, 4.5)], MaxFuncEvals = 500)
+function runestim(;steps = 100)
+    optctrl = bbsetup(objective ; SearchRange = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.3, 8.0), (3.5, 4.5)],MaxSteps = steps)
+    res100 = bboptimize(optctrl)
+    best100  = best_candidate(res100)
+    idx = rand(1:popsize(optctrl.optimizer.population))
+    acand100 = optctrl.optimizer.population[idx]
+    println("Best candidate: ", best100)
+    println("Candidate num $(idx): ", acand100)
 
-    LandUse.plot_i0k(x2dict(x))
+    
+
+    # Now serialize to a temp file:
+    fh = open(joinpath(@__DIR__,"..","out","bboptim.dat"), "w")
+    serialize(fh, (optctrl, res100))
+    close(fh)
+
+    x,m = try 
+        objective(best100, moments = true)
+    catch
+        (0,0)
+    end
+
+    txt = """
+        [LandUse.jl] Estimation finished on $(gethostname())
+
+        *Results:*
+        ========
+
+        *best candidate*: 
+        ```
+        $(x2dict(best100))
+        ```
+
+        *best moments*:
+        ```
+        $m
+        ```
+        """
+
+    
+
+    println(txt)
+    post_slack(txt)
+
+    return res100
 end
 
