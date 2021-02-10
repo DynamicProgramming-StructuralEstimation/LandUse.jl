@@ -27,7 +27,7 @@ module LandUse
 	using Blink
 	using BlackBoxOptim
 	using Serialization
-	using Dates: today
+	using Dates
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
