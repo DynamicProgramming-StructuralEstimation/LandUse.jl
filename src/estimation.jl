@@ -3,7 +3,11 @@ function post_slack(job)
 	# println(txt)
 	# println(ENV["MIG_SLACK"])
 	if haskey(ENV,"SLACK_HOOK")
-		Base.run(`curl -X POST --data-urlencode $txt $(ENV["SLACK_HOOK"])`) 
+        if LandUse.isflo
+		    Base.run(`curl -X POST --data-urlencode $txt $(ENV["SLACK_HOOK"])`) 
+        else
+            Base.run(`curl -X POST --insecure --data-urlencode $txt $(ENV["SLACK_HOOK"])`) 
+        end
 		return nothing
 	else
 		error("you need a webhook into slack as environment variable SLACK_HOOK to post a message")
@@ -91,7 +95,7 @@ function objective(x; moments = false)
         # get data moments
         ta = targets(p)
         ta[:rural_empl].model = d1.rural_emp_model
-        ta[:rural_empl].weights = ones(nrow(d1)) * 0.8
+        ta[:rural_empl].weights = ones(nrow(d1)) * 0.5
 
         # m = 0.0
         # m += sum(ta[:rural_empl].weights .* (ta[:rural_empl].data .- ta[:rural_empl].model).^2)
@@ -111,9 +115,9 @@ function objective(x; moments = false)
         ta[:density_gradient_2020][!,:weights] .= 1.0
 
         ta[:pop_vs_density_1876][!,:model]   .= (C[1].R[2].cityarea - C[1].R[1].cityarea) / (C[1].R[2].Lu - C[1].R[1].Lu)
-        ta[:pop_vs_density_1876][!,:weights] .= 1.0
+        ta[:pop_vs_density_1876][!,:weights] .= 10.0
         ta[:pop_vs_density_2015][!,:model]   .= (C[end].R[2].cityarea - C[end].R[1].cityarea) / (C[end].R[2].Lu - C[end].R[1].Lu)
-        ta[:pop_vs_density_2015][!,:weights] .= 1.0
+        ta[:pop_vs_density_2015][!,:weights] .= 10.0
 
         da = ta[:rural_empl]
         append!(da, ta[:avg_density_fall])
@@ -148,7 +152,7 @@ function runestim(;steps = 100)
     
 
     # Now serialize to a temp file:
-    fh = open(joinpath(@__DIR__,"..","out","bboptim.dat"), "w")
+    fh = open(joinpath(@__DIR__,"..","out","bboptim_$(Dates.today()).dat"), "w")
     serialize(fh, (optctrl, res100))
     close(fh)
 
