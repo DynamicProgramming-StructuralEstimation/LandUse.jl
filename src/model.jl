@@ -43,6 +43,8 @@ mutable struct Region <: Model
 	ϕ90    :: Float64   # 0.9 of radius
 	cityarea    :: Float64   # area of the city
 	citydensity    :: Float64   # average density of the city
+	ϕbreaks :: StepRangeLen  # bins of distance
+	ϕmids :: Vector{Float64}  # 
 	xsr  :: Float64  # excess subsistence rural worker
 	U    :: Float64  # common utility level
 	θu   :: Float64  # current productivity
@@ -68,7 +70,7 @@ mutable struct Region <: Model
 	nodes_center    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ1])
 	nodes_10    :: Vector{Float64}  
 	nodes_90    :: Vector{Float64}  
-	imat     :: Matrix{Float64}
+	nodes_bins  :: Matrix{Float64}  # (nbins, int_nodes)
 
 	# resulting integrals from [0,ϕ]
 	icu_input :: Float64   # ∫ cu_input(l) dl
@@ -84,6 +86,7 @@ mutable struct Region <: Model
 	ictime       :: Float64   # ∫ ctime(l) D(l) dl
 	iDensity_q10  :: Float64   # ∫ D(l) 2π dl for l ∈ [0,q10]
 	iDensity_q90  :: Float64   # ∫ D(l) 2π dl for l ∈ [q10,q90]
+	iDensities  :: Vector{Float64}   # ∫ D(l) 2π dl for l ∈ bins(ϕ)
 
 	function Region(p::Param)
 		# creates a model fill with NaN
@@ -116,6 +119,8 @@ mutable struct Region <: Model
 		m.ϕ90           = NaN
 		m.cityarea    = NaN
 		m.citydensity = NaN
+		m.ϕbreaks       = range(0,stop = 1, length = p.int_bins+1)
+		m.ϕmids         = zeros(p.int_bins)
 		m.xsr         = NaN
 		m.θu          = p.θu
 		m.θr          = p.θr
@@ -129,12 +134,13 @@ mutable struct Region <: Model
 		m.nodes_center = zeros(p.int_nodes)
 		m.nodes_10 = zeros(p.int_nodes)
 		m.nodes_90 = zeros(p.int_nodes)
-		m.imat = zeros(p.int_nodes,11)
+		m.nodes_bins = zeros(p.int_bins,p.int_nodes)
 		m.icu_input = NaN
 		m.iDensity  = NaN
 		m.iDensity_center  = NaN
 		m.iDensity_q10        = NaN
 		m.iDensity_q90        = NaN
+		m.iDensities        = fill(NaN,p.int_bins)
 		m.icu       = NaN
 		m.iτ        = NaN
 		m.iq        = NaN
@@ -208,6 +214,8 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 
 	m.ϕ10 = m.ϕ * 0.1
 	m.ϕ90 = m.ϕ * 0.9
+	m.ϕbreaks = range(0.0, stop = m.ϕ, length = p.int_bins+1)
+	m.ϕmids = midpoints(collect(m.ϕbreaks))
 
 
 
@@ -252,6 +260,11 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.nodes_center[:] .= (p.ϕ1  + 0.0) / 2 .+ (p.ϕ1 / 2)  .* m.inodes   # maps [-1,1] into [0,ϕ1]
 	m.nodes_10[:]     .= (m.ϕ10 + 0.0) / 2 .+ (m.ϕ10 / 2) .* m.inodes   # maps [-1,1] into [0,ϕ/10]
 	m.nodes_90[:]     .= (m.ϕ90 + m.ϕ) / 2 .+ ((m.ϕ - m.ϕ90) / 2 .* m.inodes)   # maps [-1,1] into [9ϕ/10, ϕ]
+
+	for ib in 1:p.int_bins
+		m.nodes_bins[ib,:] .= (m.ϕbreaks[ib] + m.ϕbreaks[ib+1]) / 2 .+ ((m.ϕbreaks[ib+1] - m.ϕbreaks[ib]) / 2 .* m.inodes)
+	end
+
 	integrate!(m,p)
 	# m.d0   = D(p.ϕ1,p,m)
 	m.d0   = m.iDensity_center
@@ -305,12 +318,20 @@ function integrate!(m::Region,p::Param)
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
+	allrings = diff(m.ϕbreaks .^2 .* π)
+	for ib in 1:p.int_bins
+		@views nb = m.nodes_bins[ib,:]
+		m.iDensities[ib] = ((m.ϕbreaks[ib+1] - m.ϕbreaks[ib]) / 2) * sum(m.iweights[i] * 2π * nb[i] * D(nb[i],p,m) for i in 1:p.int_nodes)[1] / allrings[ib]
+	end
+
 	# averages
 	m.qbar      = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	m.imode     = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	m.ictime    = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
 end
+
+
 
 
 

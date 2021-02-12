@@ -150,19 +150,21 @@ dist_from_center <- function(overwrite = FALSE, ndists = 50){
 
             for (ic in names((L[[iy]]))){
 
-                dists = distanceFromPoints(L[[iy]][[ic]]$pop_cut, L[[iy]][[ic]]$center)
+                dists = raster::distanceFromPoints(L[[iy]][[ic]]$pop_cut, L[[iy]][[ic]]$center)
                 dists = dists[!is.na(L[[iy]][[ic]]$pop_cut),drop = FALSE]  # keep only cells that are not NA
                 md = raster::cellStats(dists, "max",na.rm = T)
                 dt = seq(0,md,length.out = ndists)
-                rc = cut(values(dists), breaks = dt, label = FALSE)
+                rc = cut(raster::values(dists), breaks = dt, label = FALSE)
                 # now compute density at each quantile
-                d = data.table(quantile = rc, d = values(L[[iy]][[ic]]$pop_cut) )
-                d <- d[,list(density = mean(d,na.rm=T)),by = quantile]
+                d = data.table(quantile = rc, d = raster::values(L[[iy]][[ic]]$pop_cut) )
+                d <- d[,list(density = mean(d,na.rm=T), pop = sum(d,na.rm=T)),by = quantile]
                 d[, c("distance", "CODGEO", "LIBGEO","year") := list(dt[quantile], ic, L[[iy]][[ic]]$cityname, yr)]
                 d0 = rbind(d0,d)
             }
         }
+        d0 = d0[complete.cases(d0)]
         saveRDS(d0,file.path(LandUseR:::outdir(),"data","density-distance.Rds"))
+        fwrite(d0,file.path(LandUseR:::outdir(),"data","density-distance.csv"))
         return(d0)
     } else {
         readRDS(file.path(LandUseR:::outdir(),"data","density-distance.Rds"))

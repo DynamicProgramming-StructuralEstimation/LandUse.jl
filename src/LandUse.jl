@@ -28,6 +28,7 @@ module LandUse
 	using BlackBoxOptim
 	using Serialization
 	using Dates
+	using LsqFit
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver

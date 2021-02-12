@@ -187,3 +187,30 @@ function runestim(;steps = 100)
     return res100
 end
 
+"Estimate exponential model on spatial density. "
+function expmodel(xdata,ydata)
+    mod2(x,par) = par[1] * exp.(par[2] .* x)
+    out = curve_fit(mod2, xdata, ydata , [1.0, -0.3])
+    (coef(out), out)
+end
+
+function comp_expmodels(b0,grad)
+    xdata = range(0, stop=10, length=20)
+    ydata = b0 .* exp.(grad .* xdata) + 0.01*randn(length(xdata))
+
+    # model 1 normalizes data to first point
+    m1(x,par) = exp.(par .* x)
+    e1 = coef(curve_fit(m1, xdata, ydata ./ ydata[1], [-0.3]))
+
+    # model 2 does nothing
+    m2(x,par) = par[1] * exp.(par[2] .* x)
+    e2 = coef(curve_fit(m2, xdata, ydata, [1.0,-0.3]))
+
+    p1 = scatter(xdata, ydata ./ ydata[1], title = "normalized",leg = false)
+    plot!(p1, x -> exp.(e1[1] * x), 0, 10, annotations = ([7],[0.7],["exp coef=$(round(e1[1],digits=1))"]))
+
+    p2 = scatter(xdata, ydata , title = "true",leg = false)
+    plot!(p2, x -> e2[1] * exp.(e2[2] * x), 0, 10, annotations = ([7],[0.7 * b0],["exp coef=$(round(e2[2],digits=1))"]))
+
+    plot(p1,p2)
+end

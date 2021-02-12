@@ -7,6 +7,15 @@ function setup_color(l::Int)
     return colors
 end
 
+"plot densities for all years"
+function plot_dens_years(M::Vector{Region},p::Param)
+	x = plot(M[1].ϕmids, M[1].iDensities,leg = false)
+	for i in 2:length(M)
+		plot!(x, M[i].ϕmids, M[i].iDensities)
+	end
+	x
+end
+
 "single spatial cross sections region"
 function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 
@@ -32,17 +41,29 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 	# get 90/10 ratio of density
 	d1090 = round(m.iDensity_q10 / m.iDensity_q90, digits = 1)
 
+	# run exponential decay model
+	ndensities = m.iDensities ./ m.iDensities[1]
+	gradient,emod = expmodel(m.ϕmids, ndensities)
+	MSE = round(1000 * mse(emod),digits = 3)
+
 	if fixy
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))") , ylims = (2    , 4.1) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))                   
-		d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")         , ylims = (-3   , 60)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d1090)"]))
-		vline!(d[:D],[m.ϕ10, m.ϕ90], color = :red,leg = false)
+
+		d[:D] = scatter(m.ϕmids, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
+		plot!(d[:D], x -> gradient[1] .* exp.(gradient[2] * x), 0.0, m.ϕ, linewidth = 2, xlab = "distance", 
+		            annotations = ([m.ϕ*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
+
+
+		# d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")         , ylims = (-3   , 60)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d1090)"]))
+		# vline!(d[:D],[m.ϕ10, m.ϕ90], color = :red,leg = false)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")         , ylims = (-0.1 , 15)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")     , ylims = (-0.1 , 10)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")         , ylims = (0.5  , 5.5) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
 	else
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
-		d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d1090)"]))
-		vline!(d[:D],[m.ϕ10, m.ϕ90], color = :red,leg = false)
+		d[:D] = scatter(m.ϕmids, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
+		plot!(d[:D], x -> gradient[1] .* exp.(gradient[2] * x), 0.0, m.ϕ, linewidth = 2, xlab = "distance", 
+		            annotations =  ([m.ϕ*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))

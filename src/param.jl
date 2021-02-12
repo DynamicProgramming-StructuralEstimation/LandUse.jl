@@ -37,6 +37,7 @@ mutable struct Param
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
+	int_bins :: Int  # number of bins into which to split distance
 	iweights :: Vector{Float64}  # int weights
 	inodes    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ])
 	S     :: Float64  # area of region

@@ -127,6 +127,11 @@
 		"description" : "Number of Integration Nodes",
 		"symbol" : "n_I"
 	},
+	"int_bins" : {
+		"value" : 10,
+		"description" : "Number bins for distance",
+		"symbol" : "n_b"
+	},
 	"K" : {
 		"value" : 1,
 		"description" : "Number of Regions",
