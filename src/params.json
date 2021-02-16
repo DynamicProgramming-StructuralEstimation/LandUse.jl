@@ -128,7 +128,7 @@
 		"symbol" : "n_I"
 	},
 	"int_bins" : {
-		"value" : 10,
+		"value" : 21,
 		"description" : "Number bins for distance",
 		"symbol" : "n_b"
 	},

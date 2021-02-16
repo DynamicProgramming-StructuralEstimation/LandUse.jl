@@ -34,17 +34,26 @@ function targets(p::Param)
 
     # single value stuff: ratios of change etc
     # from average city over time
-    m[:avg_density_fall] = DataFrame(moment = "avg_density_fall", data = 9.0, model = 0.0)
+    m[:avg_density_fall] = DataFrame(moment = "avg_density_fall", data = 7.9, model = 0.0)
     m[:city_area] = DataFrame(moment = "city_area",data = 0.18, model = 0.0)
     m[:max_mode_increase] =  DataFrame(moment = "max_mode_increase", data = 7.0, model = 0.0)
 
     # average city spatial moments in 2020
-    m[:density_gradient_2020] =  DataFrame(moment = "density_gradient_2020", data = 6.0 , model = 0.0)   # 1st tenth is 6 times denser than last 10-th
+    # m[:density_9010_2020] =  DataFrame(moment = "density_gradient_2020", data = 6.0 , model = 0.0)   # 1st tenth is 6 times denser than last 10-th
+    # exponential decay model. exponential coefficient:
+    m[:density_decay_coef] =  DataFrame(moment = "density_decay_coef", data = -0.15 , model = 0.0)   # on 21 points
+    m[:density_decay_MSE] =  DataFrame(moment = "density_decay_MSE", data = 0.0 , model = 0.0) 
+
+    # housing spending Shares
+    m[:housing_share_1900] = DataFrame(moment = "housing_share_1900", data = 0.23 , model = 0.0)
+    m[:housing_share_2015] = DataFrame(moment = "housing_share_2015", data = 0.314 , model = 0.0)
+
+    # 
 
     # cross city moments
     # slope pop vs density
-    m[:pop_vs_density_1876] = DataFrame(moment = "pop_vs_density_1876", data = 0.297, model = 0.0)
-    m[:pop_vs_density_2015] = DataFrame(moment = "pop_vs_density_2015", data = 0.005, model = 0.0)
+    # m[:pop_vs_density_1876] = DataFrame(moment = "pop_vs_density_1876", data = 0.297, model = 0.0)
+    # m[:pop_vs_density_2015] = DataFrame(moment = "pop_vs_density_2015", data = 0.005, model = 0.0)
 
     return m
     
@@ -73,6 +82,10 @@ function x2dict(x)
     di
 end
 
+function p2x(p::Param)
+    [ p.cbar,  p.sbar, p.ηl, p.ηw, p.ηm, p.ϵs, p.cτ ]
+end
+
 """
 moment objective function for an optimizer
 """
@@ -81,8 +94,9 @@ function objective(x; moments = false)
     di = x2dict(x)
 
     p = Param(par = di, use_estimatedθ = false)
-    try
+    # try
         # find index of year 2020
+        i1900 = argmin( abs.(p.moments.year .- 1900) )
         i2020 = argmin( abs.(p.moments.year .- 2020) )
         i2015 = argmin( abs.(p.moments.year .- 2015) )
 
@@ -90,7 +104,7 @@ function objective(x; moments = false)
         x1,M1,p1 = LandUse.run(p, estimateθ = false)
         d1 = dataframe(M1,p1)
         # multi country	
-        xk,C,pk = runk(par = merge(di,Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.05])))
+        # xk,C,pk = runk(par = merge(di,Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.05])))
 
         # get data moments
         ta = targets(p)
@@ -103,29 +117,47 @@ function objective(x; moments = false)
         ta[:avg_density_fall][!,:model] .= d1.citydensity[1] / d1.citydensity[i2020]
         ta[:avg_density_fall][!,:weights] .= 2.0
 
-        # m += .(ta[:avg_density_fall].data .- ta[:avg_density_fall].model).^2
-
         ta[:city_area][!,:model] .= d1.cityarea[i2015]
         ta[:city_area][!,:weights] .= 1.0
 
         ta[:max_mode_increase][!,:model] .= maximum(d1.imode ./ d1.imode[1])
         ta[:max_mode_increase][!,:weights] .= 0.5
 
-        ta[:density_gradient_2020][!,:model] .= M1[i2020].iDensity_q10 / M1[i2020].iDensity_q90
-        ta[:density_gradient_2020][!,:weights] .= 1.0
+        # ta[:density_gradient_2020][!,:model] .= M1[i2020].iDensity_q10 / M1[i2020].iDensity_q90
+        # ta[:density_gradient_2020][!,:weights] .= 1.0
 
-        ta[:pop_vs_density_1876][!,:model]   .= (C[1].R[2].cityarea - C[1].R[1].cityarea) / (C[1].R[2].Lu - C[1].R[1].Lu)
-        ta[:pop_vs_density_1876][!,:weights] .= 10.0
-        ta[:pop_vs_density_2015][!,:model]   .= (C[end].R[2].cityarea - C[end].R[1].cityarea) / (C[end].R[2].Lu - C[end].R[1].Lu)
-        ta[:pop_vs_density_2015][!,:weights] .= 10.0
+        # exponential model
+        ndensities = M1[i2020].iDensities ./ M1[i2020].iDensities[1]
+        gradient,emod = expmodel(1:p.int_bins, ndensities)
+        MSE = round(1000 * mse(emod),digits = 3)
+
+        ta[:density_decay_coef][!,:model] .= gradient[2]
+        ta[:density_decay_coef][!,:weights] .= 1.0
+        ta[:density_decay_MSE][!,:model] .= MSE
+        ta[:density_decay_MSE][!,:weights] .= 1.0
+    
+        # housing spending Shares
+        ta[:housing_share_1900][!,:model] .= d1[i1900,:Ch] / d1[i1900,:C]
+        ta[:housing_share_1900][!,:weights] .= 1.0
+        ta[:housing_share_2015][!,:model] .= d1[i2015,:Ch] / d1[i2015,:C]
+        ta[:housing_share_2015][!,:weights] .= 1.0
+        
+        # ta[:pop_vs_density_1876][!,:model]   .= (C[1].R[2].cityarea - C[1].R[1].cityarea) / (C[1].R[2].Lu - C[1].R[1].Lu)
+        # ta[:pop_vs_density_1876][!,:weights] .= 10.0
+        # ta[:pop_vs_density_2015][!,:model]   .= (C[end].R[2].cityarea - C[end].R[1].cityarea) / (C[end].R[2].Lu - C[end].R[1].Lu)
+        # ta[:pop_vs_density_2015][!,:weights] .= 10.0
 
         da = ta[:rural_empl]
         append!(da, ta[:avg_density_fall])
         append!(da, ta[:city_area])
         append!(da, ta[:max_mode_increase])
-        append!(da, ta[:density_gradient_2020])
-        append!(da, ta[:pop_vs_density_1876])
-        append!(da, ta[:pop_vs_density_2015])
+        append!(da, ta[:density_decay_coef])
+        append!(da, ta[:density_decay_MSE])
+        append!(da, ta[:housing_share_1900])
+        append!(da, ta[:housing_share_2015])
+        # append!(da, ta[:density_gradient_2020])
+        # append!(da, ta[:pop_vs_density_1876])
+        # append!(da, ta[:pop_vs_density_2015])
 
         if moments
             return (sum(da.weights .* (da.data .- da.model).^2) , da)
@@ -134,10 +166,10 @@ function objective(x; moments = false)
         end
 
         
-    catch 
-        # @info "error at $(di)"
-        return 999.9
-    end
+    # catch 
+    #     # @info "error at $(di)"
+    #     return 999.9
+    # end
 end
 
 function runestim(;steps = 100)
