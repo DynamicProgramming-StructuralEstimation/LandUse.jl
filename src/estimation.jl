@@ -127,7 +127,7 @@ function objective(x; moments = false, plot = false)
         ta[:avg_density_fall][!,:weights] .= 2.0
 
         ta[:city_area][!,:model] .= d1.cityarea[i2015]
-        ta[:city_area][!,:weights] .= 1000.0
+        ta[:city_area][!,:weights] .= 10000.0
 
         ta[:max_mode_increase][!,:model] .= maximum(d1.imode ./ d1.imode[1])
         ta[:max_mode_increase][!,:weights] .= 0.5
@@ -194,10 +194,12 @@ function runestim(;steps = 1000)
     post_slack()
     post_file_slack()
 
+    mm = :dxnes
+
 
     if steps > 500
         halfstep = floor(steps/2)
-        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = halfstep)
+        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = halfstep, Method = mm)
         res100 = bboptimize(optctrl)
         best100  = best_candidate(res100)
         println("Best candidate after $halfstep steps: ", best100)
@@ -227,7 +229,7 @@ function runestim(;steps = 1000)
         serialize(fh, (optctrlb, res2))
         close(fh)
     else
-        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = steps)
+        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = steps, Method = mm)
         res100 = bboptimize(optctrl)
         best  = best_candidate(res100)
         println("Best candidate after $steps steps: ", best)
