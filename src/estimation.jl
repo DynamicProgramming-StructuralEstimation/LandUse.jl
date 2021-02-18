@@ -184,10 +184,12 @@ function objective(x; moments = false, plot = false)
     end
 end
 
-function runestim(;steps = 1000)
-    if steps > 500
+bb_bounds() = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 4.5)]
+
+function runestim(;steps = 10)
+    if steps > 5
         halfstep = floor(steps/2)
-        optctrl = bbsetup(objective ; SearchRange = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.3, 8.0), (3.5, 4.5)],MaxSteps = halfstep)
+        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = halfstep)
         res100 = bboptimize(optctrl)
         best100  = best_candidate(res100)
         println("Best candidate after $halfstep steps: ", best100)
@@ -215,7 +217,7 @@ function runestim(;steps = 1000)
         serialize(fh, (optctrlb, res2))
         close(fh)
     else
-        optctrl = bbsetup(objective ; SearchRange = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.3, 8.0), (3.5, 4.5)],MaxSteps = steps)
+        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = steps)
         res100 = bboptimize(optctrl)
         best100  = best_candidate(res100)
         println("Best candidate after $steps steps: ", best100)
@@ -228,10 +230,10 @@ function runestim(;steps = 1000)
 
     end
     
-    x,m = try 
+    x,m,pl = try 
         objective(best100, moments = true, plot = true)
     catch
-        (0,0)
+        (0,0,0)
     end
 
     txt = """
