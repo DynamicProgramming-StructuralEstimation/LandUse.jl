@@ -194,12 +194,12 @@ function runestim(;steps = 1000)
     post_slack()
     post_file_slack()
 
-    mm = :dxnes
+    # mm = :dxnes
 
 
     if steps > 500
         halfstep = floor(steps/2)
-        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = halfstep, Method = mm)
+        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = halfstep)
         res100 = bboptimize(optctrl)
         best100  = best_candidate(res100)
         println("Best candidate after $halfstep steps: ", best100)
@@ -229,7 +229,7 @@ function runestim(;steps = 1000)
         serialize(fh, (optctrlb, res2))
         close(fh)
     else
-        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = steps, Method = mm)
+        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = steps)
         res100 = bboptimize(optctrl)
         best  = best_candidate(res100)
         println("Best candidate after $steps steps: ", best)
