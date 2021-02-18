@@ -129,16 +129,16 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 
 	# check termination status
 	if termination_status(m) != MOI.LOCALLY_SOLVED
-		println("error in period $(p.it)")
-		println("Termination status: $(termination_status(m))")
-		println("rhor = $(value(ρr))")
-		println("ϕ    = $(value(ϕ ))")
-		println("r    = $(value(r ))")
-		println("Lr   = $(value(Lr))")
-		println("pr   = $(value(pr))")
-		println("Sr   = $(value(Sr))")
-		println("θr   = $(value(θr))")
-		println("θu   = $(value(θu))")
+		# println("error in period $(p.it)")
+		# println("Termination status: $(termination_status(m))")
+		# println("rhor = $(value(ρr))")
+		# println("ϕ    = $(value(ϕ ))")
+		# println("r    = $(value(r ))")
+		# println("Lr   = $(value(Lr))")
+		# println("pr   = $(value(pr))")
+		# println("Sr   = $(value(Sr))")
+		# println("θr   = $(value(θr))")
+		# println("θu   = $(value(θu))")
 		error("model not locally solved")
 	else
 		# if p.it == 1

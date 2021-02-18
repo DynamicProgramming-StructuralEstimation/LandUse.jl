@@ -94,7 +94,7 @@ function objective(x; moments = false)
     di = x2dict(x)
 
     p = Param(par = di, use_estimatedθ = false)
-    # try
+    try
         # find index of year 2020
         i1900 = argmin( abs.(p.moments.year .- 1900) )
         i2020 = argmin( abs.(p.moments.year .- 2020) )
@@ -166,22 +166,48 @@ function objective(x; moments = false)
         end
 
         
-    # catch 
-    #     # @info "error at $(di)"
-    #     return 999.9
-    # end
+    catch 
+        # @info "error at $(di)"
+        return 999.9
+    end
 end
 
-function runestim(;steps = 100)
-    optctrl = bbsetup(objective ; SearchRange = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.3, 8.0), (3.5, 4.5)],MaxSteps = steps)
+function runestim(;steps = 1000)
+    if steps > 500
+        halfstep = floor(steps/2)
+        optctrl = bbsetup(objective ; SearchRange = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.3, 8.0), (3.5, 4.5)],MaxSteps = halfstep)
+        res100 = bboptimize(optctrl)
+        best100  = best_candidate(res100)
+        println("Best candidate after $halfstep steps: ", best100)
+        println("saving")
+        # Now serialize to a temp file:
+        fp = joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_$halfstep.dat")
+        fh = open(fp, "w")
+        serialize(fh, (optctrl, res100))
+        close(fh)
+
+        # continue
+        fh = open(fp, "r")
+        optctrlb, res100b = deserialize(fh);
+        close(fh)
+
+        res2 = bboptimize(optctrlb; MaxSteps = steps - halfstep)
+
+        # final save:
+        rm(fp)
+        fp = joinpath(@__DIR__,"..","out","bboptim_$(Dates.today()).dat")
+        fh = open(fp, "w")
+        serialize(fh, (optctrlb, res2))
+        close(fh)
+    else
+
+    end
     res100 = bboptimize(optctrl)
     best100  = best_candidate(res100)
     idx = rand(1:popsize(optctrl.optimizer.population))
     acand100 = optctrl.optimizer.population[idx]
     println("Best candidate: ", best100)
     println("Candidate num $(idx): ", acand100)
-
-    
 
     # Now serialize to a temp file:
     fh = open(joinpath(@__DIR__,"..","out","bboptim_$(Dates.today()).dat"), "w")
