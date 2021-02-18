@@ -191,6 +191,9 @@ function runestim(;steps = 1000)
         optctrlb, res100b = deserialize(fh);
         close(fh)
 
+        post_slack("[LandUse] successfully done save and reload after $halfstep steps")
+
+
         res2 = bboptimize(optctrlb; MaxSteps = steps - halfstep)
 
         # final save:
@@ -200,20 +203,19 @@ function runestim(;steps = 1000)
         serialize(fh, (optctrlb, res2))
         close(fh)
     else
+        optctrl = bbsetup(objective ; SearchRange = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.3, 8.0), (3.5, 4.5)],MaxSteps = steps)
+        res100 = bboptimize(optctrl)
+        best100  = best_candidate(res100)
+        println("Best candidate after $steps steps: ", best100)
+        println("saving")
+        # Now serialize to a temp file:
+        fp = joinpath(@__DIR__,"..","out","bboptim_$(Dates.today()).dat")
+        fh = open(fp, "w")
+        serialize(fh, (optctrl, res100))
+        close(fh)
 
     end
-    res100 = bboptimize(optctrl)
-    best100  = best_candidate(res100)
-    idx = rand(1:popsize(optctrl.optimizer.population))
-    acand100 = optctrl.optimizer.population[idx]
-    println("Best candidate: ", best100)
-    println("Candidate num $(idx): ", acand100)
-
-    # Now serialize to a temp file:
-    fh = open(joinpath(@__DIR__,"..","out","bboptim_$(Dates.today()).dat"), "w")
-    serialize(fh, (optctrl, res100))
-    close(fh)
-
+    
     x,m = try 
         objective(best100, moments = true)
     catch
