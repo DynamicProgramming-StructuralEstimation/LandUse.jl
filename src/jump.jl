@@ -4,7 +4,7 @@
 """
 solve model at current paramter p and starting at point x0
 """
-function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = true)
+function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = false)
 
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
@@ -49,17 +49,18 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = tru
 
 	# expressions indexed at location l
 	@NLexpression(m, nodes[i = 1:p.int_nodes], ϕ / 2 + ϕ / 2 * mo.inodes[i] )
+	@NLexpression(m, ϵ[i = 1:p.int_nodes], p.ϵr * exp(-p.ϵs * (ϕ-nodes[i])))
 	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * wu0^(p.tauw) * nodes[i]^(p.taul) )
 	@NLexpression(m, w[i = 1:p.int_nodes], wu0 - τ[i] )
-	@warn "hard coding abs() for q function" maxlog=1
+	# @warn "hard coding abs() for q function" maxlog=1
 	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
 	@NLexpression(m, q[i = 1:p.int_nodes], qr * ((w[i] + r_pr_csbar) / xsr)^(1.0/p.γ))
-	@NLexpression(m, H[i = 1:p.int_nodes], q[i]^p.ϵr)
+	@NLexpression(m, H[i = 1:p.int_nodes], q[i]^ϵ[i])
 	@NLexpression(m, h[i = 1:p.int_nodes], p.γ * (w[i] + r_pr_csbar) / q[i])
-	@NLexpression(m, ρ[i = 1:p.int_nodes], (q[i]^(1.0 + p.ϵr)) / (1.0 + p.ϵr) )
+	@NLexpression(m, ρ[i = 1:p.int_nodes], (q[i]^(1.0 + ϵ[i])) / (1.0 + ϵ[i]) )
 	@NLexpression(m, cu[i = 1:p.int_nodes], (1.0 - p.γ)*(1.0 - p.ν)*(w[i] + r_pr_csbar) - p.sbar)
 	@NLexpression(m, D[i = 1:p.int_nodes] , H[i] / h[i])
-	@NLexpression(m, cu_input[i = 1:p.int_nodes], q[i] * H[i] * p.ϵr / (1.0+p.ϵr) )
+	@NLexpression(m, cu_input[i = 1:p.int_nodes], q[i] * H[i] * ϵ[i] / (1.0+ϵ[i]) )
 
 
 
@@ -72,11 +73,12 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = tru
 
 	# objective
 	# if estimateθ
-		if p.it == 1
-			@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2)
-		else
-			@objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
-		end
+		# if p.it == 1
+			# @objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2)
+		# else
+			@objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
+			# @objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
+		# end
 	# end
 
 	# nonlinear constraints (they are actually linear but contain nonlinear expressions - which means we need the nonlinear setup)
@@ -127,16 +129,16 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = tru
 
 	# check termination status
 	if termination_status(m) != MOI.LOCALLY_SOLVED
-		println("error in period $(p.it)")
-		println("Termination status: $(termination_status(m))")
-		println("rhor = $(value(ρr))")
-		println("ϕ    = $(value(ϕ ))")
-		println("r    = $(value(r ))")
-		println("Lr   = $(value(Lr))")
-		println("pr   = $(value(pr))")
-		println("Sr   = $(value(Sr))")
-		println("θr   = $(value(θr))")
-		println("θu   = $(value(θu))")
+		# println("error in period $(p.it)")
+		# println("Termination status: $(termination_status(m))")
+		# println("rhor = $(value(ρr))")
+		# println("ϕ    = $(value(ϕ ))")
+		# println("r    = $(value(r ))")
+		# println("Lr   = $(value(Lr))")
+		# println("pr   = $(value(pr))")
+		# println("Sr   = $(value(Sr))")
+		# println("θr   = $(value(θr))")
+		# println("θu   = $(value(θu))")
 		error("model not locally solved")
 	else
 		# if p.it == 1
@@ -156,6 +158,135 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = tru
 		(ρr = value(ρr), ϕ = value(ϕ), r = value(r), Lr = value(Lr), pr = value(pr), Sr = value(Sr), θu = estimateθ ? value(θu) : θu, θr = estimateθ ? value(θr) : θr)
 	end
 end
+
+
+"""
+solve a `Country` at point x0
+"""
+function jc(C::Country,x0::Vector)
+
+	pp = C.pp   # vector of params
+	p  = pp[1]   # param of region 1
+	K = C.K
+
+	# setup Model object
+	m = JuMP.Model(Ipopt.Optimizer)
+	set_optimizer_attribute(m, MOI.Silent(), true)
+	# lbs = [x0...] .* 0.3
+
+	# variables
+	@variable(m, LS >=  0.1 * x0[1]  , start = x0[1])
+	@variable(m, r  >=   0.1 * x0[2]  , start = x0[2])
+	@variable(m, pr >=  0.05 * x0[3]  , start = x0[3])
+	@variable(m, 0.1 * x0[3 + ik]   <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
+	@variable(m, 0.05 * x0[3+K + ik] <= Lu[ik = 1:K] <= C.L     , start = x0[3+K + ik])
+	# @variable(m, minimum([pp[ik].θu for ik in 1:K]) >= wr >= 0.0)
+
+	# all θs are in p[ik].θ
+	σ1 = (p.σ - 1) / p.σ
+	σ2 = 1 / (p.σ - 1)
+
+	# most rural sector expressions are identical in all regions
+	# rural land price
+
+	# rural pop
+
+
+	# constant expressions in each country's rural part
+	@NLexpression(m, ρr , (1-p.α)* pr * p.θr * (p.α * (LS)^(σ1) + (1-p.α))^σ2)
+	@NLexpression(m, qr , ((1+p.ϵr) * ρr)^(1.0/(1+p.ϵr)) )
+	@NLexpression(m, wr , p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
+	@NLexpression(m, r_pr_csbar, r - pr * p.cbar + p.sbar )
+	@NLexpression(m, xsr, wr + r_pr_csbar )
+	@NLexpression(m, hr, p.γ * xsr / qr )
+	@NLexpression(m, Hr, qr^p.ϵr )
+	@NLexpression(m, cur, (1.0 - p.γ)*(1.0 - p.ν)*(wr + r_pr_csbar) - p.sbar)
+	@NLexpression(m, cu_inputr,  (qr^(1 + p.ϵr)) * p.ϵr / (1.0+p.ϵr) )
+
+	# indexed by only k
+	@NLexpression(m, Lr[ik = 1:K], LS * Sr[ik])  # rural pop from labor to land share LS
+	@NLexpression(m, Srh[ik = 1:K], Lr[ik] * hr / Hr )   # housing space for rural pop
+	@NLexpression(m, ϕ[ik = 1:K], ( (pp[ik].θu - wr) / (p.a * pp[ik].θu^(p.tauw)) )^(1.0/p.taul))  # fringe for each region from inverse moving cost function
+
+
+	# expressions indexed at location l in each k
+	@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] )
+	@NLexpression(m, ϵ[i = 1:p.int_nodes, ik = 1:K], p.ϵr * exp(-p.ϵs * (ϕ[ik]-nodes[i,ik])))
+	@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], p.a * pp[ik].θu^(p.tauw) * nodes[i,ik]^(p.taul) )
+	@NLexpression(m, w[i = 1:p.int_nodes,ik = 1:K], pp[ik].θu - τ[i,ik] )
+	# @warn "hard coding abs() for q function" maxlog=1
+	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
+	@NLexpression(m,        q[i = 1:p.int_nodes,ik = 1:K], qr * ((w[i,ik] + r_pr_csbar) / xsr)^(1.0/p.γ))
+	@NLexpression(m,        H[i = 1:p.int_nodes,ik = 1:K], q[i,ik]^ϵ[i,ik])
+	@NLexpression(m,        h[i = 1:p.int_nodes,ik = 1:K], p.γ * (w[i,ik] + r_pr_csbar) / q[i,ik])
+	@NLexpression(m,        ρ[i = 1:p.int_nodes,ik = 1:K], (q[i,ik]^(1.0 + ϵ[i,ik])) / (1.0 + ϵ[i,ik]) )
+	@NLexpression(m,       cu[i = 1:p.int_nodes,ik = 1:K], (1.0 - p.γ)*(1.0 - p.ν)*(w[i,ik] + r_pr_csbar) - p.sbar)
+	@NLexpression(m,        D[i = 1:p.int_nodes,ik = 1:K] , H[i,ik] / h[i,ik])
+	@NLexpression(m, cu_input[i = 1:p.int_nodes,ik = 1:K], q[i,ik] * H[i,ik] * ϵ[i,ik] / (1.0+ϵ[i,ik]) )
+
+	# integrals for each region ik
+	@NLexpression(m, iDensity[ik = 1:K],  (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * D[i,ik] for i in 1:p.int_nodes))
+	@NLexpression(m, iρ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * ρ[i,ik] for i in 1:p.int_nodes))
+	@NLexpression(m, icu[ik = 1:K],       (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * cu[i,ik] * D[i,ik] for i in 1:p.int_nodes))
+	@NLexpression(m, icu_input[ik = 1:K], (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * cu_input[i,ik] for i in 1:p.int_nodes))
+	@NLexpression(m, iτ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * (pp[ik].θu - w[i,ik]) * D[i,ik] for i in 1:p.int_nodes))
+
+	# constraints
+	# @NLconstraint(m, aux_con_wr, wr == p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
+	# @NLconstraint(m, aux_con_Srh[ik = 1:K], Srh[ik] >= 0.001 )
+	@NLconstraint(m, C.L == sum(Lr[ik] + Lu[ik] for ik in 1:K))   # agg labor market clearing
+	@NLconstraint(m, land_clearing[ik = 1:K], C.Sk[ik] == Sr[ik] + ϕ[ik]^2 * π + Srh[ik])   # land market clearing in each region
+	@NLconstraint(m, r * C.L == sum(iρ[ik] + ρr * (Sr[ik] + Srh[ik]) for ik in 1:K))   # agg land rent definition
+	# input of urban good equal urban good production
+	@NLconstraint(m, sum(Lr[ik] * cur + icu[ik] + Srh[ik] * cu_inputr + icu_input[ik] + iτ[ik] for ik in 1:K) == sum(pp[ik].θu * Lu[ik] for ik in 1:K))
+	@NLconstraint(m, city_size[ik = 1:K], Lu[ik] == iDensity[ik])
+
+	# objective function
+	@objective(m, Min, 1.0)  # constant function
+	# @NLexpression(m, emp_share, )
+	# @NLobjective(m, Min, ((sum(Lr[ik] for ik in 1:K) / C.L)  - p.moments[1,:Employment_rural])^2)
+
+
+
+	JuMP.optimize!(m)
+
+	if termination_status(m) == MOI.LOCALLY_SOLVED
+		out = zeros(3 + 2K)
+		out[1] = value(LS)
+		out[2] = value(r)
+		out[3] = value(pr)
+		for ik in 1:K
+			out[3 + ik] = value(Sr[ik])
+			out[3 + K + ik] = value(Lu[ik])
+		end
+		return out
+	else
+		println(termination_status(m))
+		for ik in 1:K
+			println("k = $ik")
+			println("pp[ik].θu=$(pp[ik].θu),xx=$(pp[ik].θu - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
+		end
+	    error("The model was not solved correctly.")
+	end
+end
+
+function jjc()
+	m = runm()
+	x0 = m[2][1]
+	C = country()
+	x = Float64[]
+	push!(x, x0.Lr / x0.Sr)
+	push!(x, x0.r)
+	push!(x, x0.pr)
+	for ik in 1:C.K
+		push!(x,x0.Sr)
+	end
+	for ik in 1:C.K
+		push!(x,x0.Lu)
+	end
+	jc(C,x)
+end
+
 
 function stmodel2(p::LandUse.Param)
 	x00 = nocommute(p)

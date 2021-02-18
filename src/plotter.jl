@@ -7,6 +7,82 @@ function setup_color(l::Int)
     return colors
 end
 
+"plot densities for all years"
+function plot_dens_years(M::Vector{Region},p::Param)
+	x = plot(M[1].ϕmids, M[1].iDensities,leg = false)
+	for i in 2:length(M)
+		plot!(x, M[i].ϕmids, M[i].iDensities)
+	end
+	x
+end
+
+function both_plots(M::Vector{Region},p::Param,i::Int)
+	pl = LandUse.ts_plots(M,p,fixy = false)
+	pc = LandUse.cs_plots(M[i], p, i)
+	po = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
+			pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
+			pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
+			pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
+			layout = (4,4),size = (1200,800))
+	po
+end
+
+"single spatial cross sections region"
+function cs_plots(m::Region,p::Param,it::Int; fixy = false)
+
+	lvec = collect(range(0.,m.ϕ,length=100))  # space for region ik
+	setperiod!(p,it)  # set time on parameter!
+	ti = p.T[it]  # acutal year for printing
+	d = Dict()
+
+	# get data
+	ϵd = [ϵ(i,m.ϕ,p) for i in lvec]
+	Dd = [D(i,p,m) for i in lvec]
+	Hd = [H(i,p,m) for i in lvec]
+	ρd = [ρ(i,p,m) for i in lvec]
+	qd = [q(i,p,m) for i in lvec]
+
+	# get ratio first over last point
+	ϵg = round(ϵd[1]/ϵd[end],digits =1)
+	Dg = round(Dd[1]/Dd[end],digits =1)
+	Hg = round(Hd[1]/Hd[end],digits =1)
+	ρg = round(ρd[1]/ρd[end],digits =1)
+	qg = round(qd[1]/qd[end],digits =1)
+
+	# get 90/10 ratio of density
+	d1090 = round(m.iDensity_q10 / m.iDensity_q90, digits = 1)
+
+	# run exponential decay model
+	ndensities = m.iDensities ./ m.iDensities[1]
+	gradient,emod = expmodel(1:p.int_bins, ndensities)
+	MSE = round(1000 * mse(emod),digits = 3)
+
+	if fixy
+		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))") , ylims = (2    , 4.1) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))                   
+
+		d[:D] = scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
+		plot!(d[:D],1:p.int_bins, x -> gradient[1] .* exp.(gradient[2] * x), linewidth = 2, xlab = "distance", 
+		            annotations = ([p.int_bins*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
+
+
+		# d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")         , ylims = (-3   , 60)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d1090)"]))
+		# vline!(d[:D],[m.ϕ10, m.ϕ90], color = :red,leg = false)
+		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")         , ylims = (-0.1 , 15)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
+		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")     , ylims = (-0.1 , 10)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
+		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")         , ylims = (0.5  , 5.5) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
+	else
+		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
+		d[:D] = scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
+		plot!(d[:D],1:p.int_bins, x -> gradient[1] .* exp.(gradient[2] * x), linewidth = 2, xlab = "distance", 
+		            annotations =  ([p.int_bins*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
+		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
+		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
+		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
+	end
+	d
+end
+
+
 function ts_plots(M,p::Param;fixy = false)
 	d = dataframe(M,p)
 	dd = Dict()
@@ -132,11 +208,11 @@ function ts_plots(M,p::Param;fixy = false)
 					  legend = :left, yscale = :log10)
 	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	ds4 = select(d,:year,:cityarea)
-	incphi = d.cityarea[end] / d.cityarea[1]
+	incphi = round(d.cityarea[end] / d.cityarea[1],digits = 1)
 
 	dd[:phi] = @df d plot(:year, :cityarea,
-					 linewidth = 2, title = "City Size", color = "black",
-					 leg = fixy ? :topleft : false, marker = mmark, label = fixy ? "$(round(incphi,digits=1))x" : nothing,
+					 linewidth = 2, title = "City Area", color = "black",
+					 leg = fixy ? :topleft : false, marker = mmark, annotate = (p.T[end],0.2*maximum(d.cityarea),"$(round(incphi,digits=1))x"),
 					 ylims = fixy ? (0.0,0.15) : false)
     dd[:Sr] = @df d plot(:year, :Sr,
 				  linewidth = 2, color = "black",title = "Agricultural Land",
@@ -155,9 +231,6 @@ function ts_plots(M,p::Param;fixy = false)
 	ds4 = stack(dens, Not(:year))
 	ds5 = select(dens,:year,:avgd)
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
-	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false)
-
 	dd[:n_densities] = @df stack(ndens, Not(:year)) plot(:year, :value, group = :variable,
  					 linewidth = 2, title = "Normalized Densities", color = brg,
 					 leg = :topright, ylims = fixy ? (0,300) : false)
@@ -169,6 +242,10 @@ function ts_plots(M,p::Param;fixy = false)
 	dd[:avdensity] = @df ds5 plot(:year, :avgd,
 					 linewidth = 2, title = "Avg Density", marker = mmark,
 					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (p.T.stop,ancdens,"$(round(incdens,digits = 1))x"))
+
+	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false,annotations = (p.T[2],0.2*maximum(ds4.value),"$(round(incdens,digits = 1))x"))
+
 
     dss = stack(select(d,:year,:mode0,:modeϕ,:imode), Not(:year))
 	facs = combine(groupby(dss,:variable),:value => (x -> x[end]/x[1]) => :factor)
@@ -203,6 +280,26 @@ function ts_plots(M,p::Param;fixy = false)
 end
 
 
+function plot_i0k(di::Dict;it = 19)
+
+	p0 = LandUse.Param(par = di, use_estimatedθ = false)
+
+	x,M,p = LandUse.run(p0, estimateθ = false)
+	pl = LandUse.ts_plots(M,p0,fixy = false)
+	pc = LandUse.cs_plots(M[it], p0, it)
+
+						# multi country	
+	x,C,p = runk(par = merge(Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.05]),di))
+	x = impl_plot_slopes(C)
+	pl1 = plot(x[3])
+
+	pl2 = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
+						     pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
+							 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
+							 pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
+							 layout = (4,4))
+	plot(pl2, pl1, size = (1600,700), layout = @layout [a{0.7w} b{0.3w}])	
+end
 
 
 
@@ -250,17 +347,17 @@ end
 
 function impl_plot_slopes(C::Vector{Country})
 	d = dataframe(C)
-	d.lϕ = log.(d.ϕ)
+	d.larea = log.(d.cityarea)
 	d.lu = log.(d.Lu)
 	gd = groupby(d,:year)
-	gd = combine(gd, AsTable([:lϕ, :lu]) => (x -> round.(diff(vcat(extrema(x.lϕ)...)) ./ diff(vcat(extrema(x.lu)...)),digits = 1)) => :slope)
+	gd = combine(gd, AsTable([:larea, :lu]) => (x -> round.(diff(vcat(extrema(x.larea)...)) ./ diff(vcat(extrema(x.lu)...)),digits = 1)) => :slope)
 	d  = innerjoin(d,gd,on = :year)
 	transform!(d, AsTable([:year, :slope]) => (x -> string.(x.year) .* ": slope=" .* string.(x.slope) ) => :year_s)
 
 	cols = range(colorant"red",colorant"blue",length = length(unique(d.year)))
-	dd = select(d, :year_s, :region, :lϕ, :lu)
-	pl2 = @df dd plot(:lu,:lϕ,group = :year_s,
-					ylab = L"\log \phi",
+	dd = select(d, :year_s, :region, :larea, :lu)
+	pl2 = @df dd plot(:lu,:larea,group = :year_s,
+					ylab = L"\log area",
 					xlab = L"\log L_u",
 					marker = (:circle, 4),
 					colour = cols',
@@ -268,7 +365,9 @@ function impl_plot_slopes(C::Vector{Country})
 					# ylims = (-3.8,-2.7),
 					# xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
 					)
-	pl2
+	pl3 = @df d plot(:Lu, :cityarea, group = :region, xlab = "Lu", ylab = "area",m = :circle)
+	pl4 = @df d plot(:Lu, :citydensity, group = :region, xlab = "Lu", ylab = "density",m = :circle, series_annotation = Plots.text.(:year, 8, :right))
+	(pl2,pl3,pl4)
 end
 
 "time series showing all regions together"
@@ -456,11 +555,7 @@ function TS_impl(s::DataFrame; year = nothing, xlim = nothing,ylim = nothing,tst
 
 end
 
-function doit()
-	p = Param()
-	x,M,p = run(p)
-	plot_ts_xsect(M,p,1)
-end
+
 
 function plot_ts(M::Vector{Region},p::Param,it::Int)
 	df = dataframe(M,p)
@@ -649,7 +744,19 @@ function traceplot(x::NLsolve.SolverResults,it)
 	pl = plot(p1,p2,layout = (1,2))
 	savefig(pl,joinpath(@__DIR__,"..","images","solver_trace$it.pdf"))
 end
+function countrytraceplot(x::NLsolve.SolverResults,it)
 
+	ft = ftrace(x)
+	xt = xtrace(x)
+	p1 = plot(ft,title = "Ftrace $it",
+	         label = ["Lr/Sr" "r" "pr" "Sr1" "Sr2" "Lu1" "Lu2"],
+			 xlabel = "iteration",
+			 legend = :bottomright)
+	p2 = plot(xt,title = "xtrace $it",label = ["Lr/Sr" "r" "pr" "Sr1" "Sr2" "Lu1" "Lu2"], xlabel = "iteration",leg = :left)
+	# p2 = plot(xt[1:nrows,:],title = "xtrace",label = hcat(["LS" "r" "pr"],reshape(["SR_$i" for i in 1:K],1,K)),xlabel = "iteration")
+	pl = plot(p1,p2,layout = (1,2))
+	savefig(pl,joinpath(@__DIR__,"..","images","country_trace$it.pdf"))
+end
 
 function plotsol(x)
 	K = Int((length(x[1])-3)/2)

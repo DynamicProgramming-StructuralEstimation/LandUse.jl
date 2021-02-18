@@ -1,4 +1,51 @@
 
+#' Plot distance from center
+#'
+#' usign GHS grid data, plot average density at a certain distance
+#' from the center of a city
+plot_density_center <- function(city_name = c("Paris","Lyon")){
+    d0 = dist_from_center()
+    d0[, distance := distance / 1000]
+    l = list()
+    lnls = list()
+    for (ic in city_name){
+        d = d0[LIBGEO == ic & !is.na(distance)]
+
+        # estimate nls model of exponential decay
+        # https://douglas-watson.github.io/post/2018-09_exponential_curve_fitting/
+        fit <- nls(density ~ SSasymp(distance, yf, y0, log_alpha), data = d)
+        fitted <- d %>%
+            tidyr::nest(-year) %>%
+            mutate(
+                fit = purrr::map(data, ~nls(density ~ SSasymp(distance, yf, y0, log_alpha), data = .)),
+                tidied = purrr::map(fit, tidy),
+                augmented = purrr::map(fit, augment)
+            )
+
+        tab = fitted %>%
+                tidyr::unnest(tidied) %>%
+                dplyr::select(year, term, estimate) %>%
+                tidyr::spread(term, estimate) %>%
+                mutate(lambda = exp(log_alpha))
+
+        augmented <- fitted %>%
+            tidyr::unnest(augmented)
+
+        l[[ic]] = ggplot(data = augmented, aes(x=distance,y = density, color = factor(year))) +
+            geom_point() +
+            geom_line(aes(y = .fitted)) +
+            labs(caption = paste("Data: Average density at",d[,max(quantile,na.rm=TRUE)],"points"),
+                 subtitle = paste("Avg exponential parameter:",round(mean(tab$lambda),5))) +
+            ggtitle(paste("Density over time in",ic)) +
+            scale_x_continuous(name = "Distance to Center in km")
+
+
+
+        ggsave(l[[ic]], filename = file.path(dataplots(),paste0("density-center-",ic,".pdf")))
+    }
+    l
+}
+
 
 plot_sat_built <- function(){
     cc = LandUseR:::cropcities()  # first index level is years
@@ -38,6 +85,14 @@ plot_sat_vs_manual <- function(){
     ggsave(p, filename = file.path(LandUseR:::outdir(),"data","plots","areas-manual-satellite.pdf"))
     p
 }
+
+WIPfunc <- function(){
+    d = ff[, list(pop = median(pop), density = median(density)) , by = list(year,small)]
+    ggplot(d, aes(x = pop, y = density, color = small)) + geom_point() + geom_line()
+    ggplot(d, aes(x = pop, y = density, color = year)) + geom_point() + geom_line()
+    ggplot(d, aes(x = pop, y = density, color = factor(year))) + geom_point() + geom_line()
+}
+
 
 #' plot top 100 cities densities over time
 #' https://github.com/floswald/LandUse.jl/issues/42
@@ -119,6 +174,21 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
         ggtitle(paste0("Urban Density by City"),subtitle = "Top 5 cities in 1866") +
         theme_bw() + theme(panel.grid.minor = element_blank())
 
+
+    # cross section
+    p$xsect <- list()
+    p$xsect[[1]] <- ggplot(ff[LIBGEO %in% c("Paris", "Lyon")], aes(x = log(pop), y = density, color = LIBGEO)) + geom_point() + geom_line()
+    p$xsect[[2]] <- ggplot(ff[LIBGEO %in% c("Toulouse", "Lille")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
+    p$xsect[[3]] <- ggplot(ff[LIBGEO %in% c("Nantes", "Lyon")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
+    p$xsect[[4]] <- ggplot(ff[LIBGEO %in% c("Toulouse", "Saint-Malo")], aes(x = pop, y = density, color = LIBGEO)) + geom_point() + geom_line()
+
+    # small vs large cities
+    ff[, small := rep(.SD[year == 1876, pop < median(pop)], 6)]
+    d = ff[, list(pop = median(pop), density = median(density)) , by = list(year,small)]
+    p$xsect[[5]] = ggplot(d, aes(x = pop, y = density, color = small)) + geom_point() + geom_line()
+    p$xsect[[6]] = ggplot(d, aes(x = pop, y = density, color = factor(year))) + geom_point() + geom_line()
+    p$xsect[[7]] =
+
     if (save) {
         ggsave(p$violin, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))
         ggsave(p$ts, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time.pdf"))
@@ -132,6 +202,35 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
 
     p
 }
+
+
+write_paris_areas <- function(){
+    sh = sf::st_read(file.path("~/git/intro-to-r/data","CONTOURS-IRIS","1_DONNEES_LIVRAISON_2018-06-00105","CONTOURS-IRIS_2-1_SHP_LAMB93_FXX-2017","CONTOURS-IRIS.shp"),stringsAsFactors=FALSE)
+    a=sh %>% filter(INSEE_COM > 75100 & INSEE_COM < 75121) %>% group_by(INSEE_COM) %>% summarise(n=n()) %>% mutate(area = units::set_units(sf::st_area(.), km^2), CODGEO = INSEE_COM) %>% sf::st_set_geometry(NULL) %>% dplyr::select(CODGEO,area)
+    saveRDS(a, file.path(LandUseR:::datadir(),"paris-areas.Rds"))
+}
+
+plot_paris_densities <- function(){
+    a = readRDS(file.path(LandUseR:::datadir(),"paris-areas.Rds"))
+    p = readpop() %>%
+        filter(DEP == "75") %>%
+        left_join(a, by = "CODGEO") %>%
+        mutate(density = population / as.numeric(area)) %>%
+        mutate(center = if_else(as.integer(CODGEO) < 75107, TRUE, FALSE)) %>%
+        group_by(year, center) %>%
+        summarise(density = mean(density), population = sum(population))
+    out = ggplot(p, aes(year,density,color = center)) +
+        geom_point(aes(size = population)) +
+        geom_line() + theme_bw() +
+        ggtitle("Paris Central vs Fringe Density", subtitle = "Center: Arrondissements 1-6. Constant geography of 2021 Arrondissement boundaries.") +
+        labs(caption = "Each point corresponds to a Census counts by arrondissement") +
+        scale_y_continuous("population / km2")
+    ggsave(plot = out, filename = file.path(LandUseR:::outdir(),"data","plots","paris-densities.pdf"))
+    out
+
+
+}
+
 
 plot_sat_densities <- function(){
     z = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))

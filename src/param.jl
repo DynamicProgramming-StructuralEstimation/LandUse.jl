@@ -37,13 +37,19 @@ mutable struct Param
 	σ     :: Float64 # land-labor elasticity of substitution in farm production function
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
+	int_bins :: Int  # number of bins into which to split distance
+	iweights :: Vector{Float64}  # int weights
+	inodes    :: Vector{Float64}  # points where to evaluate integrand (inodes scaled into [0,ϕ])
 	S     :: Float64  # area of region
+	ϕ1  :: Float64   # first period fringe
+	ϕ1x  :: Float64   # fraction of first fringe that defines "center"
 
 	# Country setup
 	K :: Int # number of regions
 	kshare :: Vector{Float64} # share of space of each region
-	kθu :: Dict  # collection of θu's for each region for each period
-	kθr :: Dict
+	factors :: Vector{Float64} # growth factor offsets
+	# kθu :: Dict  # collection of θu's for each region for each period
+	# kθr :: Dict
 
 	trace :: Bool  # whether to trace solver
 	iters :: Int  # max iterations
@@ -82,10 +88,8 @@ mutable struct Param
 		this.t = 1815
 		this.it = 1
 		this.S = 1.0  # set default values for space and population
-
-		# country setup
-		this.kθu = Dict( )
-		this.kθr = Dict( )
+		this.ϕ1 = NaN
+		this.ϕ1x = 0.5
 
 
 		# read data from disk
@@ -172,6 +176,10 @@ mutable struct Param
 		# this.taum = 0.571
 		this.tauw = (this.ηm + this.ηw) / (1+this.ηm)
 		this.taul = (this.ηm + this.ηl) / (1+this.ηm)
+		this.inodes, this.iweights = gausslegendre(this.int_nodes)
+
+		if (isnan(this.ϕ1x) || (this.ϕ1x <= 0)) error("invalid value for ϕ1x: $(this.ϕ1x)") end
+
 		# this.taul = 0.571
 		# println("taum = $(this.taum)")
 		# println("taul = $(this.taul)")

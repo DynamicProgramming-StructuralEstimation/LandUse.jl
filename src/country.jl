@@ -33,37 +33,54 @@ mutable struct Country
 	want to give single p and get back
 	differnet theta series for each country
 	"""
-	function Country(p::Param; factors = [1.0,1.01])
+	function Country(p::Param)
 		this = new()
-		@assert p.K == length(factors)
+		@assert p.K == length(p.factors)
 		@assert p.K == length(p.kshare)
 		this.K = p.K
 
 		# create K copies of parameter
-		this.pp = Param[p for _ in 1:p.K]
-		this.R = [Region(p) for _ in 1:p.K]
+		this.pp = Param[deepcopy(p) for _ in 1:p.K]
 
 		# modify θus for each
+		@warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
 		for ik in 1:p.K
-			this.pp[ik].θut =  this.pp[1].θut .* factors[ik]
-			this.pp[ik].θu =  this.pp[ik].θut[1]   # set first period
+			this.pp[ik].θu =  max(p.θu .* p.factors[ik], 1.0)  
+			# println("modifying $ik")
+			# println(this.pp[ik].θu)
 		end
+
+		this.R = [Region(this.pp[ik]) for ik in 1:p.K]
+
 
 		this.pr = NaN
 		this.ρr = NaN
 		this.r  = NaN
 		this.LS  = NaN
-		this.L  = 1.0 # first period
-		this.S  = p.S # total spacke
-		this.Sk  = p.kshare .* p.S
+		this.L  = p.Lt[p.it] * p.K
+		this.S  = p.S * p.K # total space
+		this.Sk  = p.kshare .* this.S
 		this.T = p.T
 		return this
 	end
 end
 
+country(; par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0])) = Country(Param(par = par))
+
+function show(io::IO, C::Country)
+    # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
+	for ik in 1:C.K
+		m = C.R[ik]
+    	@printf(io,"Region %d: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",ik,m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m))
+    	if ik < C.K
+			@printf(io,"\n ")
+		end
+	end
+end
+
 "Country Rural Market Clearing"
-Rmk(C::Country,p::Vector{Param}) = sum(C.R[ik].icr + C.R[ik].Lr * cr(C.R[ik].ϕ,p[ik],C.R[ik]) for ik in 1:C.K) -
-                                   sum(Yr(C.R[ik],p[ik]) for ik in 1:C.K)
+Rmk(C::Country) = sum(C.R[ik].icr + C.R[ik].Lr * cr(C.R[ik].ϕ,C.pp[ik],C.R[ik]) for ik in 1:C.K) -
+                                   sum(Yr(C.R[ik],C.pp[ik]) for ik in 1:C.K)
 
 
 "Obtain a Time Series from an array of Country as a DataFrame"
@@ -73,7 +90,8 @@ function dataframe(C::Vector{Country})
 	# region 1
 	tt = C[1].T
 	ir = 1
-	df = dataframe([C[it].R[1] for it in 1:length(tt)],tt)
+	p = C[1].pp[1]
+	df = dataframe([C[it].R[1] for it in 1:length(tt)],p)
 	# df = DataFrame(year = C[1].T, region = ir)
 	df.region = [ir for i in 1:length(tt)]
 	# for fi in cols
@@ -82,7 +100,7 @@ function dataframe(C::Vector{Country})
 	# other regions
 	if K > 1
 		for ir in 2:K
-			df2 = dataframe([C[it].R[ir] for it in 1:length(tt)],tt)
+			df2 = dataframe([C[it].R[ir] for it in 1:length(tt)],p)
 			df2.region = [ir for i in 1:length(tt)]
 
 
@@ -109,8 +127,9 @@ The ordering in `x` is:
 4. 4 : (K+3), Sr: amount of land use in rural production (complement of Srh)
 5. (K+4) : (2K+3), Lu: urban pop in each k
 """
-function update!(c::Country,p::Vector{Param},x::Vector{Float64})
-	K = length(p)
+function update!(c::Country,x::Vector{Float64})
+	K = c.K
+	p = c.pp
 
 	# update country wide components
 	c.LS   = x[1]   # constant labor/land share in region 1. i called that b>0 in the doc.
@@ -136,6 +155,8 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 	# update each region
 	# 2. update other equations in each region
 	for ik in 1:K
+		# println("country $ik thetau = $(p[ik].θu)")
+		# println("country $ik thetar = $(p[ik].θr)")
 		# update country-wide stuff in each region
 		c.R[ik].pr = c.pr
 		c.R[ik].r  = c.r
@@ -151,7 +172,7 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 
 
 		# 1. set ϕ for each region
-		c.R[ik].ϕ  = getfringe(c.wr / p[ik].θu,p[ik])
+		c.R[ik].ϕ  = getfringe(p[ik].θu, c.wr, p[ik])
 		# 2. compute city size equation
 		c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes
 		# c.R[ik].Lu   = (c.R[ik].ϕ/2) * sum(c.R[ik].iweights[i] * D2(c.R[ik].nodes[i],p[ik],c.R[ik]) for i in 1:p[ik].int_nodes)[1]
@@ -180,9 +201,9 @@ function update!(c::Country,p::Vector{Param},x::Vector{Float64})
 		c.R[ik].GDP = GDP(c.R[ik],p[ik])
 		c.R[ik].y   =   y(c.R[ik],p[ik])
 
-		c.R[ik].mode0 = mode(0.01 * c.R[ik].ϕ,p)
+		c.R[ik].mode0 = mode(0.01 * c.R[ik].ϕ,p[ik])
 		c.R[ik].ctime0 = 0.01 * c.R[ik].ϕ / c.R[ik].mode0
-		c.R[ik].modeϕ = mode(c.R[ik].ϕ,p)
+		c.R[ik].modeϕ = mode(c.R[ik].ϕ,p[ik])
 		c.R[ik].ctimeϕ = c.R[ik].ϕ / c.R[ik].modeϕ
 	end
 end
@@ -190,9 +211,11 @@ end
 """
 Computes the entries of the residual vector ``u``
 """
-function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
+function EqSys!(F::Vector{Float64},C::Country)
 
-	K = length(C.R)  # num of regions
+	K = C.K
+	p = C.pp
+
 	fi = 1  # running index
 	# 1. agg labor market clearing
 	F[fi] = C.L - sum(pop(i) for i in C.R)
@@ -236,15 +259,182 @@ function EqSys!(F::Vector{Float64},C::Country,p::Vector{Param})
 
 end
 
-function solve!(F,x,p::Vector{Param},C::Country)
-	push!(Xtrace,copy(x))
+function solve!(F,x,C::Country)
+	# push!(Xtrace,copy(x))
 	# println(x)
 	if any(x .< 0)
 		F[:] .= 10.0 .+ x.^2
 	else
-		update!(C,p,x)
-		EqSys!(F,C,p)
+		update!(C,x)
+		EqSys!(F,C)
 	end
+end
+
+function runk_archive(;par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,1.0]))
+
+	C = LandUse.Country[]
+   	sols = Vector{Float64}[]  # an empty array of vectors
+
+	pp = LandUse.Param(par = par, use_estimatedθ = true)
+	@assert pp.K > 1
+	K = pp.K
+	# pp = convert(cp,par = par)  # create Lk and Sk for each region. if par is not zero, then first level index (Int) is region.
+
+	# 1. run a single region model
+	x0,Mk,p0 = LandUse.runm()
+
+	# 2. all regions in one country now. starting values for Sr from Mk.
+	push!(C,LandUse.Country(pp))  # create that country
+
+	# 3. make sure all countries start at θu[1]
+	for ik in 2:K
+		C[1].pp[ik].θu = C[1].pp[1].θu
+	end
+
+	# starting values.
+	# 1. b: ratio of labor to land in region 1
+	# 2. r: land rent
+	# 3. pr: relative price rural good
+	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
+	# x0 = country_starts(Mk[1],K)
+	x0 = zeros(2K + 3)
+	x0[1] = Mk[1].Lr / Mk[1].Sr
+	x0[2] = Mk[1].r
+	x0[3] = Mk[1].pr
+	for ik in 1:K
+		x0[3 + ik] = Mk[ik].Sr
+		x0[K + 3 + ik] = Mk[1].Lu
+	end
+
+	# scale_factors = ones(length(pp[1].T))
+	# scale_factors[7:end] .= 0.5
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,C[1]),x0,iterations = 100, show_trace=false)
+
+	if converged(r)
+		push!(sols, r.zero)
+		update!(C[1],r.zero)
+	else
+		println(r)
+		error("Country not converged")
+	end
+	for it in 2:5
+	# for it in 2:length(pp.T)
+		println(it)
+		# reset tried global
+		C_TRIED = [0]
+		# display(hcat(sols...)')
+		setperiod!(pp, it)   # set param to it - in particular θs
+		# println(pp.θu)
+		# if it > 12
+		# 	C0,x = adapt_θ(cp,pp,sols[it-1],it,do_traceplot=true)
+		# else
+			C0,x = step_country(sols[it-1],pp,it,do_traceplot=pp.trace)
+		# end
+       	push!(sols,x)
+       	push!(C,C0)
+   end
+   sols, C
+end
+
+function step_country(x0::Vector{Float64},pp::Param,it::Int; do_traceplot = true)
+	C0 = LandUse.Country(pp)
+	# println("period $it")
+	# println("params $(C0.pp[1].θu)")
+	# println("params $(C0.pp[2].θu)")
+	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,C0),x0,iterations = 100, store_trace=do_traceplot, extended_trace = do_traceplot)
+
+	# r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 1000,
+	# 						show_trace=false,
+	# 						extended_trace=true,
+	# 						factor = nlsolve_fac,
+	# 						autoscale = true,ftol = 0.000004)
+							# method = :newton,
+							# linesearch = LineSearches.BackTracking(order=3))
+
+	if converged(r)
+		# push!(sols, r1.zero)
+		update!(C0,r.zero)
+		if do_traceplot
+			countrytraceplot(r,it)
+		end
+		# reset traces
+		# global Xtrace = Vector{Float64}[]
+		# global Ftrace = Vector{Float64}[]
+		return C0, r.zero
+	else
+		# if C_TRIED[1] < CTRY_MAXTRY
+		# 	x0 = x0 .+ (randn(length(x0)) .* 0.01 .* x0)
+		# 	println("starting at $x0")
+		# 	C_TRIED[1] = C_TRIED[1] + 1
+		# 	step_country(x0,pp,it, do_traceplot = do_traceplot)
+		# 	if do_traceplot
+		# 		countrytraceplot(r,it)
+		# 	end
+		# else
+			println(r)
+			error("Country not converged in period $it after $CTRY_MAXTRY trials")
+		# end
+	end
+end
+
+
+# archive
+# NLopt implementation
+# r = LandUse.nlopt_solveC(pp,C0,x0)
+# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
+#       LandUse.update!(C0,pp,r[2])
+#       println("eq system:")
+#       LandUse.EqSys!(x0,C0,pp)
+#       println(x0)
+	   #        return C0, r[2]
+# else
+#       error("not converged")
+# end
+
+# for each period, start all countries at eps = 0 and
+# step wise increase the slope until maxeps
+function adapt_ϵ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_traceplot = false)
+	sols = Vector{Float64}[]  # an empty array of vectors
+	C = Country[]  # an empty array of Countries
+	push!(sols, x0)  # put solution previous period
+
+	# range of elasticity slope values
+	ϵs = range(0,stop = p[1].ϵsmax, length = p[1].ϵnsteps)[2:end]
+
+	for (i,ϵ) in enumerate(ϵs)
+		# @debug "adapting to ϵ=$ϵ in $it"
+		setfields!(p, :ϵs, ϵ)  # set current value for elaticity function slope on all params
+		c,x = step_country(sols[i],p,cp,it,do_traceplot=do_traceplot)
+		push!(sols,x)
+		push!(C,c)
+	end
+	return C[end], sols[end]
+end
+
+function adapt_θ(C::Country,x0::Vector{Float64},it::Int; do_traceplot = true,maxstep = 0.1)
+
+	# how many steps to take by looking at coutnry 1
+	step = C.pp[1].Θu[it] - C[1].pp.Θu[it-1]
+	s = Int(fld(step,maxstep)) + 1
+
+	# range of values to achieve next step
+	θs = [range(C[k].pp.θu - step, stop = C[k].pp.θu, length = s+1)[2:end]  for k in 1:C.K] # first one is done already
+	sols = Vector{Float64}[]
+	cs = Country[]
+	push!(sols,x0)
+
+	for (i,θ) in enumerate(θs)
+		@debug "θ adapting" step=i θ=θ
+		LandUse.setfields!(p, :θu, θ)   # sets on each member of p
+		LandUse.setfields!(p, :θr, θ)
+		# C0,x = adapt_ϵ(cp,p,sols[i],it,do_traceplot=true)
+		C0,x = step_country(sols[i],p,cp,it,do_traceplot=do_traceplot)
+		push!(sols,x)
+		push!(cs,C0)
+   	end
+
+	return (cs[end],sols[end])    # return final step
+
 end
 
 function NLopt_wrap(result::Vector, x::Vector, grad::Matrix,C::Country,p::Vector{Param})
@@ -291,170 +481,3 @@ function country_starts(M,K)
        end
        x0
 end
-
-function runk(;cpar = Dict(:S => 1.0, :L => 1.0, :kshare => [0.5,0.5], :K => 2),
-				par = Dict(), maxstep=0.09)
-
-	global Xtrace = Vector{Float64}[]
-	global Ftrace = Vector{Float64}[]
-	C = Country[]
-   	sols = Vector{Float64}[]  # an empty array of vectors
-
-	cp = LandUse.CParam(par = cpar)
-	K = cp.K
-	pp = convert(cp,par = par)  # create Lk and Sk for each region. if par is not zero, then first level index (Int) is region.
-
-	# 1. run single region model for each region
-	Mk = [LandUse.run(LandUse.Region,pp[ik])[2][1] for ik in 1:K]   # [2] is model, [1] is first period
-
-	# reset time t first period
-	it = 1
-	setperiod!(pp,it)
-
-	# 2. all regions in one country now. starting values for Sr from Mk.
-	push!(C,LandUse.Country(cp,pp))  # create that country
-
-	# starting values.
-	# 1. b: ratio of labor to land in region 1
-	# 2. r: land rent
-	# 3. pr: relative price rural good
-	# 4. 4 - K+3, Sr: amount of land use in rural production (complement of Srh)
-	# x0 = country_starts(Mk[1],K)
-	x0 = zeros(2K + 3)
-	x0[1] = Mk[1].Lr / Mk[1].Sr
-	x0[2] = Mk[1].r
-	x0[3] = Mk[1].pr
-	for ik in 1:K
-		x0[3 + ik] = Mk[ik].Sr
-		x0[K + 3 + ik] = cp.kshare[it] * cp.L
-	end
-
-	scale_factors = ones(length(pp[1].T))
-	# scale_factors[7:end] .= 0.5
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C[it]),x0,iterations = 100, show_trace=false)
-
-	if converged(r)
-		push!(sols, r.zero)
-		update!(C[it],pp,r.zero)
-		traceplot(r,it)
-		global Xtrace = Vector{Float64}[]
-		global Ftrace = Vector{Float64}[]
-		# @assert abs(Rmk(C[it],pp)) < 1e-6   # walras' law
-		# push!(m,m0)
-	else
-		println(r)
-		traceplot(r,it)
-		error("Country not converged")
-	end
-
-
-	for it in 2:length(pp[1].T)
-		# println(it)
-		# display(hcat(sols...)')
-
-		setperiod!(pp, it)   # set all params to it
-		# if it > 12
-		# 	C0,x = adapt_θ(cp,pp,sols[it-1],it,do_traceplot=true)
-		# else
-			C0,x = step_country(sols[it-1],pp,cp,it,do_traceplot=true,nlsolve_fac = scale_factors[it])
-		# end
-       	push!(sols,x)
-       	push!(C,C0)
-   end
-   sols, C, cp, pp
-end
-
-# for each period, start all countries at eps = 0 and
-# step wise increase the slope until maxeps
-function adapt_ϵ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_traceplot = false)
-	sols = Vector{Float64}[]  # an empty array of vectors
-	C = Country[]  # an empty array of Countries
-	push!(sols, x0)  # put solution previous period
-
-	# range of elasticity slope values
-	ϵs = range(0,stop = p[1].ϵsmax, length = p[1].ϵnsteps)[2:end]
-
-	for (i,ϵ) in enumerate(ϵs)
-		# @debug "adapting to ϵ=$ϵ in $it"
-		setfields!(p, :ϵs, ϵ)  # set current value for elaticity function slope on all params
-		c,x = step_country(sols[i],p,cp,it,do_traceplot=do_traceplot)
-		push!(sols,x)
-		push!(C,c)
-	end
-	return C[end], sols[end]
-end
-
-function adapt_θ(cp::CParam,p::Vector{Param},x0::Vector{Float64},it::Int; do_traceplot = true,maxstep = 0.1)
-
-	# how many steps to take
-	step = p[1].Θu[it] - p[1].Θu[it-1]
-	s = Int(fld(step,maxstep)) + 1
-
-	# range of values to achieve next step
-	θs = range(p[1].θu - step, stop = p[1].θu, length = s+1)[2:end]   # first one is done already
-	sols = Vector{Float64}[]
-	cs = Country[]
-	push!(sols,x0)
-
-	for (i,θ) in enumerate(θs)
-		@debug "θ adapting" step=i θ=θ
-		LandUse.setfields!(p, :θu, θ)   # sets on each member of p
-		LandUse.setfields!(p, :θr, θ)
-		# C0,x = adapt_ϵ(cp,p,sols[i],it,do_traceplot=true)
-		C0,x = step_country(sols[i],p,cp,it,do_traceplot=do_traceplot)
-		push!(sols,x)
-		push!(cs,C0)
-   	end
-
-	return (cs[end],sols[end])    # return final step
-
-end
-
-
-function step_country(x0::Vector{Float64},pp::Vector{Param},cp::CParam,it::Int; do_traceplot = true,nlsolve_fac = 1.0)
-	C0 = LandUse.Country(cp,pp)
-
-	r = LandUse.nlsolve((F,x) -> LandUse.solve!(F,x,pp,C0),x0,iterations = 1000,
-							show_trace=false,
-							extended_trace=true,
-							factor = nlsolve_fac,
-							autoscale = true,ftol = 0.000004)
-							# method = :newton,
-							# linesearch = LineSearches.BackTracking(order=3))
-	if converged(r)
-		# push!(sols, r1.zero)
-		update!(C0,pp,r.zero)
-		if do_traceplot
-			traceplot(it)
-		end
-		# reset traces
-		global Xtrace = Vector{Float64}[]
-		global Ftrace = Vector{Float64}[]
-		# @assert abs(Rmk(m0,p)) < 1e-7   # walras' law
-		# push!(m,m0)
-		# println("final eq sys:")
-		# EqSys!(x0,C0,pp)
-		# println(r)
-		return C0, r.zero
-	else
-		if do_traceplot
-			traceplot(it)
-		end
-		println(r)
-		error("Country not converged in period $it")
-	end
-end
-
-
-# archive
-# NLopt implementation
-# r = LandUse.nlopt_solveC(pp,C0,x0)
-# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
-#       LandUse.update!(C0,pp,r[2])
-#       println("eq system:")
-#       LandUse.EqSys!(x0,C0,pp)
-#       println(x0)
-	   #        return C0, r[2]
-# else
-#       error("not converged")
-# end

@@ -28,7 +28,7 @@
 		"symbol" : "\\eta"
 	},
 	"cτ" : {
-		"value" : 2.13,
+		"value" : 2.53,
 		"description" : "Commuting Costs Base Parameter",
 		"symbol" : "c_\\tau"
 	},
@@ -38,7 +38,7 @@
 		"symbol" : "\\eta_m"
 	},
 	"ηl" : {
-		"value" : 0.0,
+		"value" : 0.35,
 		"description" : "elasticity of F commuting cost wrt location",
 		"symbol" : "\\eta_l"
 	},
@@ -53,12 +53,12 @@
 		"symbol" : "\\nu"
 	},
 	"cbar" : {
-		"value" : 0.9,
+		"value" : 0.86,
 		"description" : "Rural Consumption Good Subsistence Level",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.2,
+		"value" : 0.26,
 		"description" : "Initial Urban Good Endowment",
 		"symbol" : "\\underline{s}"
 	},
@@ -78,7 +78,7 @@
 		"symbol" : "\\Psi"
 	},
 	"T" : {
-		"value" : [1815,15,2050],
+		"value" : [1840,10,2020],
 		"description" : "Start year, increments, end year",
 		"symbol" : "\\mathcal{T}"
 	},
@@ -103,17 +103,17 @@
 		"symbol" : "\\theta_{r,i,t}"
 	},
 	"ϵr" : {
-		"value" : 4.0,
+		"value" : 5.0,
 		"description" : "H Supply Elasticity Function in Rural sector",
 		"symbol" : "\\epsilon_r"
 	},
 	"ϵs" : {
-		"value" : 0.0,
+		"value" : 4.3,
 		"description" : "Current Slope Coeff in Elasticity Function",
 		"symbol" : "\\epsilon_s"
 	},
 	"ϵsmax" : {
-		"value" : 0.0,
+		"value" : 4.3,
 		"description" : "Maximal Slope Coeff in Elasticity Function",
 		"symbol" : "\\epsilon_s^*"
 	},
@@ -127,6 +127,11 @@
 		"description" : "Number of Integration Nodes",
 		"symbol" : "n_I"
 	},
+	"int_bins" : {
+		"value" : 21,
+		"description" : "Number bins for distance",
+		"symbol" : "n_b"
+	},
 	"K" : {
 		"value" : 1,
 		"description" : "Number of Regions",
@@ -136,6 +141,11 @@
 		"value" : [1.0],
 		"description" : "Region k's share of Total Space",
 		"symbol" : "\\pi_k"
+	},
+	"factors" : {
+		"value" : [1.0],
+		"description" : "Region k's growth offset",
+		"symbol" : "factor_k"
 	},
 	"ζ" : {
 		"value" : 0.5,

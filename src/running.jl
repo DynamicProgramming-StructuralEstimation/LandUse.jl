@@ -10,9 +10,9 @@ end
 
 
 """
-run model for all time periods
+run Single region model for all time periods
 """
-function run(p::Param; jump = true, estimateθ = true)
+function run(p::Param; estimateθ = false)
 
 	setperiod!(p,1)
 	x0 = startval(p)
@@ -30,24 +30,18 @@ function run(p::Param; jump = true, estimateθ = true)
 		# println(it)
 		setperiod!(p,it)
 		m = Region(p)
-		if jump
-			x = jm(p,m,sols[it], estimateθ = estimateθ)
-			push!(sols,x)
-			update!(m,p,[x...])
-		else
-			x = solve_once(p,m,[sols[it]...])
-			if converged(x)
-				push!(sols,(; zip(keys(x0), x.zero)...))
-				update!(m,p,x.zero)
-			else
-				error("nlsolve not converged in period $it")
-			end
+		x = jm(p,m,sols[it], estimateθ = estimateθ)
+		push!(sols,x)
+		if it == 1
+			p.ϕ1 = x.ϕ * p.ϕ1x
 		end
+		update!(m,p,[x...])
+
 		push!(M,m)
 		if it == 1
 			# adjust relative price in data to first period solution
 			px = x.pr / p.moments[1,:P_rural]
-			transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
+			# transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
 		end
 
 	end
@@ -56,12 +50,69 @@ function run(p::Param; jump = true, estimateθ = true)
 
 end
 
-function runm(; jump = true, estimateθ = true)
-	run(Param(), jump = jump,estimateθ = estimateθ)
+"""
+run Multi-region model for all time periods
+"""
+function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
+
+	# get single city solution in first period
+	p = LandUse.Param(par = par, use_estimatedθ = false)
+	@assert p.K > 1
+
+	setperiod!(p,1)
+	x0 = startval(p)
+	m = Region(p)
+	x0 = jm(p,m,x0, estimateθ = false)
+	update!(m,p,[x0...])
+
+
+	# starting value for country solution
+	x = Float64[]
+	push!(x, m.Lr / m.Sr)
+	push!(x, m.r)
+	push!(x, m.pr)
+	for ik in 1:p.K
+		push!(x,m.Sr)
+	end
+	for ik in 1:p.K
+		push!(x,m.Lu)
+	end
+
+	sols = Vector{Float64}[]  # an empty array of solutions
+	push!(sols,x)
+
+	C = Country[]  # an emtpy array of countries
+
+	for it in 1:length(p.T)
+		# println(it)
+		setperiod!(p,it)
+		c = Country(p)
+		x = jc(c,sols[it])
+		push!(sols,x)
+		update!(c,x)
+
+		push!(C,c)
+	end
+
+	(sols,C,p) # solutions, models, and parameter
+
+end
+
+function k1()
+	x,C,p = runk()
+	x,C,p = impl_plot_slopes(C)
+end
+
+function runm()
+	run(Param())
 end
 function plot1()
 	x,M,p = run(Param())
 	ts_plots(M,p)
+end
+function plot1cs(it)
+	x,M,p = run(Param())
+	cs_plots(M[it],p,it)
 end
 function export_thetas()
 	x,M,p = runm()
