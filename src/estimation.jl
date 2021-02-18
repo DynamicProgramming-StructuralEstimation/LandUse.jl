@@ -17,7 +17,12 @@ function post_slack()
 	haskey(ENV,"SLACK_HOOK") || error("you need a webhook into slack as environment variable SLACK_HOOK to post a message")
 end
 
-
+function post_file_slack(fname::String)
+    Base.run(`curl -F file=@$(fname) -F "initial_comment=Dashboard at best candidate" -F channels=CCW1NHS1K -H "Authorization: Bearer $(ENV["SLACK_FILES"])" https://slack.com/api/files.upload`)
+end
+function post_file_slack()
+    haskey(ENV,"SLACK_HOOK") || error("you need a webhook into slack as environment variable SLACK_FILES to post files")
+end
 
 
 
@@ -29,7 +34,7 @@ function targets(p::Param)
     # vector-value moments: time varying stuff
     m = Dict()
     m[:rural_empl] = DataFrame(moment = ["rural_emp_" .* string(i) for i in p.moments.year], 
-               data = p.moments.Employment_rural,
+               data = copy(p.moments.Employment_rural),
                model = zeros(length(p.moments.year)))
 
     # single value stuff: ratios of change etc
@@ -108,7 +113,7 @@ function objective(x; moments = false, plot = false)
 
         # get data moments
         ta = targets(p)
-        ta[:rural_empl].model = d1.rural_emp_model
+        ta[:rural_empl].model = copy(d1.rural_emp_model)
         ta[:rural_empl].weights = ones(nrow(d1)) * 0.5
 
         # m = 0.0
@@ -161,13 +166,7 @@ function objective(x; moments = false, plot = false)
 
         if moments
             if plot
-                pl = LandUse.ts_plots(M1,p1,fixy = false)
-                pc = LandUse.cs_plots(M[i2020], p1, i2020)
-                po = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
-                        pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
-                        pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
-                        pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
-                        layout = (4,4),size = (1200,800))
+                po = both_plots(M1,p1,i2020)
                 savefig(po, joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf"))
                 return (sum(da.weights .* (da.data .- da.model).^2) , da, po)
             else
@@ -186,8 +185,13 @@ end
 
 bb_bounds() = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 4.5)]
 
-function runestim(;steps = 10)
-    if steps > 5
+function runestim(;steps = 1000)
+    # check slack
+    post_slack()
+    post_file_slack()
+
+
+    if steps > 500
         halfstep = floor(steps/2)
         optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = halfstep)
         res100 = bboptimize(optctrl)
@@ -209,6 +213,8 @@ function runestim(;steps = 10)
 
 
         res2 = bboptimize(optctrlb; MaxSteps = steps - halfstep)
+        best  = best_candidate(res2)
+
 
         # final save:
         rm(fp)
@@ -219,8 +225,8 @@ function runestim(;steps = 10)
     else
         optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = steps)
         res100 = bboptimize(optctrl)
-        best100  = best_candidate(res100)
-        println("Best candidate after $steps steps: ", best100)
+        best  = best_candidate(res100)
+        println("Best candidate after $steps steps: ", best)
         println("saving")
         # Now serialize to a temp file:
         fp = joinpath(@__DIR__,"..","out","bboptim_$(Dates.today()).dat")
@@ -230,14 +236,10 @@ function runestim(;steps = 10)
 
     end
     
-    x,m,pl = try 
-        objective(best100, moments = true, plot = true)
-    catch
-        (0,0,0)
-    end
-
-    txt = """
-        [LandUse.jl] Estimation finished on $(gethostname())
+    try 
+        x,m,pl = objective(best, moments = true, plot = true)
+        txt = """
+        [LandUse.jl] Estimation finished on $(gethostname()) after $steps steps:
 
         *Results:*
         ========
@@ -253,12 +255,26 @@ function runestim(;steps = 10)
         ```
         """
 
+        println(txt)
+        post_slack(txt)
+        post_file_slack(joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf"))
+        return res100
+    catch
+        println("final eval of objective failed")
+        txt = """
+        [LandUse.jl] Estimation finished on $(gethostname())
+
+        *Results:*
+        ========
+
+        *best candidate*: 
+        ```
+        $(x2dict(best100))
+        ```
+        """
+    end
+
     
-
-    println(txt)
-    post_slack(txt)
-
-    return res100
 end
 
 "Estimate exponential model on spatial density. "

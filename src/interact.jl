@@ -155,13 +155,14 @@ function i0()
 
 					try
 						x,M,p = LandUse.run(p0, estimateθ = false)
-						pl = LandUse.ts_plots(M,p0,fixy = false)
-						pc = LandUse.cs_plots(M[it], p0, it)
-						plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
-						     pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
-							 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
-							 pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
-							 layout = (4,4),size = (1200,800))
+						# pl = LandUse.ts_plots(M,p0,fixy = false)
+						# pc = LandUse.cs_plots(M[it], p0, it)
+						both_plots(M,p0,it)
+						# plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
+						#      pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
+						# 	 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
+						# 	 pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
+						# 	 layout = (4,4),size = (1200,800))
 					catch e
 						wdg = alert("Error!")
 						print(wdg())

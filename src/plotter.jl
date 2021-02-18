@@ -16,6 +16,17 @@ function plot_dens_years(M::Vector{Region},p::Param)
 	x
 end
 
+function both_plots(M::Vector{Region},p::Param,i::Int)
+	pl = LandUse.ts_plots(M,p,fixy = false)
+	pc = LandUse.cs_plots(M[i], p, i)
+	po = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
+			pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
+			pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
+			pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
+			layout = (4,4),size = (1200,800))
+	po
+end
+
 "single spatial cross sections region"
 function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 
@@ -50,8 +61,8 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))") , ylims = (2    , 4.1) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))                   
 
 		d[:D] = scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
-		plot!(d[:D], x -> gradient[1] .* exp.(gradient[2] * x), 0.0, m.ϕ, linewidth = 2, xlab = "distance", 
-		            annotations = ([m.ϕ*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
+		plot!(d[:D],1:p.int_bins, x -> gradient[1] .* exp.(gradient[2] * x), linewidth = 2, xlab = "distance", 
+		            annotations = ([p.int_bins*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
 
 
 		# d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")         , ylims = (-3   , 60)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d1090)"]))
@@ -62,8 +73,8 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 	else
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
 		d[:D] = scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
-		plot!(d[:D], x -> gradient[1] .* exp.(gradient[2] * x), 0.0, m.ϕ, linewidth = 2, xlab = "distance", 
-		            annotations =  ([m.ϕ*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
+		plot!(d[:D],1:p.int_bins, x -> gradient[1] .* exp.(gradient[2] * x), linewidth = 2, xlab = "distance", 
+		            annotations =  ([p.int_bins*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
