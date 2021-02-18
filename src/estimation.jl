@@ -18,7 +18,11 @@ function post_slack()
 end
 
 function post_file_slack(fname::String)
-    Base.run(`curl -F file=@$(fname) -F "initial_comment=Dashboard at best candidate" -F channels=CCW1NHS1K -H "Authorization: Bearer $(ENV["SLACK_FILES"])" https://slack.com/api/files.upload`)
+    if LandUse.isflo
+        Base.run(`curl -F file=@$(fname) -F "initial_comment=Dashboard at best candidate" -F channels=CCW1NHS1K -H "Authorization: Bearer $(ENV["SLACK_FILES"])" https://slack.com/api/files.upload`)
+    else
+        Base.run(`curl --insecure -F file=@$(fname) -F "initial_comment=Dashboard at best candidate" -F channels=CCW1NHS1K -H "Authorization: Bearer $(ENV["SLACK_FILES"])" https://slack.com/api/files.upload`)
+    end
 end
 function post_file_slack()
     haskey(ENV,"SLACK_HOOK") || error("you need a webhook into slack as environment variable SLACK_FILES to post files")
