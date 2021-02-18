@@ -89,7 +89,7 @@ end
 """
 moment objective function for an optimizer
 """
-function objective(x; moments = false)
+function objective(x; moments = false, plot = false)
     # unpack X
     di = x2dict(x)
 
@@ -160,7 +160,19 @@ function objective(x; moments = false)
         # append!(da, ta[:pop_vs_density_2015])
 
         if moments
-            return (sum(da.weights .* (da.data .- da.model).^2) , da)
+            if plot
+                pl = LandUse.ts_plots(M1,p1,fixy = false)
+                pc = LandUse.cs_plots(M[i2020], p1, i2020)
+                po = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
+                        pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
+                        pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
+                        pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
+                        layout = (4,4),size = (1200,800))
+                savefig(po, joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf"))
+                return (sum(da.weights .* (da.data .- da.model).^2) , da, po)
+            else
+                return (sum(da.weights .* (da.data .- da.model).^2) , da)
+            end
         else
             return sum(da.weights .* (da.data .- da.model).^2)
         end
@@ -217,7 +229,7 @@ function runestim(;steps = 1000)
     end
     
     x,m = try 
-        objective(best100, moments = true)
+        objective(best100, moments = true, plot = true)
     catch
         (0,0)
     end
