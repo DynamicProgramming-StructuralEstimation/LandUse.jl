@@ -2,8 +2,8 @@
 #SBATCH --job-name=landuse
 #SBATCH --output=est.out
 #SBATCH --error=est.err
-#SBATCH --partition=cpunormal
+#SBATCH --partition=cpushortprio
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 
-julia --project=. -e "using LandUse; LandUse.runestim(steps = 1000)"
+julia --project=. -e "using LandUse; LandUse.runestim()"
