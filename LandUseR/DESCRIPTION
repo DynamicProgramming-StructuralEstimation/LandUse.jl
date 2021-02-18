@@ -28,5 +28,6 @@ Imports:
     magrittr,
     ggplot2,
     futile.logger,
-    purrr
+    purrr,
+    rgdal
 RoxygenNote: 7.1.1
