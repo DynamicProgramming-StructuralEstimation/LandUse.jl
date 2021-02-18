@@ -118,7 +118,7 @@ function objective(x; moments = false, plot = false)
         # get data moments
         ta = targets(p)
         ta[:rural_empl].model = copy(d1.rural_emp_model)
-        ta[:rural_empl].weights = ones(nrow(d1)) * 0.25
+        ta[:rural_empl].weights = ones(nrow(d1)) * 0.1
 
         # m = 0.0
         # m += sum(ta[:rural_empl].weights .* (ta[:rural_empl].data .- ta[:rural_empl].model).^2)
@@ -127,7 +127,7 @@ function objective(x; moments = false, plot = false)
         ta[:avg_density_fall][!,:weights] .= 2.0
 
         ta[:city_area][!,:model] .= d1.cityarea[i2015]
-        ta[:city_area][!,:weights] .= 10.0
+        ta[:city_area][!,:weights] .= 100.0
 
         ta[:max_mode_increase][!,:model] .= maximum(d1.imode ./ d1.imode[1])
         ta[:max_mode_increase][!,:weights] .= 0.5
@@ -141,9 +141,9 @@ function objective(x; moments = false, plot = false)
         MSE = round(1000 * mse(emod),digits = 3)
 
         ta[:density_decay_coef][!,:model] .= gradient[2]
-        ta[:density_decay_coef][!,:weights] .= 3.0
+        ta[:density_decay_coef][!,:weights] .= 30.0
         ta[:density_decay_MSE][!,:model] .= MSE
-        ta[:density_decay_MSE][!,:weights] .= 4.0
+        ta[:density_decay_MSE][!,:weights] .= 40.0
     
         # housing spending Shares
         ta[:housing_share_1900][!,:model] .= d1[i1900,:Ch] / d1[i1900,:C]
@@ -189,7 +189,7 @@ end
 
 bb_bounds() = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 4.5)]
 
-function runestim(;steps = 1000)
+function runestim(;steps = 3000)
     # check slack
     post_slack()
     post_file_slack()
