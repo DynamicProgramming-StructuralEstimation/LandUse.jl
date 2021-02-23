@@ -183,7 +183,7 @@ function objective(x; moments = false, plot = false)
         
     catch 
         # @info "error at $(di)"
-        return 999.9
+        return Inf
     end
 end
 
