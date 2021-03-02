@@ -91,6 +91,44 @@ function x2dict(x)
     di
 end
 
+# search_over() = OrderedDict(zip([:cbar,:sbar,:ηl , :ηw, :ηm, :ϵw, :cτ], [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 4.5)]))
+search_over() = OrderedDict(zip([:cbar], [(0.7, 0.9)]))
+symrange(x,pad,n) = range(x-pad, stop = x+pad, length = n)
+
+function gridsearch(n)
+
+    # 1. starting value we know works is
+    p0 = Param()
+    x0,M0,p0 = run(p0)   # x0[1] is first period of a working solution 
+
+    solsup = []
+    solsdown = []
+
+    # 2. make grids
+    so = search_over()
+    for (k,v) in so
+        gup   = range(getfield(p0,k), stop = v[2], length = n)
+        gdown = range(getfield(p0,k), stop = v[1], length = n)
+        # go up 
+        push!(solsup, x0[1])
+        for (ip,p) in enumerate(gup[2:end])
+            println(p)
+            p1 = Param(par = Dict(k => p))
+            x1,M1,p2 = run(solsup[ip],p1)
+            push!(solsup, x1[1])
+        end
+        push!(solsdown, x0[1])
+
+        for (ip,p) in enumerate(gdown[2:end])
+            p1 = Param(par = Dict(k => p))
+            x1,M1,p2 = run(solsdown[ip],p1)
+            push!(solsdown, x1[1])
+        end
+    end
+    [solsup ; solsdown]
+end
+
+
 function p2x(p::Param)
     [ p.cbar,  p.sbar, p.ηl, p.ηw, p.ηm, p.ϵs, p.cτ ]
 end
