@@ -19,7 +19,7 @@ module LandUse
 	using CSV
 	using SmoothingSplines
 	using LaTeXTabulars
-	using QuantEcon: smooth
+	using QuantEcon: smooth, gridmake
 	using JuMP
 	using Ipopt
 	using Interpolations: interpolate, Gridded, Linear
@@ -29,6 +29,10 @@ module LandUse
 	using Serialization
 	using Dates
 	using LsqFit
+	using SharedArrays
+	using ProgressMeter
+	using Distributed
+	using DelimitedFiles
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
@@ -58,6 +62,7 @@ module LandUse
 	include("interact.jl")
 	include("jump.jl")
 	include("estimation.jl")
+	include("learning.jl")
 
 	cpslides(name) = cp(joinpath(@__DIR__,"..","tex","slides","COT_slides.pdf"),
 	                   joinpath(dbpath,"slides","flo-slides","COT_slides-$name.pdf"),
