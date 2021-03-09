@@ -50,7 +50,7 @@ end
 function p_start_grid(g::SharedArray)
     n = size(g)[1]
     out = @showprogress pmap(1:n) do x
-        di = x2dict(x)
+        di = x2dict(g[x,:])
         p = Param(par = di, use_estimatedθ = false)
         try 
             x1,M1,p1 = LandUse.run(p, estimateθ = false)
