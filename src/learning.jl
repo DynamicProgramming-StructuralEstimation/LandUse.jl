@@ -39,7 +39,7 @@ end
 
 
 
-function peval_grid(g::SharedArray)
+function p_obj_grid(g::SharedArray)
     n = size(g)[1]
     out = @showprogress pmap(1:n) do x
         objective(g[x,:])
@@ -47,19 +47,37 @@ function peval_grid(g::SharedArray)
     out
 end
 
-# function parallel_setup(nworkers)
+function p_start_grid(g::SharedArray)
+    n = size(g)[1]
+    out = @showprogress pmap(1:n) do x
+        di = x2dict(x)
+        p = Param(par = di, use_estimatedθ = false)
+        try 
+            x1,M1,p1 = LandUse.run(p, estimateθ = false)
+            return x1[1]
+        catch
+            return missing
+        end
+    end
+    out
+end
 
-#     # create workers
-#     w = addprocs(nworkers, exeflags = "--project=.")
+function parallel_starts(npoints)
+    
+    # create shared Array
+    sg = SharedArray{Float64,2}(grid_arr(Param(),npoints))
 
-#     # load code on all workers
-#     @everywhere using LandUse
+    # run in parallel
+    r = p_start_grid(sg)
 
-#     return w
+    # add to grid, save and return
+    writedlm(joinpath(@__DIR__,"..","out","par_starts.txt"), sg)
+    post_slack("done on scpo-floswald with learning")
+    (sg,r)
 
-# end
+end
 
-function parallel_grid(npoints,nworkers)
+function parallel_obj(npoints)
     
     # create shared Array
     sg = SharedArray{Float64,2}(grid_arr(Param(),npoints))
