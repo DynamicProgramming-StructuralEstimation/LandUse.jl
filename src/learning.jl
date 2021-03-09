@@ -83,7 +83,7 @@ function parallel_starts(npoints)
 
     # add to grid, save and return
     writedlm(joinpath(@__DIR__,"..","out","par_starts.txt"), sg)
-    post_slack("done on scpo-floswald with learning")
+    post_slack("done on $(gethostname()) with learning")
     (sg,r)
 
 end
