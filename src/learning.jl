@@ -26,6 +26,17 @@ function eval_grid(g::Matrix)
     r
 end
 
+function worker_receiver(ids::Vector{Int},n::Int)
+    # ids are indices to work on for this worker
+    jobs = grid_arr(Param(),n)
+    out = zeros(length(ids))
+    for ix in 1:length(ids)
+        out[ix] = objective(jobs[ix,:])
+    end
+    return out
+end
+
+
 
 
 function peval_grid(g::SharedArray)
