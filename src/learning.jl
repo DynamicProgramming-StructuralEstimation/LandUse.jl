@@ -1,10 +1,16 @@
-function make_grid_df(p0::Param,n)
+function make_grid_df(p0::Param,n; center_on_p0 = false)
     so = search_over()
     arrs = []
-    for (k,v) in so
-        gup   = range(getfield(p0,k), stop = v[2], length = div(n, 2))  #
-        gdown = range(getfield(p0,k), stop = v[1], length = div(n, 2))[2:end]
-        push!(arrs, [gup; gdown])
+    if center_on_p0
+        for (k,v) in so
+            gup   = range(getfield(p0,k), stop = v[2], length = div(n, 2))  #
+            gdown = range(getfield(p0,k), stop = v[1], length = div(n, 2))[2:end]
+            push!(arrs, [gup; gdown])
+        end
+    else
+        for (k,v) in so
+            push!(arrs, range(v[1], stop = v[2], length = n))
+        end
     end
     d = DataFrame(gridmake(arrs...), collect(keys(so)) )
     d.id = 1:nrow(d)
@@ -56,10 +62,15 @@ function p_start_grid(g::SharedArray)
             x1,M1,p1 = LandUse.run(p, estimateθ = false)
             return x1[1]
         catch
-            return missing
+            return (ρr = missing, ϕ = missing, r = missing, Lr = missing, pr =missing, Sr = missing, θu = missing, θr = missing)
         end
     end
     out
+end
+
+function clean_p_start(x)
+    d = DataFrame
+
 end
 
 function parallel_starts(npoints)
