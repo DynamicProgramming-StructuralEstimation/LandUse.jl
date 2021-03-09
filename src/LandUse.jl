@@ -37,8 +37,15 @@ module LandUse
 	# constants
 	const PEN = 100.0  # penalty for nl solver
 	user = splitdir(homedir())[end]
+	host = gethostname()
 	isflo = (user == "florian.oswald") || (user == "74097")
-	const dbpath = isflo ? joinpath(ENV["HOME"],"Dropbox","research","LandUse") : "/home/oswald/LandUseDropbox"
+	const dbpath = if isflo
+					joinpath(ENV["HOME"],"Dropbox","research","LandUse")
+				elseif (contains(host,"cnode") || contains(host,"malbec"))
+					"/home/oswald/LandUseDropbox"
+				elseif host == "scpo-floswald"
+					"/home/floswald/LandUseDropbox"	
+				end				
 	const dbplots = joinpath(dbpath,"output","model","plots")
 	const dbdataplots = joinpath(dbpath,"output","data","plots")
 	const dbtables = joinpath(dbpath,"output","model","tables")
