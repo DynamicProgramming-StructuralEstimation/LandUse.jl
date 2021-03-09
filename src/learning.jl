@@ -70,6 +70,7 @@ function parallel_grid(npoints,nworkers)
     # add to grid, save and return
     sg = hcat(sg,r)
     writedlm(joinpath(@__DIR__,"..","out","par_grid.txt"), sg)
+    post_slack("done on scpo-floswald with learning")
     sg
 
 end
