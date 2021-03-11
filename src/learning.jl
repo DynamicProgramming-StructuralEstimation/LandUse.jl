@@ -1,3 +1,5 @@
+
+
 function make_grid_df(p0::Param,n; center_on_p0 = false)
     so = search_over()
     arrs = []
@@ -82,9 +84,10 @@ function parallel_starts(npoints)
     r = DataFrame(p_start_grid(sg))
 
     # add to grid, save and return
-    CSV.write(joinpath(@__DIR__,"..","out","par_starts.csv"), r)
+    sgr = [DataFrame(sg) r]
+    CSV.write(joinpath(@__DIR__,"..","out","par_starts.csv"), sgr)
     post_slack("done on $(gethostname()) with learning")
-    (sg,r)
+    sgr
 
 end
 
@@ -111,6 +114,8 @@ function shared_grid(x::DataFrame)
     a = hcat(a, fill(NaN,size(a)[1]))
     SharedArray{Float64,2}(a)
 end
+
+
 
 # get all reachable starting points from x0
 # given our current starting value in startval(p) - which is constant - 
