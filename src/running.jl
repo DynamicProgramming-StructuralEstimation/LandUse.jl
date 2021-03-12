@@ -15,7 +15,8 @@ run Single region model for all time periods
 function run(p::Param; estimateθ = false)
 
 	setperiod!(p,1)
-	x0 = startval(p)
+	# x0 = startval(p)
+	x0 = nearstart(p)
 
 	# m = Region(p)
 	# x = jm(p,m,x0)

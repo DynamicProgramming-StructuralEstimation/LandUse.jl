@@ -43,5 +43,12 @@ function stmodel(p::Param)
 	(ρr = ρ, ϕ = ϕ/10, r = r, Lr = Lr, pr = pr, Sr = Sr, θu = p.θu, θr = p.θr)
 
 end
+startnames() = (:ρr , :ϕ, :r , :Lr , :pr , :Sr, :θu, :θr )
 
 startval(p::Param) = stmodel(p)
+
+"you just had a failed start at p"
+function nearstart(p::Param)
+	x = p2x(p)
+	(; zip(startnames(), [p.Chain(x)...,1.0,1.0])...)
+end

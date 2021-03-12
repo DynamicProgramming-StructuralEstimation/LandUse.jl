@@ -33,6 +33,9 @@ module LandUse
 	using ProgressMeter
 	using Distributed
 	using DelimitedFiles
+	using BSON
+	using Flux
+	# import NNlib
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
