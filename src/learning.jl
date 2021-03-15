@@ -97,7 +97,7 @@ function parallel_obj(npoints)
     sg = SharedArray{Float64,2}(grid_arr(Param(),npoints))
 
     # run in parallel
-    r = peval_grid(sg)
+    r = p_obj_grid(sg)
 
     # add to grid, save and return
     sg = hcat(sg,r)
