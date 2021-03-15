@@ -260,7 +260,7 @@ function runestim(;steps = 1000)
 
         *best candidate*: 
         ```
-        $(x2dict(best100))
+        $(x2dict(best))
         ```
 
         *best moments*:
@@ -283,7 +283,7 @@ function runestim(;steps = 1000)
 
         *best candidate*: 
         ```
-        $(x2dict(best100))
+        $(x2dict(best))
         ```
         """
     end
