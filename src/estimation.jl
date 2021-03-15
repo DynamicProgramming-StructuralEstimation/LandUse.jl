@@ -126,7 +126,7 @@ function objective(x; moments = false, plot = false)
         # get data moments
         ta = targets(p)
         ta[:rural_empl].model = copy(d1.rural_emp_model)
-        ta[:rural_empl].weights = ones(nrow(d1)) * 0.001
+        ta[:rural_empl].weights = ones(nrow(d1)) * 0.01
 
         # m = 0.0
         # m += sum(ta[:rural_empl].weights .* (ta[:rural_empl].data .- ta[:rural_empl].model).^2)
@@ -135,7 +135,7 @@ function objective(x; moments = false, plot = false)
         ta[:avg_density_fall][!,:weights] .= 100.0
 
         ta[:city_area][!,:model] .= d1.cityarea[i2015]
-        ta[:city_area][!,:weights] .= 100000.0
+        ta[:city_area][!,:weights] .= 10000.0
 
         ta[:max_mode_increase][!,:model] .= maximum(d1.imode ./ d1.imode[1])
         ta[:max_mode_increase][!,:weights] .= 0.5
