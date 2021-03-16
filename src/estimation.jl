@@ -135,7 +135,7 @@ function objective(x; moments = false, plot = false)
         ta[:avg_density_fall][!,:weights] .= 100.0
 
         ta[:city_area][!,:model] .= d1.cityarea[i2015]
-        ta[:city_area][!,:weights] .= 10000.0
+        ta[:city_area][!,:weights] .= 50000.0
 
         ta[:max_mode_increase][!,:model] .= maximum(d1.imode ./ d1.imode[1])
         ta[:max_mode_increase][!,:weights] .= 0.5
