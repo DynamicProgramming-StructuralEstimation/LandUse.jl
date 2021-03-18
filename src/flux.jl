@@ -8,6 +8,7 @@ module fl
     using MLDataUtils: splitobs, shuffleobs
     using CUDA
     using Flux.Losses
+    using BSON
 
 
     @kwdef mutable struct Args
@@ -26,8 +27,8 @@ module fl
         # loading Data
         # (params, observations )
         # (7 , 16000)
-        input = readdlm("input.txt")'
-        output = readdlm("output.txt")'
+        input = readdlm(joinpath(@__DIR__,"..","out","input.txt"))'
+        output = readdlm(joinpath(@__DIR__,"..","out","output.txt"))'
 
         # Normalise the data
         x = (input .- mean(input, dims = 2)) ./ std(input, dims = 2)
@@ -123,6 +124,7 @@ module fl
                 println("  test_loss = $test_loss")
             end
         end
+        @save joinpath(@__DIR__,"..","out","mymodel.bson") model
         return model
     end
 
