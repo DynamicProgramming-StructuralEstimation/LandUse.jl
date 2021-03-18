@@ -132,21 +132,21 @@ function i0()
 	tau = 0.1:0.1:1.0
 	eta2 = 0.0:0.01:1.0
 	cbars = 0.0:0.01:1.5
-	ctaus = 0.0:0.01:4.0
+	ctaus = 0.0:0.01:5.0
 	psis = 0.1:0.01:1.0
 	p1 = Param()
 
 	# mp = @manipulate for est in OrderedDict("from data θ" => 1, "estimate θ" => 2, "from estimation θ" => 3),
-	mp = @manipulate for it in slider(1:length(p1.T), value = length(p1.T), label = "period"),
-					ϕx in slider(0.05:0.05:1.0, value = 1.0, label = "ϕ1x"),
-					cbar in slider(cbars, value = p1.cbar, label = "cbar"),
-					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
-					gamma in slider(psis, value = p1.γ, label = "gamma"),
-					cτ in slider(ctaus, value = p1.a, label = "cτ"),
-					es in slider(0.0:0.1:10.0, value = p1.ϵs	, label = "ϵs"),
-					etam in slider(eta, value = p1.ηm, label = "ηm"),
-					etal in slider(eta2, value = p1.ηl, label = "ηl"),
-					etaw in slider(eta2, value = p1.ηw, label = "ηw")
+	mp = @manipulate for it in slider(1:length(p1.T), value = length(p1.T), label = "period") |> onchange,
+					ϕx in slider(0.05:0.05:1.0, value = 1.0, label = "ϕ1x") |> onchange,
+					cbar in slider(cbars, value = p1.cbar, label = "cbar") |> onchange,
+					sbar in slider(cbars, value = p1.sbar, label = "sbar") |> onchange,
+					gamma in slider(psis, value = p1.γ, label = "gamma") |> onchange,
+					cτ in slider(ctaus, value = p1.a, label = "cτ") |> onchange,
+					es in slider(0.0:0.1:10.0, value = p1.ϵs	, label = "ϵs") |> onchange,
+					etam in slider(eta, value = p1.ηm, label = "ηm") |> onchange,
+					etal in slider(eta2, value = p1.ηl, label = "ηl") |> onchange,
+					etaw in slider(eta2, value = p1.ηw, label = "ηw") |> onchange
 
 					p0 = LandUse.Param(par = Dict(:ηm => etam, :ηl => etal, :ηw => etaw,
 											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es, :ϵs => es,

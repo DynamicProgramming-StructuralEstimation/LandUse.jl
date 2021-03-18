@@ -19,7 +19,7 @@ module LandUse
 	using CSV
 	using SmoothingSplines
 	using LaTeXTabulars
-	using QuantEcon: smooth
+	using QuantEcon: smooth, gridmake
 	using JuMP
 	using Ipopt
 	using Interpolations: interpolate, Gridded, Linear
@@ -29,12 +29,26 @@ module LandUse
 	using Serialization
 	using Dates
 	using LsqFit
+	using SharedArrays
+	using ProgressMeter
+	using Distributed
+	using DelimitedFiles
+	using BSON
+	using Flux
+	# import NNlib
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
 	user = splitdir(homedir())[end]
+	host = gethostname()
 	isflo = (user == "florian.oswald") || (user == "74097")
-	const dbpath = isflo ? joinpath(ENV["HOME"],"Dropbox","research","LandUse") : "/home/oswald/LandUseDropbox"
+	const dbpath = if isflo
+					joinpath(ENV["HOME"],"Dropbox","research","LandUse")
+				elseif (contains(host,"cnode") || contains(host,"malbec"))
+					"/home/oswald/LandUseDropbox"
+				elseif host == "scpo-floswald"
+					"/home/floswald/LandUseDropbox"	
+				end				
 	const dbplots = joinpath(dbpath,"output","model","plots")
 	const dbdataplots = joinpath(dbpath,"output","data","plots")
 	const dbtables = joinpath(dbpath,"output","model","tables")
@@ -58,6 +72,7 @@ module LandUse
 	include("interact.jl")
 	include("jump.jl")
 	include("estimation.jl")
+	include("learning.jl")
 
 	cpslides(name) = cp(joinpath(@__DIR__,"..","tex","slides","COT_slides.pdf"),
 	                   joinpath(dbpath,"slides","flo-slides","COT_slides-$name.pdf"),

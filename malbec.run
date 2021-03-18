@@ -6,4 +6,4 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 
-julia --project=. -e "using LandUse; LandUse.runestim()"
+julia --project=. -e "using LandUse, Flux; LandUse.runestim()"

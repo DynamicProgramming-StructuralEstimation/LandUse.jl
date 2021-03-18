@@ -91,6 +91,14 @@ function x2dict(x)
     di
 end
 
+search_over() = OrderedDict(zip([:cbar,:sbar,:ηl , :ηw, :ηm, :ϵs, :cτ], [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 4.5)]))
+# search_over() = OrderedDict(zip([:cbar], [(0.7, 0.88)]))
+symrange(x,pad,n) = range(x-pad, stop = x+pad, length = n)
+
+
+
+
+
 function p2x(p::Param)
     [ p.cbar,  p.sbar, p.ηl, p.ηw, p.ηm, p.ϵs, p.cτ ]
 end
@@ -118,7 +126,7 @@ function objective(x; moments = false, plot = false)
         # get data moments
         ta = targets(p)
         ta[:rural_empl].model = copy(d1.rural_emp_model)
-        ta[:rural_empl].weights = ones(nrow(d1)) * 0.001
+        ta[:rural_empl].weights = ones(nrow(d1)) * 0.01
 
         # m = 0.0
         # m += sum(ta[:rural_empl].weights .* (ta[:rural_empl].data .- ta[:rural_empl].model).^2)
@@ -127,7 +135,7 @@ function objective(x; moments = false, plot = false)
         ta[:avg_density_fall][!,:weights] .= 100.0
 
         ta[:city_area][!,:model] .= d1.cityarea[i2015]
-        ta[:city_area][!,:weights] .= 100000.0
+        ta[:city_area][!,:weights] .= 50000.0
 
         ta[:max_mode_increase][!,:model] .= maximum(d1.imode ./ d1.imode[1])
         ta[:max_mode_increase][!,:weights] .= 0.5
@@ -187,7 +195,7 @@ function objective(x; moments = false, plot = false)
     end
 end
 
-bb_bounds() = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 4.5)]
+bb_bounds() = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 5.0)]
 
 function runestim(;steps = 1000)
     # check slack
@@ -252,7 +260,7 @@ function runestim(;steps = 1000)
 
         *best candidate*: 
         ```
-        $(x2dict(best100))
+        $(x2dict(best))
         ```
 
         *best moments*:
@@ -275,7 +283,7 @@ function runestim(;steps = 1000)
 
         *best candidate*: 
         ```
-        $(x2dict(best100))
+        $(x2dict(best))
         ```
         """
     end

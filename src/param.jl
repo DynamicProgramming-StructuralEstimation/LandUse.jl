@@ -59,6 +59,9 @@ mutable struct Param
 	moments :: DataFrame
 	thetas :: DataFrame
 
+	# neural network of starting values
+	Chain :: Flux.Chain
+
 	function Param(;par=Dict(),use_estimatedθ = false)
         f = open(joinpath(dirname(@__FILE__),"params.json"))
         j = JSON.parse(f)
@@ -186,6 +189,8 @@ mutable struct Param
 		# this.ew = (-1)/(1+this.ηm)
 		# this.el = (this.ηm + this.ηl)/(1+this.ηm)
 		# as ηm goes to infinity the transport cost goes to 2 ζ w l
+
+		this.Chain = BSON.load(joinpath(@__DIR__,"..","out","mymodel.bson"))[:x]
 
 
     	return this

@@ -15,7 +15,8 @@ run Single region model for all time periods
 function run(p::Param; estimateθ = false)
 
 	setperiod!(p,1)
-	x0 = startval(p)
+	# x0 = startval(p)
+	x0 = nearstart(p)
 
 	# m = Region(p)
 	# x = jm(p,m,x0)
@@ -31,6 +32,40 @@ function run(p::Param; estimateθ = false)
 		setperiod!(p,it)
 		m = Region(p)
 		x = jm(p,m,sols[it], estimateθ = estimateθ)
+		push!(sols,x)
+		if it == 1
+			p.ϕ1 = x.ϕ * p.ϕ1x
+		end
+		update!(m,p,[x...])
+
+		push!(M,m)
+		if it == 1
+			# adjust relative price in data to first period solution
+			px = x.pr / p.moments[1,:P_rural]
+			# transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
+		end
+
+	end
+
+	(sols[2:end],M,p) # solutions, models, and parameter
+
+end
+
+
+"""
+run Single region model for all time periods
+"""
+function run(x0::NamedTuple, p::Param)
+
+	sols = NamedTuple[]
+	push!(sols,x0)
+	M = Region[]
+
+	for it in 1:length(p.T)
+		# println(it)
+		setperiod!(p,it)
+		m = Region(p)
+		x = jm(p,m,sols[it])
 		push!(sols,x)
 		if it == 1
 			p.ϕ1 = x.ϕ * p.ϕ1x
