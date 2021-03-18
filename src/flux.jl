@@ -124,7 +124,7 @@ module fl
                 println("  test_loss = $test_loss")
             end
         end
-        @save joinpath(@__DIR__,"..","out","mymodel.bson") model
+        BSON.@save joinpath(@__DIR__,"..","out","mymodel.bson") model
         return model
     end
 
