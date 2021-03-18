@@ -67,7 +67,7 @@ module fl
 
     function build_model()
         return Chain(
-                Dense(7,8, relu),
+                Dense(6,8, relu),
                 Dense(8,8, relu),
                 Dense(8,7, relu),
                 Dense(7,6))
