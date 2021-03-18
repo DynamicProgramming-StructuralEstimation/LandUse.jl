@@ -79,12 +79,15 @@ function parallel_starts(npoints)
     
     # create shared Array
     sg = SharedArray{Float64,2}(grid_arr(Param(),npoints))
+    writedlm(joinpath(@__DIR__,"..","out","input.txt"), sg)
 
     # run in parallel
-    r = DataFrame(p_start_grid(sg))
+    r = p_start_grid(sg)
+    writedlm(joinpath(@__DIR__,"..","out","output.txt"), r)
+
 
     # add to grid, save and return
-    sgr = [DataFrame(sg) r]
+    sgr = [DataFrame(sg) DataFrame(r)]
     CSV.write(joinpath(@__DIR__,"..","out","par_starts.csv"), sgr)
     post_slack("done on $(gethostname()) with learning")
     sgr

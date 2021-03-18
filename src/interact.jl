@@ -143,7 +143,7 @@ function i0()
 					sbar in slider(cbars, value = p1.sbar, label = "sbar") |> onchange,
 					gamma in slider(psis, value = p1.γ, label = "gamma") |> onchange,
 					cτ in slider(ctaus, value = p1.a, label = "cτ") |> onchange,
-					es in slider(0.0:0.1:10.0, value = p1.ϵs	, label = "ϵs") |> onchange,
+					es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
 					etam in slider(eta, value = p1.ηm, label = "ηm") |> onchange,
 					etal in slider(eta2, value = p1.ηl, label = "ηl") |> onchange,
 					etaw in slider(eta2, value = p1.ηw, label = "ηw") |> onchange
