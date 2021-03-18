@@ -96,7 +96,7 @@ function make_input_output()
     dropmissing!(sgr)
     a = Array(sgr)
     input = a[:,1:length(search_over())]
-    output = a[:,(length(search_over())+1):size(a,2)]
+    output = a[:,(length(search_over())+1):(size(a,2)-2)]
     writedlm(joinpath(@__DIR__,"..","out","input.txt"), input)
     writedlm(joinpath(@__DIR__,"..","out","output.txt"), output)
 end
