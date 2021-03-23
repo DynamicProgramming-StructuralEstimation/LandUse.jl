@@ -81,14 +81,24 @@ function parallel_starts(npoints)
     sg = SharedArray{Float64,2}(grid_arr(Param(),npoints))
 
     # run in parallel
-    r = DataFrame(p_start_grid(sg))
+    r = p_start_grid(sg)
 
     # add to grid, save and return
-    sgr = [DataFrame(sg) r]
+    sgr = [DataFrame(sg) DataFrame(r)]
     CSV.write(joinpath(@__DIR__,"..","out","par_starts.csv"), sgr)
     post_slack("done on $(gethostname()) with learning")
     sgr
 
+end
+
+function make_input_output()
+    sgr = CSV.read(joinpath(@__DIR__,"..","out","par_starts.csv"), DataFrame)
+    dropmissing!(sgr)
+    a = Array(sgr)
+    input = a[:,1:length(search_over())]
+    output = a[:,(length(search_over())+1):(size(a,2)-2)]
+    writedlm(joinpath(@__DIR__,"..","out","input.txt"), input)
+    writedlm(joinpath(@__DIR__,"..","out","output.txt"), output)
 end
 
 function parallel_obj(npoints)

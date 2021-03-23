@@ -84,14 +84,12 @@ function x2dict(x)
     :ηl => x[3],
     :ηw => x[4],
     :ηm => x[5],
-    :ϵs => x[6],
-    :ϵsmax => x[6],
-    :cτ => x[7],
+    :cτ => x[6],
     :ϕ1x => 0.15)
     di
 end
 
-search_over() = OrderedDict(zip([:cbar,:sbar,:ηl , :ηw, :ηm, :ϵs, :cτ], [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 4.5)]))
+search_over() = OrderedDict(zip([:cbar,:sbar,:ηl , :ηw, :ηm, :cτ], [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (3.5, 4.5)]))
 # search_over() = OrderedDict(zip([:cbar], [(0.7, 0.88)]))
 symrange(x,pad,n) = range(x-pad, stop = x+pad, length = n)
 
@@ -100,7 +98,7 @@ symrange(x,pad,n) = range(x-pad, stop = x+pad, length = n)
 
 
 function p2x(p::Param)
-    [ p.cbar,  p.sbar, p.ηl, p.ηw, p.ηm, p.ϵs, p.cτ ]
+    [ p.cbar,  p.sbar, p.ηl, p.ηw, p.ηm, p.cτ ]
 end
 
 """
@@ -195,7 +193,7 @@ function objective(x; moments = false, plot = false)
     end
 end
 
-bb_bounds() = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 5.0)]
+# bb_bounds() = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 5.0)]
 
 function runestim(;steps = 1000)
     # check slack
@@ -207,7 +205,7 @@ function runestim(;steps = 1000)
 
     if steps > 500
         halfstep = floor(steps/2)
-        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = halfstep)
+        optctrl = bbsetup(objective ; SearchRange = collect(values(search_over())),MaxSteps = halfstep)
         res100 = bboptimize(optctrl)
         best100  = best_candidate(res100)
         println("Best candidate after $halfstep steps: ", best100)
@@ -237,7 +235,7 @@ function runestim(;steps = 1000)
         serialize(fh, (optctrlb, res2))
         close(fh)
     else
-        optctrl = bbsetup(objective ; SearchRange = bb_bounds(),MaxSteps = steps)
+        optctrl = bbsetup(objective ; SearchRange = collect(values(search_over())),MaxSteps = steps)
         res100 = bboptimize(optctrl)
         best  = best_candidate(res100)
         println("Best candidate after $steps steps: ", best)

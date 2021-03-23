@@ -15,8 +15,8 @@ run Single region model for all time periods
 function run(p::Param; estimateθ = false)
 
 	setperiod!(p,1)
-	# x0 = startval(p)
-	x0 = nearstart(p)
+	x0 = startval(p)
+	# x0 = nearstart(p)
 
 	# m = Region(p)
 	# x = jm(p,m,x0)
@@ -148,6 +148,10 @@ end
 function plot1cs(it)
 	x,M,p = run(Param())
 	cs_plots(M[it],p,it)
+end
+function plotboth(it)
+	x,M,p = run(Param())
+	both_plots(M,p,it)
 end
 function export_thetas()
 	x,M,p = runm()

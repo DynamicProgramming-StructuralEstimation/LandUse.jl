@@ -190,7 +190,7 @@ mutable struct Param
 		# this.el = (this.ηm + this.ηl)/(1+this.ηm)
 		# as ηm goes to infinity the transport cost goes to 2 ζ w l
 
-		this.Chain = BSON.load(joinpath(@__DIR__,"..","out","mymodel.bson"))[:x]
+		this.Chain = BSON.load(joinpath(@__DIR__,"..","out","mymodel.bson"))[:model]
 
 
     	return this

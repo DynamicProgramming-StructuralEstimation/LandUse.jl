@@ -108,12 +108,12 @@
 		"symbol" : "\\epsilon_r"
 	},
 	"ϵs" : {
-		"value" : 4.3,
-		"description" : "Current Slope Coeff in Elasticity Function",
+		"value" : 2.0,
+		"description" : "H Supply Elasticity Function in Center",
 		"symbol" : "\\epsilon_s"
 	},
 	"ϵsmax" : {
-		"value" : 4.3,
+		"value" : 2.0,
 		"description" : "Maximal Slope Coeff in Elasticity Function",
 		"symbol" : "\\epsilon_s^*"
 	},

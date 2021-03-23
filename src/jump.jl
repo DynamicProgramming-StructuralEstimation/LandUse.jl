@@ -49,7 +49,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 
 	# expressions indexed at location l
 	@NLexpression(m, nodes[i = 1:p.int_nodes], ϕ / 2 + ϕ / 2 * mo.inodes[i] )
-	@NLexpression(m, ϵ[i = 1:p.int_nodes], p.ϵr * exp(-p.ϵs * (ϕ-nodes[i])))
+	@NLexpression(m, ϵ[i = 1:p.int_nodes], p.ϵr * nodes[i] / ϕ + p.ϵs * (ϕ - nodes[i])/ϕ)
 	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * wu0^(p.tauw) * nodes[i]^(p.taul) )
 	@NLexpression(m, w[i = 1:p.int_nodes], wu0 - τ[i] )
 	# @warn "hard coding abs() for q function" maxlog=1
