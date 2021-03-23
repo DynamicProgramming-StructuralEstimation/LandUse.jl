@@ -45,7 +45,7 @@ function targets(p::Param)
     # from average city over time
     m[:avg_density_fall] = DataFrame(moment = "avg_density_fall", data = 7.9, model = 0.0)
     m[:city_area] = DataFrame(moment = "city_area",data = 0.18, model = 0.0)
-    m[:max_mode_increase] =  DataFrame(moment = "max_mode_increase", data = 7.0, model = 0.0)
+    m[:max_mode_increase] =  DataFrame(moment = "max_mode_increase", data = 5.0, model = 0.0)
 
     # average city spatial moments in 2020
     # m[:density_9010_2020] =  DataFrame(moment = "density_gradient_2020", data = 6.0 , model = 0.0)   # 1st tenth is 6 times denser than last 10-th
@@ -104,7 +104,7 @@ end
 """
 moment objective function for an optimizer
 """
-function objective(x; moments = false, plot = false)
+function objective(x; moments = false, plot = false, save = false)
     # unpack X
     di = x2dict(x)
 
@@ -130,7 +130,7 @@ function objective(x; moments = false, plot = false)
         # m += sum(ta[:rural_empl].weights .* (ta[:rural_empl].data .- ta[:rural_empl].model).^2)
 
         ta[:avg_density_fall][!,:model] .= d1.citydensity[1] / d1.citydensity[i2020]
-        ta[:avg_density_fall][!,:weights] .= 100.0
+        ta[:avg_density_fall][!,:weights] .= 0.0
 
         ta[:city_area][!,:model] .= d1.cityarea[i2015]
         ta[:city_area][!,:weights] .= 50000.0
@@ -177,7 +177,9 @@ function objective(x; moments = false, plot = false)
         if moments
             if plot
                 po = both_plots(M1,p1,i2020)
-                savefig(po, joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf"))
+                if save 
+                    savefig(po, joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf")) 
+                end
                 return (sum(da.weights .* (da.data .- da.model).^2) , da, po)
             else
                 return (sum(da.weights .* (da.data .- da.model).^2) , da)
