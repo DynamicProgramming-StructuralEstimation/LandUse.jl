@@ -22,7 +22,7 @@ function both_plots(M::Vector{Region},p::Param,i::Int)
 	po = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
 			pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
 			pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
-			pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
+			pc[:ϵ] , pc[:D], pc[:mode] , pc[:H],
 			layout = (4,4),size = (1200,800))
 	po
 end
@@ -76,7 +76,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")         , ylims = (-0.1 , 15)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")     , ylims = (-0.1 , 10)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")         , ylims = (0.5  , 5.5) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
-		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, ylab = "mode (log scale)", annotations = (m.ϕ*0.2 , 0.5*maximum(md) , "Elasticity: $(round(spela[1],digits=2))"))
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, annotations = (m.ϕ*0.2 , 0.5*maximum(md) , "Elasticity: $(round(spela[1],digits=2))"))
 	else
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
 		d[:D] = Plots.scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
@@ -85,7 +85,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
-		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, ylab = "mode (log scale)", annotations = (m.ϕ*0.2 , 0.5*maximum(md) , "Elasticity: $(round(spela[1],digits=2))"))
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10,annotations = (m.ϕ*0.2 , 0.5*maximum(md) , "Elasticity: $(round(spela[1],digits=2))"))
 
 	end
 	d
@@ -108,7 +108,6 @@ function ts_plots(M,p::Param;fixy = false)
 	rg = ["red" "green"]
 	brg = ["blue" "red" "green"]
 
-
 	t1900 = findmin(abs.(collect(p.T) .- 1900))[2]
 	h1900 = df[t1900,:h]
 	hend = df[end,:h]
@@ -116,7 +115,6 @@ function ts_plots(M,p::Param;fixy = false)
 			   linewidth = 2, title = "Spending Shares",
 			   ylims = (0.0,0.83), marker = mmark, legend = :right, color = brg,
 			   annotations = ([p.T[t1900],p.T.stop],[h1900-0.1, hend-0.1],["$(round(h1900,digits = 3))","$(round(hend,digits = 3))"]))
-
 
     # dd[:spending_data] = plot!(dd[:spending], p.moments.year, p.moments[!,[:SpendingShare_Housing, :SpendingShare_Urban,:SpendingShare_Rural]], color = brg)
 
@@ -275,13 +273,8 @@ function ts_plots(M,p::Param;fixy = false)
 					 # linewidth = 2, title = "commute time", leg = :topleft, labels = reshape(labs,1,3) )
 					 linewidth = 2, title = "ctime increase", leg = :topleft, marker = mmark)
 
-
-    # to time vs distancne in 2005
-	cdistances = [log(M[11].nodes[i]) for i in 1:p.int_nodes]
-	cspeed     = [log(mode(M[11].nodes[i],p)) for i in 1:p.int_nodes]
-	dd[:dist_vs_time] = plot(cdistances,cspeed,title = "2005",
-	               xlab = "dist",ylab = "speed",ylims = (-5,-1),
-				   xlims = (-10,-4),leg=false)
+	# distribution of modes chosen in each year to get a view of how many people choose which mode in which year
+	md = [[mode(i,p) for i in range(0,M[j].ϕ,length = 100)] for j in 1:length(M)]
 
 	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
 	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))

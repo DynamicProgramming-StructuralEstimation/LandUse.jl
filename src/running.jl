@@ -149,6 +149,10 @@ function plot1cs(it)
 	x,M,p = run(Param())
 	cs_plots(M[it],p,it)
 end
+function plotboth(it)
+	x,M,p = run(Param())
+	both_plots(M,p,it)
+end
 function export_thetas()
 	x,M,p = runm()
 	latex_param()
