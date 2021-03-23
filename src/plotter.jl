@@ -31,6 +31,7 @@ end
 function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 
 	lvec = collect(range(0.,m.ϕ,length=100))  # space for region ik
+	lvec0 = collect(range(0.001,m.ϕ,length=100))  # space for region ik
 	setperiod!(p,it)  # set time on parameter!
 	ti = p.T[it]  # acutal year for printing
 	d = Dict()
@@ -40,7 +41,8 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 	Dd = [D(i,p,m) for i in lvec]
 	Hd = [H(i,p,m) for i in lvec]
 	ρd = [ρ(i,p,m) for i in lvec]
-	qd = [q(i,p,m) for i in lvec]
+	qd = [q(i,p,m) for i in lvec]	
+	md = [mode(i,p) for i in lvec0]
 
 	# get ratio first over last point
 	ϵg = round(ϵd[1]/ϵd[end],digits =1)
@@ -57,6 +59,10 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 	gradient,emod = expmodel(1:p.int_bins, ndensities)
 	MSE = round(1000 * mse(emod),digits = 3)
 
+	# get elasticity of speed wrt distance
+	# it's a straight line
+	spela = diff(log.(md[[1,end]])) ./ diff(log.(lvec0[[1,end]]))
+
 	if fixy
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))") , ylims = (2    , 4.1) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))                   
 
@@ -70,6 +76,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")         , ylims = (-0.1 , 15)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")     , ylims = (-0.1 , 10)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")         , ylims = (0.5  , 5.5) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, ylab = "mode (log scale)", annotations = (m.ϕ*0.2 , 0.5*maximum(md) , "Elasticity: $(round(spela[1],digits=2))"))
 	else
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
 		d[:D] = Plots.scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
@@ -78,6 +85,8 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, ylab = "mode (log scale)", annotations = (m.ϕ*0.2 , 0.5*maximum(md) , "Elasticity: $(round(spela[1],digits=2))"))
+
 	end
 	d
 end
