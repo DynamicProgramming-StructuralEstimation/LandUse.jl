@@ -14,7 +14,7 @@ module fl
     @kwdef mutable struct Args
         η::Float64 = 3e-4       # learning rate
         batchsize::Int = 256    # batch size
-        epochs::Int = 100        # number of epochs
+        epochs::Int = 1000        # number of epochs
         use_cuda::Bool = true   # use gpu (if cuda available)
         train_prop::Float64 = 0.7     # proportion of data to use for trainging
         nin::Int = 7
@@ -65,12 +65,12 @@ module fl
 
     end
 
-    function build_model()
+    function build_model(din,dout)
         return Chain(
-                Dense(6,8, relu),
+                Dense(din,8, relu),
                 Dense(8,8, relu),
                 Dense(8,7, relu),
-                Dense(7,6))
+                Dense(7,dout))
     end
 
     function loss_function(data_loader, model, device)
@@ -99,9 +99,10 @@ module fl
 
         # Create test and train dataloaders
         train_loader, test_loader = getdata(args)
+        dsizes = size.(train_loader.data)
 
         # Construct model
-        model = build_model() |> device
+        model = build_model(dsizes[1][1],dsizes[2][1]) |> device
         ps = Flux.params(model) # model's trainable parameters
         
         ## Optimizer
