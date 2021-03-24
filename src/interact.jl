@@ -125,9 +125,48 @@ function i22()
     end
 end
 
+function iobj()
+	eta = 0.5:0.01:2.0
+	tau = 0.1:0.1:1.0
+	eta2 = 0.0:0.01:1.0
+	cbars = 0.0:0.01:1.5
+	ctaus = 0.0:0.01:5.0
+	psis = 0.1:0.01:1.0
+	p1 = Param()
+
+	# mp = @manipulate for est in OrderedDict("from data θ" => 1, "estimate θ" => 2, "from estimation θ" => 3),
+	mp = @manipulate for it in slider(1:length(p1.T), value = length(p1.T), label = "period") |> onchange,
+					cbar in slider(cbars, value = p1.cbar, label = "cbar") |> onchange,
+					sbar in slider(cbars, value = p1.sbar, label = "sbar") |> onchange,
+					gamma in slider(psis, value = p1.γ, label = "gamma") |> onchange,
+					cτ in slider(ctaus, value = p1.a, label = "cτ") |> onchange,
+					es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
+					etam in slider(eta, value = p1.ηm, label = "ηm") |> onchange,
+					etal in slider(eta2, value = p1.ηl, label = "ηl") |> onchange,
+					etaw in slider(eta2, value = p1.ηw, label = "ηw") |> onchange
+
+					p0 = LandUse.Param(par = Dict(:ηm => etam, :ηl => etal, :ηw => etaw,
+											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es, :ϵs => es,
+											  :ϕ1x => 0.15),
+									   use_estimatedθ = false)
+
+					o = objective(p2x(p0), moments = true, plot = true)
+
+					o[3]
+
+					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
+					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
+
+	end
+	@layout! mp vbox(hbox(:it, :ϕx),
+	                 hbox(:sbar, :cbar,:gamma,:es),
+	                 hbox(:cτ, :etam, :etal, :etaw),
+					 observe(_))
+	w = Window()
+	body!(w,mp)
+end
 
 function i0()
-	gfac = 1.00:0.05:2.0
 	eta = 0.5:0.01:2.0
 	tau = 0.1:0.1:1.0
 	eta2 = 0.0:0.01:1.0

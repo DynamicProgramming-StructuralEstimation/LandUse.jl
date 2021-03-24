@@ -16,9 +16,9 @@ function plot_dens_years(M::Vector{Region},p::Param)
 	x
 end
 
-function both_plots(M::Vector{Region},p::Param,i::Int)
+function both_plots(M::Vector{Region},p::Param,i::Int; objvalue = nothing)
 	pl = LandUse.ts_plots(M,p,fixy = false)
-	pc = LandUse.cs_plots(M[i], p, i)
+	pc = LandUse.cs_plots(M[i], p, i, objvalue = objvalue)
 	po = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
 			pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
 			pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
@@ -28,7 +28,7 @@ function both_plots(M::Vector{Region},p::Param,i::Int)
 end
 
 "single spatial cross sections region"
-function cs_plots(m::Region,p::Param,it::Int; fixy = false)
+function cs_plots(m::Region,p::Param,it::Int; fixy = false, objvalue = nothing)
 
 	lvec = collect(range(0.,m.ϕ,length=100))  # space for region ik
 	lvec0 = collect(range(0.001,m.ϕ,length=100))  # space for region ik
@@ -63,6 +63,13 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 	# it's a straight line
 	spela = diff(log.(md[[1,end]])) ./ diff(log.(lvec0[[1,end]]))
 
+	if isnothing(objvalue)
+		manno = (m.ϕ*0.2 , 0.5*maximum(md) , "Elasticity: $(round(spela[1],digits=2))")
+	else
+		manno = ([m.ϕ*0.2,m.ϕ*0.2 ] , [0.5*maximum(md),0.3*maximum(md)] , ["Elasticity: $(round(spela[1],digits=2))", "Objective: $(round(objvalue,digits = 2))"])
+	end
+
+
 	if fixy
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))") , ylims = (2    , 4.1) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))                   
 
@@ -70,13 +77,12 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 		plot!(d[:D],1:p.int_bins, x -> gradient[1] .* exp.(gradient[2] * x), linewidth = 2, xlab = "distance", 
 		            annotations = ([p.int_bins*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
 
-
 		# d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")         , ylims = (-3   , 60)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d1090)"]))
 		# vline!(d[:D],[m.ϕ10, m.ϕ90], color = :red,leg = false)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")         , ylims = (-0.1 , 15)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")     , ylims = (-0.1 , 10)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")         , ylims = (0.5  , 5.5) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
-		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, annotations = (m.ϕ*0.2 , 0.5*maximum(md) , "Elasticity: $(round(spela[1],digits=2))"))
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, annotations = manno)
 	else
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
 		d[:D] = Plots.scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
@@ -85,8 +91,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
-		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10,annotations = (m.ϕ*0.2 , 0.5*maximum(md) , "Elasticity: $(round(spela[1],digits=2))"))
-
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, annotations = manno)
 	end
 	d
 end
@@ -101,6 +106,8 @@ function ts_plots(M,p::Param;fixy = false)
 		 select(:year, :h, :u , :r)
 	ds = stack(df, Not(:year))
 
+
+
 	# marker
 	mmark = (:circle, 4)
 
@@ -109,6 +116,10 @@ function ts_plots(M,p::Param;fixy = false)
 	brg = ["blue" "red" "green"]
 
 	t1900 = findmin(abs.(collect(p.T) .- 1900))[2]
+	i2015 = argmin( abs.(p.moments.year .- 2015) )
+	i2010 = argmin( abs.(p.moments.year .- 2010) )
+	i1870 = argmin( abs.(p.moments.year .- 1870) )
+
 	h1900 = df[t1900,:h]
 	hend = df[end,:h]
 	dd[:spending] = @df ds plot(:year,:value, group = :variable,
@@ -218,7 +229,7 @@ function ts_plots(M,p::Param;fixy = false)
 	incphi = round(d.cityarea[end] / d.cityarea[1],digits = 1)
 
 	dd[:phi] = @df d plot(:year, :cityarea,
-					 linewidth = 2, title = "City Area", color = "black",
+					 linewidth = 2, title = "City Area. 2015=$(round(d.cityarea[i2015],digits=2))", color = "black",
 					 leg = fixy ? :topleft : false, marker = mmark, annotate = (p.T[end],0.2*maximum(d.cityarea),"$(round(incphi,digits=1))x"),
 					 ylims = fixy ? (0.0,0.15) : false)
     dd[:Sr] = @df d plot(:year, :Sr,
@@ -243,8 +254,8 @@ function ts_plots(M,p::Param;fixy = false)
 					 leg = :topright, ylims = fixy ? (0,300) : false)
 
 
-    incdens = df4.avgd[1] / df4.avgd[end]
-    diffdens = df4.avgd[1] - df4.avgd[end]
+    incdens = df4.avgd[i1870] / df4.avgd[i2010]
+    diffdens = df4.avgd[i1870] - df4.avgd[i2010]
 	ancdens = df4.avgd[end] + 0.2 * diffdens
 	dd[:avdensity] = @df ds5 plot(:year, :avgd,
 					 linewidth = 2, title = "Avg Density", marker = mmark,

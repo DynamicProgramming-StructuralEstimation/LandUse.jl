@@ -23,3 +23,10 @@ readENTD <- function(reload = FALSE){
     return(l)
 }
 
+writeENTD <- function(){
+    x = readENTD()
+    fwrite(x$famdemo,file = file.path(entddir(),"ENTD2008-famdemo.csv"))
+    fwrite(x$inddemo,file = file.path(entddir(),"ENTD2008-inddemo.csv"))
+    fwrite(x$work,file = file.path(entddir(),"ENTD2008-work.csv"))
+}
+

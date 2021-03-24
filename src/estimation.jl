@@ -83,13 +83,13 @@ function x2dict(x)
     :sbar => x[2],
     :ηl => x[3],
     :ηw => x[4],
-    :ηm => x[5],
-    :cτ => x[6],
+    # :ηm => x[5],
+    :cτ => x[5],
     :ϕ1x => 0.15)
     di
 end
 
-search_over() = OrderedDict(zip([:cbar,:sbar,:ηl , :ηw, :ηm, :cτ], [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (3.5, 4.5)]))
+search_over() = OrderedDict(zip([:cbar,:sbar,:ηl , :ηw, :cτ], [(0.7, 0.9),(0.2, 0.26), (0.08,0.15), (0.45, 0.55), (2.0, 3.0)]))
 # search_over() = OrderedDict(zip([:cbar], [(0.7, 0.88)]))
 symrange(x,pad,n) = range(x-pad, stop = x+pad, length = n)
 
@@ -98,7 +98,7 @@ symrange(x,pad,n) = range(x-pad, stop = x+pad, length = n)
 
 
 function p2x(p::Param)
-    [ p.cbar,  p.sbar, p.ηl, p.ηw, p.ηm, p.cτ ]
+    [ p.cbar,  p.sbar, p.ηl, p.ηw, p.cτ ]
 end
 
 """
@@ -136,7 +136,7 @@ function objective(x; moments = false, plot = false, save = false)
         ta[:city_area][!,:weights] .= 50000.0
 
         ta[:max_mode_increase][!,:model] .= maximum(d1.imode ./ d1.imode[1])
-        ta[:max_mode_increase][!,:weights] .= 0.5
+        ta[:max_mode_increase][!,:weights] .= 5.0
 
         # ta[:density_gradient_2020][!,:model] .= M1[i2020].iDensity_q10 / M1[i2020].iDensity_q90
         # ta[:density_gradient_2020][!,:weights] .= 1.0
@@ -147,9 +147,9 @@ function objective(x; moments = false, plot = false, save = false)
         MSE = round(1000 * mse(emod),digits = 3)
 
         ta[:density_decay_coef][!,:model] .= gradient[2]
-        ta[:density_decay_coef][!,:weights] .= 3.0
+        ta[:density_decay_coef][!,:weights] .= 0.0
         ta[:density_decay_MSE][!,:model] .= MSE
-        ta[:density_decay_MSE][!,:weights] .= 5.0
+        ta[:density_decay_MSE][!,:weights] .= 0.0
     
         # housing spending Shares
         ta[:housing_share_1900][!,:model] .= d1[i1900,:Ch] / d1[i1900,:C]
@@ -175,14 +175,15 @@ function objective(x; moments = false, plot = false, save = false)
         # append!(da, ta[:pop_vs_density_2015])
 
         if moments
+            vv = sum(da.weights .* (da.data .- da.model).^2)
             if plot
-                po = both_plots(M1,p1,i2020)
+                po = both_plots(M1,p1,i2020, objvalue = vv)
                 if save 
                     savefig(po, joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf")) 
                 end
-                return (sum(da.weights .* (da.data .- da.model).^2) , da, po)
+                return (vv , da, po)
             else
-                return (sum(da.weights .* (da.data .- da.model).^2) , da)
+                return (vv , da)
             end
         else
             return sum(da.weights .* (da.data .- da.model).^2)
@@ -194,8 +195,6 @@ function objective(x; moments = false, plot = false, save = false)
         return Inf
     end
 end
-
-# bb_bounds() = [(0.7, 0.9),(0.1, 0.26), (0.0,0.5), (0.0, 0.5), (0.9, 2.0), (4.0, 8.0), (3.5, 5.0)]
 
 function runestim(;steps = 1000)
     # check slack

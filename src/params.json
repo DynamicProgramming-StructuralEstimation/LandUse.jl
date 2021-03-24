@@ -28,22 +28,22 @@
 		"symbol" : "\\eta"
 	},
 	"cτ" : {
-		"value" : 2.53,
+		"value" : 2.15,
 		"description" : "Commuting Costs Base Parameter",
 		"symbol" : "c_\\tau"
 	},
 	"ηm" : {
-		"value" : 1.01,
+		"value" : 1.0,
 		"description" : "elasticity of F commuting cost wrt mode",
 		"symbol" : "\\eta_m"
 	},
 	"ηl" : {
-		"value" : 0.35,
+		"value" : 0.12,
 		"description" : "elasticity of F commuting cost wrt location",
 		"symbol" : "\\eta_l"
 	},
 	"ηw" : {
-		"value" : 0.65,
+		"value" : 0.5,
 		"description" : "elasticity of F commuting cost wrt location",
 		"symbol" : "\\eta_w"
 	},

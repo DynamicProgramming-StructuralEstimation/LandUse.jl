@@ -75,7 +75,7 @@ function clean_p_start(x)
 
 end
 
-function parallel_starts(npoints)
+function parallel_starts(; npoints = 7)
     
     # create shared Array
     sg = SharedArray{Float64,2}(grid_arr(Param(),npoints))
@@ -101,7 +101,12 @@ function make_input_output()
     writedlm(joinpath(@__DIR__,"..","out","output.txt"), output)
 end
 
-function parallel_obj(npoints)
+function prep_learning(; npoints = 7)
+    x = parallel_starts(npoints = npoints)
+    make_input_output()
+end
+
+function parallel_obj(; npoints = 7)
     
     # create shared Array
     sg = SharedArray{Float64,2}(grid_arr(Param(),npoints))
