@@ -28,7 +28,7 @@
 		"symbol" : "\\eta"
 	},
 	"cτ" : {
-		"value" : 2.15,
+		"value" : 2.13739,
 		"description" : "Commuting Costs Base Parameter",
 		"symbol" : "c_\\tau"
 	},
@@ -38,12 +38,12 @@
 		"symbol" : "\\eta_m"
 	},
 	"ηl" : {
-		"value" : 0.12,
+		"value" : 0.09794212,
 		"description" : "elasticity of F commuting cost wrt location",
 		"symbol" : "\\eta_l"
 	},
 	"ηw" : {
-		"value" : 0.5,
+		"value" : 0.496665,
 		"description" : "elasticity of F commuting cost wrt location",
 		"symbol" : "\\eta_w"
 	},
@@ -53,12 +53,12 @@
 		"symbol" : "\\nu"
 	},
 	"cbar" : {
-		"value" : 0.86,
+		"value" : 0.777075,
 		"description" : "Rural Consumption Good Subsistence Level",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.26,
+		"value" : 0.247941,
 		"description" : "Initial Urban Good Endowment",
 		"symbol" : "\\underline{s}"
 	},

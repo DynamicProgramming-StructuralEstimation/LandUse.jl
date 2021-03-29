@@ -111,6 +111,7 @@ function objective(x; moments = false, plot = false, save = false)
     p = Param(par = di, use_estimatedθ = false)
     try
         # find index of year 2020
+        i1870 = argmin( abs.(p.moments.year .- 1870) )
         i1900 = argmin( abs.(p.moments.year .- 1900) )
         i2020 = argmin( abs.(p.moments.year .- 2020) )
         i2015 = argmin( abs.(p.moments.year .- 2015) )
@@ -129,7 +130,7 @@ function objective(x; moments = false, plot = false, save = false)
         # m = 0.0
         # m += sum(ta[:rural_empl].weights .* (ta[:rural_empl].data .- ta[:rural_empl].model).^2)
 
-        ta[:avg_density_fall][!,:model] .= d1.citydensity[1] / d1.citydensity[i2020]
+        ta[:avg_density_fall][!,:model] .= d1.citydensity[i1870] / d1.citydensity[i2015]
         ta[:avg_density_fall][!,:weights] .= 0.0
 
         ta[:city_area][!,:model] .= d1.cityarea[i2015]
@@ -250,7 +251,7 @@ function runestim(;steps = 1000)
     end
     
     try 
-        x,m,pl = objective(best, moments = true, plot = true)
+        x,m,pl = objective(best, moments = true, plot = true, save = true)
         txt = """
         [LandUse.jl] Estimation finished on $(gethostname()) after $steps steps:
 
@@ -269,8 +270,9 @@ function runestim(;steps = 1000)
         """
 
         println(txt)
-        post_slack(txt)
         post_file_slack(joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf"))
+        post_slack(txt)
+
         return res100
     catch
         println("final eval of objective failed")
