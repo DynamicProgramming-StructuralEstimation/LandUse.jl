@@ -27,6 +27,10 @@ mutable struct Param
 	tauw     :: Float64   # exponent on wu (equation 5 in commutingtech)
 	taul     :: Float64   # exponent on l (equation 5 in commutingtech)
 
+	# speed thresholds
+	speed_thresholds :: Vector{Float64}
+	nspeeds :: Int
+
 	α     :: Float64 # labor weight on farm sector production function
 	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
 	L     :: Float64 # total population
@@ -155,6 +159,7 @@ mutable struct Param
         else
 			# this.τ0t = [this.τ0t[1] ; Float64[growθ(this.τ0t[1], [this.τ0_g for i in 2:it]) for it in 2:T]]
 		end
+		this.nspeeds = length(this.speed_thresholds) + 1
 
 		this.θu = this.θut[1]
 		this.θr = this.θrt[1]
@@ -170,9 +175,10 @@ mutable struct Param
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
         end
 
-		if this.ηm < 0 error("ηm < 0 violated") end
+		if this.ηm < 0 error("ηm > 0 violated") end
 		if this.ζ > 1.0 || this.ζ < 0.0 error("ζ ∈ (0,1) violated") end
 		if this.ηl > 1.0 || this.ηl < 0.0 error("ηl ∈ (0,1) violated") end
+		if !issorted(this.speed_thresholds) error("speed thresholds must be increasing") end
 		# derived parameters
 		this.a = this.cτ
 		# this.a = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))

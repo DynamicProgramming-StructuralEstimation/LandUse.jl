@@ -172,5 +172,9 @@
 		"value" : true,
 		"description" : "trace solver or not",
 		"type" : "numerical"
+	},
+	"speed_thresholds" : {
+		"value" : [0.25, 0.41],
+		"description" : "commuting speed thresholds"
 	}
 }

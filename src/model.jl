@@ -44,6 +44,7 @@ mutable struct Region <: Model
 	cityarea    :: Float64   # area of the city
 	citydensity    :: Float64   # average density of the city
 	ϕbreaks :: StepRangeLen  # bins of distance
+	speedbreaks :: Vector{Float64}  # breaks of speed
 	ϕmids :: Vector{Float64}  # 
 	xsr  :: Float64  # excess subsistence rural worker
 	U    :: Float64  # common utility level
@@ -71,6 +72,7 @@ mutable struct Region <: Model
 	nodes_10    :: Vector{Float64}  
 	nodes_90    :: Vector{Float64}  
 	nodes_bins  :: Matrix{Float64}  # (nbins, int_nodes)
+	nodes_speeds  :: Matrix{Float64}
 
 	# resulting integrals from [0,ϕ]
 	icu_input :: Float64   # ∫ cu_input(l) dl
@@ -87,6 +89,7 @@ mutable struct Region <: Model
 	iDensity_q10  :: Float64   # ∫ D(l) 2π dl for l ∈ [0,q10]
 	iDensity_q90  :: Float64   # ∫ D(l) 2π dl for l ∈ [q10,q90]
 	iDensities  :: Vector{Float64}   # ∫ D(l) 2π dl for l ∈ bins(ϕ)
+	iDensitySpeeds  :: Vector{Float64}   # ∫ D(l) 2π dl for l ∈ {(0,walk),(walk,bus), (bus,ϕ)}
 
 	function Region(p::Param)
 		# creates a model fill with NaN
@@ -120,6 +123,7 @@ mutable struct Region <: Model
 		m.cityarea    = NaN
 		m.citydensity = NaN
 		m.ϕbreaks       = range(0,stop = 1, length = p.int_bins+1)
+		m.speedbreaks   = zeros(p.nspeeds + 1)  # [0, lofmode(0.25), lofmode(0.41), ϕ]
 		m.ϕmids         = zeros(p.int_bins)
 		m.xsr         = NaN
 		m.θu          = p.θu
@@ -134,13 +138,16 @@ mutable struct Region <: Model
 		m.nodes_center = zeros(p.int_nodes)
 		m.nodes_10 = zeros(p.int_nodes)
 		m.nodes_90 = zeros(p.int_nodes)
+		m.nodes_90 = zeros(p.int_nodes)
 		m.nodes_bins = zeros(p.int_bins,p.int_nodes)
+		m.nodes_speeds = zeros(p.nspeeds,p.int_nodes)
 		m.icu_input = NaN
 		m.iDensity  = NaN
-		m.iDensity_center  = NaN
-		m.iDensity_q10        = NaN
-		m.iDensity_q90        = NaN
-		m.iDensities        = fill(NaN,p.int_bins)
+		m.iDensity_center = NaN
+		m.iDensity_q10    = NaN
+		m.iDensity_q90    = NaN
+		m.iDensities      = fill(NaN,p.int_bins)
+		m.iDensitySpeeds  = zeros(p.nspeeds)
 		m.icu       = NaN
 		m.iτ        = NaN
 		m.iq        = NaN
@@ -217,6 +224,20 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 	m.ϕbreaks = range(0.0, stop = m.ϕ, length = p.int_bins+1)
 	m.ϕmids = midpoints(collect(m.ϕbreaks))
 
+	m.speedbreaks = [0.0]
+	for i in p.speed_thresholds
+		xspeed = lofmode(i,p)
+		if xspeed < m.ϕ
+			push!(m.speedbreaks, xspeed)
+		else
+			push!(m.speedbreaks, m.ϕ)
+			break
+		end
+		if i == p.speed_thresholds[end]
+			push!(m.speedbreaks, m.ϕ)
+		end
+	end
+
 
 
 	# update equations
@@ -265,6 +286,10 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 		m.nodes_bins[ib,:] .= (m.ϕbreaks[ib] + m.ϕbreaks[ib+1]) / 2 .+ ((m.ϕbreaks[ib+1] - m.ϕbreaks[ib]) / 2 .* m.inodes)
 	end
 
+	for ib in 1:(length(m.speedbreaks)-1)
+		m.nodes_speeds[ib,:] .= (m.speedbreaks[ib] + m.speedbreaks[ib+1]) / 2 .+ ((m.speedbreaks[ib+1] - m.speedbreaks[ib]) / 2 .* m.inodes)
+	end
+	
 	integrate!(m,p)
 	# m.d0   = D(p.ϕ1,p,m)
 	m.d0   = m.iDensity_center
@@ -318,11 +343,21 @@ function integrate!(m::Region,p::Param)
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
+	# integrate density by bin
 	allrings = diff(m.ϕbreaks .^2 .* π)
 	for ib in 1:p.int_bins
 		@views nb = m.nodes_bins[ib,:]
 		m.iDensities[ib] = ((m.ϕbreaks[ib+1] - m.ϕbreaks[ib]) / 2) * sum(m.iweights[i] * 2π * nb[i] * D(nb[i],p,m) for i in 1:p.int_nodes)[1] / allrings[ib]
 	end
+
+	# integrate density by speed bin
+	speedrings = diff(m.speedbreaks .^2 .* π)
+	for ib in 1:length(speedrings)
+		@views nb = m.nodes_speeds[ib,:]
+		m.iDensitySpeeds[ib] = ((m.speedbreaks[ib+1] - m.speedbreaks[ib]) / 2) * sum(m.iweights[i] * 2π * nb[i] * D(nb[i],p,m) for i in 1:p.int_nodes)[1] # / speedrings[ib]
+	end
+
+
 
 	# averages
 	m.qbar      = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
@@ -393,6 +428,7 @@ end
 
 
 mode(l::Float64,p::Param) = ((2*p.ζ)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm)) * (p.θu)^((1 - p.ηw)/(1+p.ηm))
+lofmode(m::Float64, p::Param) = ((2*p.ζ)/p.cτ)^(-1/(1-p.ηl)) * m^((1+p.ηm) / (1-p.ηl)) * (p.θu)^(-(1 - p.ηw)/(1-p.ηl))
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 

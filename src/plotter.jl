@@ -285,7 +285,10 @@ function ts_plots(M,p::Param;fixy = false)
 					 linewidth = 2, title = "ctime increase", leg = :topleft, marker = mmark)
 
 	# distribution of modes chosen in each year to get a view of how many people choose which mode in which year
-	md = [[mode(i,p) for i in range(0,M[j].ϕ,length = 100)] for j in 1:length(M)]
+	z = select(d, :iDensity, :iDensitySpeeds , :year, [:iDensity, :iDensitySpeeds] => ((a,b) -> b ./ a) => :SpeedShares)
+	z = hcat(select(d,:year), DataFrame(hcat(Array(select(z, :SpeedShares))...)',[:walk, :bus, :car]))
+	sy = stack(z, Not(:year))
+	dd[:speedshares] = @df sy groupedbar(:year, :value, group = :variable)
 
 	# plot(pl,pl2,pl3,pl4,pl5, layout = (1,5),size = (700,250))
 	# plot(pl2,pl6,pl4,pl7 ,layout = (1,4),size = (900,250))
