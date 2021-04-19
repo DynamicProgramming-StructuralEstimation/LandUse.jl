@@ -133,7 +133,7 @@ measure_cities <- function(overwrite = FALSE, cutoff = 30){
     return(list(OL,L))
 }
 
-dist_from_center <- function(overwrite = FALSE, ndists = 50){
+dist_from_center <- function(overwrite = FALSE, ndists = 51){
 
     if (overwrite) {
         # read cut out city list
