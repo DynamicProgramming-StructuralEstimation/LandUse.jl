@@ -138,6 +138,16 @@ function k1()
 	x,C,p = impl_plot_slopes(C)
 end
 
+function k3()
+	x,C,p = runk(par = Dict(:K => 3,:kshare => [0.25,0.25,0.5], :factors => [1.0,1.005,1.05]))
+	# x,C,p = runk(par = Dict(:K => 3,:kshare => [0.333,0.333,0.333], :factors => [1.0,1.005,1.05]))
+	x,C,p = impl_plot_slopes(C)
+	d = dataframes(C)
+	gd = groupby(d,:region)
+	dd = combine(gd, :cityarea => (x -> x ./ x[1]) => :narea, :year, :Lu => (x -> x ./x[1]) => :npop, :cityarea, :Lu)
+	dd
+end
+
 function runm()
 	run(Param())
 end

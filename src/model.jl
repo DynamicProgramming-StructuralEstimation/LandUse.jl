@@ -343,7 +343,7 @@ function integrate!(m::Region,p::Param)
 	m.iy        = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * w(m.Lu,m.nodes[i],m.ϕ,p) * D(m.nodes[i],p,m) for i in 1:p.int_nodes)[1]
 	m.ihexp     = (m.ϕ/2) * sum(m.iweights[i] * two_π_l[i] * (q(m.nodes[i],p,m) * h(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
-	# integrate density by bin
+	# integrate density by distance bin
 	allrings = diff(m.ϕbreaks .^2 .* π)
 	for ib in 1:p.int_bins
 		@views nb = m.nodes_bins[ib,:]
