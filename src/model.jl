@@ -204,7 +204,7 @@ area(m::Model) = cityarea(m) + m.Sr + m.Srh
 
 update a single region a parameter vector at choices `x`.
 """
-function update!(m::Region,p::Param,x::Vector{Float64})
+function update!(m::Region,p::Param,x::Vector{Float64}; Lu...)
 	# println(x)
 	m.ρr    = x[1]
 	m.ϕ    = x[2]
@@ -241,7 +241,11 @@ function update!(m::Region,p::Param,x::Vector{Float64})
 
 
 	# update equations
-	m.Lu   = p.L - m.Lr   # employment in urban sector
+	if length(Lu) == 0
+		m.Lu   = p.L - m.Lr   # employment in urban sector
+	else
+		m.Lu = Lu[1]
+	end
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
 	m.wr   = m.wu0 - τ(m.ϕ,p)
 	# m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)

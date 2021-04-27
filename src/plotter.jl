@@ -16,7 +16,7 @@ function plot_dens_years(M::Vector{Region},p::Param)
 	x
 end
 
-function both_plots(M::Vector{Region},p::Param,i::Int; objvalue = nothing)
+function dashboard(M::Vector{Region},p::Param,i::Int; objvalue = nothing)
 	pl = LandUse.ts_plots(M,p,fixy = false)
 	pc = LandUse.cs_plots(M[i], p, i, objvalue = objvalue)
 	po = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
@@ -25,6 +25,19 @@ function both_plots(M::Vector{Region},p::Param,i::Int; objvalue = nothing)
 			pc[:ϵ] , pc[:D], pc[:mode] , pc[:H],
 			layout = (4,4),size = (1200,800))
 	po
+end
+
+function dashboard(C::Vector{Country},it::Int)
+	K = C[1].K
+	pl = Any[]
+
+	for ik in 1:K
+		cs = cs_plots(C[it].R[ik],C[it].pp[ik], it)
+		ts = ts_plots([C[ij].R[ik] for ij in eachindex(C[1].T)],C[it].pp[ik])
+		push!(pl, ts[:densities], ts[:speedshares], cs[:D])
+	end
+	plot(pl..., layout = (3,K),size = (900,700))
+
 end
 
 "single spatial cross sections region"
@@ -105,8 +118,6 @@ function ts_plots(M,p::Param;fixy = false)
 		 transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
 		 select(:year, :h, :u , :r)
 	ds = stack(df, Not(:year))
-
-
 
 	# marker
 	mmark = (:circle, 4)
@@ -361,6 +372,7 @@ function plot_ts(C::Vector{Country})
 	plts
 end
 
+
 function impl_plot_slopes(C::Vector{Country})
 	d = dataframe(C)
 	d.larea = log.(d.cityarea)
@@ -381,7 +393,8 @@ function impl_plot_slopes(C::Vector{Country})
 					# ylims = (-3.8,-2.7),
 					# xlims = K == 3 ? (-1.5,-0.8) : (-1.0,-0.5),
 					)
-	pl3 = @df d plot(:Lu, :cityarea, group = :region, xlab = "Lu", ylab = "area",m = :circle)
+	totarea = combine(filter(row -> row.year .== 2010, d), :cityarea => sum)[1,1]
+	pl3 = @df d plot(:Lu, :cityarea, group = :region, xlab = "Lu", ylab = "area",m = :circle, series_annotation = Plots.text.(:year, 8, :right),title = "Total Urban area: $(round(totarea,digits=2))")
 	pl4 = @df d plot(:Lu, :citydensity, group = :region, xlab = "Lu", ylab = "density",m = :circle, series_annotation = Plots.text.(:year, 8, :right))
 	(pl2,pl3,pl4)
 end

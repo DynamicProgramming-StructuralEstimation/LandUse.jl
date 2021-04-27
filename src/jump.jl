@@ -259,7 +259,18 @@ function jc(C::Country,x0::Vector)
 			out[3 + ik] = value(Sr[ik])
 			out[3 + K + ik] = value(Lu[ik])
 		end
-		return out
+		return (out,value.(ϕ))
+
+		# 		names = [:LS,:r,:pr, 
+		# 		[Symbol("Sr_$ik") for ik in 1:K]..., 
+		# 		[Symbol("Lu_$ik") for ik in 1:K]...,
+		# 		[Symbol("ϕ_$ik") for ik in 1:K]...]
+		# values = [value(LS),value(r), value(pr),
+		# 		 [value(Sr[ik])  for ik in 1:K]..., 
+		# 		 [value(Lu[ik])  for ik in 1:K]...,
+		# 		 [value(ϕ[ik]) for ik in 1:K]...]
+
+		# (; zip(names, values)...)  # return as named tuple
 	else
 		println(termination_status(m))
 		for ik in 1:K
