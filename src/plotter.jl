@@ -22,7 +22,7 @@ function both_plots(M::Vector{Region},p::Param,i::Int; objvalue = nothing)
 	po = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
 			pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
 			pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
-			pc[:ϵ] , pc[:D], pc[:mode] , pc[:H],
+			pc[:ϵ] , pc[:D], pc[:mode] , pl[:speedshares],
 			layout = (4,4),size = (1200,800))
 	po
 end

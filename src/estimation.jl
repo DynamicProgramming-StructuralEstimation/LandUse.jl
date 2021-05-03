@@ -101,6 +101,8 @@ function p2x(p::Param)
     [ p.cbar,  p.sbar, p.ηl, p.ηw, p.cτ ]
 end
 
+objective1() = objective(p2x(Param()), moments = true, plot = true)
+
 """
 moment objective function for an optimizer
 """
