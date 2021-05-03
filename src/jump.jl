@@ -36,7 +36,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	# nonlinear expressions
 
 	@NLexpression(m, wu0, θu * (p.L - Lr)^p.η)
-	@NLexpression(m, wr , p.Ψ * (wu0 - p.a * (wu0^(p.tauw)) * (ϕ^(p.taul))) )
+	@NLexpression(m, wr , p.Ψ * (wu0 - p.a * (wu0^(p.ξw)) * (ϕ^(p.ξl))) )
 	@NLexpression(m, qr , ((1+p.ϵr) * ρr)^(1.0/(1+p.ϵr)) )
 	@NLexpression(m, r_pr_csbar, r - pr * p.cbar + p.sbar )
 	@NLexpression(m, xsr, wr + r_pr_csbar )
@@ -50,7 +50,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	# expressions indexed at location l
 	@NLexpression(m, nodes[i = 1:p.int_nodes], ϕ / 2 + ϕ / 2 * mo.inodes[i] )
 	@NLexpression(m, ϵ[i = 1:p.int_nodes], p.ϵr * nodes[i] / ϕ + p.ϵs * (ϕ - nodes[i])/ϕ)
-	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * wu0^(p.tauw) * nodes[i]^(p.taul) )
+	@NLexpression(m, τ[i = 1:p.int_nodes], p.a * wu0^(p.ξw) * nodes[i]^(p.ξl) )
 	@NLexpression(m, w[i = 1:p.int_nodes], wu0 - τ[i] )
 	# @warn "hard coding abs() for q function" maxlog=1
 	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
@@ -206,13 +206,13 @@ function jc(C::Country,x0::Vector)
 	# indexed by only k
 	@NLexpression(m, Lr[ik = 1:K], LS * Sr[ik])  # rural pop from labor to land share LS
 	@NLexpression(m, Srh[ik = 1:K], Lr[ik] * hr / Hr )   # housing space for rural pop
-	@NLexpression(m, ϕ[ik = 1:K], ( (pp[ik].θu - wr) / (p.a * pp[ik].θu^(p.tauw)) )^(1.0/p.taul))  # fringe for each region from inverse moving cost function
+	@NLexpression(m, ϕ[ik = 1:K], ( (pp[ik].θu - wr) / (p.a * pp[ik].θu^(p.ξw)) )^(1.0/p.ξl))  # fringe for each region from inverse moving cost function
 
 
 	# expressions indexed at location l in each k
 	@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] )
 	@NLexpression(m, ϵ[i = 1:p.int_nodes, ik = 1:K], p.ϵr * exp(-p.ϵs * (ϕ[ik]-nodes[i,ik])))
-	@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], p.a * pp[ik].θu^(p.tauw) * nodes[i,ik]^(p.taul) )
+	@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], p.a * pp[ik].θu^(p.ξw) * nodes[i,ik]^(p.ξl) )
 	@NLexpression(m, w[i = 1:p.int_nodes,ik = 1:K], pp[ik].θu - τ[i,ik] )
 	# @warn "hard coding abs() for q function" maxlog=1
 	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))

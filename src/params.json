@@ -27,25 +27,25 @@
 		"description" : "Agglomeration Forces",
 		"symbol" : "\\eta"
 	},
-	"cτ" : {
+	"a" : {
 		"value" : 2.13739,
 		"description" : "Commuting Costs Base Parameter",
-		"symbol" : "c_\\tau"
+		"symbol" : "a"
 	},
 	"ηm" : {
 		"value" : 1.0,
 		"description" : "elasticity of F commuting cost wrt mode",
 		"symbol" : "\\eta_m"
 	},
-	"ηl" : {
-		"value" : 0.09794212,
+	"ξl" : {
+		"value" : 0.55,
 		"description" : "elasticity of F commuting cost wrt location",
-		"symbol" : "\\eta_l"
+		"symbol" : "\\xi_l"
 	},
-	"ηw" : {
-		"value" : 0.496665,
-		"description" : "elasticity of F commuting cost wrt location",
-		"symbol" : "\\eta_w"
+	"ξw" : {
+		"value" : 0.75,
+		"description" : "elasticity of F commuting cost wrt wage",
+		"symbol" : "\\xi_w"
 	},
 	"ν" : {
 		"value" : 0.025,
@@ -111,11 +111,6 @@
 		"value" : 2.0,
 		"description" : "H Supply Elasticity Function in Center",
 		"symbol" : "\\epsilon_s"
-	},
-	"ϵsmax" : {
-		"value" : 2.0,
-		"description" : "Maximal Slope Coeff in Elasticity Function",
-		"symbol" : "\\epsilon_s^*"
 	},
 	"nsteps" : {
 		"value" : 2,

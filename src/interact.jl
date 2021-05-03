@@ -1,130 +1,4 @@
 
-
-
-
-
-
-
-
-
-
-
-function iccost()
-	sbs = 0.0:0.05:0.5
-	cbs = 0.0:0.05:0.8
-	sis = 0.1:0.1:0.99
-	θus = 1.0:0.05:1.3
-	θrs = 1.0:0.05:1.3
-	esl = 0.0:10:100.0
-	eps = 0.0:0.1:6.0
-	t1s = 0.5:0.1:1.0
-	zetas = 0.0:0.1:0.5
-
-	p = Param()
-	@manipulate for sb in slider(sbs, label = "sbar", value = p.sbar),
-					cb in slider(cbs, label = "cbar", value = p.cbar),
-					# sig in slider(sis, label = "σ", value = p.σ),
-					# # agg in slider(ags, label = "agg_g", value = p.θagg_g),
-					# θug in slider(θus, label = "θu_g", value = p.θu_g),
-					# esl in slider(esl, label = "ϵ-slope", value = p.ϵsmax),
-					# epl in slider(eps, label = "ϵ", value = p.ϵr),
-					# θrg in slider(θrs, label = "θr_g", value = p.θr_g),
-					t1 in slider(t1s, label = "τ1", value = 0.9),
-					# t1 in slider(range(0.99,0.99,length = 1)),
-					zeta in slider(zetas, label = "ζ", value = p.ζ)
-					# zeta in slider(range(0.1,0.1,length = 1))
-			# t1 = 0.99
-			x,M,p = try
-				run(Region,
-				             # Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
-							 #                  :sbar => sb, :cbar => cb, :σ => sig)))
-							 Param(par = Dict(:ζ => zeta, :τ1 => t1, :sbar => sb, :cbar => cb)))
-
-
-			catch
-				# println("error with ζ = $zeta, τ1 = $t1")
-				(0,0,0)
-			end
-
-		if isa(M,Vector)
-		   	dd = ts_plots(M,p)
-			plot(dd[:pop],dd[:avdensity],dd[:phi],dd[:tauphi] ,layout = (1,4),size = (900,250))
-		else
-			println("error with ζ = $zeta, τ1 = $t1")
-		end
-	end
-end
-
-"""
-https://github.com/floswald/LandUse.jl/issues/22
-"""
-function i22()
-	sbs = 0.0:0.05:0.5
-	cbs = 0.0:0.05:0.5
-	sis = 0.1:0.1:0.99
-	# ags = 0.0:0.1:1.0
-	θus = 1.0:0.05:1.3
-	θrs = 1.0:0.05:1.3
-	esl = 0.0:10:100.0
-	eps = 0.0:0.1:6.0
-	t1s = range(0.6,stop = 0.98, length = 5)
-	zetas = 0.05:0.05:0.5
-
-
-	p = Param()
-	@manipulate for θtype in Dict("Matlab θ" => 1, "Growth θ" => 2),
-		            # sb in slider(sbs, label = "sbar", value = p.sbar),
-		            # cb in slider(cbs, label = "cbar", value = p.cbar),
-		            # sig in slider(sis, label = "σ", value = p.σ),
-		            # # agg in slider(ags, label = "agg_g", value = p.θagg_g),
-		            θug in slider(θus, label = "θu_g", value = p.θu_g),
-		            # esl in slider(esl, label = "ϵ-slope", value = p.ϵsmax),
-		            # epl in slider(eps, label = "ϵ", value = p.ϵr),
-		            θrg in slider(θrs, label = "θr_g", value = p.θr_g),
-		            t1 in slider(t1s, label = "τ1", value = 0.98),
-		            # t1 in slider(range(0.99,0.99,length = 1)),
-		            zeta in slider(zetas, label = "ζ", value = p.ζ)
-		            # zeta in slider(range(0.1,0.1,length = 1))
-
-
-		if θtype == 1
-			x,M,p = try
-				run(Region,
-				             # Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
-							 #                  :sbar => sb, :cbar => cb, :σ => sig)))
-							 Param(par = Dict(:ζ => zeta,:τ1 => t1)))
-
-
-			catch
-				println("error with ζ = $zeta, τ1 = $t1")
-				(0,0,0)
-			end
-		else
-			x,M,p = try
-	    		run(Region,
-		             # Param(par = Dict(:ζ => zeta,:τ1 => t1,:ϵs => 0.0, :ϵsmax => esl,:ϵr => epl,
-					 #                  :sbar => sb, :cbar => cb, :σ => sig,
-						# 			  :θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg)))
-						Param(par = Dict(:θut => 0.32, :θrt => 0.32, :θu_g => θug, :θr_g => θrg,:ζ => zeta,:τ1 => t1)))
-
-
-
-		    catch
-				println("error with ζ = $zeta, τ1 = $t1")
-				(0,0,0)
-
-			end
-
-        end
-		# @info "model done."
-
-		if isa(M,Vector)
-			dd = ts_plots(M,p)
-			plot(dd[:pop],dd[:avdensity],dd[:phi],dd[:tauphi] ,layout = (1,4),size = (900,250))
-		end
-    end
-end
-
 function iobj()
 	eta = 0.5:0.01:2.0
 	tau = 0.1:0.1:1.0
@@ -167,28 +41,25 @@ function iobj()
 end
 
 function i0()
-	eta = 0.5:0.01:2.0
-	tau = 0.1:0.1:1.0
-	eta2 = 0.0:0.01:1.0
+	xis = 0.0:0.01:1.0
 	cbars = 0.0:0.01:1.5
-	ctaus = 0.0:0.01:5.0
+	as = 0.0:0.01:5.0
 	psis = 0.1:0.01:1.0
 	p1 = Param()
 
 	# mp = @manipulate for est in OrderedDict("from data θ" => 1, "estimate θ" => 2, "from estimation θ" => 3),
 	mp = @manipulate for it in slider(1:length(p1.T), value = length(p1.T), label = "period") |> onchange,
-					ϕx in slider(0.05:0.05:1.0, value = 1.0, label = "ϕ1x") |> onchange,
+					ϕx in slider(0.05:0.05:1.0, value = p1.ϕ1x, label = "ϕ1x") |> onchange,
 					cbar in slider(cbars, value = p1.cbar, label = "cbar") |> onchange,
 					sbar in slider(cbars, value = p1.sbar, label = "sbar") |> onchange,
 					gamma in slider(psis, value = p1.γ, label = "gamma") |> onchange,
-					cτ in slider(ctaus, value = p1.a, label = "cτ") |> onchange,
+					a in slider(as, value = p1.a, label = "a") |> onchange,
 					es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
-					etam in slider(eta, value = p1.ηm, label = "ηm") |> onchange,
-					etal in slider(eta2, value = p1.ηl, label = "ηl") |> onchange,
-					etaw in slider(eta2, value = p1.ηw, label = "ηw") |> onchange
+					xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
+					xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange
 
-					p0 = LandUse.Param(par = Dict(:ηm => etam, :ηl => etal, :ηw => etaw,
-											  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es, :ϵs => es,
+					p0 = LandUse.Param(par = Dict(:ξl => xil, :ξw => xiw,
+											  :cbar => cbar, :sbar => sbar, :a => a, :γ => gamma, :ϵs => es,
 											  :ϕ1x => ϕx),
 									   use_estimatedθ = false)
 
@@ -196,7 +67,7 @@ function i0()
 						x,M,p = LandUse.run(p0, estimateθ = false)
 						# pl = LandUse.ts_plots(M,p0,fixy = false)
 						# pc = LandUse.cs_plots(M[it], p0, it)
-						both_plots(M,p0,it)
+						dashboard(M,p0,it)
 						# plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
 						#      pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
 						# 	 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
@@ -213,7 +84,7 @@ function i0()
 	end
 	@layout! mp vbox(hbox(:it, :ϕx),
 	                 hbox(:sbar, :cbar,:gamma,:es),
-	                 hbox(:cτ, :etam, :etal, :etaw),
+	                 hbox(:a, :xil, :xiw),
 					 observe(_))
 	w = Window()
 	body!(w,mp)
@@ -221,106 +92,41 @@ end
 
 function ik()
 	p1 = Param()
-	gfac = 1.00:0.05:2.0
-	eta = 0.5:0.01:3.0
-	tau = 0.1:0.1:1.0
-	eta2 = 0.0:0.01:1.0
+	gfac = 1.00:0.01:2.0
+	xis = 0.0:0.01:1.0
 	cbars = 0.0:0.01:1.5
-	ctaus = 0.0:0.01:6.0
+	as = 0.0:0.01:5.0
 	psis = 0.1:0.01:1.0
-	mp = @manipulate for cbar in slider(cbars, value = p1.cbar, label = "cbar"),
-					sbar in slider(cbars, value = p1.sbar, label = "sbar"),
-					gamma in slider(psis, value = p1.γ, label = "gamma"),
-					cτ in slider(ctaus, value = p1.a, label = "cτ"),
-					es in slider(0.0:0.1:10.0, value = p1.ϵs, label = "ϵs"),
-					g2 in slider(1.0:0.01:1.1, value = 1.05, label = "g2"),
-					etam in slider(eta, value = p1.ηm, label = "ηm"),
-					etal in slider(eta2, value = p1.ηl, label = "ηl"),
-					etaw in slider(eta2, value = p1.ηw, label = "ηw")
+	mp = @manipulate for it in slider(1:length(p1.T)), 
+		cbar in slider(cbars, value = p1.cbar, label = "cbar") |> onchange,
+		sbar in slider(cbars, value = p1.sbar, label = "sbar") |> onchange,
+		gamma in slider(psis, value = p1.γ, label = "gamma") |> onchange,
+		a in slider(as, value = p1.a, label = "a") |> onchange,
+		es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
+		xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
+		xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
+		g2 in slider(gfac, value = 1.01, label = "g2") |> onchange,
+		g3 in slider(gfac, value = 1.02, label = "g3") |> onchange
 
-					try
-						x,C,p = runk(par = Dict(:K => 2, :kshare => [0.5,0.5], :factors => [1.0,g2],
-						                        :ηm => etam, :ηl => etal, :ηw => etaw,
-												  :cbar => cbar, :sbar => sbar, :cτ => cτ, :γ => gamma, :ϵsmax => es))
-						x = impl_plot_slopes(C)
-						plot(x[1],x[2],x[3],
-							 layout = (1,3),size = (1200,400))
-					catch e
-						wdg = alert("Error!")
-						print(wdg())
-					end
-
-					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
-					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
-
+		try
+			x,C,p = runk(par = Dict(:K => 3, :kshare => [1/3,1/3,1/3], :factors => [1.0,g2,g3],
+									:ξl => xil, :ξw => xiw,
+									:cbar => cbar, :sbar => sbar, :a => a, :γ => gamma, :ϵs => es))
+			dashboard(C, it)
+		catch e
+			wdg = alert("Error!")
+			print(wdg())
+		end
 	end
 	@layout! mp vbox(hbox(:g2),
 	                 hbox(:sbar, :cbar,:gamma,:es),
-	                 hbox(:cτ, :etam, :etal, :etaw),
+	                 hbox(:a, :xil, :xiw),
 					 observe(_))
 	w = Window()
 	body!(w,mp)
 				 
 
 end
-
-
-function i1()
-
-	ti = 1:14
-	epsimax = 0.0:10.0
-	gfac = 1.00:0.05:1.25
-	sigmas = 0.1:0.1:0.99
-
-	@manipulate for growthtype = Dict("orig" => 1, "orig-u" => 2, "orig-r" => 3, "u-r const" => 4),
-		            time in slider(ti, value = 14, label = "time"),
-					ugrowth in slider(gfac,value = 1.24, label = "u-growthrate"),
-					rgrowth in slider(gfac,value = 1.24, label = "r-growthrate"),
-					epsim in slider(epsimax, value = 0.0, label = "ϵ-slope"),
-					sigma in slider(sigmas, value = 0.9, label = "sigma")
-
-					if growthtype == 1
-						p0 = LandUse.Param(par = Dict(:ϵsmax => epsim,:σ => sigma ))
-						x,M,p = LandUse.run(LandUse.Region,p0)
-						LandUse.plot_ts(M,p0,time)
-
-					elseif growthtype == 2
-						p0 = LandUse.Param(par = Dict(:θut => [ugrowth for i in 1:14],
-											 :ϵsmax => epsim,
-											 :σ => sigma ))
-						x,M,p = LandUse.run(LandUse.Region,p0)
-						LandUse.plot_ts(M,p0,time)
-					#
-					# elseif growthtype == 3
-					# 		p0 = LandUse.Param(par = Dict(:θrg => [rgrowth for i in 1:14],
-					# 							 :ϵsmax => epsim,
-					# 							 :σ => sigma ))
-					# 		x,M,p = LandUse.run(LandUse.Region,p0)
-					# 		LandUse.plot_ts(M,p0,time)
-					#
-					# elseif growthtype == 4
-					# 	p0 = LandUse.Param(par = Dict(:θug => [ugrowth for i in 1:14],
-					# 						 :θrg => [rgrowth for i in 1:14],
-					# 	                     :ϵsmax => epsim,
-					# 						 :σ => sigma ))
-					#     x,M,p = LandUse.run(LandUse.Region,p0)
-					# 	LandUse.plot_ts(M,p0,time)
-
-
-					# elseif growthtype == 3
-					# 	gg = (LandUse.originalθ[end] - LandUse.originalθ[1]) / 13
-					# 	g0 = LandUse.originalθ[1] .+ gg .* [i for i in 0:13]
-					# 	g = g0[2:end] ./ g0[1:end-1]
-					# 	p0 = LandUse.Param(par = Dict(:θug => [growth for i in 1:14],
-					# 						 :θrg => [growth for i in 1:14],
-					# 	                     :ϵsmax => epsim))
-					#     x,M,p = LandUse.run(p0)
-					# 	LandUse.plot_ts_xsect(M,p0,time)
-
-					end
-	end
-end
-
 
 
 function i0k()

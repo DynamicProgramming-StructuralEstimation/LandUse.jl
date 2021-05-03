@@ -2,7 +2,6 @@ mutable struct Param
 	γ     :: Float64 # housing weight
 	ϵr     :: Float64 # housing supply elasticity in rural sector
 	ϵs    :: Float64  # current slope of elasticity function
-	ϵsmax :: Float64  # max slope of elasticity function
 	nsteps :: Int  # num steps in thetau search
 	η     :: Float64 # agglomeration forces
 	ν     :: Float64 # weight of rural good consumption on consumption composite
@@ -19,13 +18,13 @@ mutable struct Param
 
 	# commuting cost setup
 	ηm     :: Float64   # speed elasticity of fixed cost
-	ηl     :: Float64   # location elasticity of fixed cost
-	ηw     :: Float64   # wage elasticity of fixed cost
+	ξl     :: Float64   # location elasticity of fixed cost
+	ηl     :: Float64   # derived location elasticity of fixed cost
+	ξw     :: Float64   # wage elasticity of fixed cost
+	ηw     :: Float64   # derived wage elasticity of fixed cost
 	cτ     :: Float64   # efficiency of transport technology
 	ζ      :: Float64   # valuation of commuting time in terms of forgone wages
 	a      :: Float64   # implied combination of above parameters
-	tauw     :: Float64   # exponent on wu (equation 5 in commutingtech)
-	taul     :: Float64   # exponent on l (equation 5 in commutingtech)
 
 	# speed thresholds
 	speed_thresholds :: Vector{Float64}
@@ -96,6 +95,7 @@ mutable struct Param
 		this.it = 1
 		this.S = 1.0  # set default values for space and population
 		this.ϕ1 = NaN
+		this.ηm = 1.0   # old formulation used this. now fixed at 1.0
 		# this.ϕ1x = 0.5
 
 
@@ -118,9 +118,6 @@ mutable struct Param
 
 		this.moments = innerjoin(this.moments, Lt, on = :year)
 
-		# bring on scale we know that works
-		# thetas.thetar .= thetas.thetar .* 0.32
-		# thetas.thetau .= thetas.thetau .* 0.32
 		# # pick out correct years
 		tt = this.thetas[ this.thetas.year .∈ Ref(this.T),  : ]
 		this.θut = tt.thetau
@@ -163,13 +160,6 @@ mutable struct Param
 
 		this.θu = this.θut[1]
 		this.θr = this.θrt[1]
-		# this.τ  = this.τ0t[1]
-
-		# set epsilon slope
-		if this.ϵs != this.ϵsmax
-			@warn "you set ϵs not equal to ϵsmax. I take ϵsmax => ϵs."
-			this.ϵs = this.ϵsmax
-		end
 
         if this.η != 0
         	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
@@ -177,14 +167,16 @@ mutable struct Param
 
 		if this.ηm < 0 error("ηm > 0 violated") end
 		if this.ζ > 1.0 || this.ζ < 0.0 error("ζ ∈ (0,1) violated") end
-		if this.ηl > 1.0 || this.ηl < 0.0 error("ηl ∈ (0,1) violated") end
+		if this.ξl > 1.0 || this.ξl < 0.0 error("ξl ∈ (0,1) violated") end
+		if this.ξw > 1.0 || this.ξw < 0.0 error("ξw ∈ (0,1) violated") end
+
 		if !issorted(this.speed_thresholds) error("speed thresholds must be increasing") end
+
 		# derived parameters
-		this.a = this.cτ
-		# this.a = ((1 + this.ηm) / this.ηm) * this.cτ^(1 / (1 + this.ηm)) * (2 * this.ζ)^((this.ηm + this.ηl) / (1 + this.ηm))
-		# this.taum = 0.571
-		this.tauw = (this.ηm + this.ηw) / (1+this.ηm)
-		this.taul = (this.ηm + this.ηl) / (1+this.ηm)
+		this.cτ = this.a
+		this.ηw = 2 * this.ξw - 1
+		this.ηl = 2 * this.ξl - 1
+
 		this.inodes, this.iweights = gausslegendre(this.int_nodes)
 
 		if (isnan(this.ϕ1x) || (this.ϕ1x <= 0)) error("invalid value for ϕ1x: $(this.ϕ1x)") end
@@ -242,9 +234,8 @@ function latex_param()
 	   getline(j["ν"]),
 	   getline(j["cbar"]),
 	   getline(j["sbar"]),
-	   getline(j["ηw"]),
-	   getline(j["ηl"]),
-	   getline(j["ηm"]),
+	   getline(j["ξw"]),
+	   getline(j["ξl"]),
 	   getline(j["cτ"]),
 	   getline(j["ζ"]),
 	   getline(j["ϵr"]),
@@ -260,7 +251,6 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      γ       : $(p.γ   )\n")
 	print(io,"      ϵr      : $(p.ϵr  )\n")
 	print(io,"      ϵs      : $(p.ϵs  )\n")
-	print(io,"      ϵsmax   : $(p.ϵsmax  )\n")
 	print(io,"      nsteps : $(p.nsteps  )\n")
 	print(io,"      η       : $(p.η   )\n")
 	print(io,"      ν       : $(p.ν   )\n")
@@ -438,20 +428,6 @@ function ϵfun_tmp(d,s,ϕ,p::Param)
 end
 
 
-
-
-function plot_ϵfun(ϵsmax;ϕ = 0.7,ϵtarget = 4)
-	p = Param(par = Dict(:ϵsmax => ϵsmax))
-	xr = range(0.0,stop = 1.0,length=200)
-	sr = range(0.0,p.ϵsmax,length = 10)
-	# y = [(d,s) -> ϵfun(d,ϕ,p) for d in xr, s in sr]
-	y = [ϵfun_tmp(d,s,ϕ,p) for d in xr, s in sr]
-
-	p = plot(xr,y, labels=reshape(["s=$i" for i in sr],1,length(sr)),title = L"\epsilon(\phi) \exp(-s (\phi - d))", xlabel = "distance to center", ylabel = "Elasticity")
-	vline!(p,[ϕ], color = :red, label = "")
-	savefig(p, joinpath(@__FILE__,"..","..","images","epsfun.pdf"))
-	p
-end
 
 
 
