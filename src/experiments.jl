@@ -5,7 +5,8 @@ run model with flat epsilon
 https://github.com/floswald/LandUse.jl/issues/59
 """
 function issue59()
-    # wts
+    p = Param()
+    p2 = Param(par = Dict(:ϵs => 0.0))
 end
 
 
