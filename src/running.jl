@@ -121,9 +121,19 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 	for it in 1:length(p.T)
 		# println(it)
 		setperiod!(p,it)
-		c = Country(p)
-		x = jc(c,sols[it])
+		c = Country(p)  # performs scaling of productivity upon creation
+		x,ϕs = jc(c,sols[it])
 		push!(sols,x)
+		if it == 1
+			for ik in 1:p.K
+				c.pp[ik].ϕ1 = ϕs[ik] * c.pp[ik].ϕ1x
+			end
+		else
+			for ik in 1:p.K
+				c.pp[ik].ϕ1 = C[1].R[ik].ϕ * c.pp[ik].ϕ1x
+			end
+		end
+
 		update!(c,x)
 
 		push!(C,c)
@@ -141,11 +151,11 @@ end
 function k3()
 	x,C,p = runk(par = Dict(:K => 3,:kshare => [0.25,0.25,0.5], :factors => [1.0,1.005,1.05]))
 	# x,C,p = runk(par = Dict(:K => 3,:kshare => [0.333,0.333,0.333], :factors => [1.0,1.005,1.05]))
-	x,C,p = impl_plot_slopes(C)
-	d = dataframes(C)
-	gd = groupby(d,:region)
-	dd = combine(gd, :cityarea => (x -> x ./ x[1]) => :narea, :year, :Lu => (x -> x ./x[1]) => :npop, :cityarea, :Lu)
-	dd
+	# x,C,p = impl_plot_slopes(C)
+	# d = dataframe(C)
+	# gd = groupby(d,:region)
+	# dd = combine(gd, :cityarea => (x -> x ./ x[1]) => :narea, :year, :Lu => (x -> x ./x[1]) => :npop, :cityarea, :Lu)
+	# dd
 end
 
 function runm()
@@ -159,9 +169,9 @@ function plot1cs(it)
 	x,M,p = run(Param())
 	cs_plots(M[it],p,it)
 end
-function plotboth(it)
+function dash(it)
 	x,M,p = run(Param())
-	both_plots(M,p,it)
+	dashboard(M,p,it)
 end
 function export_thetas()
 	x,M,p = runm()

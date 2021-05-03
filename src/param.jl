@@ -96,7 +96,7 @@ mutable struct Param
 		this.it = 1
 		this.S = 1.0  # set default values for space and population
 		this.ϕ1 = NaN
-		this.ϕ1x = 0.5
+		# this.ϕ1x = 0.5
 
 
 		# read data from disk

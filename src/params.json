@@ -176,5 +176,9 @@
 	"speed_thresholds" : {
 		"value" : [0.25, 0.41],
 		"description" : "commuting speed thresholds"
+	},
+	"ϕ1x" : {
+		"value" : 0.15,
+		"description" : "fraction of initial city that is denoted center"
 	}
 }
