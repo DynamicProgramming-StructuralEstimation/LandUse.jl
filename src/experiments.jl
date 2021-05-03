@@ -1,4 +1,14 @@
 
+"""
+run model with flat epsilon
+
+https://github.com/floswald/LandUse.jl/issues/59
+"""
+function issue59()
+    # wts
+end
+
+
 
 """
 plot ``\\phi_k`` vs ``\\L{u,k}`` for all regions ``k``.
@@ -578,6 +588,4 @@ function output_paper(;save = false)
         end
     end
     r
-
-
 end

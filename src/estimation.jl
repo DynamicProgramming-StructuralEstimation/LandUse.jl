@@ -180,7 +180,7 @@ function objective(x; moments = false, plot = false, save = false)
         if moments
             vv = sum(da.weights .* (da.data .- da.model).^2)
             if plot
-                po = both_plots(M1,p1,i2020, objvalue = vv)
+                po = dashboard(M1,p1,i2020, objvalue = vv)
                 if save 
                     savefig(po, joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf")) 
                 end
