@@ -57,6 +57,7 @@ function i0()
 					es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
 					xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
 					xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
+					psi in slider(0.0, value = p1.ξw, label = "ξw") |> onchange,
 					flat in checkbox(label = "flat ϵ?")
 
 					p0 = LandUse.Param(par = Dict(:ξl => xil, :ξw => xiw,
