@@ -4,9 +4,29 @@ run model with flat epsilon
 
 https://github.com/floswald/LandUse.jl/issues/59
 """
-function issue59()
-    p = Param()
-    p2 = Param(par = Dict(:ϵs => 0.0))
+function issue59(;save = false)
+    p1 = Param()
+    p2 = Param(par = Dict(:ϵflat => true))
+
+    x1,m1,p1 = run(p1)
+    x2,m2,p2 = run(p2)
+
+    d1 = dataframe(m1,p1); d2 = dataframe(m2,p2)
+    d1[!,:type] .= "baseline"
+    d2[!,:type] .= "flat ϵ"
+    d = vcat(d1,d2)
+
+    pl = Dict()
+    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Urban Density")
+    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area")
+    pl[:qbar] = @df d plot(:year, :qbar, group = :type, title = "Average Urban House Price")
+
+    if save 
+        for (k,v) in pl
+            savefig(v,joinpath(dbplots,"issue59-$(string(k)).pdf"))
+        end 
+    end
+    pl
 end
 
 
