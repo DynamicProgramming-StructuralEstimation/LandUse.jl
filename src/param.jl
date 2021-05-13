@@ -2,6 +2,7 @@ mutable struct Param
 	γ     :: Float64 # housing weight
 	ϵr     :: Float64 # housing supply elasticity in rural sector
 	ϵs    :: Float64  # current slope of elasticity function
+	ϵflat :: Bool  # whether impose a flat elasticity function or not
 	nsteps :: Int  # num steps in thetau search
 	η     :: Float64 # agglomeration forces
 	ν     :: Float64 # weight of rural good consumption on consumption composite
@@ -97,6 +98,7 @@ mutable struct Param
 		this.ϕ1 = NaN
 		this.ηm = 1.0   # old formulation used this. now fixed at 1.0
 		# this.ϕ1x = 0.5
+		this.ϵflat = false
 
 
 		# read data from disk
