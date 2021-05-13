@@ -57,11 +57,12 @@ function i0()
 					es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
 					xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
 					xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
+					eta in slider(0.0:0.01:0.1, value = 0.0, label = "η") |> onchange,
 					flat in checkbox(label = "flat ϵ?")
 
 					p0 = LandUse.Param(par = Dict(:ξl => xil, :ξw => xiw,
 											  :cbar => cbar, :sbar => sbar, :a => a, :γ => gamma, :ϵs => es,
-											  :ϕ1x => ϕx, :ϵflat => flat),
+											  :ϕ1x => ϕx, :ϵflat => flat, :η => eta),
 									   use_estimatedθ = false)
 
 					try
@@ -83,7 +84,7 @@ function i0()
 					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
 
 	end
-	@layout! mp vbox(hbox(:it, :ϕx , :flat),
+	@layout! mp vbox(hbox(:it, :ϕx , :flat, :eta),
 	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:a, :xil, :xiw),
 					 observe(_))

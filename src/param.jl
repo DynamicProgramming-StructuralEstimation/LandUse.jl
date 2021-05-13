@@ -163,10 +163,6 @@ mutable struct Param
 		this.θu = this.θut[1]
 		this.θr = this.θrt[1]
 
-        if this.η != 0
-        	@warn "current wage function hard coded \n to LU_CONST=$LU_CONST. Need to change for agglo effects!"
-        end
-
 		if this.ηm < 0 error("ηm > 0 violated") end
 		if this.ζ > 1.0 || this.ζ < 0.0 error("ζ ∈ (0,1) violated") end
 		if this.ξl > 1.0 || this.ξl < 0.0 error("ξl ∈ (0,1) violated") end
