@@ -37,18 +37,19 @@ https://github.com/floswald/LandUse.jl/issues/60
 """
 function issue60(;save = false)
     p1 = Param()
-    p2 = Param(par = Dict(:ψ => 0.1))
+    p2 = Param(par = Dict(:η => 0.1))
 
     x1,m1,p1 = run(p1)
     x2,m2,p2 = run(p2)
 
     d1 = dataframe(m1,p1); d2 = dataframe(m2,p2)
     d1[!,:type] .= "baseline"
-    d2[!,:type] .= "with ψ"
+    d2[!,:type] .= "η = $(p2.η)"
     d = vcat(d1,d2)
 
     pl = Dict()
     pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Urban Density")
+    pl[:cdensity] = @df d plot(:year, :d0, group = :type, title = "Central Urban Density")
     pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area")
     pl[:qbar] = @df d plot(:year, :qbar, group = :type, title = "Average Urban House Price")
 
