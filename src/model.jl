@@ -469,14 +469,8 @@ getfringe(w0::Float64,wr::Float64,p::Param) = w0 > wr ? invτ(w0 - wr,p) : 0.0
 "urban wage at location ``l``"
 wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(l,p)
 
-"urban wage at location ``l``"
-# wu(l::Float64,ϕ::Float64,p::Param) = wu0(p) .- τ(l,p)
-
 "urban wage at center"
 wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
-
-"urban wage at center"
-wu0(p::Param) = p.Ψ * p.θu
 
 "rural wage from indifference condition at ϕ. Eq (11)"
 wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(ϕ,p)
@@ -487,15 +481,8 @@ foc_Lr(L_over_S::Float64,pr::Float64, p::Param) = p.α * pr * p.θr * (p.α + (1
 "FOC of rural firm wrt land Sr"
 foc_Sr(L_over_S::Float64,pr::Float64, p::Param) = (1-p.α)* pr * p.θr * (p.α * (L_over_S)^((p.σ-1)/p.σ) + (1-p.α))^(1.0 / (p.σ-1))
 
-
-"rural wage from indifference condition at ϕ. Eq (11)"
-# wr(ϕ::Float64,p::Param) = wu0(p) .- τ(ϕ,p)
-
 "wage at location ``l``"
 w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)
-
-"wage at location ``l`` indep of Lu"
-# w(l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(ϕ,p) : wu(l,ϕ,p)
 
 "excess subsistence urban worker"
 xsu(l::Float64,p::Param,m::Model) = w(m.Lu,l,m.ϕ,p) .+ m.r .- m.pr .* p.cbar .+ p.sbar
