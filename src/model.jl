@@ -523,7 +523,7 @@ cost(l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? cfun(ϕ,p) : cfun(l,p)
 χ(l::Float64,ϕ::Float64,p::Param) = (1.0 / cost(l,ϕ,p))^ϵ(l,ϕ,p)
 
 "housing supply elasticity at ``l``"
-ϵ(l::Float64,ϕ::Float64,p::Param) = p.ϵflat ? p.ϵr : p.ϵr * l / ϕ + p.ϵs * (ϕ - l)/ϕ
+ϵ(l::Float64,ϕ::Float64,p::Param) = p.ϵr * l / ϕ + p.ϵs * (ϕ - l)/ϕ
 
 "house price function at ``l``. equation (12)"
 q(l::Float64,p::Param,m::Model) = m.qr * (xsu(l,p,m) / m.xsr).^(1.0/p.γ)
