@@ -210,7 +210,9 @@ function jc(C::Country,x0::Vector)
 	# indexed by only k
 	@NLexpression(m, Lr[ik = 1:K], LS * Sr[ik])  # rural pop from labor to land share LS
 	@NLexpression(m, Srh[ik = 1:K], Lr[ik] * hr / Hr )   # housing space for rural pop
-	@NLexpression(m, ϕ[ik = 1:K], ( (pp[ik].θu - wr) / (p.a * pp[ik].θu^(p.ξw)) )^(1.0/p.ξl))  # fringe for each region from inverse moving cost function
+	@NLexpression(m, wu0[ik = 1:K], pp[ik].θu * Lu[ik]^p.η)  # urban wage in each city
+
+	@NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / (p.a * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  # fringe for each region from inverse moving cost function
 
 
 	# expressions indexed at location l in each k

@@ -55,7 +55,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false, objvalue = nothing)
 	Hd = [H(i,p,m) for i in lvec]
 	ρd = [ρ(i,p,m) for i in lvec]
 	qd = [q(i,p,m) for i in lvec]	
-	md = [mode(i,p) for i in lvec0]
+	md = [mode(i,p,m.Lu) for i in lvec0]
 
 	# get ratio first over last point
 	ϵg = round(ϵd[1]/ϵd[end],digits =1)

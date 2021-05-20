@@ -156,7 +156,7 @@ function update!(c::Country,x::Vector{Float64})
 	# 2. update other equations in each region
 	for ik in 1:K
 		cx = [c.ρr, 
-		      getfringe(p[ik].θu, c.wr, p[ik]), 
+		      getfringe(wu0(Lu[ik],p[ik]), c.wr, p[ik]), 
 			  c.r, 
 			  c.LS * Srk[ik], 
 			  c.pr, 

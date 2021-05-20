@@ -174,7 +174,9 @@ mutable struct Param
 		if !issorted(this.speed_thresholds) error("speed thresholds must be increasing") end
 
 		# derived parameters
-		this.cτ = this.a
+		
+		this.ηm = 1.0 # by default as normalization
+		this.cτ = (0.5 * this.a)^2 / (2 * this.ζ)
 		this.ηw = 2 * this.ξw - 1
 		this.ηl = 2 * this.ξl - 1
 
