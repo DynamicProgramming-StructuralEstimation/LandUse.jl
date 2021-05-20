@@ -35,6 +35,7 @@ module LandUse
 	using DelimitedFiles
 	using BSON
 	using Flux
+	using Latexify
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver

@@ -176,9 +176,9 @@ end
 function export_thetas()
 	x,M,p = runm()
 	latex_param()
-	d = DataFrame(year = collect(p.T), thetau = p.θut, thetar = p.θrt, pr = [M[it].pr for it in 1:length(M)])
+	d = DataFrame(year = collect(p.T), thetau = p.θut, thetar = p.θrt, pr = [M[it].pr for it in 1:length(M)], Lt = p.Lt)
 	CSV.write(joinpath(dbtables,"export_theta_pr.csv"),d)
 
-	x0 = LandUse.startval(Param())
+	x0 = LandUse.nearstart(Param())
 	CSV.write(joinpath(dbtables,"export_x0.csv"),DataFrame([x0]))
 end

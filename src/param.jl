@@ -8,6 +8,11 @@ mutable struct Param
 	ν     :: Float64 # weight of rural good consumption on consumption composite
 	cbar  :: Float64 # agr cons subsistence level (0.14 for thailand)
 	sbar  :: Float64 # neg urba subsistence level
+	α     :: Float64 # labor weight on farm sector production function
+	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
+	σ     :: Float64 # land-labor elasticity of substitution in farm production function
+	β     :: Float64 # discount factor
+
 
 	# productivity setup
 	θu_g  :: Float64 # constant growth factors by sector
@@ -31,14 +36,12 @@ mutable struct Param
 	speed_thresholds :: Vector{Float64}
 	nspeeds :: Int
 
-	α     :: Float64 # labor weight on farm sector production function
-	λ     :: Float64 # useless land: non-farm, non-urban land (forests, national parks...)
+
 	L     :: Float64 # total population
 	Lt     :: Vector{Float64} # total population by year
 	T     :: StepRange{Int64,Int64}
 	t     :: Int64
 	it     :: Int64
-	σ     :: Float64 # land-labor elasticity of substitution in farm production function
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
 	int_bins :: Int  # number of bins into which to split distance
@@ -218,9 +221,9 @@ function latex_param()
 	j = JSON.parse(f)
 	close(f)
 
-	getline(x) = [latexstring(x["symbol"]), x["description"], x["value"]]
+	getline(x;digits = 3) = [latexstring(x["symbol"]), x["description"], round(x["value"],digits = digits)]
 
-	latex_tabular(joinpath(dbtables,"params.tex"), Tabular("l l D{.}{.}{5.5}@{}"), [
+	latex_tabular(joinpath(dbtables,"params.tex"), Tabular("l l D{.}{.}{1.3}@{}"), [
 	   Rule(:top),
        ["Parameter", "Description", MultiColumn(1,:c,"value")],
        Rule(:mid),
@@ -232,11 +235,13 @@ function latex_param()
 	   getline(j["ν"]),
 	   getline(j["cbar"]),
 	   getline(j["sbar"]),
+	   getline(j["β"]),
 	   getline(j["ξw"]),
 	   getline(j["ξl"]),
-	   getline(j["cτ"]),
+	   getline(j["a"]),
 	   getline(j["ζ"]),
 	   getline(j["ϵr"]),
+	   getline(j["ϵs"]),
        Rule(:bottom)
 	   ]
 	)

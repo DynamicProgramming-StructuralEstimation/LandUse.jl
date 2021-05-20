@@ -5,7 +5,7 @@
 		"symbol" : "S"
 	},"L" : {
 		"value" : 1.0,
-		"description" : "Total Population in t",
+		"description" : "Total Population in 1840",
 		"symbol" : "L"
 	},"Lt" : {
 		"value" : [1.0],
@@ -39,12 +39,12 @@
 	},
 	"ξl" : {
 		"value" : 0.55,
-		"description" : "elasticity of F commuting cost wrt location",
+		"description" : "Elasticity of commuting cost wrt location",
 		"symbol" : "\\xi_l"
 	},
 	"ξw" : {
 		"value" : 0.75,
-		"description" : "elasticity of F commuting cost wrt wage",
+		"description" : "Elasticity of commuting cost wrt urban wage",
 		"symbol" : "\\xi_w"
 	},
 	"ν" : {
@@ -104,13 +104,13 @@
 	},
 	"ϵr" : {
 		"value" : 5.0,
-		"description" : "H Supply Elasticity Function in Rural sector",
+		"description" : "Housing Supply Elasticity in rural area",
 		"symbol" : "\\epsilon_r"
 	},
 	"ϵs" : {
 		"value" : 2.0,
-		"description" : "H Supply Elasticity Function in Center",
-		"symbol" : "\\epsilon_s"
+		"description" : "Housing Supply Elasticity at city center",
+		"symbol" : "\\epsilon(0)"
 	},
 	"nsteps" : {
 		"value" : 2,
@@ -146,6 +146,11 @@
 		"value" : 0.5,
 		"description" : "Valuation of commuting time in terms of wages",
 		"symbol" : "\\zeta"
+	},
+	"β" : {
+		"value" : 0.935,
+		"description" : "Discount Factor",
+		"symbol" : "\\beta"
 	},
 	"ma" : {
 		"value" : 15,
