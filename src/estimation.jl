@@ -78,27 +78,36 @@ function dicts2df(d::Dict)
     df
 end
 
+"""
+    x2dict(x)
+
+map vector x to dict for [`Param`](@ref)
+"""
 function x2dict(x)
     di = Dict(:cbar => x[1],
     :sbar => x[2],
-    # :ηl => x[3],
-    :ηw => x[3],
-    # :ηm => x[5],
-    :cτ => x[4],
+    :ξw => x[3],
+    :a => x[4],
+    :γ => x[5],
     :ϕ1x => 0.15)
     di
 end
 
-search_over() = OrderedDict(zip([:cbar,:sbar, :ηw, :cτ], [(0.7, 0.9),(0.2, 0.26), (0.45, 0.55), (2.0, 3.0)]))
+search_over() = OrderedDict(zip([:cbar,:sbar, :ξw, :a, :gamma], [(0.7, 0.9),(0.2, 0.26), (0.5, 0.9), (2.0, 3.0), (0.28, 0.33)]))
 # search_over() = OrderedDict(zip([:cbar], [(0.7, 0.88)]))
 symrange(x,pad,n) = range(x-pad, stop = x+pad, length = n)
 
 
 
 
+"""
+    p2x(p::Param)
 
+map param to x for objective function quick eval
+this is the inverse of [`x2dict`](@ref).
+"""
 function p2x(p::Param)
-    [ p.cbar,  p.sbar, p.ηl, p.ηw, p.cτ ]
+    [ p.cbar,  p.sbar, p.ξw, p.a, p.γ ]
 end
 
 objective1(;save = false) = objective(p2x(Param()), moments = true, plot = true, save = save)

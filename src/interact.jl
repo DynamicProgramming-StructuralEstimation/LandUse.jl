@@ -107,20 +107,21 @@ function ik()
 		es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
 		xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
 		xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
+		eta in slider(0.0:0.01:0.1, value = p1.η, label = "η") |> onchange,
 		g2 in slider(gfac, value = 1.01, label = "g2") |> onchange,
 		g3 in slider(gfac, value = 1.02, label = "g3") |> onchange
 
 		try
 			x,C,p = runk(par = Dict(:K => 3, :kshare => [1/3,1/3,1/3], :factors => [1.0,g2,g3],
 									:ξl => xil, :ξw => xiw,
-									:cbar => cbar, :sbar => sbar, :a => a, :γ => gamma, :ϵs => es))
+									:cbar => cbar, :sbar => sbar, :a => a, :γ => gamma, :ϵs => es, :η => eta))
 			dashboard(C, it)
 		catch e
 			wdg = alert("Error!")
 			print(wdg())
 		end
 	end
-	@layout! mp vbox(hbox(:g2),
+	@layout! mp vbox(hbox(:g2, :g3, :eta),
 	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:a, :xil, :xiw),
 					 observe(_))

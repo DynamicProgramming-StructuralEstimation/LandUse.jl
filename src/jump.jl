@@ -217,9 +217,9 @@ function jc(C::Country,x0::Vector)
 
 	# expressions indexed at location l in each k
 	@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] )
-	@NLexpression(m, ϵ[i = 1:p.int_nodes, ik = 1:K], p.ϵr * exp(-p.ϵs * (ϕ[ik]-nodes[i,ik])))
+	@NLexpression(m, ϵ[i = 1:p.int_nodes, ik = 1:K], p.ϵr * nodes[i,ik] / ϕ[ik] + p.ϵs * (ϕ[ik] - nodes[i,ik])/ϕ[ik])
 	@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], p.a * pp[ik].θu^(p.ξw) * nodes[i,ik]^(p.ξl) )
-	@NLexpression(m, w[i = 1:p.int_nodes,ik = 1:K], pp[ik].θu - τ[i,ik] )
+	@NLexpression(m, w[i = 1:p.int_nodes,ik = 1:K], wu0[ik] - τ[i,ik] )
 	# @warn "hard coding abs() for q function" maxlog=1
 	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
 	@NLexpression(m,        q[i = 1:p.int_nodes,ik = 1:K], qr * ((w[i,ik] + r_pr_csbar) / xsr)^(1.0/p.γ))
@@ -235,7 +235,7 @@ function jc(C::Country,x0::Vector)
 	@NLexpression(m, iρ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * ρ[i,ik] for i in 1:p.int_nodes))
 	@NLexpression(m, icu[ik = 1:K],       (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * cu[i,ik] * D[i,ik] for i in 1:p.int_nodes))
 	@NLexpression(m, icu_input[ik = 1:K], (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * cu_input[i,ik] for i in 1:p.int_nodes))
-	@NLexpression(m, iτ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * (pp[ik].θu - w[i,ik]) * D[i,ik] for i in 1:p.int_nodes))
+	@NLexpression(m, iτ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * (wu0[ik] - w[i,ik]) * D[i,ik] for i in 1:p.int_nodes))
 
 	# constraints
 	# @NLconstraint(m, aux_con_wr, wr == p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
@@ -244,11 +244,13 @@ function jc(C::Country,x0::Vector)
 	@NLconstraint(m, land_clearing[ik = 1:K], C.Sk[ik] == Sr[ik] + ϕ[ik]^2 * π + Srh[ik])   # land market clearing in each region
 	@NLconstraint(m, r * C.L == sum(iρ[ik] + ρr * (Sr[ik] + Srh[ik]) for ik in 1:K))   # agg land rent definition
 	# input of urban good equal urban good production
-	@NLconstraint(m, sum(Lr[ik] * cur + icu[ik] + Srh[ik] * cu_inputr + icu_input[ik] + iτ[ik] for ik in 1:K) == sum(pp[ik].θu * Lu[ik] for ik in 1:K))
+	@NLconstraint(m, sum(Lr[ik] * cur + icu[ik] + Srh[ik] * cu_inputr + icu_input[ik] + iτ[ik] for ik in 1:K) == sum(wu0[ik] * Lu[ik] for ik in 1:K))
 	@NLconstraint(m, city_size[ik = 1:K], Lu[ik] == iDensity[ik])
 
 	# objective function
 	@objective(m, Min, 1.0)  # constant function
+	# @objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
+
 	# @NLexpression(m, emp_share, )
 	# @NLobjective(m, Min, ((sum(Lr[ik] for ik in 1:K) / C.L)  - p.moments[1,:Employment_rural])^2)
 

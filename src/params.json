@@ -13,7 +13,7 @@
 		"symbol" : "L"
 	},
 	"γ" : {
-		"value" : 0.31,
+		"value" : 0.311104,
 		"description" : "Utility Weight of Housing",
 		"symbol" : "\\gamma"
 	},
@@ -28,7 +28,7 @@
 		"symbol" : "\\eta"
 	},
 	"a" : {
-		"value" : 2.13739,
+		"value" : 2.1230735,
 		"description" : "Commuting Costs Base Parameter",
 		"symbol" : "a"
 	},
@@ -43,7 +43,7 @@
 		"symbol" : "\\xi_l"
 	},
 	"ξw" : {
-		"value" : 0.75,
+		"value" : 0.75187788,
 		"description" : "Elasticity of commuting cost wrt urban wage",
 		"symbol" : "\\xi_w"
 	},
@@ -53,12 +53,12 @@
 		"symbol" : "\\nu"
 	},
 	"cbar" : {
-		"value" : 0.777075,
+		"value" : 0.763753,
 		"description" : "Rural Consumption Good Subsistence Level",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.247941,
+		"value" : 0.211069,
 		"description" : "Initial Urban Good Endowment",
 		"symbol" : "\\underline{s}"
 	},

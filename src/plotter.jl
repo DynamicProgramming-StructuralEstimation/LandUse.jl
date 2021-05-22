@@ -34,9 +34,9 @@ function dashboard(C::Vector{Country},it::Int)
 	for ik in 1:K
 		cs = cs_plots(C[it].R[ik],C[it].pp[ik], it)
 		ts = ts_plots([C[ij].R[ik] for ij in eachindex(C[1].T)],C[it].pp[ik])
-		push!(pl, ts[:densities], ts[:speedshares], cs[:D])
+		push!(pl, ts[:phi], ts[:n_densities], ts[:qbar_real], ts[:ctime])
 	end
-	plot(pl..., layout = (3,K),size = (900,700))
+	plot(pl..., layout = (K,4),size = (1100,700))
 
 end
 
@@ -255,12 +255,12 @@ function ts_plots(M,p::Param;fixy = false)
     # dens = select(df4,:year,:d0, :dq1, :dq2, :dq3, :dq4, :dr, :avgd)
     dens = select(d,:year,:d0,  :dr, :citydensity => :avgd)
 	df4 = dens
-	ndens = mapcols(x -> x ./ x[1],select(dens, Not(:year)))
-	ndens[!,:year] .= dens.year
+	# ndens = mapcols(x -> x ./ x[1],select(dens, Not(:year)))
+	# ndens[!,:year] .= dens.year
 	ds4 = stack(dens, Not(:year))
 	ds5 = select(dens,:year,:avgd)
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
-	dd[:n_densities] = @df stack(ndens, Not(:year)) plot(:year, :value, group = :variable,
+	dd[:n_densities] = @df stack(select(d,:year,:d0_n, :dr_n, :avgd_n), Not(:year)) plot(:year, :value, group = :variable,
  					 linewidth = 2, title = "Normalized Densities", color = brg,
 					 leg = :topright, ylims = fixy ? (0,300) : false)
 

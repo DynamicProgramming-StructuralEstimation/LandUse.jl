@@ -223,7 +223,7 @@ function latex_param()
 	j = JSON.parse(f)
 	close(f)
 
-	getline(x;digits = 3) = [latexstring(x["symbol"]), x["description"], round(x["value"],digits = digits)]
+	getline(x;digits = 4) = [latexstring(x["symbol"]), x["description"], round(x["value"],digits = digits)]
 
 	latex_tabular(joinpath(dbtables,"params.tex"), Tabular("l l D{.}{.}{1.3}@{}"), [
 	   Rule(:top),

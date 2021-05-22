@@ -6,27 +6,29 @@ https://github.com/floswald/LandUse.jl/issues/59
 """
 function issue59(;save = false)
     p1 = Param()
-    p2 = Param(par = Dict(:ϵflat => true))
+    p2 = Param(par = Dict(:ϵflat => true, :ϵr => 4.0))
 
     x1,m1,p1 = run(p1)
     x2,m2,p2 = run(p2)
 
     d1 = dataframe(m1,p1); d2 = dataframe(m2,p2)
     d1[!,:type] .= "baseline"
-    d2[!,:type] .= "flat ϵ"
+    d2[!,:type] .= "ϵ(l) = 4"
     d = vcat(d1,d2)
 
     pl = Dict()
-    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Urban Density")
-    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area")
-    pl[:qbar] = @df d plot(:year, :qbar, group = :type, title = "Average Urban House Price")
+    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Density")
+    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area", leg=false)
+    pl[:qbar] = @df d plot(:year, :qbar_real, group = :type, title = "Avg House Price", leg=false)
 
+    pl[:ndens0] = @df d plot(:year, :d0_n, group = :type, title = "Central n density", leg=false)
+    pl[:ndensr] = @df d plot(:year, :dr_n, group = :type, title = "Fringe n density", leg=false)
+    pl[:ndensa] = @df d plot(:year, :avgd_n, group = :type, title = "Avg n density", leg=false)
+    o = plot(pl[:density], pl[:size], pl[:qbar], pl[:ndens0], pl[:ndensa], pl[:ndensr], layout = (2,3), size = (800,400))
     if save 
-        for (k,v) in pl
-            savefig(v,joinpath(dbplots,"issue59-$(string(k)).pdf"))
-        end 
+        savefig(o,joinpath(dbplots,"issue59.pdf"))
     end
-    pl
+    o
 end
 
 
@@ -48,17 +50,23 @@ function issue60(;save = false)
     d = vcat(d1,d2)
 
     pl = Dict()
-    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Urban Density")
-    pl[:cdensity] = @df d plot(:year, :d0, group = :type, title = "Central Urban Density")
-    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area")
-    pl[:qbar] = @df d plot(:year, :qbar, group = :type, title = "Average Urban House Price")
+    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Density")
+    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area", leg=false)
+    pl[:qbar] = @df d plot(:year, :qbar_real, group = :type, title = "Avg House Price", leg=false)
+
+    pl[:ndens0] = @df d plot(:year, :d0_n, group = :type, title = "Central n density", leg=false)
+    pl[:ndensr] = @df d plot(:year, :dr_n, group = :type, title = "Fringe n density", leg=false)
+    pl[:ndensa] = @df d plot(:year, :avgd_n, group = :type, title = "Avg n density", leg=false)
+    o = plot(pl[:density], pl[:size], pl[:qbar], pl[:ndens0], pl[:ndensa], pl[:ndensr], layout = (2,3), size = (800,400))
+
 
     if save 
-        for (k,v) in pl
-            savefig(v,joinpath(dbplots,"issue60-$(string(k)).pdf"))
-        end 
+        savefig(o,joinpath(dbplots,"issue60.pdf"))
+        # for (k,v) in pl
+        #     savefig(v,joinpath(dbplots,"issue60-$(string(k)).pdf"))
+        # end 
     end
-    pl
+    o
 end
 
 

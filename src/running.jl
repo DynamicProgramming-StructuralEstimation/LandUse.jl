@@ -95,7 +95,7 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 	@assert p.K > 1
 
 	setperiod!(p,1)
-	x0 = startval(p)
+	x0 = nearstart(p)
 	m = Region(p)
 	x0 = jm(p,m,x0, estimateθ = false)
 	update!(m,p,[x0...])
@@ -149,7 +149,7 @@ function k1()
 end
 
 function k3()
-	x,C,p = runk(par = Dict(:K => 3,:kshare => [0.25,0.25,0.5], :factors => [1.0,1.005,1.05]))
+	runk(par = Dict(:K => 3,:kshare => [0.25,0.25,0.5], :factors => [1.0,1.005,1.05]))
 	# x,C,p = runk(par = Dict(:K => 3,:kshare => [0.333,0.333,0.333], :factors => [1.0,1.005,1.05]))
 	# x,C,p = impl_plot_slopes(C)
 	# d = dataframe(C)
@@ -173,7 +173,11 @@ function dash(it)
 	x,M,p = run(Param())
 	dashboard(M,p,it)
 end
-function export_thetas()
+function cdash(it)
+	x,M,p = k3()
+	dashboard(M,it)
+end
+function export_params()
 	x,M,p = runm()
 	latex_param()
 	d = DataFrame(year = collect(p.T), thetau = p.θut, thetar = p.θrt, pr = [M[it].pr for it in 1:length(M)], Lt = p.Lt)

@@ -615,6 +615,20 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	df[!,:qbar_real] = df[!,:qbar] ./ df[!, :p_index]
 	df[!,:ρ0_real] = df[!,:ρ0] ./ df[!, :p_index]
 
+	# normalizations
+	sort!(df, :year)
+	dens = select(df,:d0,  :dr, :citydensity)
+	mapcols!(x -> x ./ x[1],dens)
+	rename!(dens, [:d0_n, :dr_n, :avgd_n] )
+
+	df = [df dens]
+
+	
+	
+	
+	# ndens[!,:year] .= dens.year
+	
+
 	df
 end
 
