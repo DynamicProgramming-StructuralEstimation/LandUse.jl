@@ -34,7 +34,7 @@ function dashboard(C::Vector{Country},it::Int)
 	for ik in 1:K
 		cs = cs_plots(C[it].R[ik],C[it].pp[ik], it)
 		ts = ts_plots([C[ij].R[ik] for ij in eachindex(C[1].T)],C[it].pp[ik])
-		push!(pl, ts[:phi], ts[:n_densities], ts[:qbar_real], ts[:ctime])
+		push!(pl, ts[:phi], ts[:pop], ts[:densities], ts[:productivity])
 	end
 	plot(pl..., layout = (K,4),size = (1100,700))
 

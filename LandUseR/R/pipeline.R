@@ -14,3 +14,19 @@ pipe <- function(overwrite = FALSE){
     cm = measure_cities(overwrite)
     mm = combine_measures(overwrite)
 }
+
+#' Read main output table
+#'
+#' @export
+read_output <- function(){
+    readRDS(file.path(outdatadir(),"france_final.Rds"))
+}
+
+#' Show Relative population and area
+#'
+#' output table for top5 cities with relative population and area to Paris.
+#' @export
+relative_pop_area <- function(cities = top5now()){
+    x = read_output()
+    x[(LIBGEO %in% cities) & (year == 2015), list(LIBGEO,relative_pop = pop / max(pop), relative_area = area / max(area))]
+}

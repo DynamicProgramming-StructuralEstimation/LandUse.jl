@@ -25,10 +25,16 @@ function issue59(;save = false)
     pl[:ndensr] = @df d plot(:year, :dr_n, group = :type, title = "Fringe n density", leg=false)
     pl[:ndensa] = @df d plot(:year, :avgd_n, group = :type, title = "Avg n density", leg=false)
     o = plot(pl[:density], pl[:size], pl[:qbar], pl[:ndens0], pl[:ndensa], pl[:ndensr], layout = (2,3), size = (800,400))
+
+    cs1 = cs_plots(m1[19],p1,19)
+    cs2 = cs_plots(m2[19],p2,19)
+    pl[:gradients] = plot(cs1[:D],cs2[:D], title = ["baseline" "flat ϵ"])
+
     if save 
         savefig(o,joinpath(dbplots,"issue59.pdf"))
+        savefig(pl[:gradients],joinpath(dbplots,"issue59-gradients.pdf"))
     end
-    o
+    pl
 end
 
 
@@ -70,6 +76,75 @@ function issue60(;save = false)
 end
 
 
+"""
+run model with congestion forces
+
+https://github.com/floswald/LandUse.jl/issues/64
+"""
+function issue64(;save = false)
+    p1 = Param()
+    p2 = Param(par = Dict(:ηa => 0.1))
+
+    x1,m1,p1 = run(p1)
+    x2,m2,p2 = run(p2)
+
+    d1 = dataframe(m1,p1); d2 = dataframe(m2,p2)
+    d1[!,:type] .= "baseline"
+    d2[!,:type] .= "ηa = $(p2.ηa)"
+    transform!(d1, :imode => (x -> x ./ x[1]) => :imode_n)
+    transform!(d2, :imode => (x -> x ./ x[1]) => :imode_n)
+    d = vcat(d1,d2)
+
+    pl = Dict()
+    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Density")
+    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area", leg=false)
+    pl[:mode] = @df d plot(:year, :imode_n, group = :type, title = "Mode increase", leg=false)
+
+    pl[:ndens0] = @df d plot(:year, :d0_n, group = :type, title = "Central n density", leg=false)
+    pl[:ndensr] = @df d plot(:year, :dr_n, group = :type, title = "Fringe n density", leg=false)
+    pl[:ndensa] = @df d plot(:year, :avgd_n, group = :type, title = "Avg n density", leg=false)
+    o = plot(pl[:density], pl[:size], pl[:mode], pl[:ndens0], pl[:ndensa], pl[:ndensr], layout = (2,3), size = (800,400))
+
+
+    if save 
+        savefig(o,joinpath(dbplots,"issue64.pdf"))
+        # for (k,v) in pl
+        #     savefig(v,joinpath(dbplots,"issue60-$(string(k)).pdf"))
+        # end 
+    end
+    o
+end
+
+
+"""
+run multi city with congestion
+
+https://github.com/floswald/LandUse.jl/issues/66
+"""
+function issue66(;save = false)
+    p1 = Param()
+    p2 = Param(par = Dict(:ηa => 0.1))
+    d1 = Dict(:K => 3, :kshare => [1/3,1/3,1/3], :factors => [1.0,1.01,1.1])
+    d2 = Dict(:K => 3, :kshare => [1/3,1/3,1/3], :factors => [1.0,1.01,1.1], :ηa => 0.1)
+    
+
+    x1,m1,p1 = runk(par = d1)
+    x2,m2,p2 = runk(par = d2)
+
+    c1 = dashboard(m1, 19)
+    c2 = dashboard(m2, 19)
+
+    o = plot(c1, c2, size = (2200,700))
+
+
+    if save 
+        savefig(o,joinpath(dbplots,"issue64.pdf"))
+        # for (k,v) in pl
+        #     savefig(v,joinpath(dbplots,"issue60-$(string(k)).pdf"))
+        # end 
+    end
+    o
+end
 
 """
 plot ``\\phi_k`` vs ``\\L{u,k}`` for all regions ``k``.

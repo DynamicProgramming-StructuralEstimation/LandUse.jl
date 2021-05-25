@@ -57,12 +57,13 @@ function i0()
 					es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
 					xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
 					xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
-					eta in slider(0.0:0.01:0.1, value = 0.0, label = "η") |> onchange,
+					eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
+					etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange,
 					flat in checkbox(label = "flat ϵ?")
 
 					p0 = LandUse.Param(par = Dict(:ξl => xil, :ξw => xiw,
 											  :cbar => cbar, :sbar => sbar, :a => a, :γ => gamma, :ϵs => es,
-											  :ϕ1x => ϕx, :ϵflat => flat, :η => eta),
+											  :ϕ1x => ϕx, :ϵflat => flat, :η => eta, :ηa => etaa),
 									   use_estimatedθ = false)
 
 					try
@@ -84,7 +85,7 @@ function i0()
 					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
 
 	end
-	@layout! mp vbox(hbox(:it, :ϕx , :flat, :eta),
+	@layout! mp vbox(hbox(:it, :ϕx , :flat, :eta, :etaa),
 	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:a, :xil, :xiw),
 					 observe(_))
@@ -92,14 +93,14 @@ function i0()
 	body!(w,mp)
 end
 
-function ik()
+function ik3()
 	p1 = Param()
 	gfac = 1.00:0.01:2.0
 	xis = 0.0:0.01:1.0
 	cbars = 0.0:0.01:1.5
 	as = 0.0:0.01:5.0
 	psis = 0.1:0.01:1.0
-	mp = @manipulate for it in slider(1:length(p1.T)), 
+	mp = @manipulate for it in slider(1:length(p1.T), label = "it"), 
 		cbar in slider(cbars, value = p1.cbar, label = "cbar") |> onchange,
 		sbar in slider(cbars, value = p1.sbar, label = "sbar") |> onchange,
 		gamma in slider(psis, value = p1.γ, label = "gamma") |> onchange,
@@ -107,30 +108,69 @@ function ik()
 		es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
 		xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
 		xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
-		eta in slider(0.0:0.01:0.1, value = p1.η, label = "η") |> onchange,
+		eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
+		etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange,
+		g1 in slider(0.95:0.01:1.0, value = 1.0, label = "g1") |> onchange,
 		g2 in slider(gfac, value = 1.01, label = "g2") |> onchange,
 		g3 in slider(gfac, value = 1.02, label = "g3") |> onchange
 
 		try
-			x,C,p = runk(par = Dict(:K => 3, :kshare => [1/3,1/3,1/3], :factors => [1.0,g2,g3],
+			x,C,p = runk(par = Dict(:K => 3, :kshare => [1/3,1/3,1/3], :factors => [g1,g2,g3],
 									:ξl => xil, :ξw => xiw,
-									:cbar => cbar, :sbar => sbar, :a => a, :γ => gamma, :ϵs => es, :η => eta))
+									:cbar => cbar, :sbar => sbar, 
+									:a => a, :γ => gamma, :ϵs => es, :η => eta, :ηa => etaa))
 			dashboard(C, it)
 		catch e
 			wdg = alert("Error!")
 			print(wdg())
 		end
 	end
-	@layout! mp vbox(hbox(:g2, :g3, :eta),
+	@layout! mp vbox(hbox(:g1,:g2, :g3, :eta, :etaa),
 	                 hbox(:sbar, :cbar,:gamma,:es),
-	                 hbox(:a, :xil, :xiw),
+	                 hbox(:a, :xil, :xiw, :it),
 					 observe(_))
 	w = Window()
 	body!(w,mp)
-				 
-
 end
 
+function ik2()
+	p1 = Param()
+	gfac = 1.00:0.01:2.0
+	xis = 0.0:0.01:1.0
+	cbars = 0.0:0.01:1.5
+	as = 0.0:0.01:5.0
+	psis = 0.1:0.01:1.0
+	mp = @manipulate for it in slider(1:length(p1.T), label = "it"), 
+		cbar in slider(cbars, value = p1.cbar, label = "cbar") |> onchange,
+		sbar in slider(cbars, value = p1.sbar, label = "sbar") |> onchange,
+		gamma in slider(psis, value = p1.γ, label = "gamma") |> onchange,
+		a in slider(as, value = p1.a, label = "a") |> onchange,
+		es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
+		xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
+		xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
+		eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
+		etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange,
+		g1 in slider(0.9:0.01:1.0, value = 1.0, label = "g1") |> onchange,
+		g2 in slider(gfac, value = 1.2, label = "g2") |> onchange
+
+		try
+			x,C,p = runk(par = Dict(:K => 2, :kshare => [1/2,1/2], :factors => [g1,g2],
+									:ξl => xil, :ξw => xiw,
+									:cbar => cbar, :sbar => sbar, 
+									:a => a, :γ => gamma, :ϵs => es, :η => eta, :ηa => etaa))
+			dashboard(C, it)
+		catch 
+			wdg = alert("Error!")
+			print(wdg())
+		end
+	end
+	@layout! mp vbox(hbox(:g1,:g2, :eta, :etaa),
+	                 hbox(:sbar, :cbar,:gamma,:es),
+	                 hbox(:a, :xil, :xiw, :it),
+					 observe(_))
+	w = Window()
+	body!(w,mp)
+end
 
 function i0k()
 	gfac = 1.00:0.05:2.0

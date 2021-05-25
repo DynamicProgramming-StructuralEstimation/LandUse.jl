@@ -31,6 +31,7 @@ mutable struct Param
 	cτ     :: Float64   # efficiency of transport technology
 	ζ      :: Float64   # valuation of commuting time in terms of forgone wages
 	a      :: Float64   # implied combination of above parameters
+	ηa     :: Float64   # congestion parameter
 
 	# speed thresholds
 	speed_thresholds :: Vector{Float64}
@@ -102,6 +103,7 @@ mutable struct Param
 		this.ηm = 1.0   # old formulation used this. now fixed at 1.0
 		# this.ϕ1x = 0.5
 		this.ϵflat = false
+		this.ηa = 0.0  # no congestion by default
 
 
 		# read data from disk
@@ -176,7 +178,7 @@ mutable struct Param
 		# derived parameters
 		
 		this.ηm = 1.0 # by default as normalization
-		this.cτ = (0.5 * this.a)^2 / (2 * this.ζ)
+		# this.cτ = (0.5 * this.a)^2 / (2 * this.ζ)
 		this.ηw = 2 * this.ξw - 1
 		this.ηl = 2 * this.ξl - 1
 

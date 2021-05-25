@@ -429,22 +429,24 @@ end
 # Model Component Functions
 
 
+a(Lu::Float64,p::Param) = p.a * Lu^p.ηa
+cτ(Lu::Float64,p::Param) = (0.5 * a(Lu,p))^2 / (2 * p.ζ)
 
 
-mode(l::Float64,p::Param,Lu::Float64) = ((2*p.ζ)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm)) * wu0(Lu, p)^((1 - p.ηw)/(1+p.ηm))
-lofmode(m::Float64, p::Param,Lu::Float64) = ((2*p.ζ)/p.cτ)^(-1/(1-p.ηl)) * m^((1+p.ηm) / (1-p.ηl)) * wu0(Lu, p)^(-(1 - p.ηw)/(1-p.ηl))
+mode(l::Float64,p::Param,Lu::Float64) = ((2*p.ζ)/cτ(Lu,p))^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm)) * wu0(Lu, p)^((1 - p.ηw)/(1+p.ηm))
+lofmode(m::Float64, p::Param,Lu::Float64) = ((2*p.ζ)/cτ(Lu,p))^(-1/(1-p.ηl)) * m^((1+p.ηm) / (1-p.ηl)) * wu0(Lu, p)^(-(1 - p.ηw)/(1-p.ηl))
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
 "commuting cost: location x → cost"
 # τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.ξl)
-τ(x::Float64,p::Param,Lu::Float64) = p.a * wu0(Lu, p)^(p.ξw) * x^(p.ξl)
+τ(x::Float64,p::Param,Lu::Float64) = a(Lu,p) * wu0(Lu, p)^(p.ξw) * x^(p.ξl)
 
 
 
 "inverse commuting cost. cost x → location. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
 # invτ(x::Float64,p::Param,Lu::Float64) = ( x / ( p.a * wu0(Lu, p)^(p.ξw)) )^(1.0/p.ξl)
-invτ(wr::Float64,wu::Float64,p::Param) = ( (wu - wr) / ( p.a * wu^(p.ξw)) )^(1.0/p.ξl)
+invτ(Lu::Float64,wr::Float64,wu::Float64,p::Param) = ( (wu - wr) / ( a(Lu,p) * wu^(p.ξw)) )^(1.0/p.ξl)
 
 
 """
@@ -461,7 +463,7 @@ which can be rearranged to obtain a map from ``w(0) - w_r = \\tau(\\phi)``.
 The function takes ``w(0) - w_r`` as argument `x`. then we give ``\\tau(\\phi)``
 	to its inverse function to get back ``\\phi``
 """
-getfringe(w0::Float64,wr::Float64,p::Param) = w0 > wr ? invτ(wr,w0,p) : 0.0
+getfringe(Lu::Float64,w0::Float64,wr::Float64,p::Param) = w0 > wr ? invτ(Lu,wr,w0,p) : 0.0
 
 "urban wage at location ``l``"
 wu(Lu::Float64,l::Float64,p::Param) = wu0(Lu,p) .- τ(l,p,Lu)
