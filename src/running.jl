@@ -86,7 +86,8 @@ function run(x0::NamedTuple, p::Param)
 end
 
 """
-run Multi-region model for all time periods
+run Multi-region model for all time periods starting from 
+the single city starting value. Works only for not too different θu values.
 """
 function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 
@@ -112,9 +113,13 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 	for ik in 1:p.K
 		push!(x,m.Lu)
 	end
+	runk_impl(x,p)
+end
 
+
+function runk_impl(x0::Vector,p::Param)
 	sols = Vector{Float64}[]  # an empty array of solutions
-	push!(sols,x)
+	push!(sols,x0)
 
 	C = Country[]  # an emtpy array of countries
 
@@ -138,10 +143,29 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 
 		push!(C,c)
 	end
-
 	(sols,C,p) # solutions, models, and parameter
-
 end
+
+"""
+collect valid starting values for the 2 country case by reusing the first period solution
+	of each preceding step in θu along the sequence
+"""
+function startvals_2k(; θus = 1.2:0.01:1.32)
+	par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,θus[1]])  # 1.2 is the last value
+	x,C,p = runk(par = par)
+
+	x0 = Vector{Float64}[] 
+	push!(x0, x[2])
+	for (i,θu) in enumerate(θus)
+		println("θu = $θu")
+		par[:factors][2] = θu
+		p = LandUse.Param(par = par)
+		x1,C1,p1 = runk_impl(x0[i],p)
+		push!(x0,x1[2])
+	end
+	x0
+end
+# x,C,p = LandUse.runk_impl(x0[end], LandUse.Param(par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.32])))
 
 function k1()
 	x,C,p = runk()

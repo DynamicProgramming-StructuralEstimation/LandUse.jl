@@ -151,10 +151,11 @@ function ik2()
 		eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
 		etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange,
 		g1 in slider(0.9:0.01:1.0, value = 1.0, label = "g1") |> onchange,
+		f1 in slider(0.9:0.01:1.1, value = 1.0, label = "f1") |> onchange,
 		g2 in slider(gfac, value = 1.2, label = "g2") |> onchange
 
 		try
-			x,C,p = runk(par = Dict(:K => 2, :kshare => [1/2,1/2], :factors => [g1,g2],
+			x,C,p = runk(par = Dict(:K => 2, :kshare => [1/2,1/2], :factors => [g1,g2],:factor1 => f1,
 									:ξl => xil, :ξw => xiw,
 									:cbar => cbar, :sbar => sbar, 
 									:a => a, :γ => gamma, :ϵs => es, :η => eta, :ηa => etaa))
@@ -164,7 +165,7 @@ function ik2()
 			print(wdg())
 		end
 	end
-	@layout! mp vbox(hbox(:g1,:g2, :eta, :etaa),
+	@layout! mp vbox(hbox(:g1,:g2, :f1, :eta, :etaa),
 	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:a, :xil, :xiw, :it),
 					 observe(_))
