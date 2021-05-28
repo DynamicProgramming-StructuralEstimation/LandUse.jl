@@ -637,3 +637,6 @@ end
 function pdiff(M::Vector{Model}, v::Symbol; t1=1,t2=7)
 	(getfield(M[t2],v) - getfield(M[t1],v)) / getfield(M[t1],v)
 end
+
+"normalize a vector wrt it's first element"
+firstnorm(x) = x ./ x[1]

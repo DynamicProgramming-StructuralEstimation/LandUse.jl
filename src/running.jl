@@ -146,30 +146,73 @@ function runk_impl(x0::Vector,p::Param)
 	(sols,C,p) # solutions, models, and parameter
 end
 
+
+"helper function to prepare country param"
+function startvals_par(K::Int; θus = 1.2:0.01:1.35)
+	if K == 2
+		θus = 1.2:0.01:1.32
+		facs = [1.0, θus[1]]
+	elseif K == 3	
+		facs = [1.0, 1.07, θus[1]]
+	elseif K == 4	
+		facs = [1.0, 1.07, 1.1, θus[1]]
+	elseif K == 5	
+		facs = [1.0, 1.07, 1.08, 1.09, θus[1]]
+	end
+		
+	(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => facs), θus = θus)
+end
+
 """
-collect valid starting values for the 2 country case by reusing the first period solution
+collect valid starting values for the k country case by reusing the first period solution
 	of each preceding step in θu along the sequence
 """
-function startvals_2k(; θus = 1.2:0.01:1.32)
-	par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,θus[1]])  # 1.2 is the last value
+function startvals_impl(K::Int; θu = 1.2:0.01:1.35)
+	
+	par, θus = startvals_par(K,θus = θu)
+
 	x,C,p = runk(par = par)
 
 	x0 = Vector{Float64}[] 
 	push!(x0, x[2])
 	for (i,θu) in enumerate(θus)
-		println("θu = $θu")
-		par[:factors][2] = θu
+		# println("θu = $θu")
+		par[:factors][K] = θu
 		p = LandUse.Param(par = par)
 		x1,C1,p1 = runk_impl(x0[i],p)
 		push!(x0,x1[2])
 	end
-	x0
+	(par = par, x0 = x0[end])
 end
-# x,C,p = LandUse.runk_impl(x0[end], LandUse.Param(par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.32])))
 
-function k1()
-	x,C,p = runk()
-	x,C,p = impl_plot_slopes(C)
+
+"""
+	startvals_k()
+
+Find feasible starting values for multi city case (2 to 5 cities) and write to disk. By default return the saved dict with start param and initial guess vector `x0`.
+"""
+function startvals_k(K::Int; overwrite = false)
+	if overwrite
+		# recompute all starting values and write to disk
+		d = Dict()
+		for k in 2:K
+			@info "doing case k=$k"
+			d[k] = startvals_impl(k)
+		end
+		bson(joinpath(@__DIR__,"..","out","multistarts.bson"), d)
+
+	else
+		# read from disk
+		d = BSON.load(joinpath(@__DIR__,"..","out","multistarts.bson"))
+	end
+	d[K]
+end
+
+"5 country case"
+function k5()
+	(par, x0) = startvals_k(5)
+	p = Param(par = par)
+	runk_impl(x0,p)
 end
 
 function k3()

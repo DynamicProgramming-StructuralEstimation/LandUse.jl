@@ -50,6 +50,7 @@ module LandUse
 					"/home/floswald/LandUseDropbox"	
 				end				
 	const dbplots = joinpath(dbpath,"output","model","plots")
+	const dboutdata = joinpath(dbpath,"output","data")
 	const dbdataplots = joinpath(dbpath,"output","data","plots")
 	const dbtables = joinpath(dbpath,"output","model","tables")
 	const CTRY_MAXTRY = 100

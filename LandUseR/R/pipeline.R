@@ -26,7 +26,13 @@ read_output <- function(){
 #'
 #' output table for top5 cities with relative population and area to Paris.
 #' @export
-relative_pop_area <- function(cities = top5now()){
-    x = read_output()
-    x[(LIBGEO %in% cities) & (year == 2015), list(LIBGEO,relative_pop = pop / max(pop), relative_area = area / max(area))]
+relative_pop_area <- function(cities = top5now(), overwrite = FALSE){
+    if (overwrite){
+        x = read_output()
+        y = x[(LIBGEO %in% cities) & (year == 2015), list(LIBGEO,relative_pop = pop / max(pop), relative_area = area / max(area))][order(relative_pop)]
+        fwrite(y, file.path(outdatadir(),"top5poparea.csv"))
+        y
+    } else {
+        fread(file.path(outdatadir(),"top5poparea.csv"))
+    }
 }

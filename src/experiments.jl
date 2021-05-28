@@ -146,6 +146,74 @@ function issue66(;save = false)
     o
 end
 
+
+"""
+five city cross section
+
+https://github.com/floswald/LandUse.jl/issues/67
+"""
+function issue67()
+    x,C,p = k5()
+    d = LandUse.dataframe(C)
+    g = groupby(d, :region)
+
+    dd = select(transform(g, :Lu => firstnorm => :Lun, 
+                             :cityarea => firstnorm => :cityarean,
+                             :citydensity => firstnorm => :citydensityn), 
+                 :year, :Lu, :cityarea, :Lun, :cityarean,:citydensity,:citydensityn, :region)
+
+    pl = Dict()
+
+    # Relative Population and Area in final period
+    data = CSV.File(joinpath(LandUse.dboutdata,"top5poparea.csv")) |> DataFrame
+    data[!,:region] = 1:5
+    data[!,:group] .= "data"
+    sort!(data, :region)
+    
+    m = select(subset(d, :year => x -> x .== 2020), :region, :Lu => (x -> x ./ maximum(x)) => :relative_pop, :cityarea => (x -> x ./ maximum(x)) => :relative_area)
+    m[!,:group] .= "model"
+
+    dm = vcat(select(data,Not(:LIBGEO)),m)
+    dm = leftjoin(dm, select(data,:region, :LIBGEO => :city), on = :region)
+
+    pl[:relpop] = @df dm groupedbar(:relative_pop, group = :group, legend = :left, xticks = (:region,:city), title = "2020 Population relative to Paris")
+    pl[:relarea] = @df dm groupedbar(:relative_area, group = :group, legend = :left, xticks = (:region,:city), title = "2020 Area relative to Paris")
+    savefig(pl[:relpop], joinpath(dbplots,"five-city-relpop.pdf"))
+    savefig(pl[:relarea], joinpath(dbplots,"five-city-relarea.pdf"))
+
+
+
+    # Density
+    # =======
+
+    # cross section: bigger cities are denser, in all periods
+    pl[:cross] = @df dd plot(:year, :citydensity, group = :region, yaxis = :log, ylab = "log density", title = "Bigger cities are always denser.")
+    savefig(pl[:cross], joinpath(dbplots,"five-city-cross.pdf"))
+    
+    # over time, the fall in density is more pronounced in large cities than in smaller ones
+    pl[:time] = @df dd plot(:year, :citydensityn, group = :region, ylab = "normalized density (1840 = 1)", title = "...but they become less dense faster!")
+    savefig(pl[:time], joinpath(dbplots,"five-city-time.pdf"))
+
+    # show relative density and population over time
+    pk = @df subset(dd, :region => x -> x .== 1) plot(:citydensityn, :Lun, series_annotation = Plots.text.(:year, 8, :right),xlab = "relative density (1840 = 1)",
+     ylab = "relative Population (1840 = 1)", title = "Density vs Urban Population", label = "1")
+    for ik in 2:5
+        ds = subset(dd, :region => x -> x .== ik)
+        if ik < 5
+            plot!(pk, ds.citydensityn, ds.Lun, label = "$ik")
+        else
+            years = string.(collect(p.T))
+            years[Not([1,5,10,15,19])] .= ""
+            plot!(pk, ds.citydensityn, ds.Lun, label = "$ik", series_annotation = Plots.text.(years, 8, :right))
+        end
+    end
+    pl[:rel] = pk
+    savefig(pl[:rel], joinpath(dbplots,"five-city-rel.pdf"))
+    pl
+end
+
+
+
 """
 plot ``\\phi_k`` vs ``\\L{u,k}`` for all regions ``k``.
 relates to https://github.com/floswald/LandUse.jl/issues/9
