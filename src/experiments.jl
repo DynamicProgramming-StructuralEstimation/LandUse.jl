@@ -165,6 +165,8 @@ function issue67()
     pl = Dict()
 
     # Relative Population and Area in final period
+    # ============================================
+
     data = CSV.File(joinpath(LandUse.dboutdata,"top5poparea.csv")) |> DataFrame
     data[!,:region] = 1:5
     data[!,:group] .= "data"
@@ -180,6 +182,19 @@ function issue67()
     pl[:relarea] = @df dm groupedbar(:relative_area, group = :group, legend = :left, xticks = (:region,:city), title = "2020 Area relative to Paris")
     savefig(pl[:relpop], joinpath(dbplots,"five-city-relpop.pdf"))
     savefig(pl[:relarea], joinpath(dbplots,"five-city-relarea.pdf"))
+
+
+    # commuting time
+    # ==============
+    ct = combine(g, :ictime => last, :imode => last)
+    rct = transform(ct, :ictime_last => maxnorm => :reltime, :imode_last => maxnorm => :relspeed)
+    rct = leftjoin(rct, select(data,:region,:LIBGEO => :city), on = :region)
+    sct = stack(select(rct,:city, :region, :reltime, :relspeed), Not([:region, :city]))
+
+    pl[:relspeedtime] = @df sct groupedbar(:value, group = :variable, legend = :topleft, xticks = (:region,:city), title = "Average Speed and Commute Time rel to Paris")
+    savefig(pl[:relspeedtime], joinpath(dbplots,"five-city-relspeedtime.pdf"))
+
+
 
 
 
@@ -209,7 +224,7 @@ function issue67()
     end
     pl[:rel] = pk
     savefig(pl[:rel], joinpath(dbplots,"five-city-rel.pdf"))
-    pl
+    (pl,d,g)
 end
 
 

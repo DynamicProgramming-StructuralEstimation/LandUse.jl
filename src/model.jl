@@ -644,3 +644,6 @@ end
 
 "normalize a vector wrt it's first element"
 firstnorm(x) = x ./ x[1]
+
+"normalize a vector wrt it's maximal element"
+maxnorm(x) = x ./ maximum(x)
