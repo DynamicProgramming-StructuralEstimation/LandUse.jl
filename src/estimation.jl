@@ -78,30 +78,39 @@ function dicts2df(d::Dict)
     df
 end
 
+"""
+    x2dict(x)
+
+map vector x to dict for [`Param`](@ref)
+"""
 function x2dict(x)
     di = Dict(:cbar => x[1],
     :sbar => x[2],
-    :ηl => x[3],
-    :ηw => x[4],
-    # :ηm => x[5],
-    :cτ => x[5],
+    :ξw => x[3],
+    :a => x[4],
+    :γ => x[5],
     :ϕ1x => 0.15)
     di
 end
 
-search_over() = OrderedDict(zip([:cbar,:sbar,:ηl , :ηw, :cτ], [(0.7, 0.9),(0.2, 0.26), (0.08,0.15), (0.45, 0.55), (2.0, 3.0)]))
+search_over() = OrderedDict(zip([:cbar,:sbar, :ξw, :a, :gamma], [(0.7, 0.9),(0.2, 0.26), (0.5, 0.9), (2.0, 3.0), (0.28, 0.33)]))
 # search_over() = OrderedDict(zip([:cbar], [(0.7, 0.88)]))
 symrange(x,pad,n) = range(x-pad, stop = x+pad, length = n)
 
 
 
 
+"""
+    p2x(p::Param)
 
+map param to x for objective function quick eval
+this is the inverse of [`x2dict`](@ref).
+"""
 function p2x(p::Param)
-    [ p.cbar,  p.sbar, p.ηl, p.ηw, p.cτ ]
+    [ p.cbar,  p.sbar, p.ξw, p.a, p.γ ]
 end
 
-objective1() = objective(p2x(Param()), moments = true, plot = true)
+objective1(;save = false) = objective(p2x(Param()), moments = true, plot = true, save = save)
 
 """
 moment objective function for an optimizer
@@ -183,11 +192,15 @@ function objective(x; moments = false, plot = false, save = false)
                 po = dashboard(M1,p1,i2020, objvalue = vv)
                 if save 
                     savefig(po, joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf")) 
+                    open(joinpath(dbtables,"moments.tex"),"w") do f
+                        print(f,latexify(da, fmt = "%.3f",env = :table))
+                    end
                 end
                 return (vv , da, po)
             else
                 return (vv , da)
             end
+
         else
             return sum(da.weights .* (da.data .- da.model).^2)
         end

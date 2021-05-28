@@ -226,7 +226,7 @@ function update!(m::Region,p::Param,x::Vector{Float64}; Lu...)
 
 	m.speedbreaks = [0.0]
 	for i in p.speed_thresholds
-		xspeed = lofmode(i,p)
+		xspeed = lofmode(i,p,m.Lu)
 		if xspeed < m.ϕ
 			push!(m.speedbreaks, xspeed)
 		else
@@ -247,7 +247,7 @@ function update!(m::Region,p::Param,x::Vector{Float64}; Lu...)
 		m.Lu = Lu[1]
 	end
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = m.wu0 - τ(m.ϕ,p)
+	m.wr   = m.wu0 - τ(m.ϕ,p,m.Lu)
 	# m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = 0.059
@@ -298,9 +298,9 @@ function update!(m::Region,p::Param,x::Vector{Float64}; Lu...)
 	# m.d0   = D(p.ϕ1,p,m)
 	m.d0   = m.iDensity_center
 
-	m.mode0 = mode(0.01 * m.ϕ,p)
+	m.mode0 = mode(0.01 * m.ϕ,p,m.Lu)
 	m.ctime0 = 0.01 * m.ϕ / m.mode0
-	m.modeϕ = mode(m.ϕ,p)
+	m.modeϕ = mode(m.ϕ,p,m.Lu)
 	m.ctimeϕ = m.ϕ / m.modeϕ
 
 	# income measures
@@ -365,8 +365,8 @@ function integrate!(m::Region,p::Param)
 
 	# averages
 	m.qbar      = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	m.imode     = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (mode(m.nodes[i],p) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
-	m.ictime    = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * ((m.nodes[i] / mode(m.nodes[i],p)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.imode     = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (mode(m.nodes[i],p,m.Lu) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
+	m.ictime    = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * ((m.nodes[i] / mode(m.nodes[i],p,m.Lu)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
 end
 
@@ -429,25 +429,24 @@ end
 # Model Component Functions
 
 
+a(Lu::Float64,p::Param) = p.a * Lu^p.ηa
+cτ(Lu::Float64,p::Param) = (0.5 * a(Lu,p))^2 / (2 * p.ζ)
 
 
-mode(l::Float64,p::Param) = ((2*p.ζ)/p.cτ)^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm)) * (p.θu)^((1 - p.ηw)/(1+p.ηm))
-lofmode(m::Float64, p::Param) = ((2*p.ζ)/p.cτ)^(-1/(1-p.ηl)) * m^((1+p.ηm) / (1-p.ηl)) * (p.θu)^(-(1 - p.ηw)/(1-p.ηl))
+mode(l::Float64,p::Param,Lu::Float64) = ((2*p.ζ)/cτ(Lu,p))^(1/(1+p.ηm)) * l^((1 - p.ηl)/(1+p.ηm)) * wu0(Lu, p)^((1 - p.ηw)/(1+p.ηm))
+lofmode(m::Float64, p::Param,Lu::Float64) = ((2*p.ζ)/cτ(Lu,p))^(-1/(1-p.ηl)) * m^((1+p.ηm) / (1-p.ηl)) * wu0(Lu, p)^(-(1 - p.ηw)/(1-p.ηl))
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
 "commuting cost: location x → cost"
 # τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.ξl)
-τ(x::Float64,p::Param) = p.a * p.θu^(p.ξw) * x^(p.ξl)
+τ(x::Float64,p::Param,Lu::Float64) = a(Lu,p) * wu0(Lu, p)^(p.ξw) * x^(p.ξl)
 
 
 
 "inverse commuting cost. cost x → location. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
-invτ(x::Float64,p::Param) = ( x / ( p.a * p.θu^(p.ξw)) )^(1.0/p.ξl)
-
-# old versions
-# invτ(x::Float64,p::Param) = ( x * p.θu^(p.ζ) / (p.τ) )^(1/p.τ1)
-# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.θu^(-p.ζ) * p.τ * (x)^p.τ1
+# invτ(x::Float64,p::Param,Lu::Float64) = ( x / ( p.a * wu0(Lu, p)^(p.ξw)) )^(1.0/p.ξl)
+invτ(Lu::Float64,wr::Float64,wu::Float64,p::Param) = ( (wu - wr) / ( a(Lu,p) * wu^(p.ξw)) )^(1.0/p.ξl)
 
 
 """
@@ -464,16 +463,16 @@ which can be rearranged to obtain a map from ``w(0) - w_r = \\tau(\\phi)``.
 The function takes ``w(0) - w_r`` as argument `x`. then we give ``\\tau(\\phi)``
 	to its inverse function to get back ``\\phi``
 """
-getfringe(w0::Float64,wr::Float64,p::Param) = w0 > wr ? invτ(w0 - wr,p) : 0.0
+getfringe(Lu::Float64,w0::Float64,wr::Float64,p::Param) = w0 > wr ? invτ(Lu,wr,w0,p) : 0.0
 
 "urban wage at location ``l``"
-wu(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(l,p)
+wu(Lu::Float64,l::Float64,p::Param) = wu0(Lu,p) .- τ(l,p,Lu)
 
 "urban wage at center"
 wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
 
 "rural wage from indifference condition at ϕ. Eq (11)"
-wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(ϕ,p)
+wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(ϕ,p,Lu)
 
 "FOC of rural firm wrt labor Lr"
 foc_Lr(L_over_S::Float64,pr::Float64, p::Param) = p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0/ L_over_S )^((p.σ-1)/p.σ))^(1.0 / (p.σ-1))
@@ -482,7 +481,7 @@ foc_Lr(L_over_S::Float64,pr::Float64, p::Param) = p.α * pr * p.θr * (p.α + (1
 foc_Sr(L_over_S::Float64,pr::Float64, p::Param) = (1-p.α)* pr * p.θr * (p.α * (L_over_S)^((p.σ-1)/p.σ) + (1-p.α))^(1.0 / (p.σ-1))
 
 "wage at location ``l``"
-w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,ϕ,p)
+w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,p)
 
 "excess subsistence urban worker"
 xsu(l::Float64,p::Param,m::Model) = w(m.Lu,l,m.ϕ,p) .+ m.r .- m.pr .* p.cbar .+ p.sbar
@@ -601,7 +600,7 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	df[1,:p_index] = M[1].pr
 	for i in 1:tt
 		setperiod!(p,i)
-		df[i, :τ_ts] = τ(initϕ, p)
+		df[i, :τ_ts] = τ(initϕ, p, M[i].Lu)
 		df[i, :rural_emp_model] = M[i].Lr / p.L
 		if i > 1
 			df[i, :p_laspeyres] = ( M[i].pr * M[i-1].Yr + M[i-1].Yu ) / ( M[i-1].pr *  M[i-1].Yr + M[i-1].Yu )
@@ -618,9 +617,26 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	df[!,:qbar_real] = df[!,:qbar] ./ df[!, :p_index]
 	df[!,:ρ0_real] = df[!,:ρ0] ./ df[!, :p_index]
 
+	# normalizations
+	sort!(df, :year)
+	dens = select(df,:d0,  :dr, :citydensity)
+	mapcols!(x -> x ./ x[1],dens)
+	rename!(dens, [:d0_n, :dr_n, :avgd_n] )
+
+	df = [df dens]
+
+	
+	
+	
+	# ndens[!,:year] .= dens.year
+	
+
 	df
 end
 
 function pdiff(M::Vector{Model}, v::Symbol; t1=1,t2=7)
 	(getfield(M[t2],v) - getfield(M[t1],v)) / getfield(M[t1],v)
 end
+
+"normalize a vector wrt it's first element"
+firstnorm(x) = x ./ x[1]

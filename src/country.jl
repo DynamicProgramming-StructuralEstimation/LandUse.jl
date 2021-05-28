@@ -46,8 +46,6 @@ mutable struct Country
 		@warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
 		for ik in 1:p.K
 			this.pp[ik].θu =  max(p.θu .* p.factors[ik], 1.0)  
-			# println("modifying $ik")
-			# println(this.pp[ik].θu)
 		end
 
 		this.R = [Region(this.pp[ik]) for ik in 1:p.K]
@@ -71,7 +69,8 @@ function show(io::IO, C::Country)
     # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
 	for ik in 1:C.K
 		m = C.R[ik]
-    	@printf(io,"Region %d: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f",ik,m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m))
+		show(io,m)
+    	# @printf(io,"Region %d: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f, pr=%1.3f",ik,m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m))
     	if ik < C.K
 			@printf(io,"\n ")
 		end
@@ -156,7 +155,7 @@ function update!(c::Country,x::Vector{Float64})
 	# 2. update other equations in each region
 	for ik in 1:K
 		cx = [c.ρr, 
-		      getfringe(p[ik].θu, c.wr, p[ik]), 
+		      getfringe(Lu[ik],wu0(Lu[ik],p[ik]), c.wr, p[ik]), 
 			  c.r, 
 			  c.LS * Srk[ik], 
 			  c.pr, 

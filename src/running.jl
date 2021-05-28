@@ -86,7 +86,8 @@ function run(x0::NamedTuple, p::Param)
 end
 
 """
-run Multi-region model for all time periods
+run Multi-region model for all time periods starting from 
+the single city starting value. Works only for not too different θu values.
 """
 function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 
@@ -95,7 +96,7 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 	@assert p.K > 1
 
 	setperiod!(p,1)
-	x0 = startval(p)
+	x0 = nearstart(p)
 	m = Region(p)
 	x0 = jm(p,m,x0, estimateθ = false)
 	update!(m,p,[x0...])
@@ -112,9 +113,13 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 	for ik in 1:p.K
 		push!(x,m.Lu)
 	end
+	runk_impl(x,p)
+end
 
+
+function runk_impl(x0::Vector,p::Param)
 	sols = Vector{Float64}[]  # an empty array of solutions
-	push!(sols,x)
+	push!(sols,x0)
 
 	C = Country[]  # an emtpy array of countries
 
@@ -138,18 +143,80 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 
 		push!(C,c)
 	end
-
 	(sols,C,p) # solutions, models, and parameter
-
 end
 
-function k1()
-	x,C,p = runk()
-	x,C,p = impl_plot_slopes(C)
+
+"helper function to prepare country param"
+function startvals_par(K::Int; θus = 1.2:0.01:1.35)
+	if K == 2
+		θus = 1.2:0.01:1.32
+		facs = [1.0, θus[1]]
+	elseif K == 3	
+		facs = [1.0, 1.07, θus[1]]
+	elseif K == 4	
+		facs = [1.0, 1.07, 1.1, θus[1]]
+	elseif K == 5	
+		facs = [1.0, 1.07, 1.08, 1.09, θus[1]]
+	end
+		
+	(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => facs), θus = θus)
+end
+
+"""
+collect valid starting values for the k country case by reusing the first period solution
+	of each preceding step in θu along the sequence
+"""
+function startvals_impl(K::Int; θu = 1.2:0.01:1.35)
+	
+	par, θus = startvals_par(K,θus = θu)
+
+	x,C,p = runk(par = par)
+
+	x0 = Vector{Float64}[] 
+	push!(x0, x[2])
+	for (i,θu) in enumerate(θus)
+		# println("θu = $θu")
+		par[:factors][K] = θu
+		p = LandUse.Param(par = par)
+		x1,C1,p1 = runk_impl(x0[i],p)
+		push!(x0,x1[2])
+	end
+	(par = par, x0 = x0[end])
+end
+
+
+"""
+	startvals_k()
+
+Find feasible starting values for multi city case (2 to 5 cities) and write to disk. By default return the saved dict with start param and initial guess vector `x0`.
+"""
+function startvals_k(K::Int; overwrite = false)
+	if overwrite
+		# recompute all starting values and write to disk
+		d = Dict()
+		for k in 2:K
+			@info "doing case k=$k"
+			d[k] = startvals_impl(k)
+		end
+		bson(joinpath(@__DIR__,"..","out","multistarts.bson"), d)
+
+	else
+		# read from disk
+		d = BSON.load(joinpath(@__DIR__,"..","out","multistarts.bson"))
+	end
+	d[K]
+end
+
+"5 country case"
+function k5()
+	(par, x0) = startvals_k(5)
+	p = Param(par = par)
+	runk_impl(x0,p)
 end
 
 function k3()
-	x,C,p = runk(par = Dict(:K => 3,:kshare => [0.25,0.25,0.5], :factors => [1.0,1.005,1.05]))
+	runk(par = Dict(:K => 3,:kshare => [0.25,0.25,0.5], :factors => [1.0,1.005,1.05]))
 	# x,C,p = runk(par = Dict(:K => 3,:kshare => [0.333,0.333,0.333], :factors => [1.0,1.005,1.05]))
 	# x,C,p = impl_plot_slopes(C)
 	# d = dataframe(C)
@@ -173,12 +240,16 @@ function dash(it)
 	x,M,p = run(Param())
 	dashboard(M,p,it)
 end
-function export_thetas()
+function cdash(it)
+	x,M,p = k3()
+	dashboard(M,it)
+end
+function export_params()
 	x,M,p = runm()
 	latex_param()
-	d = DataFrame(year = collect(p.T), thetau = p.θut, thetar = p.θrt, pr = [M[it].pr for it in 1:length(M)])
+	d = DataFrame(year = collect(p.T), thetau = p.θut, thetar = p.θrt, pr = [M[it].pr for it in 1:length(M)], Lt = p.Lt)
 	CSV.write(joinpath(dbtables,"export_theta_pr.csv"),d)
 
-	x0 = LandUse.startval(Param())
+	x0 = LandUse.nearstart(Param())
 	CSV.write(joinpath(dbtables,"export_x0.csv"),DataFrame([x0]))
 end

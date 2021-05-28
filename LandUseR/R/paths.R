@@ -9,3 +9,4 @@ dataplots <- function(){file.path(outdir(),"data","plots")}
 entddir <- function(){file.path(datadir(),"ENTD")}
 
 outdir <- function(){file.path(dboxdir(),"output")}
+outdatadir <- function(){file.path(dboxdir(),"output","data")}

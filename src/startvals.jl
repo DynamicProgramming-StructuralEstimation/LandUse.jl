@@ -47,8 +47,17 @@ startnames() = (:ρr , :ϕ, :r , :Lr , :pr , :Sr, :θu, :θr )
 
 startval(p::Param) = stmodel(p)
 
+"""
+    p2Flux(p::Param)
+
+map param to Flux Chain to get starting value
+"""
+function p2Flux(p::Param)
+    [ p.cbar,  p.sbar, p.ηl, p.ηw, p.a ]
+end
+
 "you just had a failed start at p"
 function nearstart(p::Param)
-	x = p2x(p)
+	x = p2Flux(p)
 	(; zip(startnames(), [p.Chain(x)...,1.0,1.0])...)
 end

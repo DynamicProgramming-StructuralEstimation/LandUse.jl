@@ -6,25 +6,33 @@ https://github.com/floswald/LandUse.jl/issues/59
 """
 function issue59(;save = false)
     p1 = Param()
-    p2 = Param(par = Dict(:ϵflat => true))
+    p2 = Param(par = Dict(:ϵflat => true, :ϵr => 4.0))
 
     x1,m1,p1 = run(p1)
     x2,m2,p2 = run(p2)
 
     d1 = dataframe(m1,p1); d2 = dataframe(m2,p2)
     d1[!,:type] .= "baseline"
-    d2[!,:type] .= "flat ϵ"
+    d2[!,:type] .= "ϵ(l) = 4"
     d = vcat(d1,d2)
 
     pl = Dict()
-    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Urban Density")
-    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area")
-    pl[:qbar] = @df d plot(:year, :qbar, group = :type, title = "Average Urban House Price")
+    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Density")
+    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area", leg=false)
+    pl[:qbar] = @df d plot(:year, :qbar_real, group = :type, title = "Avg House Price", leg=false)
+
+    pl[:ndens0] = @df d plot(:year, :d0_n, group = :type, title = "Central n density", leg=false)
+    pl[:ndensr] = @df d plot(:year, :dr_n, group = :type, title = "Fringe n density", leg=false)
+    pl[:ndensa] = @df d plot(:year, :avgd_n, group = :type, title = "Avg n density", leg=false)
+    o = plot(pl[:density], pl[:size], pl[:qbar], pl[:ndens0], pl[:ndensa], pl[:ndensr], layout = (2,3), size = (800,400))
+
+    cs1 = cs_plots(m1[19],p1,19)
+    cs2 = cs_plots(m2[19],p2,19)
+    pl[:gradients] = plot(cs1[:D],cs2[:D], title = ["baseline" "flat ϵ"])
 
     if save 
-        for (k,v) in pl
-            savefig(v,joinpath(dbplots,"issue59-$(string(k)).pdf"))
-        end 
+        savefig(o,joinpath(dbplots,"issue59.pdf"))
+        savefig(pl[:gradients],joinpath(dbplots,"issue59-gradients.pdf"))
     end
     pl
 end
@@ -48,16 +56,159 @@ function issue60(;save = false)
     d = vcat(d1,d2)
 
     pl = Dict()
-    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Urban Density")
-    pl[:cdensity] = @df d plot(:year, :d0, group = :type, title = "Central Urban Density")
-    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area")
-    pl[:qbar] = @df d plot(:year, :qbar, group = :type, title = "Average Urban House Price")
+    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Density")
+    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area", leg=false)
+    pl[:qbar] = @df d plot(:year, :qbar_real, group = :type, title = "Avg House Price", leg=false)
+
+    pl[:ndens0] = @df d plot(:year, :d0_n, group = :type, title = "Central n density", leg=false)
+    pl[:ndensr] = @df d plot(:year, :dr_n, group = :type, title = "Fringe n density", leg=false)
+    pl[:ndensa] = @df d plot(:year, :avgd_n, group = :type, title = "Avg n density", leg=false)
+    o = plot(pl[:density], pl[:size], pl[:qbar], pl[:ndens0], pl[:ndensa], pl[:ndensr], layout = (2,3), size = (800,400))
+
 
     if save 
-        for (k,v) in pl
-            savefig(v,joinpath(dbplots,"issue60-$(string(k)).pdf"))
-        end 
+        savefig(o,joinpath(dbplots,"issue60.pdf"))
+        # for (k,v) in pl
+        #     savefig(v,joinpath(dbplots,"issue60-$(string(k)).pdf"))
+        # end 
     end
+    o
+end
+
+
+"""
+run model with congestion forces
+
+https://github.com/floswald/LandUse.jl/issues/64
+"""
+function issue64(;save = false)
+    p1 = Param()
+    p2 = Param(par = Dict(:ηa => 0.1))
+
+    x1,m1,p1 = run(p1)
+    x2,m2,p2 = run(p2)
+
+    d1 = dataframe(m1,p1); d2 = dataframe(m2,p2)
+    d1[!,:type] .= "baseline"
+    d2[!,:type] .= "ηa = $(p2.ηa)"
+    transform!(d1, :imode => (x -> x ./ x[1]) => :imode_n)
+    transform!(d2, :imode => (x -> x ./ x[1]) => :imode_n)
+    d = vcat(d1,d2)
+
+    pl = Dict()
+    pl[:density] = @df d plot(:year, :citydensity, group = :type, title = "Average Density")
+    pl[:size] = @df d plot(:year, :cityarea, group = :type, title = "Urban Area", leg=false)
+    pl[:mode] = @df d plot(:year, :imode_n, group = :type, title = "Mode increase", leg=false)
+
+    pl[:ndens0] = @df d plot(:year, :d0_n, group = :type, title = "Central n density", leg=false)
+    pl[:ndensr] = @df d plot(:year, :dr_n, group = :type, title = "Fringe n density", leg=false)
+    pl[:ndensa] = @df d plot(:year, :avgd_n, group = :type, title = "Avg n density", leg=false)
+    o = plot(pl[:density], pl[:size], pl[:mode], pl[:ndens0], pl[:ndensa], pl[:ndensr], layout = (2,3), size = (800,400))
+
+
+    if save 
+        savefig(o,joinpath(dbplots,"issue64.pdf"))
+        # for (k,v) in pl
+        #     savefig(v,joinpath(dbplots,"issue60-$(string(k)).pdf"))
+        # end 
+    end
+    o
+end
+
+
+"""
+run multi city with congestion
+
+https://github.com/floswald/LandUse.jl/issues/66
+"""
+function issue66(;save = false)
+    p1 = Param()
+    p2 = Param(par = Dict(:ηa => 0.1))
+    d1 = Dict(:K => 3, :kshare => [1/3,1/3,1/3], :factors => [1.0,1.01,1.1])
+    d2 = Dict(:K => 3, :kshare => [1/3,1/3,1/3], :factors => [1.0,1.01,1.1], :ηa => 0.1)
+    
+
+    x1,m1,p1 = runk(par = d1)
+    x2,m2,p2 = runk(par = d2)
+
+    c1 = dashboard(m1, 19)
+    c2 = dashboard(m2, 19)
+
+    o = plot(c1, c2, size = (2200,700))
+
+
+    if save 
+        savefig(o,joinpath(dbplots,"issue64.pdf"))
+        # for (k,v) in pl
+        #     savefig(v,joinpath(dbplots,"issue60-$(string(k)).pdf"))
+        # end 
+    end
+    o
+end
+
+
+"""
+five city cross section
+
+https://github.com/floswald/LandUse.jl/issues/67
+"""
+function issue67()
+    x,C,p = k5()
+    d = LandUse.dataframe(C)
+    g = groupby(d, :region)
+
+    dd = select(transform(g, :Lu => firstnorm => :Lun, 
+                             :cityarea => firstnorm => :cityarean,
+                             :citydensity => firstnorm => :citydensityn), 
+                 :year, :Lu, :cityarea, :Lun, :cityarean,:citydensity,:citydensityn, :region)
+
+    pl = Dict()
+
+    # Relative Population and Area in final period
+    data = CSV.File(joinpath(LandUse.dboutdata,"top5poparea.csv")) |> DataFrame
+    data[!,:region] = 1:5
+    data[!,:group] .= "data"
+    sort!(data, :region)
+    
+    m = select(subset(d, :year => x -> x .== 2020), :region, :Lu => (x -> x ./ maximum(x)) => :relative_pop, :cityarea => (x -> x ./ maximum(x)) => :relative_area)
+    m[!,:group] .= "model"
+
+    dm = vcat(select(data,Not(:LIBGEO)),m)
+    dm = leftjoin(dm, select(data,:region, :LIBGEO => :city), on = :region)
+
+    pl[:relpop] = @df dm groupedbar(:relative_pop, group = :group, legend = :left, xticks = (:region,:city), title = "2020 Population relative to Paris")
+    pl[:relarea] = @df dm groupedbar(:relative_area, group = :group, legend = :left, xticks = (:region,:city), title = "2020 Area relative to Paris")
+    savefig(pl[:relpop], joinpath(dbplots,"five-city-relpop.pdf"))
+    savefig(pl[:relarea], joinpath(dbplots,"five-city-relarea.pdf"))
+
+
+
+    # Density
+    # =======
+
+    # cross section: bigger cities are denser, in all periods
+    pl[:cross] = @df dd plot(:year, :citydensity, group = :region, yaxis = :log, ylab = "log density", title = "Bigger cities are always denser.")
+    savefig(pl[:cross], joinpath(dbplots,"five-city-cross.pdf"))
+    
+    # over time, the fall in density is more pronounced in large cities than in smaller ones
+    pl[:time] = @df dd plot(:year, :citydensityn, group = :region, ylab = "normalized density (1840 = 1)", title = "...but they become less dense faster!")
+    savefig(pl[:time], joinpath(dbplots,"five-city-time.pdf"))
+
+    # show relative density and population over time
+    pk = @df subset(dd, :region => x -> x .== 1) plot(:citydensityn, :Lun, series_annotation = Plots.text.(:year, 8, :right),xlab = "relative density (1840 = 1)",
+     ylab = "relative Population (1840 = 1)", title = "Density vs Urban Population", label = "1")
+    for ik in 2:5
+        ds = subset(dd, :region => x -> x .== ik)
+        if ik < 5
+            plot!(pk, ds.citydensityn, ds.Lun, label = "$ik")
+        else
+            years = string.(collect(p.T))
+            years[Not([1,5,10,15,19])] .= ""
+            plot!(pk, ds.citydensityn, ds.Lun, label = "$ik", series_annotation = Plots.text.(years, 8, :right))
+        end
+    end
+    pl[:rel] = pk
+    savefig(pl[:rel], joinpath(dbplots,"five-city-rel.pdf"))
     pl
 end
 

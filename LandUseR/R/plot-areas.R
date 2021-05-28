@@ -5,12 +5,7 @@
 
 
 
-#' Read main output table
-#'
-#' @export
-read_output <- function(){
-    readRDS(file.path(datadir(),"areas_pops.Rds"))
-}
+
 
 
 #' read area data
