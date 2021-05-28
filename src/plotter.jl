@@ -113,12 +113,9 @@ end
 function ts_plots(M,p::Param;fixy = false)
 	d = dataframe(M,p)
 	dd = Dict()
-	df = @linq d |>
-		 select(:year,:Ch,:Cu,:Cr,:C ) |>
-		 transform(h = :Ch ./ :C,u = :Cu ./ :C,r = :Cr ./ :C) |>
-		 select(:year, :h, :u , :r)
+	df = select(d, :year, :hshare => :h, :ushare => :u, :rshare => :r)
 	ds = stack(df, Not(:year))
-
+	
 	# marker
 	mmark = (:circle, 4)
 
