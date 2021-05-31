@@ -36,6 +36,7 @@ mutable struct Country
 	function Country(p::Param)
 		this = new()
 		@assert p.K == length(p.factors)
+		@assert p.K == length(p.gs)
 		@assert p.K == length(p.kshare)
 		this.K = p.K
 
@@ -45,7 +46,8 @@ mutable struct Country
 		# modify θus for each
 		@warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
 		for ik in 1:p.K
-			this.pp[ik].θu =  max(p.θu .* p.factors[ik], 1.0)  
+			p.θu = max(p.θu, 1.0)
+			this.pp[ik].θu =  p.θu * p.factors[ik] * exp(p.gs[ik] * (p.it-1))
 		end
 
 		this.R = [Region(this.pp[ik]) for ik in 1:p.K]

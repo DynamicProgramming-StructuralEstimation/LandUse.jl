@@ -160,7 +160,7 @@ function startvals_par(K::Int; θus = 1.2:0.01:1.35)
 		facs = [1.0, 1.07, 1.08, 1.09, θus[1]]
 	end
 		
-	(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => facs), θus = θus)
+	(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => facs, :gs => zeros(K)), θus = θus)
 end
 
 """
@@ -211,18 +211,22 @@ end
 "5 country case"
 function k5()
 	(par, x0) = startvals_k(5)
+	par[:gs] = zeros(5)
 	p = Param(par = par)
 	runk_impl(x0,p)
 end
 
+
 function k3()
-	runk(par = Dict(:K => 3,:kshare => [0.25,0.25,0.5], :factors => [1.0,1.005,1.05]))
-	# x,C,p = runk(par = Dict(:K => 3,:kshare => [0.333,0.333,0.333], :factors => [1.0,1.005,1.05]))
-	# x,C,p = impl_plot_slopes(C)
-	# d = dataframe(C)
-	# gd = groupby(d,:region)
-	# dd = combine(gd, :cityarea => (x -> x ./ x[1]) => :narea, :year, :Lu => (x -> x ./x[1]) => :npop, :cityarea, :Lu)
-	# dd
+
+	(par, x0) = startvals_impl(3, θu = 1.2:0.01:1.24)
+	par[:gs] = [0.0,0.001,0.01]
+	
+	p = Param(par = par)
+	x,C,p = runk_impl(x0,p)
+	d = dataframe(C)
+	gg = groupby(select(filter(x -> x.region .∈ Ref([1,3]), d), :region, :year, :Lu), :year)
+    combine(gg, :Lu => (x -> maximum(x) / minimum(x)) => :rel_Lu)
 end
 
 function runm()

@@ -36,3 +36,16 @@ relative_pop_area <- function(cities = top5now(), overwrite = FALSE){
         fread(file.path(outdatadir(),"top5poparea.csv"))
     }
 }
+
+pop_allyears <- function(){
+    x = read_output()
+    p0 = data.table(readpop())
+    p1 = p0[DEP == 75, list(CODGEO = "75060", LIBGEO = "Paris", population = sum(population)), by = year(date)]
+    p = rbind(p0[,list(CODGEO,LIBGEO,population,year)],p1[,list(CODGEO,LIBGEO,population,year)])
+    y = merge(x[year == 1876,list(CODGEO,rank)], p, all.y = FALSE)
+    y = y[, list(LIBGEO, rank,relpop = population / max(population)),by=year]
+    fwrite(y, file.path(outdatadir(),"relpop.csv"))
+
+    ggplot(y[rank < 21][rank != 1], aes(x=year, y = relpop, color = LIBGEO)) + geom_line()
+
+}

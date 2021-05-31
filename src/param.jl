@@ -53,9 +53,11 @@ mutable struct Param
 	ϕ1x  :: Float64   # fraction of first fringe that defines "center"
 
 	# Country setup
+	# country growth: θ_it = θ_i exp(g_i * t) * θ_ut
 	K :: Int # number of regions
 	kshare :: Vector{Float64} # share of space of each region
-	factors :: Vector{Float64} # growth factor offsets
+	factors :: Vector{Float64} # city specific baseline shift on aggregate theta_u
+	gs :: Vector{Float64} # city specific growth shift on aggregate theta_u
 	# kθu :: Dict  # collection of θu's for each region for each period
 	# kθr :: Dict
 
