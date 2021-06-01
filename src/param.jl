@@ -60,6 +60,7 @@ mutable struct Param
 	gs :: Vector{Float64} # city specific growth shift on aggregate theta_u
 	# kθu :: Dict  # collection of θu's for each region for each period
 	# kθr :: Dict
+	citygroups :: DataFrame
 
 	trace :: Bool  # whether to trace solver
 	iters :: Int  # max iterations
@@ -196,6 +197,9 @@ mutable struct Param
 		# as ηm goes to infinity the transport cost goes to 2 ζ w l
 
 		this.Chain = BSON.load(joinpath(@__DIR__,"..","out","mymodel.bson"))[:model]
+
+		# data size classification
+		this.citygroups = CSV.read(joinpath(dboutdata, "relpop-classification.csv"), DataFrame)
 
 
     	return this

@@ -2,7 +2,11 @@
 
 function relpop(; maxrank = 20)
     d = CSV.read(joinpath(LandUse.dboutdata, "relpop.csv"), DataFrame, types = Dict(2 => String))
-    d20 = subset(d, :rank => x -> x .< maxrank)
+    d20 = subset(d, :rank => x -> x .<= maxrank)
+    d20 = transform(groupby(d20, :year), :pop => (x -> x / sum(x)) => :popweight)
+
+
+
     d1 = sort(subset(d20, :year => x-> x .== 1876), :relpop, rev = true ) # fist year
 
     # classify cities
@@ -13,6 +17,8 @@ function relpop(; maxrank = 20)
     d1[d1.relpop .<  0.08, :group] .= 4
     d1[d1.relpop .<  0.043, :group] .= 5
     d1 = transform(groupby(d1, :group), nrow => :ngroup)
+    CSV.write(joinpath(LandUse.dboutdata, "relpop-classification.csv"), d1)
+
 
     # merge back into data
     d20 = leftjoin(d20,select(d1, :CODGEO, :group, :ngroup), on = :CODGEO)
@@ -27,11 +33,16 @@ function relpop(; maxrank = 20)
     # manually smooth out marseille in 1936: set equal to Lyon
     d20[(d20.LIBGEO .== "Marseille") .& (d20.year .== 1936), :relpop] .= d20[(d20.LIBGEO .== "Lyon") .& (d20.year .== 1936), :relpop]
 
-     # create group means
-     dm = combine(groupby(d20, [:group, :year]), :ngroup => first => :ngroup, :relpop => mean => :relpop)
+    # create group means
+    dm = combine(groupby(d20, [:group, :year]), :ngroup => first => :ngroup, :relpop => mean => :relpop, :popweight => sum => :popweight)
+    transform!(dm, [:group, :ngroup] => ((a,b) -> string.(a,"(n=",b,")")) => :grouplabel)
 
-     # plot
-     @df subset(dm, :group => x -> x .> 1) plot(:year, :relpop, group = :group, marker = :circle)
+    # plot
+    pl = @df subset(dm, :group => x -> x .> 1) plot(:year, :relpop, group = :grouplabel, marker = :circle, title = "Population Data relative to Paris")
+
+    CSV.write(joinpath(LandUse.dboutdata, "relpop-means.csv"), dm)
+
+    return (pl, dm)
 
 
 

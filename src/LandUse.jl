@@ -75,6 +75,7 @@ module LandUse
 	include("jump.jl")
 	include("estimation.jl")
 	include("learning.jl")
+	include("data.jl")
 
 	cpslides(name) = cp(joinpath(@__DIR__,"..","tex","slides","COT_slides.pdf"),
 	                   joinpath(dbpath,"slides","flo-slides","COT_slides-$name.pdf"),

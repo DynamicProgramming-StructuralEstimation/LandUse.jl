@@ -229,6 +229,34 @@ function k3()
     combine(gg, :Lu => (x -> maximum(x) / minimum(x)) => :rel_Lu)
 end
 
+"""
+return model relative population in each year to largest city
+largest city is city 1
+"""
+function relpop(C::Vector{Country})
+	d = dataframe(C)
+	cla = select(C[1].pp[1].citygroups, :rank, :group, :ngroup)
+	transform!(cla, [:group, :ngroup] => ((a,b) -> string.(a,"(n=",b,")")) => :grouplabel)
+
+	d = leftjoin(select(d, :year, :region, :Lu), cla, on = :region => :rank)
+	gg = groupby(d, :year)
+    g2 = combine(gg, [:Lu, :region] => ((a,b) -> a ./ a[b .== 1]) => :rel_Lu, :region, :Lu, :grouplabel)
+	combine(groupby(g2, [:grouplabel, :year]),  :rel_Lu => mean, :region) # mean amongst groups
+end
+
+function k20()
+	K = 20
+	# par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.09, 1.02, 1.02, 1.01,1.01, [1.005 for i in 1:7]...,ones(8)...], :gs => [0.003,zeros(K-1)...])
+	par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.1, 1.01, 1.01, 1.005,1.005, [1.0025 for i in 1:7]...,ones(8)...], :gs => [0.0025,zeros(K-1)...])
+	# par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.05, 1.01, 1.01, 1.005,1.005, [1.0025 for i in 1:7]...,ones(8)...], :gs => [0.002,zeros(K-1)...])
+	# par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.02, 1.001, 1.001, 1.01,1.01, [1.005 for i in 1:7]...,ones(8)...], :gs => [0.001,zeros(K-1)...])
+	x,C,p = runk(par = par)
+	# relpop(C)
+	dd = relpop(C)
+	@df subset(dd, :region => x-> x.> 1, :year => x-> x.> 1870) plot(:year, :rel_Lu_mean, group = :grouplabel, title = "model relative to paris")
+	
+end
+
 function runm()
 	run(Param())
 end
