@@ -130,14 +130,14 @@ measure_cities <- function(overwrite = FALSE, cutoff = 30){
         OL = readRDS(file.path(LandUseR:::outdir(),"data","france_measured.Rds"))
         L = readRDS(file.path(LandUseR:::outdir(),"data","france-cropped-cities.Rds"))
     }
-    return(list(OL,L))
+    return(list(measured = OL,cropped = L))
 }
 
 dist_from_center <- function(overwrite = FALSE, ndists = 51){
 
     if (overwrite) {
         # read cut out city list
-        L = measure_cities()[[2]]
+        L = measure_cities()$cropped
         OL = list()
 
         d0 = data.table()
@@ -177,6 +177,9 @@ combine_measures <- function(overwrite = FALSE,cutoff = 30){
     # melt manual measures
     x = LandUseR:::pop_1950_2(overwrite = overwrite)
     setnames(x,"area_EM","area_1876")
+
+    # overwrite rank column because that is non-contiguous
+    x[, rank := order(pop_1876, decreasing = TRUE)]
     m = melt.data.table(x,id = c("CODGEO","LIBGEO","rank","REG","DEP","extent"),
                       measure = patterns("^pop_","^area_"),
                       value.name = c("pop","area"),
@@ -197,10 +200,10 @@ combine_measures <- function(overwrite = FALSE,cutoff = 30){
     # fill in values
     ll = list()
     for (yr in GHS_years()){
-        ss = sat[[paste(yr)]]
+        ss = sat$measured[[paste(yr)]]
         q = rbindlist(ss)
-        q[,c("year","CODGEO") := list(yr,names(ss))]
-        ll[[yr]] <- merge(m2[.(yr)], q, by = c("year","CODGEO"))
+        q[, c("year","CODGEO") := list(yr,names(ss))]
+        ll[[paste0(yr)]] <- merge(m2[.(yr)], q, by = c("year","CODGEO"))
     }
     m2 = rbindlist(ll)
     m2[,type := "satellite"]

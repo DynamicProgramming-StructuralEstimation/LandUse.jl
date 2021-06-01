@@ -51,7 +51,7 @@ pop_allyears <- function(){
     y[ , rank := .SD[year == 1876, rank], by = CODGEO]
     y <- y[!is.na(pop)]
     y = y[, list(CODGEO = as.character(CODGEO),LIBGEO, rank,pop,relpop = pop / max(pop)),by=year]
-    fwrite(y, file.path(outdatadir(),"relpop.csv"),)
+    fwrite(y, file.path(outdatadir(),"relpop.csv"))
 
     p0 = ggplot(y[rank < 21], aes(x=year, y = pop, color = LIBGEO)) + geom_line()
     p01 = ggplot(y[rank < 21], aes(x=pop, color = year)) + geom_density()
