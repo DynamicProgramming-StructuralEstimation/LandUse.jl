@@ -42,10 +42,21 @@ pop_allyears <- function(){
     p0 = data.table(readpop())
     p1 = p0[DEP == 75, list(CODGEO = "75060", LIBGEO = "Paris", population = sum(population)), by = year(date)]
     p = rbind(p0[,list(CODGEO,LIBGEO,population,year)],p1[,list(CODGEO,LIBGEO,population,year)])
-    y = merge(x[year == 1876,list(CODGEO,rank)], p, all.y = FALSE)
-    y = y[, list(LIBGEO, rank,relpop = population / max(population)),by=year]
-    fwrite(y, file.path(outdatadir(),"relpop.csv"))
+    x[year == 1950 , year := 1954] # fix census year
+    p = p[CODGEO %in% x[,unique(CODGEO)]]
+    y = merge(x[,list(CODGEO,rank,pop, area, type,year)], p, all.y = TRUE, by = c("CODGEO","year"))
 
-    ggplot(y[rank < 21][rank != 1], aes(x=year, y = relpop, color = LIBGEO)) + geom_line()
+    # before 1954, take census measures, after take satellite
+    y[ year < 1954, pop := population]
+    y[ , rank := .SD[year == 1876, rank], by = CODGEO]
+    y <- y[!is.na(pop)]
+    y = y[, list(CODGEO = as.character(CODGEO),LIBGEO, rank,pop,relpop = pop / max(pop)),by=year]
+    fwrite(y, file.path(outdatadir(),"relpop.csv"),)
+
+    p0 = ggplot(y[rank < 21], aes(x=year, y = pop, color = LIBGEO)) + geom_line()
+    p01 = ggplot(y[rank < 21], aes(x=pop, color = year)) + geom_density()
+    p1 = ggplot(y[rank < 21][rank != 1], aes(x=year, y = relpop, color = LIBGEO)) + geom_line() + geom_point() + ggtitle("Population relative to Paris")
+    p2 = ggplot(y[rank != 1], aes(x=year, y = relpop, color = LIBGEO)) + geom_line() + theme(legend.position = "none")
+    list(p0,p01,p1,p2)
 
 }
