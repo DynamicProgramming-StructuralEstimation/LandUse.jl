@@ -5,8 +5,6 @@ function relpop(; maxrank = 20)
     d20 = subset(d, :rank => x -> x .<= maxrank)
     d20 = transform(groupby(d20, :year), :pop => (x -> x / sum(x)) => :popweight)
 
-
-
     d1 = sort(subset(d20, :year => x-> x .== 1876), :relpop, rev = true ) # fist year
 
     # classify cities
@@ -18,7 +16,6 @@ function relpop(; maxrank = 20)
     d1[d1.relpop .<  0.043, :group] .= 5
     d1 = transform(groupby(d1, :group), nrow => :ngroup)
     CSV.write(joinpath(LandUse.dboutdata, "relpop-classification.csv"), d1)
-
 
     # merge back into data
     d20 = leftjoin(d20,select(d1, :CODGEO, :group, :ngroup), on = :CODGEO)
@@ -43,7 +40,4 @@ function relpop(; maxrank = 20)
     CSV.write(joinpath(LandUse.dboutdata, "relpop-means.csv"), dm)
 
     return (pl, dm)
-
-
-
 end

@@ -168,11 +168,18 @@ end
 """
 solve a `Country` at point x0
 """
-function jc(C::Country,x0::Vector)
+function jc(C::Country,x0::Vector; estimateθ = false)
 
 	pp = C.pp   # vector of params
 	p  = pp[1]   # param of region 1
 	K = C.K
+	if K > 20 
+		error("city data only for top 20 prepared")
+	else
+		# prepare population weights and relative urban populations
+		popwgt = p.citylist[1:K,:pop]  ./ sum(p.citylist[1:K,:pop])
+		relpop = p.citylist[1:K,:pop]  ./ p.citylist[1,:pop]
+	end
 
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
@@ -186,6 +193,13 @@ function jc(C::Country,x0::Vector)
 	@variable(m, 0.1 * x0[3 + ik]   <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
 	@variable(m, 0.05 * x0[3+K + ik] <= Lu[ik = 1:K] <= C.L     , start = x0[3+K + ik])
 	# @variable(m, minimum([pp[ik].θu for ik in 1:K]) >= wr >= 0.0)
+
+	if estimateθ
+		@variable(m, θu[ik = 1:K] , start = p.θu)  # everybody starts with θu of city 1
+		# @variable(m, 0.98 <= θu[ik = 1:K] <= 1.05, start = p.θu)  # everybody starts with θu of city 1
+	else
+		θu = [pp[ik].θu for ik in 1:K]
+	end
 
 	# all θs are in p[ik].θ
 	σ1 = (p.σ - 1) / p.σ
@@ -211,9 +225,10 @@ function jc(C::Country,x0::Vector)
 	# indexed by only k
 	@NLexpression(m, Lr[ik = 1:K], LS * Sr[ik])  # rural pop from labor to land share LS
 	@NLexpression(m, Srh[ik = 1:K], Lr[ik] * hr / Hr )   # housing space for rural pop
-	@NLexpression(m, wu0[ik = 1:K], pp[ik].θu * Lu[ik]^p.η)  # urban wage in each city
+	@NLexpression(m, wu0[ik = 1:K], θu[ik] * Lu[ik]^p.η)  # urban wage in each city
 
-	@NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  # fringe for each region from inverse moving cost function
+	# fringe for each region from inverse moving cost function
+	@NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
 
 
 	# expressions indexed at location l in each k
@@ -239,7 +254,7 @@ function jc(C::Country,x0::Vector)
 	@NLexpression(m, iτ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * (wu0[ik] - w[i,ik]) * D[i,ik] for i in 1:p.int_nodes))
 
 	# constraints
-	# @NLconstraint(m, aux_con_wr, wr == p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
+	# @NLconstraint(m, aux_con_wr, wr == p.α * pr * θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
 	# @NLconstraint(m, aux_con_Srh[ik = 1:K], Srh[ik] >= 0.001 )
 	@NLconstraint(m, C.L == sum(Lr[ik] + Lu[ik] for ik in 1:K))   # agg labor market clearing
 	@NLconstraint(m, land_clearing[ik = 1:K], C.Sk[ik] == Sr[ik] + ϕ[ik]^2 * π + Srh[ik])   # land market clearing in each region
@@ -248,8 +263,20 @@ function jc(C::Country,x0::Vector)
 	@NLconstraint(m, sum(Lr[ik] * cur + icu[ik] + Srh[ik] * cu_inputr + icu_input[ik] + iτ[ik] for ik in 1:K) == sum(wu0[ik] * Lu[ik] for ik in 1:K))
 	@NLconstraint(m, city_size[ik = 1:K], Lu[ik] == iDensity[ik])
 
+	# choose urban productivities so that their population-weighted sum reproduces the data series for average θu
+	if estimateθ
+		# @NLconstraint(m, 0.6 * θu[1] + 0.4 * θu[2] == p.θu)
+		@NLconstraint(m, uwage[ik = 1:K], θu[ik] >= wr)
+		@NLconstraint(m, sum( popwgt[ik] * θu[ik] for ik in 1:K ) == p.θu)   # weighted average productivity is equal to aggregate
+		@NLobjective(m, Min, sum( ((Lu[ik] / Lu[1]) - relpop[ik])^2 for ik in 2:K))
+	else
+		@objective(m, Min, 1.0)  # constant function
+	end
+
+	# urban population shares relative to largest city ( number 1 )
+	# @NLobjective(m, Min, sum( ((Lu[1] / Lu[ik]) - 2.0)^2 for ik in 2:K))
+
 	# objective function
-	@objective(m, Min, 1.0)  # constant function
 	# @objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
 
 	# @NLexpression(m, emp_share, )
@@ -260,13 +287,16 @@ function jc(C::Country,x0::Vector)
 	JuMP.optimize!(m)
 
 	if termination_status(m) == MOI.LOCALLY_SOLVED
-		out = zeros(3 + 2K)
+		out = zeros(3 + 3K)
 		out[1] = value(LS)
 		out[2] = value(r)
 		out[3] = value(pr)
 		for ik in 1:K
 			out[3 + ik] = value(Sr[ik])
 			out[3 + K + ik] = value(Lu[ik])
+			if estimateθ
+				out[3 + 2K + ik] = value(θu[ik])
+			end
 		end
 		return (out,value.(ϕ))
 
@@ -284,7 +314,11 @@ function jc(C::Country,x0::Vector)
 		println(termination_status(m))
 		for ik in 1:K
 			println("k = $ik")
-			println("pp[ik].θu=$(pp[ik].θu),xx=$(pp[ik].θu - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
+			if estimateθ
+				println("θu[ik]=$(value(θu[ik])),xx=$(value(θu[ik]) - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
+			else
+				println("θu[ik]=$(θu[ik]),xx=$(θu[ik] - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
+			end
 		end
 	    error("The model was not solved correctly.")
 	end

@@ -127,8 +127,9 @@ The ordering in `x` is:
 3. pr: relative price rural good
 4. 4 : (K+3), Sr: amount of land use in rural production (complement of Srh)
 5. (K+4) : (2K+3), Lu: urban pop in each k
+5. (2K+4) : end, θu: urban prod in each k
 """
-function update!(c::Country,x::Vector{Float64})
+function update!(c::Country,x::Vector{Float64};estimateθ=false)
 	K = c.K
 	p = c.pp
 
@@ -138,6 +139,9 @@ function update!(c::Country,x::Vector{Float64})
 	c.pr   = x[3]   # relative price rural good
 	Srk    = x[4:(K+3)]  # Sr for each region k
 	Lu     = x[(K+4):(2K+3)]  # Lu for each region k
+	if estimateθ
+		θus    = x[(2K+3+1):end]  # θu for each region k
+	end
 
 	@assert K == length(c.R)
 
@@ -151,8 +155,6 @@ function update!(c::Country,x::Vector{Float64})
 	# rural wage
 	c.wr = foc_Lr( c.LS , c.pr, p1)
 
-	#
-
 	# update each region
 	# 2. update other equations in each region
 	for ik in 1:K
@@ -162,62 +164,11 @@ function update!(c::Country,x::Vector{Float64})
 			  c.LS * Srk[ik], 
 			  c.pr, 
 			  Srk[ik],
-			  p[ik].θu,
+			  estimateθ ? θus[ik] : p[ik].θu,
 			  p[ik].θr
 			  ]
 		update!(c.R[ik],p[ik],cx, Lu = Lu[ik])
 	end
-		# println("country $ik thetau = $(p[ik].θu)")
-		# println("country $ik thetar = $(p[ik].θr)")
-		# update country-wide stuff in each region
-	# 	c.R[ik].pr = c.pr
-	# 	c.R[ik].r  = c.r
-	# 	c.R[ik].ρr = c.ρr
-	# 	c.R[ik].wr = c.wr # wage rate rural sector
-
-	# 	# we know Sr in each region:
-	# 	c.R[ik].Sr = Srk[ik]
-	# 	# now we know Lr for each region:
-	# 	c.R[ik].Lr = c.LS * Srk[ik]
-	# 	# and Lu for each region:
-	# 	c.R[ik].Lu = Lu[ik]
-
-
-	# 	# 1. set ϕ for each region
-	# 	c.R[ik].ϕ  = getfringe(p[ik].θu, c.wr, p[ik])
-	# 	# 2. compute city size equation
-	# 	c.R[ik].nodes[:] .= c.R[ik].ϕ / 2 .+ (c.R[ik].ϕ / 2) .* c.R[ik].inodes
-	# 	# c.R[ik].Lu   = (c.R[ik].ϕ/2) * sum(c.R[ik].iweights[i] * D2(c.R[ik].nodes[i],p[ik],c.R[ik]) for i in 1:p[ik].int_nodes)[1]
-
-	# 	# 3. update remaining fields
-	# 	c.R[ik].wu0  = wu0(c.R[ik].Lu,p[ik])   # wage rate urban sector at city center (distance = 0)
-	# 	# c.R[ik].wr   = wr(c.R[ik].Lu,c.R[ik].ϕ,p) # TEST
-	# 	c.R[ik].xsr  = xsr(p[ik],c.R[ik])
-	# 	c.R[ik].Srh  = Srh(p[ik],c.R[ik])
-	# 	c.R[ik].qr   = qr(p[ik],c.R[ik])
-	# 	c.R[ik].q0   = q(0.0,p[ik],c.R[ik])
-	# 	c.R[ik].ρ0   = ρ(0.0,p[ik],c.R[ik])
-	# 	c.R[ik].cityarea   = cityarea(c.R[ik])
-	# 	c.R[ik].citydensity = c.R[ik].Lu / cityarea(c.R[ik])
-	# 	c.R[ik].d0   = D(0.0,p[ik],c.R[ik])
-	# 	c.R[ik].dr   = D(c.R[ik].ϕ,p[ik],c.R[ik])
-	# 	c.R[ik].Hr   = H(c.R[ik].ϕ,p[ik],c.R[ik])
-	# 	c.R[ik].hr   = h(c.R[ik].ϕ,p[ik],c.R[ik])
-	# 	cr01 = (cr(0.0,p[ik],c.R[ik])-p[ik].cbar, cr(1.0,p[ik],c.R[ik])-p[ik].cbar)
-	# 	cu01 = (cu(0.0,p[ik],c.R[ik])       , cu(1.0,p[ik],c.R[ik])       )
-	# 	c.R[ik].U    = all( (cr01 .>= 0.0) .* (cu01 .>= 0.0) ) ? utility(0.0,p[ik],c.R[ik]) : NaN
-	# 	integrate!(c.R[ik],p[ik])
-	# 	# income measures
-	# 	# income measures
-	# 	c.R[ik].pcy = pcy(c.R[ik],p[ik])
-	# 	c.R[ik].GDP = GDP(c.R[ik],p[ik])
-	# 	c.R[ik].y   =   y(c.R[ik],p[ik])
-
-	# 	c.R[ik].mode0 = mode(0.01 * c.R[ik].ϕ,p[ik])
-	# 	c.R[ik].ctime0 = 0.01 * c.R[ik].ϕ / c.R[ik].mode0
-	# 	c.R[ik].modeϕ = mode(c.R[ik].ϕ,p[ik])
-	# 	c.R[ik].ctimeϕ = c.R[ik].ϕ / c.R[ik].modeϕ
-	# end
 end
 
 """

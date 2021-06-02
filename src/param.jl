@@ -61,6 +61,7 @@ mutable struct Param
 	# kθu :: Dict  # collection of θu's for each region for each period
 	# kθr :: Dict
 	citygroups :: DataFrame
+	citylist :: DataFrame
 
 	trace :: Bool  # whether to trace solver
 	iters :: Int  # max iterations
@@ -199,7 +200,8 @@ mutable struct Param
 		this.Chain = BSON.load(joinpath(@__DIR__,"..","out","mymodel.bson"))[:model]
 
 		# data size classification
-		this.citygroups = CSV.read(joinpath(dboutdata, "relpop-classification.csv"), DataFrame)
+		this.citylist = CSV.read(joinpath(dboutdata, "relpop-classification.csv"), DataFrame, types = Dict(:CODGEO => String))
+		this.citygroups = CSV.read(joinpath(dboutdata, "relpop-means.csv"), DataFrame, types = Dict(:CODGEO => String))
 
 
     	return this
