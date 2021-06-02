@@ -260,7 +260,7 @@ function relpop(C::Vector{Country})
 	cla = select(C[1].pp[1].citylist, :rank, :group, :ngroup)
 	transform!(cla, [:group, :ngroup] => ((a,b) -> string.(a,"(n=",b,")")) => :grouplabel)
 
-	d2 = leftjoin(select(d, :year, :region, :Lu), cla, on = :region => :rank)
+	d2 = leftjoin(select(d, :year, :region, :Lu), C[1].pp[1].citylist, on = [:region => :rank, :year])
 	gg = groupby(d2, :year)
     g2 = combine(gg, [:Lu, :region] => ((a,b) -> a ./ a[b .== 1]) => :rel_Lu, :region, :Lu, :grouplabel)
 	combine(groupby(g2, [:grouplabel, :year]),  :rel_Lu => mean, :region) # mean amongst groups

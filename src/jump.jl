@@ -177,8 +177,17 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 		error("city data only for top 20 prepared")
 	else
 		# prepare population weights and relative urban populations
-		popwgt = p.citylist[1:K,:pop]  ./ sum(p.citylist[1:K,:pop])
-		relpop = p.citylist[1:K,:pop]  ./ p.citylist[1,:pop]
+		data = subset(p.citylist, :rank => x -> x .<= K)
+		# find closest year in data
+		datayears = unique(data.year)
+		modelyears = p.T
+		iyear = argmin( abs.(datayears .- modelyears[p.it]) )
+		yyear = datayears[iyear]
+		ydata = subset(data, :year => x -> x .== yyear)
+		sort!(ydata, :rank)
+		# println(ydata)
+		popwgt = ydata[!,:pop]  ./ sum(ydata[!,:pop])
+		relpop = ydata[!,:pop]  ./  ydata[1,:pop]
 	end
 
 	# setup Model object

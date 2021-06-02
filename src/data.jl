@@ -38,6 +38,7 @@ function relpop(; maxrank = 20)
     pl = @df subset(dm, :group => x -> x .> 1) plot(:year, :relpop, group = :grouplabel, marker = :circle, title = "Population Data relative to Paris")
 
     CSV.write(joinpath(LandUse.dboutdata, "relpop-means.csv"), dm)
+    CSV.write(joinpath(LandUse.dboutdata, "relpop-full.csv"), d20)
 
-    return (pl, dm)
+    return (pl, d20, dm)
 end
