@@ -266,8 +266,17 @@ function relpop(C::Vector{Country})
 	combine(groupby(g2, [:grouplabel, :year]),  :rel_Lu => mean, :region) # mean amongst groups
 end
 
-function k20()
-	x,C,p = LandUse.runk(par = Dict(:K => 20,:kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20)),estimateθ = true)
+function k20(;overwrite = false)
+	if overwrite
+		x,C,p = LandUse.runk(par = Dict(:K => 20,:kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20)),estimateθ = true)
+		d = dataframe(C)
+		CSV.write(joinpath(LandUse.dboutdata, "k20.csv"), d)
+		d
+		x,C,p,d
+	else
+		CSV.read(joinpath(LandUse.dboutdata, "k20.csv"), DataFrame)
+	end
+
 	# K = 20
 	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.09, 1.02, 1.02, 1.01,1.01, [1.005 for i in 1:7]...,ones(8)...], :gs => [0.003,zeros(K-1)...])
 	# par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K))

@@ -629,6 +629,8 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	               [:Cu, :C] => ((a,b) -> a ./b) => :ushare,
 	               [:Cr, :C] => ((a,b) -> a ./b) => :rshare)
 
+	transform!(df, :Lr => (x -> x ./ (p.Lt .* p.K)) => :Lr_n, :Lu => (x -> x ./ (p.Lt .* p.K)) => :Lu_n)
+
 	
 	
 	

@@ -40,6 +40,45 @@ function dashboard(C::Vector{Country},it::Int)
 
 end
 
+"plots for 20 city cross section"
+function dashk20(d::DataFrame)
+	di = Dict()
+	g2 = combine(groupby(d,:year), [:Lu, :region] => ((a,b) -> a ./ a[b .== 1]) => :rel_Lu, :region, :Lu)
+
+	di[:rpop] = @df d plot(:year,:Lr, group = :region, ylab = "Share of Rural Population")
+	di[:pop] = @df d plot(:year,:Lu, group = :region, ylab = "Urban Population")
+	di[:popn] = @df d plot(:year,:Lu_n, group = :region, ylab = "Share of Urban Population")
+	di[:relpop] = @df subset(g2, :region => x -> x .> 1) plot(:year,:rel_Lu, group = :region,
+	                   ylab = "Population relative to Biggest City")
+	di[:dens_pop] = @df d plot(:Lu, :citydensity, group = :region, 
+	                    xaxis = ("log urban pop", :log), yaxis = ("log density", :log), leg = false)
+
+	dparis = subset(d, :region => x-> x.==1)
+	di[:dens_paris] = @df dparis plot(:year, :citydensity, label = "Average", lw = 2, title = "Paris Density", ylab = "Density")
+	plot!(di[:dens_paris], dparis.year, dparis.d0, label = "Central", lw = 2)
+
+	di[:densn_paris] = @df dparis plot(:year, :avgd_n, label = "Average", lw = 2, title = "Paris Normalized Density", ylab = "Density")
+	plot!(di[:densn_paris], dparis.year, dparis.d0_n, label = "Central", lw = 2)
+	plot!(di[:densn_paris], dparis.year, dparis.dr_n, label = "Fringe", lw = 2)
+
+	dparis = subset(d, :region => x-> x.==2)
+	di[:dens_lyon] = @df dparis plot(:year, :citydensity, label = "Average", lw = 2, title = "Lyon Density", ylab = "Density")
+	plot!(di[:dens_lyon], dparis.year, dparis.d0, label = "Central", lw = 2)
+
+	di[:densn_lyon] = @df dparis plot(:year, :avgd_n, label = "Average", lw = 2, title = "Lyon Normalized Density", ylab = "Density")
+	plot!(di[:densn_lyon], dparis.year, dparis.d0_n, label = "Central", lw = 2)
+	plot!(di[:densn_lyon], dparis.year, dparis.dr_n, label = "Fringe", lw = 2)
+
+	g3 = combine(groupby(d, :year), :citydensity => mean => :avgdensity)
+
+	# get a single city to compare
+	x,M,p = runm()
+	d1 = dataframe(M,p)
+	di[:avg_density] = @df g3 plot(:year, :avgdensity, label = "Avg over 20" , title = "Average Densities", lw = 2)
+	plot!(di[:avg_density], d1.year, d1.citydensity, label = "Single city", lw = 2)
+	di
+end
+
 "single spatial cross sections region"
 function cs_plots(m::Region,p::Param,it::Int; fixy = false, objvalue = nothing)
 

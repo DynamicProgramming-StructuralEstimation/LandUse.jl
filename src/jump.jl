@@ -288,7 +288,6 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	# objective function
 	# @objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
 
-	# @NLexpression(m, emp_share, )
 	# @NLobjective(m, Min, ((sum(Lr[ik] for ik in 1:K) / C.L)  - p.moments[1,:Employment_rural])^2)
 
 
