@@ -82,6 +82,7 @@ function dashk20(d::DataFrame)
 	pyplot()
 	di[:density_3d] = surface(unique(d.year), unique(d.region), reshape(d.citydensity,20,19), camera = (130,10),
 	       ylab = "City", xlab = "year",cbar = false)
+	savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
 	gr()
 	di
 end
