@@ -46,6 +46,14 @@ pop_allyears <- function(){
     p = p[CODGEO %in% x[,unique(CODGEO)]]
     y = merge(x[,list(CODGEO,rank,pop, area, type,year)], p, all.y = TRUE, by = c("CODGEO","year"))
 
+    # paris census data is incorrect - paris is larger than "paris" even before WW2
+    pa = fread(file.path(LandUseR:::datadir(),"paris-seine.csv"))
+    setnames(pa, "population", "pop2")
+    pa[,CODGEO := "75060"]
+    y = merge(y, pa, all.x = TRUE)
+    y[ year < 1954 & CODGEO == "75060", population := pop2]
+    y[,pop2 := NULL]
+
     # before 1954, take census measures, after take satellite
     y[ year < 1954, pop := population]
     y[ , rank := .SD[year == 1876, rank], by = CODGEO]
@@ -56,7 +64,8 @@ pop_allyears <- function(){
     p0 = ggplot(y[rank < 21], aes(x=year, y = pop, color = LIBGEO)) + geom_line()
     p01 = ggplot(y[rank < 21], aes(x=pop, color = year)) + geom_density()
     p1 = ggplot(y[rank < 21][rank != 1], aes(x=year, y = relpop, color = LIBGEO)) + geom_line() + geom_point() + ggtitle("Population relative to Paris")
+    ggsave(p1, file = file.path(dataplots(),"relpop-paris.pdf"))
     p2 = ggplot(y[rank != 1], aes(x=year, y = relpop, color = LIBGEO)) + geom_line() + theme(legend.position = "none")
-    list(p0,p01,p1,p2)
+    list(y, p0,p01,p1,p2)
 
 }

@@ -76,6 +76,13 @@ function dashk20(d::DataFrame)
 	d1 = dataframe(M,p)
 	di[:avg_density] = @df g3 plot(:year, :avgdensity, label = "Avg over 20" , title = "Average Densities", lw = 2)
 	plot!(di[:avg_density], d1.year, d1.citydensity, label = "Single city", lw = 2)
+
+	# cross section of densities
+	sort!(d, [:year, :region])
+	pyplot()
+	di[:density_3d] = surface(unique(d.year), unique(d.region), reshape(d.citydensity,20,19), camera = (130,10),
+	       ylab = "City", xlab = "year",cbar = false)
+	gr()
 	di
 end
 
