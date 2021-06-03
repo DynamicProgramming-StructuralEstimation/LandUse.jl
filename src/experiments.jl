@@ -164,6 +164,10 @@ function issue67()
 
     pl = Dict()
 
+    # ratio of smallest to largest city's population over time
+    gg = groupby(select(filter(x -> x.region .∈ Ref([1,5]), d), :region, :year, :Lu), :year)
+    dg = combine(gg, :Lu => (x -> maximum(x) / minimum(x)) => :rel_Lu)
+
     # Relative Population and Area in final period
     # ============================================
 
@@ -224,7 +228,7 @@ function issue67()
     end
     pl[:rel] = pk
     savefig(pl[:rel], joinpath(dbplots,"five-city-rel.pdf"))
-    (pl,d,g)
+    (pl,d,g,dg)
 end
 
 

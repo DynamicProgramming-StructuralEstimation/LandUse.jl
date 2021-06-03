@@ -75,7 +75,7 @@ function run(x0::NamedTuple, p::Param)
 		push!(M,m)
 		if it == 1
 			# adjust relative price in data to first period solution
-			px = x.pr / p.moments[1,:P_rural]
+			# px = x.pr / p.moments[1,:P_rural]
 			# transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
 		end
 
@@ -89,7 +89,7 @@ end
 run Multi-region model for all time periods starting from 
 the single city starting value. Works only for not too different θu values.
 """
-function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
+function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2)), estimateθ = false)
 
 	# get single city solution in first period
 	p = LandUse.Param(par = par, use_estimatedθ = false)
@@ -102,7 +102,20 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 	update!(m,p,[x0...])
 
 
-	# starting value for country solution
+	# # starting value for country solution
+	# θu
+
+	# names = [:LS,:r,:pr, 
+	# 	[Symbol("Sr_$ik") for ik in 1:K]..., 
+	# 	[Symbol("Lu_$ik") for ik in 1:K]...,
+	# 	[Symbol("θu_$ik") for ik in 1:K]...]
+	# values = [m.Lr / m.Sr,m.r, m.pr,
+	# 		[m.Sr  for ik in 1:K]..., 
+	# 		[m.Lu  for ik in 1:K]...,
+	# 		[m.θu for ik in 1:K]...]
+
+	# x = (; zip(names, values)...)  # named tuple
+
 	x = Float64[]
 	push!(x, m.Lr / m.Sr)
 	push!(x, m.r)
@@ -113,12 +126,15 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.05]))
 	for ik in 1:p.K
 		push!(x,m.Lu)
 	end
-	runk_impl(x,p)
+	for ik in 1:p.K
+		push!(x,p.θu)
+	end
+	runk_impl(x,p, estimateθ = estimateθ)
 end
 
 
-function runk_impl(x0::Vector,p::Param)
-	sols = Vector{Float64}[]  # an empty array of solutions
+function runk_impl(x0::Vector,p::Param; estimateθ = false)
+	sols =Vector{Float64}[]
 	push!(sols,x0)
 
 	C = Country[]  # an emtpy array of countries
@@ -127,7 +143,7 @@ function runk_impl(x0::Vector,p::Param)
 		# println(it)
 		setperiod!(p,it)
 		c = Country(p)  # performs scaling of productivity upon creation
-		x,ϕs = jc(c,sols[it])
+		x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
 		push!(sols,x)
 		if it == 1
 			for ik in 1:p.K
@@ -138,8 +154,14 @@ function runk_impl(x0::Vector,p::Param)
 				c.pp[ik].ϕ1 = C[1].R[ik].ϕ * c.pp[ik].ϕ1x
 			end
 		end
+		# overwrite θu if estimated
+		if estimateθ
+			for ik in 1:p.K
+				c.pp[ik].θu = x[3 + 2p.K + ik]
+			end
+		end
 
-		update!(c,x)
+		update!(c,x,estimateθ = estimateθ)
 
 		push!(C,c)
 	end
@@ -160,7 +182,7 @@ function startvals_par(K::Int; θus = 1.2:0.01:1.35)
 		facs = [1.0, 1.07, 1.08, 1.09, θus[1]]
 	end
 		
-	(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => facs), θus = θus)
+	(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => facs, :gs => zeros(K)), θus = θus)
 end
 
 """
@@ -211,18 +233,62 @@ end
 "5 country case"
 function k5()
 	(par, x0) = startvals_k(5)
+	par[:gs] = zeros(5)
 	p = Param(par = par)
 	runk_impl(x0,p)
 end
 
+
 function k3()
-	runk(par = Dict(:K => 3,:kshare => [0.25,0.25,0.5], :factors => [1.0,1.005,1.05]))
-	# x,C,p = runk(par = Dict(:K => 3,:kshare => [0.333,0.333,0.333], :factors => [1.0,1.005,1.05]))
-	# x,C,p = impl_plot_slopes(C)
-	# d = dataframe(C)
-	# gd = groupby(d,:region)
-	# dd = combine(gd, :cityarea => (x -> x ./ x[1]) => :narea, :year, :Lu => (x -> x ./x[1]) => :npop, :cityarea, :Lu)
-	# dd
+
+	(par, x0) = startvals_impl(3, θu = 1.2:0.01:1.24)
+	par[:gs] = [0.0,0.001,0.01]
+	
+	p = Param(par = par)
+	x,C,p = runk_impl(x0,p)
+	d = dataframe(C)
+	gg = groupby(select(filter(x -> x.region .∈ Ref([1,3]), d), :region, :year, :Lu), :year)
+    combine(gg, :Lu => (x -> maximum(x) / minimum(x)) => :rel_Lu)
+end
+
+"""
+return model relative population in each year to largest city
+largest city is city 1
+"""
+function relpop(C::Vector{Country})
+	d = dataframe(C)
+	cla = select(C[1].pp[1].citylist, :rank, :group, :ngroup)
+	transform!(cla, [:group, :ngroup] => ((a,b) -> string.(a,"(n=",b,")")) => :grouplabel)
+
+	d2 = leftjoin(select(d, :year, :region, :Lu), C[1].pp[1].citylist, on = [:region => :rank, :year])
+	gg = groupby(d2, :year)
+    g2 = combine(gg, [:Lu, :region] => ((a,b) -> a ./ a[b .== 1]) => :rel_Lu, :region, :Lu, :grouplabel)
+	combine(groupby(g2, [:grouplabel, :year]),  :rel_Lu => mean, :region) # mean amongst groups
+end
+
+function k20(;overwrite = false)
+	if overwrite
+		x,C,p = LandUse.runk(par = Dict(:K => 20,:kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20)),estimateθ = true)
+		d = dataframe(C)
+		CSV.write(joinpath(LandUse.dboutdata, "k20.csv"), d)
+		d
+		x,C,p,d
+	else
+		CSV.read(joinpath(LandUse.dboutdata, "k20.csv"), DataFrame)
+	end
+
+	# K = 20
+	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.09, 1.02, 1.02, 1.01,1.01, [1.005 for i in 1:7]...,ones(8)...], :gs => [0.003,zeros(K-1)...])
+	# par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K))
+	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.1, 1.01, 1.01, 1.005,1.005, [1.0025 for i in 1:7]...,ones(8)...], :gs => [0.0025,zeros(K-1)...])
+	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.05, 1.01, 1.01, 1.005,1.005, [1.0025 for i in 1:7]...,ones(8)...], :gs => [0.002,zeros(K-1)...])
+	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.02, 1.001, 1.001, 1.01,1.01, [1.005 for i in 1:7]...,ones(8)...], :gs => [0.001,zeros(K-1)...])
+	# # x,C,p = runk(par = par)
+	# runk(par = par)
+	# # relpop(C)
+	# # dd = relpop(C)
+	# @df subset(dd, :region => x-> x.> 1, :year => x-> x.> 1870) plot(:year, :rel_Lu_mean, group = :grouplabel, title = "model relative to paris")
+	
 end
 
 function runm()
