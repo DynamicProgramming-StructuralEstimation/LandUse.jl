@@ -199,8 +199,9 @@ mutable struct Param
 
 		this.Chain = BSON.load(joinpath(@__DIR__,"..","out","mymodel.bson"))[:model]
 
-		# data size classification
+		# data size classifications
 		this.citylist = CSV.read(joinpath(dboutdata, "relpop-full.csv"), DataFrame, types = Dict(:CODGEO => String))
+		sort!(this.citylist, [:year, :rank])
 		this.citygroups = CSV.read(joinpath(dboutdata, "relpop-means.csv"), DataFrame, types = Dict(:CODGEO => String))
 
 

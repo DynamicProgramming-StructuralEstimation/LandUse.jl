@@ -271,7 +271,7 @@ function k20(;overwrite = false)
 		x,C,p = LandUse.runk(par = Dict(:K => 20,:kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20)),estimateθ = true)
 		d = dataframe(C)
 		CSV.write(joinpath(LandUse.dboutdata, "k20.csv"), d)
-		d
+		
 		x,C,p,d
 	else
 		CSV.read(joinpath(LandUse.dboutdata, "k20.csv"), DataFrame)

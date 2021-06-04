@@ -58,14 +58,14 @@ pop_allyears <- function(){
     y[ year < 1954, pop := population]
     y[ , rank := .SD[year == 1876, rank], by = CODGEO]
     y <- y[!is.na(pop)]
-    y = y[, list(CODGEO = as.character(CODGEO),LIBGEO, rank,pop,relpop = pop / max(pop)),by=year]
+    y = y[, list(CODGEO = as.character(CODGEO),LIBGEO, rank,density_data = pop / area, reldensity_data = (pop / area) / max(pop / area), area_data = area,relarea_data = area / max(area),pop_data = pop,relpop_data = pop / max(pop)),by=year]
     fwrite(y, file.path(outdatadir(),"relpop.csv"))
 
     p0 = ggplot(y[rank < 21], aes(x=year, y = pop, color = LIBGEO)) + geom_line()
-    p01 = ggplot(y[rank < 21], aes(x=pop, color = year)) + geom_density()
-    p1 = ggplot(y[rank < 21][rank != 1], aes(x=year, y = relpop, color = LIBGEO)) + geom_line() + geom_point() + ggtitle("Population relative to Paris")
+    p01 = ggplot(y[rank < 21], aes(x=pop_data, color = year)) + geom_density()
+    p1 = ggplot(y[rank < 21][rank != 1], aes(x=year, y = relpop_data, color = LIBGEO)) + geom_line() + geom_point() + ggtitle("Population relative to Paris")
     ggsave(p1, file = file.path(dataplots(),"relpop-paris.pdf"))
-    p2 = ggplot(y[rank != 1], aes(x=year, y = relpop, color = LIBGEO)) + geom_line() + theme(legend.position = "none")
+    p2 = ggplot(y[rank != 1], aes(x=year, y = relpop_data, color = LIBGEO)) + geom_line() + theme(legend.position = "none")
     list(y, p0,p01,p1,p2)
 
 }

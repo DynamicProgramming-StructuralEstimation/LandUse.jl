@@ -43,7 +43,39 @@ end
 "plots for 20 city cross section"
 function dashk20(d::DataFrame)
 	di = Dict()
-	g2 = combine(groupby(d,:year), [:Lu, :region] => ((a,b) -> a ./ a[b .== 1]) => :rel_Lu, :region, :Lu)
+
+	# compare model to data
+	# =====================
+	# get a single city to compare
+	x,M,p = runm()
+	yearmap = popdata_mapyears(p)
+	d = leftjoin(d, yearmap, on = :year => :modelyears)
+	d = leftjoin(d, p.citylist, on = [:region => :rank, :datayears => :year])
+
+	# add rel pop and rel dens
+	d = transform(groupby(d,:year), [:Lu, :region]          => ((a,b) -> a ./ a[b .== 1]) => :rel_Lu,
+	                                [:citydensity, :region] => ((a,b) -> a ./ a[b .== 1]) => :rel_density)
+
+	# no paris
+	nop = subset(d, :region => x -> x .> 1)
+
+	# relative population
+	c20 = palette(:tab20)
+	pl = @df subset(nop, :region => x -> x.==2) plot(:year, :rel_Lu, leg = :outertopright, linecolor = c20[2], lab = "Lyon",
+	ylab = "Population rel to Paris" )
+	@df subset(nop, :region => x -> x.==2) scatter!(:datayears, :relpop_data, markercolor = c20[2], lab = "" )
+	for ik in 3:20
+		dk = subset(nop, :region => x -> x.==ik)
+		plot!(pl,dk.year, dk.rel_Lu,  linecolor = c20[ik], lab = dk[1,:LIBGEO] )
+		scatter!(pl,dk.datayears, dk.relpop_data,  markercolor = c20[ik], lab = "" )
+	end
+	title!(pl, "Model (Lines) vs Data (Points)")
+
+	di[:relpop] = copy(pl)
+	savefig(pl, joinpath(LandUse.dbplots,"k20-relpop-model-data.pdf"))
+
+	di[:relpop] = @df nop plot(:year, :rel_Lu, group = :LIBGEO, leg = :outertopright, col = palette(:tab20))
+	@df nop scatter!(:datayears, :relpop_data, group = :LIBGEO, lab = false, col = palette(:tab20))
 
 	di[:rpop] = @df d plot(:year,:Lr, group = :region, ylab = "Share of Rural Population")
 	di[:pop] = @df d plot(:year,:Lu, group = :region, ylab = "Urban Population")
@@ -71,19 +103,37 @@ function dashk20(d::DataFrame)
 
 	g3 = combine(groupby(d, :year), :citydensity => mean => :avgdensity)
 
-	# get a single city to compare
-	x,M,p = runm()
+	
 	d1 = dataframe(M,p)
 	di[:avg_density] = @df g3 plot(:year, :avgdensity, label = "Avg over 20" , title = "Average Densities", lw = 2)
 	plot!(di[:avg_density], d1.year, d1.citydensity, label = "Single city", lw = 2)
 
 	# cross section of densities
 	sort!(d, [:year, :region])
-	pyplot()
-	di[:density_3d] = surface(unique(d.year), unique(d.region), reshape(d.citydensity,20,19), camera = (130,10),
-	       ylab = "City", xlab = "year",cbar = false)
-	savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
-	gr()
+	# pyplot()
+	# di[:density_3d] = surface(unique(d.year), unique(d.region), reshape(d.citydensity,20,19), camera = (130,10),
+	#        ylab = "City", xlab = "year",cbar = false)
+	# savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
+	# gr()
+
+
+	# compare model to data
+	# =====================
+
+	yearmap = popdata_mapyears(p)
+	dd = leftjoin(p.citylist, yearmap, on = :year => model)
+
+	nop = subset(g2, :region => x -> x .> 1)  # no paris
+	nop = leftjoin(nop, dd, on = :year => :model)
+	rename!(nop, :data => :dyear)
+
+	# rel pop shares 
+	di[:relpop_data] = @df subset(g2, :region => x -> x .> 1) plot(:year,:rel_Lu, group = :region,
+	                   ylab = "Population relative to Biggest City")
+	# scatter(di[:relpop_data], g2.)
+
+
+
 	di
 end
 
