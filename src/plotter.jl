@@ -110,19 +110,28 @@ function dashk20(d::DataFrame)
 	plot!(di[:avg_density], d1.year, d1.citydensity, label = "Single city", lw = 2)
 
 	# cross section of densities
-	sort!(d, [:year, :region])
-	# pyplot()
-	# di[:density_3d] = surface(unique(d.year), unique(d.region), reshape(d.citydensity,20,19), camera = (130,10),
-	#        ylab = "City", xlab = "year",cbar = false)
-	# savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
-	# gr()
+	sort!(d, [:region, :year])
+	di[:density_3d] = wireframe(unique(d.region), unique(d.year), 
+	                            reshape(d.citydensity,19,20), 
+								camera = (70,40),xlab = "City", 
+								ylab = "year",zlab = "Average Density", 
+								title = "Density Cross Section over Time")
+
+
+	savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
+	
+
+	# within density in year 2020
+	de2020 = hcat( Matrix(select(subset(d , :year => x -> x .== 2020 ),  :iDensities))... )
+	dens_2020 = wireframe(1:K,1:p.int_bins,de2020, 
+	                          xlab = "city rank", ylab = "distance bin",
+							  zlab = "density",camera = (70,40),
+							  title = "year 2020 within city gradients")
+	savefig(dens_2020, joinpath(LandUse.dbplots,"k20-density3D-2020.pdf"))
 
 
 	# compare model to data
 	# =====================
-
-	
-
 
 	di
 end

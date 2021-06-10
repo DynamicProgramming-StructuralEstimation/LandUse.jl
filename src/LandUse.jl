@@ -37,6 +37,7 @@ module LandUse
 	using Flux
 	using Latexify
 	using GLM
+	using FileIO
 	# constants
 	const PEN = 100.0  # penalty for nl solver
 	user = splitdir(homedir())[end]
