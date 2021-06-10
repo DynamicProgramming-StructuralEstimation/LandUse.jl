@@ -105,27 +105,29 @@ function ik3()
 		sbar in slider(cbars, value = p1.sbar, label = "sbar") |> onchange,
 		gamma in slider(psis, value = p1.γ, label = "gamma") |> onchange,
 		a in slider(as, value = p1.a, label = "a") |> onchange,
-		es in slider(1.0:0.1:3.0, value = p1.ϵs	, label = "ϵs") |> onchange,
 		xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
 		xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
 		eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
-		etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange,
-		g1 in slider(0.95:0.01:1.0, value = 1.0, label = "g1") |> onchange,
-		g2 in slider(gfac, value = 1.01, label = "g2") |> onchange,
-		g3 in slider(gfac, value = 1.02, label = "g3") |> onchange
+		etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange
 
-		try
-			x,C,p = runk(par = Dict(:K => 3, :kshare => [1/3,1/3,1/3], :factors => [g1,g2,g3],
+		# try
+			x,C,p = runk(par = Dict(:K => 20, :kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20),
 									:ξl => xil, :ξw => xiw,
 									:cbar => cbar, :sbar => sbar, 
-									:a => a, :γ => gamma, :ϵs => es, :η => eta, :ηa => etaa))
-			dashboard(C, it)
-		catch e
-			wdg = alert("Error!")
-			print(wdg())
-		end
+									:a => a, :γ => gamma, :η => eta, :ηa => etaa), estimateθ = true)
+			d = dataframe(C)
+			p0 = @df select(subset(d, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "year 2020")
+			p01 = @df select(subset(d, :year => x->x.== 2020,  :region => x->x.> 1 ), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "year 2020")
+			pl = dashk20(d)
+			dd = select(subset(d, :year => x->x.== 2020, :region => x->x.>1), :year, :Lu, :citydensity, :region)
+			xx = lm(@formula( log(citydensity) ~ log(Lu)), dd)
+			plot(pl[:relpop],pl[:avg_density], bar([coef(xx)[2]],ylims = (0,1)), p01, layout = (2,2), size = (800,500))
+		# catch e
+		# 	wdg = alert("Error!")
+		# 	print(wdg())
+		# end
 	end
-	@layout! mp vbox(hbox(:g1,:g2, :g3, :eta, :etaa),
+	@layout! mp vbox(hbox(:eta, :etaa),
 	                 hbox(:sbar, :cbar,:gamma,:es),
 	                 hbox(:a, :xil, :xiw, :it),
 					 observe(_))

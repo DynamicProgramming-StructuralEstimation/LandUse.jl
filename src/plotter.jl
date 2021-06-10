@@ -43,6 +43,7 @@ end
 "plots for 20 city cross section"
 function dashk20(d::DataFrame)
 	di = Dict()
+	K = maximum(d.region)
 
 	# compare model to data
 	# =====================
@@ -64,14 +65,14 @@ function dashk20(d::DataFrame)
 	pl = @df subset(nop, :region => x -> x.==2) plot(:year, :rel_Lu, leg = :outertopright, linecolor = c20[2], lab = "Lyon",
 	ylab = "Population rel to Paris" )
 	@df subset(nop, :region => x -> x.==2) scatter!(:datayears, :relpop_data, markercolor = c20[2], lab = "" )
-	for ik in 3:20
+	for ik in 3:K
 		dk = subset(nop, :region => x -> x.==ik)
 		plot!(pl,dk.year, dk.rel_Lu,  linecolor = c20[ik], lab = dk[1,:LIBGEO] )
 		scatter!(pl,dk.datayears, dk.relpop_data,  markercolor = c20[ik], lab = "" )
 	end
 	title!(pl, "Model (Lines) vs Data (Points)")
 
-	di[:relpop] = copy(pl)
+	di[:relpop] = pl
 	savefig(pl, joinpath(LandUse.dbplots,"k20-relpop-model-data.pdf"))
 
 	di[:relpop] = @df nop plot(:year, :rel_Lu, group = :LIBGEO, leg = :outertopright, col = palette(:tab20))
@@ -80,7 +81,7 @@ function dashk20(d::DataFrame)
 	di[:rpop] = @df d plot(:year,:Lr, group = :region, ylab = "Share of Rural Population")
 	di[:pop] = @df d plot(:year,:Lu, group = :region, ylab = "Urban Population")
 	di[:popn] = @df d plot(:year,:Lu_n, group = :region, ylab = "Share of Urban Population")
-	di[:relpop] = @df subset(g2, :region => x -> x .> 1) plot(:year,:rel_Lu, group = :region,
+	di[:relpop] = @df nop plot(:year,:rel_Lu, group = :region,
 	                   ylab = "Population relative to Biggest City")
 	di[:dens_pop] = @df d plot(:Lu, :citydensity, group = :region, 
 	                    xaxis = ("log urban pop", :log), yaxis = ("log density", :log), leg = false)
@@ -105,7 +106,7 @@ function dashk20(d::DataFrame)
 
 	
 	d1 = dataframe(M,p)
-	di[:avg_density] = @df g3 plot(:year, :avgdensity, label = "Avg over 20" , title = "Average Densities", lw = 2)
+	di[:avg_density] = @df g3 plot(:year, :avgdensity, label = "Avg over $K" , title = "Average Densities", lw = 2)
 	plot!(di[:avg_density], d1.year, d1.citydensity, label = "Single city", lw = 2)
 
 	# cross section of densities
@@ -120,18 +121,7 @@ function dashk20(d::DataFrame)
 	# compare model to data
 	# =====================
 
-	yearmap = popdata_mapyears(p)
-	dd = leftjoin(p.citylist, yearmap, on = :year => model)
-
-	nop = subset(g2, :region => x -> x .> 1)  # no paris
-	nop = leftjoin(nop, dd, on = :year => :model)
-	rename!(nop, :data => :dyear)
-
-	# rel pop shares 
-	di[:relpop_data] = @df subset(g2, :region => x -> x .> 1) plot(:year,:rel_Lu, group = :region,
-	                   ylab = "Population relative to Biggest City")
-	# scatter(di[:relpop_data], g2.)
-
+	
 
 
 	di

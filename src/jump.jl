@@ -186,8 +186,8 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 		ydata = subset(data, :year => x -> x .== yyear)
 		sort!(ydata, :rank)
 		# println(ydata)
-		popwgt = ydata[!,:pop]  ./ sum(ydata[!,:pop])
-		relpop = ydata[!,:pop]  ./  ydata[1,:pop]
+		popwgt = ydata[!,:pop_data]  ./ sum(ydata[!,:pop_data])
+		relpop = ydata[!,:pop_data]  ./  ydata[1,:pop_data]
 	end
 
 	# setup Model object
