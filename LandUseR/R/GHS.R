@@ -85,9 +85,17 @@ measure_cities <- function(overwrite = FALSE, cutoff = 30){
                 raster::values(citymask) <- (raster::values(cc) == whichc)
                 raster::values(citymask)[!raster::values(citymask)] = NA  # set FALSE to NA
 
+                # inverse mask
+                imask <- citymask
+                raster::values(imask) <- is.na(raster::values(citymask))
+                raster::values(imask)[!raster::values(imask)] <- NA
+
                 # store final cut out areas for populaiton and built up back on list
                 L[[iy]][[ic]]$built_cut = cityb[citymask, drop = FALSE]
                 L[[iy]][[ic]]$pop_cut = cityp[citymask, drop = FALSE]
+
+                # store inverse city mask - everything that is *not* city
+                L[[iy]][[ic]]$inverse_mask <- imask
 
                 # store city center on list
                 L[[iy]][[ic]]$center = ct[CODGEO == ic, c(center_x, center_y)]
@@ -95,13 +103,11 @@ measure_cities <- function(overwrite = FALSE, cutoff = 30){
 
 
 
-                # inverse mask
-                # imask = citymask
-                # raster::values(imask) <- is.na(raster::values(citymask))
-                # raster::values(imask)[!raster::values(imask)] <- NA
-
                 totarea = raster::cellStats(citymask, "sum",na.rm = T)   # sum of gridcells
                 totarea = totarea * (250 * 250) / 1e+6  # total area in square kilometers
+
+                totarea_rural = raster::cellStats(imask, "sum",na.rm = T)   # sum of gridcells
+                totarea_rural = totarea_rural * (250 * 250) / 1e+6  # total area in square kilometers
 
                 totpop = sum(cityp[citymask],na.rm = T)
                 meanbuilt = mean(cityb[citymask],na.rm = T)
@@ -109,7 +115,7 @@ measure_cities <- function(overwrite = FALSE, cutoff = 30){
                 qpop = quantile(cityp[citymask],na.rm = T)
 
                 # output
-                OL[[iy]][[ic]] = list(area = totarea, pop = totpop, meanbuilt = meanbuilt,
+                OL[[iy]][[ic]] = list(area = totarea, rural_area = totarea_rural, pop = totpop, meanbuilt = meanbuilt,
                                       b10 = qbuilt[1],
                                       b25 = qbuilt[2],
                                       b50 = qbuilt[3],
