@@ -9,6 +9,7 @@ module fl
     using CUDA
     using Flux.Losses
     using BSON
+    using Statistics: mean
 
 
     @kwdef mutable struct Args

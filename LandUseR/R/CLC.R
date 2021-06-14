@@ -36,6 +36,7 @@ CLC_bboxes <- function(overwrite = FALSE){
             # inverse_mask in CLC crs
             ivm = raster::projectRaster(ms[[ix]]$inverse_mask, to = OL[[ix]]$full, method = "ngb")
             OL[[ix]]$cut  <- OL[[ix]]$full[ivm, drop = FALSE]
+            OL[[ix]]$cityname  <- ms[[ix]]$cityname
         }
         names(OL) <- names(ms)
         saveRDS(OL,file.path(LandUseR:::outdir(),"data","CLC-France-cropped.Rds"))
@@ -52,9 +53,12 @@ CLC_read_legend <- function(){
     setnames(x, c("code","red","green","blue","alpha","label"))
     x[,color := rgb(red,green,blue, maxColorValue = alpha)]
     x[,mcode := factor(c(1:44,48))]  # get out of u2018_clc2018_v2020_20u1_raster100m/Legend/clc_legend_qgis_raster.qml
+    x[mcode == 21, label := "Agr. Land w/ sign. areas of natural vegetation"]
     x[,legend := factor(code,labels = label)]
     x
 }
+
+
 
 #' Measure Landuse Around Cities with CLC
 #'
@@ -74,5 +78,42 @@ CLC_measure <- function(){
     df2 = merge(df,le[,list(mcode,legend,color)])
     df2 = df2[order(avg_prop,decreasing = TRUE)]
 
-    ggplot(df2[1:15], aes(x = reorder(legend,avg_prop) ,y = avg_prop)) + geom_bar(stat = "identity") + coord_flip() + ggtitle("Average Land Use outside top 100")
+    colnames = df2[, as.character(color)]
+    names(colnames) <- df2[, as.character(legend)]
+    gg = ggplot(df2[1:15], aes(x = reorder(legend,avg_prop) ,y = avg_prop)) + geom_bar(stat = "identity", aes(fill = legend)) + coord_flip() + ggtitle("Average Land Use Outside top 100 Cities")  + scale_fill_manual(values = colnames) + theme_bw()  + theme(legend.position = "none") + scale_x_discrete(name = "") + scale_y_continuous("Proportion")
+
+    ggsave(gg, file = file.path(dataplots(),"CLC-landuse-top100.pdf"), width = 8 , height = 4.5)
+    gg
 }
+
+
+#' Plot CLC Landuse patterns
+#'
+CLC_plots <- function(){
+    le = CLC_read_legend()
+    cuts = CLC_bboxes(FALSE)
+
+    OL = list()
+    for (insee in 1:4) {
+        r <- cuts[[insee]]$cut
+        v = raster::values(r)
+        raster::values(r) <- raster::as.factor(v)
+        rat <- raster::levels(r)[[1]]
+        rat = merge.data.table(rat, le[,list(mcode,legend,color)],by.x = "VALUE", by.y = "mcode")
+        setDT(rat)
+        setcolorder(rat, "ID")
+        setkey(rat,ID)
+        cols = rat[,color]
+        rat[, c("VALUE","color") := NULL]
+
+        levels(r) <- rat
+
+        OL[[insee]] <- rasterVis::levelplot(r,col.regions = cols,xlab=NULL, ylab=NULL, scales=list(draw=FALSE))
+        lattice::trellis.device(pdf, file=file.path(dataplots(),paste0("CLC-",cuts[[insee]]$cityname,".pdf")),height=4.5, width=8)
+        print(OL[[insee]])
+        dev.off()
+    }
+    OL
+}
+
+
