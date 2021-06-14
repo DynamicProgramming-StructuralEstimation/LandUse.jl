@@ -48,7 +48,9 @@ plot_density_center <- function(city_name = c("Paris","Lyon")){
 
 
 plot_sat_built <- function(){
-    cc = LandUseR:::cropcities()  # first index level is years
+    cc = LandUseR:::measure_cities()  # first index level is years
+
+    error("broken")
 
     ci = bboxes_top100()[LIBGEO %in% tops()]  # 5 cities we want to see
     out = list()
@@ -66,7 +68,7 @@ plot_sat_built <- function(){
         png(pngname,width = 1000, height=700, res = 175)
         print(out[[ir]])
         dev.off()
-        pdf(pdfname,width = 11,height = 6)
+        lattice::trellis.device(pdfname,width = 11,height = 6)
         print(out[[ir]])
         dev.off()
 

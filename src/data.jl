@@ -58,3 +58,10 @@ function popdata_mapyears(p::Param)
     end
     df
 end
+
+"""
+load population and area data
+"""
+function poparea_data()
+    CSV.read(joinpath(LandUse.dboutdata, "france_final.csv"), DataFrame)
+end

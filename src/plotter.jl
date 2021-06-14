@@ -219,6 +219,13 @@ function ts_plots(M,p::Param;fixy = false)
 	rg = ["red" "green"]
 	brg = ["blue" "red" "green"]
 
+	# subsets
+	d1880 = subset(d, :year => x -> x .>= 1880)
+
+	# normalizations
+	transform!(d1880, :cityarea => firstnorm => :cityarea_n,
+	                   :Lu => firstnorm => :Lu_n)
+
 	t1900 = findmin(abs.(collect(p.T) .- 1900))[2]
 	i2015 = argmin( abs.(p.moments.year .- 2015) )
 	i2010 = argmin( abs.(p.moments.year .- 2010) )
@@ -330,13 +337,26 @@ function ts_plots(M,p::Param;fixy = false)
 					  legend = :left, yscale = :log10)
 	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	ds4 = select(d,:year,:cityarea)
-	incphi = round(d.cityarea[end] / d.cityarea[1],digits = 1)
+	incphi = round(d1880.cityarea[end] / d1880.cityarea[1],digits = 1)
 
-	dd[:phi] = @df d plot(:year, :cityarea,
+	dd[:phi] = @df d1880 plot(:year, :cityarea,
 					 linewidth = 2, title = "City Area. 2015=$(round(d.cityarea[i2015],digits=2))", color = "black",
 					 leg = fixy ? :topleft : false, marker = mmark, annotate = (p.T[end],0.2*maximum(d.cityarea),"$(round(incphi,digits=1))x"),
 					 ylims = fixy ? (0.0,0.15) : false)
-    dd[:Sr] = @df d plot(:year, :Sr,
+
+
+	dd[:phi_Lu] = @df stack(select(d1880, :year, :Lu_n => :population, :cityarea_n => :area), Not(:year)) plot(:year, :value, 
+	                       group = :variable, leg = :left, linewidth = 2,
+						   linecolor = ["orange" "red" ], marker = (:circle, ["orange" "red" ]),
+						   yscale = :auto, formatter = y->string(round(Int,y)))
+
+	pad = copy(p.poparea_data)
+	transform!(pad, :population => firstnorm => :population, 
+	                :area => firstnorm => :area)
+	dd[:phi_Lu_data] = scatter!(dd[:phi_Lu], pad.year, [pad.area, pad.population],
+	                            marker = (:star5, ["orange" "red" ]), label = "")					   
+    
+	dd[:Sr] = @df d plot(:year, :Sr,
 				  linewidth = 2, color = "black",title = "Agricultural Land",
 				  leg = false, marker = mmark, ylims = fixy ? (0.6,1.0) : false)
 	# ds4 = stack(select(d,:year,:pr), Not(:year))
