@@ -882,49 +882,17 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 
 \subsection{Parameterization}
 
-\begin{frame}{Baseline Model Results}
-	\begin{figure}
-		\begin{subfigure}[t]{0.32\textwidth}
-			\centering
-			\includegraphics[scale=0.3]{\modelplots/AgrEmpl_data_2901.pdf}
-			\caption{Rural Employment}
-			\label{fig:sub1}
-		\end{subfigure}\hskip 1mm%
-		\begin{subfigure}[t]{0.32\textwidth}
-			\centering
-			\includegraphics[scale=0.3]{\modelplots/AgrPrice_data_2901.pdf}
-			\label{fig:sub2}
-			\caption{Relative price}
-		\end{subfigure}
-		\begin{subfigure}[t]{0.32\textwidth}
-			\centering
-			\includegraphics[scale=0.3]{\modelplots/CitySize_2901.pdf}
-			\label{fig:sub2}
-			\caption{city size}
-		\end{subfigure}
 
-		\begin{subfigure}[t]{0.32\textwidth}
-			\centering
-			\includegraphics[scale=0.3]{\modelplots/UrbDens_2901.pdf}
-			\caption{Urban densities}
-			\label{fig:sub1}
-		\end{subfigure}\hskip 1mm%
-		\begin{subfigure}[t]{0.32\textwidth}
-			\centering
-			\includegraphics[scale=0.3]{\modelplots/WealthValues_2901.pdf}
-			\label{fig:sub2}
-			\caption{Wealth / Income}
-		\end{subfigure}
-		\begin{subfigure}[t]{0.32\textwidth}
-			\centering
-			\includegraphics[scale=0.3]{\modelplots/HouseIndex_2901.pdf}
-			\label{fig:sub2}
-			\caption{Housing Price}
-		\end{subfigure}
-	\end{figure}
+
+\begin{frame}{Numerical Illustration: Identical Growth (1.25\%) in Both Sectors}
+
+	\begin{adjustbox}{center}
+		\includegraphics[width=\textwidth]{\modelplots/baseline-6panel.png}
+	\end{adjustbox}
+	
 \end{frame}
 
-\begin{frame}{Counterfactual: Only Rural Growth}
+\begin{frame}{Numerical Illustration: Only Rural Growth}
 \begin{figure}
 	
 	\begin{subfigure}[t]{0.32\textwidth}
@@ -949,7 +917,7 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 \end{figure}
 \end{frame}
 
-\begin{frame}{Counterfactual: Only Urban Growth}
+\begin{frame}{Numerical Illustration: Only Urban Growth}
 	\begin{figure}
 		
 		\begin{subfigure}[t]{0.32\textwidth}
@@ -976,7 +944,47 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 	\end{frame}
 
 
+\begin{frame}{Numerical Model Results: Feed $\theta_{ut},\theta_{rt}$ from Data}
+	\begin{figure}
+		\begin{subfigure}[t]{0.32\textwidth}
+			\centering
+			\includegraphics[scale=0.32]{\modelplots/AgrEmpl_data.pdf}
+			\caption{Rural Employment}
+			\label{fig:sub1}
+		\end{subfigure}\hskip 1mm%
+		\begin{subfigure}[t]{0.32\textwidth}
+			\centering
+			\includegraphics[scale=0.32]{\modelplots/Expshares.pdf}
+			\label{fig:sub2}
+			\caption{Spending Shares}
+		\end{subfigure}
+		\begin{subfigure}[t]{0.32\textwidth}
+			\centering
+			\includegraphics[scale=0.32]{\modelplots/CitySize_data.pdf}
+			\label{fig:sub2}
+			\caption{Urban Population and Area}
+		\end{subfigure}
 
+		\begin{subfigure}[t]{0.32\textwidth}
+			\centering
+			\includegraphics[scale=0.32]{\modelplots/AvgDens_data.pdf}
+			\caption{Avg Urban Density}
+			\label{fig:sub1}
+		\end{subfigure}\hskip 1mm%
+		\begin{subfigure}[t]{0.32\textwidth}
+			\centering
+			\includegraphics[scale=0.32]{\modelplots/UrbDens.pdf}
+			\label{fig:sub2}
+			\caption{Relative densities}
+		\end{subfigure}
+		\begin{subfigure}[t]{0.32\textwidth}
+			\centering
+			\includegraphics[scale=0.32]{\modelplots/DecDensity.pdf}
+			\label{fig:sub2}
+			\caption{Within Density gradient}
+		\end{subfigure}
+	\end{figure}
+\end{frame}
 
 \begin{frame}{Multiple Cities}
 
