@@ -32,6 +32,8 @@ mutable struct Param
 	ζ      :: Float64   # valuation of commuting time in terms of forgone wages
 	a      :: Float64   # implied combination of above parameters
 	ηa     :: Float64   # congestion parameter
+	d1     :: Float64   # extension for variable commuting cost
+	d2     :: Float64   # extension for variable commuting cost
 
 	# speed thresholds
 	speed_thresholds :: Vector{Float64}
@@ -108,6 +110,8 @@ mutable struct Param
 		# this.ϕ1x = 0.5
 		this.ϵflat = false
 		this.ηa = 0.0  # no congestion by default
+		this.d1 = 0.0  # recovers baseline commuting distances
+		this.d2 = 0.0  # 
 
 
 		# read data from disk

@@ -266,6 +266,10 @@ function relpop(C::Vector{Country})
 	combine(groupby(g2, [:grouplabel, :year]),  :rel_Lu => mean, :region) # mean amongst groups
 end
 
+function k(K;pars = Dict())
+	LandUse.runk(par = merge(Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K)), pars),estimateθ = true)
+end
+
 function k20(;overwrite = false)
 	if overwrite
 		x,C,p = LandUse.runk(par = Dict(:K => 20,:kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20)),estimateθ = true)
