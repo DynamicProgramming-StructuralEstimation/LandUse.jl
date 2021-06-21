@@ -110,8 +110,8 @@ function ik3()
 		xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
 		xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
 		eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
-		d1 in slider(0.0:0.001:0.1, value = 0.0, label = "d1") |> onchange,
-		d2 in slider(0.0:0.01:1.0, value = 0.0, label = "d2") |> onchange,
+		d1 in slider(0.0:0.001:0.1, value = 0.01, label = "d1") |> onchange,
+		d2 in slider(0.0:0.01:2.0, value = 1.5, label = "d2") |> onchange,
 		etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange
 
 		# try

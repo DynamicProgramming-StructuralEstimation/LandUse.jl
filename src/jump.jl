@@ -238,7 +238,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	@NLexpression(m, wu0[ik = 1:K], θu[ik] * Lu[ik]^p.η)  # urban wage in each city
 
 	# fringe for each region from inverse moving cost function
-	if (p.d1 > 0.0) & (p.d2 > 0.0)
+	if (p.d1 > 0.0) || (p.d2 > 0.0)
 		@NLexpression(m, dϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
 		@variable(m, ϕ[ik = 1:K] >= 0)
 		# add constraint that pins down ϕ via the transformation from residence location to commuting distance

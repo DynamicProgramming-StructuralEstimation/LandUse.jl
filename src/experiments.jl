@@ -1,4 +1,33 @@
 
+
+function k20output(k;d1_ = 0.001,d2_ = 0.0)
+
+
+    x,C0,p = LandUse.k(k)
+    x,C1,p = LandUse.k(k, pars = Dict(:d1 => d1_, :d2 => d2_))
+    d0 = dataframe(C0)
+    d1 = dataframe(C1)
+    p0x = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) 
+    p0 = @df p0x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "baseline")
+    annotate!(p0, [(2,0.5, Plots.text("$(round(p0x[2,:fn],digits = 6))"))])
+
+    p1x = select(subset(d1, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region)
+    p1 = @df p1x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "d1 = $d1_, d2 = $d2_")
+    annotate!(p1, [(2,0.5, Plots.text("$(round(p1x[2,:fn],digits = 6))"))])
+
+    dd0 = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity, :region)
+    dd1 = select(subset(d1, :year => x->x.== 2020), :year, :Lu, :citydensity, :region)
+    xx0 = lm(@formula( log(citydensity) ~ log(Lu)), dd0)
+    xx1 = lm(@formula( log(citydensity) ~ log(Lu)), dd1)
+    # (xx0, xx1, d0, d1)
+    b0 = bar([coef(xx0)[2]],ylims = (0,1), title = "baseline",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx0)[2],digits = 6))")))
+    b1 = bar([coef(xx1)[2]],ylims = (0,1), title = "d1 = $d1_, d2 = $d2_",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx1)[2],digits = 6))")))
+    plot(b0,b1, p0, p1, layout = (2,2), size = (800,500))
+end
+
+
+
+
 """
 run model with flat epsilon
 
