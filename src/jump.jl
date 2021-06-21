@@ -243,6 +243,8 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 		@variable(m, ϕ[ik = 1:K] >= 0)
 		# add constraint that pins down ϕ via the transformation from residence location to commuting distance
 		@NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik]))  
+		@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
+
 		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
 		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
 

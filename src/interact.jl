@@ -125,7 +125,7 @@ function ik3()
 			pl = dashk20(d)
 			dd = select(subset(d, :year => x->x.== 2020, :region => x->x.>1), :year, :Lu, :citydensity, :region)
 			xx = lm(@formula( log(citydensity) ~ log(Lu)), dd)
-			plot(pl[:relpop],pl[:avg_density], bar([coef(xx)[2]],ylims = (0,1)), p01, layout = (2,2), size = (800,500))
+			plot(pl[:relpop],pl[:avg_density], bar([coef(xx)[2]],ylims = (0,1)), p0, layout = (2,2), size = (800,500))
 		# catch e
 		# 	wdg = alert("Error!")
 		# 	print(wdg())
