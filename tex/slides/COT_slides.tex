@@ -134,6 +134,7 @@
 
 \end{frame}
 
+\begin{v75mins}
 \begin{frame}
 \frametitle{Preview of Main Mechanisms}
 \framesubtitle{Transitory Dynamics with Rising Productivity and Falling Commuting Costs}
@@ -144,7 +145,7 @@
 \item<3-> \textbf{Nowadays:} Reallocation of factors/land use slows down. Cities expand less and land prices increase more with rising productivity.
 \end{widei}
 \end{frame}
-
+\end{v75mins}
 
 
 \begin{frame}
@@ -224,6 +225,8 @@ Quantitative Spatial Economics. Redding and Rossi-Hansberg (2017). Sprawl/Densit
 
 \section{Facts}
 \subsection{Data}
+
+\begin{v75mins}
 \begin{frame}
 \frametitle{Urban Expansion in France 1866--2016}
 \framesubtitle{Data description}
@@ -243,6 +246,7 @@ Quantitative Spatial Economics. Redding and Rossi-Hansberg (2017). Sprawl/Densit
 \ei
 \ei
 \end{frame}
+\end{v75mins}
 
 
 \subsection{Factor reallocation}
@@ -466,15 +470,26 @@ Sources:
 \framesubtitle{Set-up}
 
 \begin{midi}
-\item Economy endowed with a fixed amount of land and $L$ ex-ante identical workers supplying one unit of labour.
-\item Three sectors/goods: rural  \re{($r$)}, urban \re{($u$)} and housing \re{($h$)}.
-\item Goods and factor markets perfectly competitive. Labor mobile.
-\item Goods (u) and (r) perfectly tradable.
+\item Three sectors and goods: rural, urban and housing.
+\begin{itemize}
+	\item Different intensity in the use of land as input
+	\item Rival Land Use: Agriculture \emph{or} Housing
+	\item Fixed Supply of Land
+\end{itemize}
+
+\item Urban versus Rural Land: Endogenous commuting costs for urban workers.
+
+\item Drivers of Structural Change
+\begin{itemize}
+	\item Non-homothetic preferences for the rural good.
+	\item Increases in productivity.
+\end{itemize}
 \end{midi}
 \end{frame}
 
 %here say replication of static equilibrium, abstract from t indices
 
+\begin{v75mins}
 \begin{frame}
 \frametitle{Technology}
 \framesubtitle{Urban and Rural good}
@@ -495,7 +510,6 @@ Y_r=\re{\theta_r}\left(\alpha (L_r)^{\frac{\sigma-1}{\sigma}} +(1-\alpha)(S_r)^{
 \end{frame}
 
 
-\begin{v75mins}
 \begin{frame}
 \frametitle{Factor Payments}
 
@@ -513,7 +527,7 @@ w_r=\alpha p\theta_r\left(\alpha  +(1-\alpha)\left(\frac{S_r}{L_r}\right)^{\frac
 \end{eqnarray*}
 where \re{$p$} the relative price of the rural good\\
 %Importantly, $\frac{\partial q_r}{\partial (L_r/S_r)} > 0.$
-\end{frame}\end{v75mins}
+\end{frame}
 
 \begin{frame}[label=preference]
 \frametitle{Preferences and budget constraint}
@@ -533,6 +547,7 @@ $q(\ell)$ the rental price per unit of housing in location $\ell$.\\
 $\mathbf{r}$ land rents per capita, equally distributed.
 \end{midi}
 \end{frame}
+\end{v75mins}
 
 % \begin{frame}
 % \frametitle{Spending shares}
@@ -608,6 +623,74 @@ $\mathbf{r}$ land rents per capita, equally distributed.
 \end{mide}
 \end{column}
 \end{columns}
+\end{frame}
+
+\begin{frame}{Comparative Statics: Increase in Rural Productivity}
+
+	\begin{columns}
+		\begin{column}{0.7\textwidth}
+			\input{tikz/urban-wage3.tex}
+		\end{column}
+		\begin{column}{0.3\textwidth}
+			\begin{midi}
+				\item Rural prod. $\theta_r \uparrow$
+				
+			\end{midi}
+		\end{column}
+		\end{columns}
+	
+	
+\end{frame}
+
+\begin{frame}{Comparative Statics: Increase in Rural Productivity}
+
+	\begin{columns}
+		\begin{column}{0.7\textwidth}
+			\input{tikz/urban-wage4.tex}
+		\end{column}
+		\begin{column}{0.3\textwidth}
+			\begin{midi}
+				\item Rural prod. $\theta_r \uparrow$
+				\item $\theta_r \uparrow \Rightarrow (\rho_r \downarrow, w_r \downarrow)$
+				\item Indifference point is pushed outwards.
+			\end{midi}
+		\end{column}
+		\end{columns}
+	
+	
+\end{frame}
+
+\begin{frame}{Comparative Statics: Increase in Urban Productivity}
+
+	\begin{columns}
+		\begin{column}{0.7\textwidth}
+			\input{tikz/urban-wage3.tex}
+		\end{column}
+		\begin{column}{0.3\textwidth}
+			\begin{midi}
+				\item Urban prod. $\theta_u \uparrow \Rightarrow w_u \uparrow$
+			\end{midi}
+		\end{column}
+		\end{columns}
+	
+	
+\end{frame}
+
+\begin{frame}{Comparative Statics: Increase in Urban Productivity}
+
+	\begin{columns}
+		\begin{column}{0.7\textwidth}
+			\input{tikz/urban-wage5.tex}
+		\end{column}
+		\begin{column}{0.3\textwidth}
+			\begin{midi}
+				\item Urban prod. $\theta_u \uparrow \Rightarrow w_u \uparrow$
+				\item all else equal, last worker will commute longer distance.
+			\end{midi}
+		\end{column}
+		\end{columns}
+	
+	
 \end{frame}
 
 \begin{v75mins}
@@ -724,7 +807,9 @@ Closed forms for:
 \end{column}
 \end{columns}
 \end{frame}
+
 \end{v75mins}
+
 
 % \begin{frame}{Closing The Model}{Market Clearing}
 
@@ -797,6 +882,23 @@ see Baum-Snow and Huan (2019).  %important quantitatively but not qualitatively
 \end{v75mins}
 
 
+\begin{frame}{Equilibrium}
+
+	\begin{midi}
+		\item Land developers buy land and numeraire good to provide residential floorspace.
+		\item Arbitrage across land use at the fringe pins down land values and house prices:
+		\begin{equation*}
+			\rho_r = \frac{q_r^{1+\epsilon}}{1+\epsilon} = (1-\alpha)p \theta_r \left(\frac{L_r}{S_r}\right)^\alpha
+		\end{equation*}
+		\item Land Market Clearing.
+		\item Labour Market Clearing.
+		\item Land Rents consistently defined.
+	\end{midi}
+
+\end{frame}
+
+\begin{v75mins}
+
 \begin{frame}
 \frametitle{Housing Market Equilibrium}
 \framesubtitle{Housing market clearing in the city}
@@ -838,7 +940,6 @@ with $\gamma_r=\gamma_\phi$ (homogenous rural housing supply conditions).
  \ei
 \end{frame}
 
-\begin{v75mins}
 
 \begin{frame}
 \frametitle{Goods Market Equilibrium}
@@ -856,7 +957,7 @@ c_u+\frac{w_u}{L}\int_{0}^{\phi}\tau(\ell)D(\ell)d\ell+\frac{1}{L}\int_{0}^{\phi
 \end{equation*}
 where $y_u=\frac{Y_u}{L}=$ production per worker of $(u)$.
 \ei
-\end{frame}\end{v75mins}
+\end{frame}
 
 \begin{frame}
 \frametitle{Equilibrium Allocation}
@@ -875,7 +976,7 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 	\end{itemize}
 }
 \end{frame}
-
+\end{v75mins}
 
 \separator{Results}
 
@@ -967,7 +1068,7 @@ For technology parameters $(\theta_u,\theta_r, \alpha, \sigma)$, spatial frictio
 
 		\begin{subfigure}[t]{0.32\textwidth}
 			\centering
-			\includegraphics[scale=0.32]{\modelplots/AvgDens_data.pdf}
+			\includegraphics[scale=0.32]{\modelplots/AvgDens_data_levels.pdf}
 			\caption{Avg Urban Density}
 			\label{fig:sub1}
 		\end{subfigure}\hskip 1mm%
