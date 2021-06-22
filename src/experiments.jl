@@ -15,10 +15,11 @@ function k20output(k;d1_ = 0.001,d2_ = 0.0, a = 2.14)
     p1 = @df p1x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "d1 = $d1_, d2 = $d2_")
     annotate!(p1, [(2,0.5, Plots.text("$(round(p1x[2,:fn],digits = 6))"))])
 
-    dd0 = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity, :region)
-    dd1 = select(subset(d1, :year => x->x.== 2020), :year, :Lu, :citydensity, :region)
-    xx0 = lm(@formula( log(citydensity) ~ log(Lu)), dd0)
-    xx1 = lm(@formula( log(citydensity) ~ log(Lu)), dd1)
+    dd0 = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :cityarea, :citydensity, :region)
+    dd1 = select(subset(d1, :year => x->x.== 2020), :year, :Lu, :cityarea, :citydensity, :region)
+    xx0 = lm(@formula( log(cityarea) ~ log(Lu) ), dd0)
+    xx1 = lm(@formula( log(cityarea) ~ log(Lu) ), dd1)
+    return (d0, d1)
     # (xx0, xx1, d0, d1)
     b0 = bar([coef(xx0)[2]],ylims = (0,1), title = "baseline",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx0)[2],digits = 6))")))
     b1 = bar([coef(xx1)[2]],ylims = (0,1), title = "d1 = $d1_, d2 = $d2_",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx1)[2],digits = 6))")))
@@ -40,8 +41,8 @@ function k20output(k;d1_ = 0.001,d2_ = 0.0, a = 2.14)
 
     plot(b0,b1, plot(ts0[:n_densities],title = "baseline, k=1"), 
          plot(ts1[:n_densities], title = "d1 = $d1_, d2 = $d2_, k=1"),
-         a0, 
-         a1, 
+         plot(ts20[:n_densities],title = "baseline, k=2"),
+         plot(ts21[:n_densities],title = "d1 = $d1_, d2 = $d2_, k=2"),
          phi0,
          phi1, layout = (4,2), size = (800,900))
 end
