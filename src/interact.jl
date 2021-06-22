@@ -59,8 +59,8 @@ function i0()
 					xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
 					eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
 					etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange,
-					d1 in slider(0.0:0.01:0.1, value = 0.0, label = "d1") |> onchange,
-					d2 in slider(0.0:0.01:1.0, value = 0.0, label = "d2") |> onchange,
+					d1 in slider(0.0:0.0001:0.1, value = 0.0, label = "d1") |> onchange,
+					d2 in slider(0.0:0.01:1.0, value = 1.0, label = "d2") |> onchange,
 					flat in checkbox(label = "flat ϵ?")
 
 					p0 = LandUse.Param(par = Dict(:ξl => xil, :ξw => xiw,
@@ -68,7 +68,7 @@ function i0()
 											  :ϕ1x => ϕx, :ϵflat => flat, :η => eta, :ηa => etaa, :d1 => d1, :d2 => d2),
 									   use_estimatedθ = false)
 
-					try
+					# try
 						x,M,p = LandUse.run(p0, estimateθ = false)
 						# pl = LandUse.ts_plots(M,p0,fixy = false)
 						# pc = LandUse.cs_plots(M[it], p0, it)
@@ -78,10 +78,10 @@ function i0()
 						# 	 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
 						# 	 pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
 						# 	 layout = (4,4),size = (1200,800))
-					catch e
-						wdg = alert("Error!")
-						print(wdg())
-					end
+					# catch e
+					# 	wdg = alert("Error!")
+					# 	print(wdg())
+					# end
 
 					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
 					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)

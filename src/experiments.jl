@@ -19,7 +19,7 @@ function k20output(k;d1_ = 0.001,d2_ = 0.0, a = 2.14)
     dd1 = select(subset(d1, :year => x->x.== 2020), :year, :Lu, :cityarea, :citydensity, :region)
     xx0 = lm(@formula( log(cityarea) ~ log(Lu) ), dd0)
     xx1 = lm(@formula( log(cityarea) ~ log(Lu) ), dd1)
-    return (d0, d1)
+    # return (d0, d1)
     # (xx0, xx1, d0, d1)
     b0 = bar([coef(xx0)[2]],ylims = (0,1), title = "baseline",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx0)[2],digits = 6))")))
     b1 = bar([coef(xx1)[2]],ylims = (0,1), title = "d1 = $d1_, d2 = $d2_",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx1)[2],digits = 6))")))
@@ -33,8 +33,8 @@ function k20output(k;d1_ = 0.001,d2_ = 0.0, a = 2.14)
     avg0 = select(d0, :year, :region, :citydensity, :cityarea)
     avg1 = select(d1, :year, :region, :citydensity, :cityarea)
 
-    a0 = @df avg0 plot(:year, :citydensity, group = :region, title = "baseline")
-    a1 = @df avg1 plot(:year, :citydensity, group = :region, title = "d1 = $d1_, d2 = $d2_")
+    a0 = @df avg0 plot(:year, :citydensity, group = :region, title = "baseline av density" ,ylims = (0,125))
+    a1 = @df avg1 plot(:year, :citydensity, group = :region, title = "d1 = $d1_, d2 = $d2_ av dens",ylims = (0,125))
 
     phi0 = @df avg0 plot(:year, :cityarea, group = :region, title = "baseline cityarea", leg = :left)
     phi1 = @df avg1 plot(:year, :cityarea, group = :region, title = "city area d1 = $d1_, d2 = $d2_", leg = :left, ylims = (0,0.25))
@@ -43,8 +43,9 @@ function k20output(k;d1_ = 0.001,d2_ = 0.0, a = 2.14)
          plot(ts1[:n_densities], title = "d1 = $d1_, d2 = $d2_, k=1"),
          plot(ts20[:n_densities],title = "baseline, k=2"),
          plot(ts21[:n_densities],title = "d1 = $d1_, d2 = $d2_, k=2"),
+         a0,a1,
          phi0,
-         phi1, layout = (4,2), size = (800,900))
+         phi1, layout = (5,2), size = (800,1100))
 end
 
 
