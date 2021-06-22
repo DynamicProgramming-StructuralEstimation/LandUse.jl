@@ -1,10 +1,10 @@
 
 
-function k20output(k;d1_ = 0.001,d2_ = 0.0)
+function k20output(k;d1_ = 0.001,d2_ = 0.0, a = 2.14)
 
 
     x,C0,p = LandUse.k(k)
-    x,C1,p = LandUse.k(k, pars = Dict(:d1 => d1_, :d2 => d2_))
+    x,C1,p = LandUse.k(k, pars = Dict(:d1 => d1_, :d2 => d2_, :a => a))
     d0 = dataframe(C0)
     d1 = dataframe(C1)
     p0x = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) 
@@ -22,7 +22,28 @@ function k20output(k;d1_ = 0.001,d2_ = 0.0)
     # (xx0, xx1, d0, d1)
     b0 = bar([coef(xx0)[2]],ylims = (0,1), title = "baseline",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx0)[2],digits = 6))")))
     b1 = bar([coef(xx1)[2]],ylims = (0,1), title = "d1 = $d1_, d2 = $d2_",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx1)[2],digits = 6))")))
-    plot(b0,b1, p0, p1, layout = (2,2), size = (800,500))
+
+    ts0 = ts_plots([C0[i].R[1] for i in 1:length(p.T)], p)
+    ts1 = ts_plots([C1[i].R[1] for i in 1:length(p.T)], p)
+
+    ts20 = ts_plots([C0[i].R[2] for i in 1:length(p.T)], p)
+    ts21 = ts_plots([C1[i].R[2] for i in 1:length(p.T)], p)
+
+    avg0 = select(d0, :year, :region, :citydensity, :cityarea)
+    avg1 = select(d1, :year, :region, :citydensity, :cityarea)
+
+    a0 = @df avg0 plot(:year, :citydensity, group = :region, title = "baseline")
+    a1 = @df avg1 plot(:year, :citydensity, group = :region, title = "d1 = $d1_, d2 = $d2_")
+
+    phi0 = @df avg0 plot(:year, :cityarea, group = :region, title = "baseline cityarea", leg = :left)
+    phi1 = @df avg1 plot(:year, :cityarea, group = :region, title = "city area d1 = $d1_, d2 = $d2_", leg = :left, ylims = (0,0.25))
+
+    plot(b0,b1, plot(ts0[:n_densities],title = "baseline, k=1"), 
+         plot(ts1[:n_densities], title = "d1 = $d1_, d2 = $d2_, k=1"),
+         a0, 
+         a1, 
+         phi0,
+         phi1, layout = (4,2), size = (800,900))
 end
 
 
