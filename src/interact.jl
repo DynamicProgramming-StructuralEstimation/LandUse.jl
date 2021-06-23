@@ -60,7 +60,7 @@ function i0()
 					eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
 					etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange,
 					d1 in slider(0.0:0.0001:0.1, value = 0.0, label = "d1") |> onchange,
-					d2 in slider(0.0:0.01:1.0, value = 1.0, label = "d2") |> onchange,
+					d2 in slider(0.0:0.01:1.0, value = 0.0, label = "d2") |> onchange,
 					flat in checkbox(label = "flat ϵ?")
 
 					p0 = LandUse.Param(par = Dict(:ξl => xil, :ξw => xiw,

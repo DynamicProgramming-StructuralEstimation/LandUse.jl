@@ -1,10 +1,10 @@
 
 
-function k20output(k;d1_ = 0.001,d2_ = 0.0, a = 2.14)
+function k20output(k;d1_ = 0.001,d2_ = 0.0, a = nothing)
 
 
     x,C0,p = LandUse.k(k)
-    x,C1,p = LandUse.k(k, pars = Dict(:d1 => d1_, :d2 => d2_, :a => a))
+    x,C1,p = LandUse.k(k, pars = Dict(:d1 => d1_, :d2 => d2_, :a => isnothing(a) ? p.a : a))
     d0 = dataframe(C0)
     d1 = dataframe(C1)
     p0x = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) 
@@ -30,8 +30,8 @@ function k20output(k;d1_ = 0.001,d2_ = 0.0, a = 2.14)
     ts20 = ts_plots([C0[i].R[2] for i in 1:length(p.T)], p)
     ts21 = ts_plots([C1[i].R[2] for i in 1:length(p.T)], p)
 
-    avg0 = select(d0, :year, :region, :citydensity, :cityarea)
-    avg1 = select(d1, :year, :region, :citydensity, :cityarea)
+    avg0 = select(d0, :year, :region, :citydensity, :cityarea, :d0)
+    avg1 = select(d1, :year, :region, :citydensity, :cityarea, :d0)
 
     a0 = @df avg0 plot(:year, :citydensity, group = :region, title = "baseline av density" ,ylims = (0,125))
     a1 = @df avg1 plot(:year, :citydensity, group = :region, title = "d1 = $d1_, d2 = $d2_ av dens",ylims = (0,125))
@@ -39,13 +39,14 @@ function k20output(k;d1_ = 0.001,d2_ = 0.0, a = 2.14)
     phi0 = @df avg0 plot(:year, :cityarea, group = :region, title = "baseline cityarea", leg = :left)
     phi1 = @df avg1 plot(:year, :cityarea, group = :region, title = "city area d1 = $d1_, d2 = $d2_", leg = :left, ylims = (0,0.25))
 
-    plot(b0,b1, plot(ts0[:n_densities],title = "baseline, k=1"), 
+    pout = plot(b0,b1, plot(ts0[:n_densities],title = "baseline, k=1"), 
          plot(ts1[:n_densities], title = "d1 = $d1_, d2 = $d2_, k=1"),
          plot(ts20[:n_densities],title = "baseline, k=2"),
          plot(ts21[:n_densities],title = "d1 = $d1_, d2 = $d2_, k=2"),
          a0,a1,
          phi0,
          phi1, layout = (5,2), size = (800,1100))
+    (d0,d1,pout)
 end
 
 

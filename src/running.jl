@@ -135,6 +135,8 @@ end
 
 function runk_impl(x0::Vector,p::Param; estimateθ = false)
 	sols =Vector{Float64}[]
+	# ϕvs =Vector{Float64}[]
+	# dϕvs =Vector{Float64}[]
 	push!(sols,x0)
 
 	C = Country[]  # an emtpy array of countries
@@ -144,6 +146,7 @@ function runk_impl(x0::Vector,p::Param; estimateθ = false)
 		setperiod!(p,it)
 		c = Country(p)  # performs scaling of productivity upon creation
 		x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
+		# x,ϕs,dϕs = jc(c,sols[it],estimateθ = estimateθ)
 		push!(sols,x)
 		if it == 1
 			for ik in 1:p.K
@@ -164,7 +167,10 @@ function runk_impl(x0::Vector,p::Param; estimateθ = false)
 		update!(c,x,estimateθ = estimateθ)
 
 		push!(C,c)
+		# push!(ϕvs,ϕs)
+		# push!(dϕvs,dϕs)
 	end
+	# (sols,C,p, ϕvs, dϕvs) # solutions, models, and parameter
 	(sols,C,p) # solutions, models, and parameter
 end
 
@@ -266,8 +272,8 @@ function relpop(C::Vector{Country})
 	combine(groupby(g2, [:grouplabel, :year]),  :rel_Lu => mean, :region) # mean amongst groups
 end
 
-function k(K;pars = Dict())
-	LandUse.runk(par = merge(Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K)), pars),estimateθ = true)
+function k(K;pars = Dict(),estimateθ = true)
+	LandUse.runk(par = merge(Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K)), pars),estimateθ = estimateθ)
 end
 
 function k20(;overwrite = false)
