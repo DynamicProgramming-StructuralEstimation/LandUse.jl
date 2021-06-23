@@ -227,16 +227,15 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 		@variable(m, dϕ[ik = 1:K] >= 0)
 		@variable(m,  ϕ[ik = 1:K] >= 0)
 
-		@NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
+		# @NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
 		# add constraint that pins down ϕ via the transformation from residence location to commuting distance
-		@NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) )  
+		# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) )  
 		@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
 
 		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + (nodes[i,ik] / (1 + p.d2 * ϕ[ik])) )
 		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
 
-		# @NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * (wu0[ik]^(p.ξw)) * ( (p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik] ) )^(p.ξl))) )
-
+		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * (wu0[ik]^(p.ξw)) * ( (p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik] ) )^(p.ξl))) )
 
 	else
 		@NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl)) 
@@ -301,7 +300,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	JuMP.optimize!(m)
 
 
-	if termination_status(m) == MOI.LOCALLY_SOLVED
+	# if termination_status(m) == MOI.LOCALLY_SOLVED
 		out = zeros(3 + 3K)
 		out[1] = value(LS)
 		out[2] = value(r)
@@ -314,9 +313,9 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 			end
 		end
 		if (p.d1 > 0.0) || (p.d2 > 0.0)
-			return (out,value.(ϕ),value.(dϕ))
+			return (out,value.(ϕ),value.(dϕ),m)
 		else 
-			return (out,value.(ϕ))
+			return (out,value.(ϕ),m)
 		end
 
 		# 		names = [:LS,:r,:pr, 
@@ -329,21 +328,21 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 		# 		 [value(ϕ[ik]) for ik in 1:K]...]
 
 		# (; zip(names, values)...)  # return as named tuple
-	else
-		println(termination_status(m))
+	# else
+	# 	println(termination_status(m))
 		
-		println("error in period $(p.it)")
-		for ik in 1:K
-			println("k = $ik")
-			if estimateθ
-				println("θu[ik]=$(value(θu[ik])),xx=$(value(θu[ik]) - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
-			else
-				println("θu[ik]=$(θu[ik]),xx=$(θu[ik] - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
-			end
-		end
-		JuMP.primal_feasibility_report(m)
-	    # error("The model was not solved correctly.")
-	end
+	# 	println("error in period $(p.it)")
+	# 	for ik in 1:K
+	# 		println("k = $ik")
+	# 		if estimateθ
+	# 			println("θu[ik]=$(value(θu[ik])),xx=$(value(θu[ik]) - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
+	# 		else
+	# 			println("θu[ik]=$(θu[ik]),xx=$(θu[ik] - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
+	# 		end
+	# 	end
+	# 	JuMP.primal_feasibility_report(m)
+	#     # error("The model was not solved correctly.")
+	# end
 end
 
 function jjc()

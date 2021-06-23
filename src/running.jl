@@ -145,7 +145,17 @@ function runk_impl(x0::Vector,p::Param; estimateθ = false)
 		# println(it)
 		setperiod!(p,it)
 		c = Country(p)  # performs scaling of productivity upon creation
-		x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
+		xmod = jc(c,sols[it],estimateθ = estimateθ) # returns a JuMP model as last element
+		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
+			# clean up results and save
+			x,ϕs = xmod[1], xmod[2]
+		else		
+			println(it)
+			println(termination_status(xmod[end]))  # error
+			return JuMP.primal_feasibility_report(xmod[end])
+		end
+
+		# x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
 		# x,ϕs,dϕs = jc(c,sols[it],estimateθ = estimateθ)
 		push!(sols,x)
 		if it == 1
