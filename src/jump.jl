@@ -115,7 +115,7 @@ end
 """
 solve a `Country` at point x0
 """
-function jc(C::Country,x0::Vector; estimateθ = false)
+function jc(C::Country,x0::Vector; estimateθ = false, solve = true)
 
 	pp = C.pp   # vector of params
 	p  = pp[1]   # param of region 1
@@ -186,7 +186,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	@NLexpression(m, wu0[ik = 1:K], θu[ik] * Lu[ik]^p.η)  # urban wage in each city center
 
 	# fringe for each region from inverse moving cost function
-	if (p.d1 > 0.0) || (p.d2 < 1.0)
+	# if (p.d1 > 0.0) || (p.d2 < 1.0)
 		# @variable(m, dϕ[ik = 1:K] >= 0)
 		@variable(m,  ϕ[ik = 1:K] >= 0)
 
@@ -197,15 +197,16 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 
 		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 + p.d2 *  nodes[i,ik] )
 		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
+		@NLexpression(m, dϕ[ik = 1:K], p.d1 + p.d2 * ϕ[ik] )
 
-		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - τ[p.int_nodes,ik]) )
+		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dϕ[ik]^(p.ξl) ) )
 
-	else
-		@NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl)) 
-		@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
-		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * nodes[i,ik]^(p.ξl) )
+	# else
+		# @NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl)) 
+		# @NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
+		# @NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * nodes[i,ik]^(p.ξl) )
 
-	end
+	# end
 
 	# expressions indexed at location l in each k
 
@@ -250,25 +251,32 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 		@objective(m, Min, 1.0)  # constant function
 	end
 
-	JuMP.optimize!(m)
-
-	out = zeros(3 + 3K)
-	out[1] = value(LS)
-	out[2] = value(r)
-	out[3] = value(pr)
-	for ik in 1:K
-		out[3 + ik] = value(Sr[ik])
-		out[3 + K + ik] = value(Lu[ik])
-		if estimateθ
-			out[3 + 2K + ik] = value(θu[ik])
+	if solve 
+		JuMP.optimize!(m) 
+		out = zeros(3 + 3K)
+		out[1] = value(LS)
+		out[2] = value(r)
+		out[3] = value(pr)
+		for ik in 1:K
+			out[3 + ik] = value(Sr[ik])
+			out[3 + K + ik] = value(Lu[ik])
+			if estimateθ
+				out[3 + 2K + ik] = value(θu[ik])
+			end
 		end
+		if (p.d1 > 0.0) || (p.d2 > 0.0)
+			return (out,value.(ϕ),m)
+		else 
+			return (out,value.(ϕ),m)
+		end
+	else
+		# return model, no solving done
+		# prepare variable index
+		raw_index(v::MOI.VariableIndex) = v.value
+		allvars = JuMP.all_variables(m)
+		i = Dict(zip(allvars,raw_index.(JuMP.index.(allvars))))
+		m
 	end
-	if (p.d1 > 0.0) || (p.d2 > 0.0)
-		return (out,value.(ϕ),m)
-	else 
-		return (out,value.(ϕ),m)
-	end
-
 end
 
 

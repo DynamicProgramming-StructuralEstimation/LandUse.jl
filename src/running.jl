@@ -118,7 +118,58 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :
 end
 
 
+function feas_check(it; d1 = 0.04, d2= 1.0)
+	par = Dict(:d1 => d1, :d2 => d2,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
 
+	x0,M,p = run(Param(par = par))
+	m = M[it]  # period 
+	setperiod!(p,it)
+	sols =Vector{Float64}[]
+	C = Country[]  # an emtpy array of countries
+
+	x = Float64[]
+	push!(x, m.Lr / m.Sr)
+	push!(x, m.r)
+	push!(x, m.pr)
+	for ik in 1:p.K
+		push!(x,m.Sr)
+	end
+	for ik in 1:p.K
+		push!(x,m.Lu)
+	end
+	for ik in 1:p.K
+		push!(x,p.θu)
+	end
+	push!(sols, x)
+	c = Country(p)  # performs scaling of productivity upon creation
+	mo = jc(c,sols[1],estimateθ = false,solve = false) # returns a JuMP model as last element
+
+	ct = JuMP.list_of_constraint_types(mo)
+	JuMP.all_constraints(m, ct[1]...)
+	JuMP.all_constraints(m, ct[2]...)
+	
+
+	d = JuMP.NLPEvaluator(mo)
+	MOI.initialize(d, [:Grad])
+	MOI.eval_constraint(d, x)
+
+
+	# https://jump.dev/JuMP.jl/stable/manual/nlp/#Querying-derivatives-from-a-JuMP-model
+	# raw_index(v::MOI.VariableIndex) = v.value
+	# model = Model()
+	# @variable(model, x)
+	# @variable(model, y)
+	# @NLobjective(model, Min, sin(x) + sin(y))
+	# values = zeros(2)
+	# x_index = raw_index(JuMP.index(x))
+	# y_index = raw_index(JuMP.index(y))
+	# values[x_index] = 2.0
+	# values[y_index] = 3.0
+	# d = NLPEvaluator(model)
+	# MOI.initialize(d, [:Grad])
+	# MOI.eval_objective(d, values) # == sin(2.0) + sin(3.0)
+		
+end
 
 function check(it; d1 = 0.04, d2= 1.0)
 	par = Dict(:d1 => d1, :d2 => d2,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
