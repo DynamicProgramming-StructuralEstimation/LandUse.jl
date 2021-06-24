@@ -111,7 +111,7 @@ mutable struct Param
 		this.ϵflat = false
 		this.ηa = 0.0  # no congestion by default
 		this.d1 = 0.0  # recovers baseline commuting distances
-		this.d2 = 0.0  # 
+		this.d2 = 1.0  # 
 
 
 		# read data from disk
