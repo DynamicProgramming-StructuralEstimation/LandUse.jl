@@ -166,7 +166,7 @@ function check(it; d1 = 0.04, d2= 1.0)
 	
 	# (sols,C,p) # solutions, models, and parameter
 
-	m.ϕ - c.R[1].ϕ
+	println("percent difference in radius: $(round(100 * (m.ϕ - c.R[1].ϕ) / m.ϕ,digits = 6)) ")
 end
 
 

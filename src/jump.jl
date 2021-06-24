@@ -68,7 +68,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	@NLexpression(m, iρ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * ρ[i] for i in 1:p.int_nodes))
 	@NLexpression(m, icu,       (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * cu[i] * D[i] for i in 1:p.int_nodes))
 	@NLexpression(m, icu_input, (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * cu_input[i] for i in 1:p.int_nodes))
-	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * (wu0 - w[i]) * D[i] for i in 1:p.int_nodes))
+	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * τ[i] * D[i] for i in 1:p.int_nodes))
 
 
 	@objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
@@ -140,7 +140,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
 	set_optimizer_attribute(m, MOI.Silent(), true)
-	set_optimizer_attribute(m, "constr_viol_tol", 1e-10)
+	set_optimizer_attribute(m, "constr_viol_tol", 1e-9)
 	# lbs = [x0...] .* 0.3
 
 	# variables
