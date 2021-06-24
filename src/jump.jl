@@ -187,7 +187,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 
 	# fringe for each region from inverse moving cost function
 	if (p.d1 > 0.0) || (p.d2 < 1.0)
-		@variable(m, dϕ[ik = 1:K] >= 0)
+		# @variable(m, dϕ[ik = 1:K] >= 0)
 		@variable(m,  ϕ[ik = 1:K] >= 0)
 
 		# @NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
@@ -198,7 +198,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 + p.d2 *  nodes[i,ik] )
 		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
 
-		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * (wu0[ik]^(p.ξw)) * ( (p.d1 +  p.d2 * ϕ[ik] )^(p.ξl))) )
+		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - τ[p.int_nodes,ik]) )
 
 	else
 		@NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl)) 
