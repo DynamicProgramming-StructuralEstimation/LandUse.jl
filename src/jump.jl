@@ -178,6 +178,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
 	set_optimizer_attribute(m, MOI.Silent(), true)
+	set_optimizer_attribute(m, "constr_viol_tol", 1e-10)
 	# lbs = [x0...] .* 0.3
 
 	# variables
@@ -227,15 +228,15 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 		@variable(m, dϕ[ik = 1:K] >= 0)
 		@variable(m,  ϕ[ik = 1:K] >= 0)
 
-		# @NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
+		@NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
 		# add constraint that pins down ϕ via the transformation from residence location to commuting distance
-		# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) )  
+		@NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) ,  )  
 		@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
 
 		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + (nodes[i,ik] / (1 + p.d2 * ϕ[ik])) )
 		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
 
-		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * (wu0[ik]^(p.ξw)) * ( (p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik] ) )^(p.ξl))) )
+		# @NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * (wu0[ik]^(p.ξw)) * ( (p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik] ) )^(p.ξl))) )
 
 	else
 		@NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl)) 
@@ -313,7 +314,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 			end
 		end
 		if (p.d1 > 0.0) || (p.d2 > 0.0)
-			return (out,value.(ϕ),value.(dϕ),m)
+			return (out,value.(ϕ),m)
 		else 
 			return (out,value.(ϕ),m)
 		end

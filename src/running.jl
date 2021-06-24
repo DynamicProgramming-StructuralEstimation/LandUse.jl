@@ -101,21 +101,6 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :
 	x0 = jm(p,m,x0, estimateθ = false)
 	update!(m,p,[x0...])
 
-
-	# # starting value for country solution
-	# θu
-
-	# names = [:LS,:r,:pr, 
-	# 	[Symbol("Sr_$ik") for ik in 1:K]..., 
-	# 	[Symbol("Lu_$ik") for ik in 1:K]...,
-	# 	[Symbol("θu_$ik") for ik in 1:K]...]
-	# values = [m.Lr / m.Sr,m.r, m.pr,
-	# 		[m.Sr  for ik in 1:K]..., 
-	# 		[m.Lu  for ik in 1:K]...,
-	# 		[m.θu for ik in 1:K]...]
-
-	# x = (; zip(names, values)...)  # named tuple
-
 	x = Float64[]
 	push!(x, m.Lr / m.Sr)
 	push!(x, m.r)
@@ -130,6 +115,125 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :
 		push!(x,p.θu)
 	end
 	runk_impl(x,p, estimateθ = estimateθ)
+end
+
+
+
+
+function check(it)
+	par = Dict(:d1 => 0.04, :d2 => 1.0,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
+
+	x0,M,p = run(Param(par = par))
+	m = M[it]  # period 
+	setperiod!(p,it)
+	sols =Vector{Float64}[]
+	C = Country[]  # an emtpy array of countries
+
+
+	x = Float64[]
+	push!(x, m.Lr / m.Sr)
+	push!(x, m.r)
+	push!(x, m.pr)
+	for ik in 1:p.K
+		push!(x,m.Sr)
+	end
+	for ik in 1:p.K
+		push!(x,m.Lu)
+	end
+	for ik in 1:p.K
+		push!(x,p.θu)
+	end
+	push!(sols, x)
+	# for it in 1:length(p.T)
+		# println(it)
+		# setperiod!(p,it)
+		c = Country(p)  # performs scaling of productivity upon creation
+		xmod = jc(c,sols[1],estimateθ = false) # returns a JuMP model as last element
+		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
+			# clean up results and save
+			x,ϕs = xmod[1], xmod[2]
+		else		
+			println("period = $it")
+			println(termination_status(xmod[end]))  # error
+			println(JuMP.all_variables(xmod[end]))
+			return JuMP.primal_feasibility_report(xmod[end])
+		end
+		update!(c,x,estimateθ = false)
+
+		push!(C,c)
+		# push!(ϕvs,ϕs)
+		# push!(dϕvs,dϕs)
+	
+	(sols,C,p) # solutions, models, and parameter
+end
+
+
+function check2()
+	par = Dict(:d1 => 0.04, :d2 => 1.0,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
+
+	x0,M,p = run(Param(par = par))
+	m = M[1]  # period 2
+	setperiod!(p,1)
+	sols =Vector{Float64}[]
+	C = Country[]  # an emtpy array of countries
+
+
+	x = Float64[]
+	push!(x, m.Lr / m.Sr)
+	push!(x, m.r)
+	push!(x, m.pr)
+	for ik in 1:p.K
+		push!(x,m.Sr)
+	end
+	for ik in 1:p.K
+		push!(x,m.Lu)
+	end
+	for ik in 1:p.K
+		push!(x,p.θu)
+	end
+	push!(sols, x)
+	for it in 1:length(p.T)
+		# println(it)
+		setperiod!(p,it)
+		c = Country(p)  # performs scaling of productivity upon creation
+		xmod = jc(c,sols[it],estimateθ = false) # returns a JuMP model as last element
+		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
+			# clean up results and save
+			x,ϕs = xmod[1], xmod[2]
+		else		
+			println("period = $it")
+			println(termination_status(xmod[end]))  # error
+			println(JuMP.all_variables(xmod[end]))
+			return JuMP.primal_feasibility_report(xmod[end])
+		end
+
+		# x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
+		# x,ϕs,dϕs = jc(c,sols[it],estimateθ = estimateθ)
+		push!(sols,x)
+		if it == 1
+			for ik in 1:p.K
+				c.pp[ik].ϕ1 = ϕs[ik] * c.pp[ik].ϕ1x
+			end
+		else
+			for ik in 1:p.K
+				c.pp[ik].ϕ1 = C[1].R[ik].ϕ * c.pp[ik].ϕ1x
+			end
+		end
+		# overwrite θu if estimated
+		# if estimateθ
+		# 	for ik in 1:p.K
+		# 		c.pp[ik].θu = x[3 + 2p.K + ik]
+		# 	end
+		# end
+
+		update!(c,x,estimateθ = false)
+
+		push!(C,c)
+		# push!(ϕvs,ϕs)
+		# push!(dϕvs,dϕs)
+	end
+	
+	(sols,C,p) # solutions, models, and parameter
 end
 
 
@@ -150,8 +254,9 @@ function runk_impl(x0::Vector,p::Param; estimateθ = false)
 			# clean up results and save
 			x,ϕs = xmod[1], xmod[2]
 		else		
-			println(it)
+			println("period = $it")
 			println(termination_status(xmod[end]))  # error
+			println(JuMP.all_variables(xmod[end]))
 			return JuMP.primal_feasibility_report(xmod[end])
 		end
 
