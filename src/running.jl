@@ -218,6 +218,43 @@ function check(it; d1 = 0.04, d2= 1.0)
 	# (sols,C,p) # solutions, models, and parameter
 
 	println("percent difference in radius: $(round(100 * (m.ϕ - c.R[1].ϕ) / m.ϕ,digits = 6)) ")
+	println("radius single:    $(m.ϕ)")
+	println("radius multi (1): $(c.R[1].ϕ) ")
+	println("radius multi (2): $(c.R[2].ϕ) ")
+	println()
+	println("Lr single:    $(m.Lr)")
+	println("Lr multi (1): $(c.R[1].Lr) ")
+	println("Lr multi (2): $(c.R[2].Lr) ")
+	println()
+	println("Lu single:    $(m.Lu)")
+	println("Lu multi (1): $(c.R[1].Lu) ")
+	println("Lu multi (2): $(c.R[2].Lu) ")
+
+	println()
+	println("pr single:    $(m.pr)")
+	println("pr multi (1): $(c.R[1].pr) ")
+	println("pr multi (2): $(c.R[2].pr) ")
+
+	println()
+	println("Sr single:    $(m.Sr)")
+	println("Sr multi (1): $(c.R[1].Sr) ")
+	println("Sr multi (2): $(c.R[2].Sr) ")
+
+	println()
+	println("Srh single:    $(m.Srh)")
+	println("Srh multi (1): $(c.R[1].Srh) ")
+	println("Srh multi (2): $(c.R[2].Srh) ")
+
+	println()
+	println("Srh - cityarea single:    $(m.Srh      - π* (m.ϕ)^2)")
+	println("Srh - cityarea multi (1): $(c.R[1].Srh - π* (c.R[1].ϕ)^2) ")
+	println("Srh - cityarea multi (2): $(c.R[2].Srh - π* (c.R[2].ϕ)^2) ")
+
+	println()
+	println("Sr + cityarea + Srh single:    $(m.Srh      + m.Sr      + π* (m.ϕ)^2)")
+	println("Sr + cityarea + Srh multi (1): $(c.R[1].Srh + c.R[1].Sr + π* (c.R[1].ϕ)^2) ")
+	println("Sr + cityarea + Srh multi (2): $(c.R[2].Srh + c.R[2].Sr + π* (c.R[2].ϕ)^2) ")
+
 end
 
 
