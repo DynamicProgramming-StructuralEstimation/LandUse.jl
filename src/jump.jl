@@ -228,15 +228,15 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 		@variable(m, dϕ[ik = 1:K] >= 0)
 		@variable(m,  ϕ[ik = 1:K] >= 0)
 
-		@NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
+		# @NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
 		# add constraint that pins down ϕ via the transformation from residence location to commuting distance
-		@NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) ,  )  
+		# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) ,  )  
 		@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
 
 		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + (nodes[i,ik] / (1 + p.d2 * ϕ[ik])) )
 		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
 
-		# @NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * (wu0[ik]^(p.ξw)) * ( (p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik] ) )^(p.ξl))) )
+		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * (wu0[ik]^(p.ξw)) * ( (p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik] ) )^(p.ξl))) )
 
 	else
 		@NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl)) 
@@ -276,12 +276,13 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	@NLconstraint(m, sum(Lr[ik] * cur + icu[ik] + Srh[ik] * cu_inputr + icu_input[ik] + iτ[ik] for ik in 1:K) == sum(wu0[ik] * Lu[ik] for ik in 1:K))
 	@NLconstraint(m, city_size[ik = 1:K], Lu[ik] == iDensity[ik])
 
-	@NLconstraint(m, uwage[ik = 1:K], wu0[ik] >= wr)
 
 
 	# choose urban productivities so that their population-weighted sum reproduces the data series for average θu
 	if estimateθ
 		# @NLconstraint(m, 0.6 * θu[1] + 0.4 * θu[2] == p.θu)
+		@NLconstraint(m, uwage[ik = 1:K], wu0[ik] >= wr)
+
 		@NLconstraint(m, sum( popwgt[ik] * θu[ik] for ik in 1:K ) == p.θu)   # weighted average productivity is equal to aggregate
 		@NLobjective(m, Min, sum( ((Lu[ik] / Lu[1]) - relpop[ik])^2 for ik in 2:K))
 	else

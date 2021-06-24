@@ -120,8 +120,8 @@ end
 
 
 
-function check(it)
-	par = Dict(:d1 => 0.04, :d2 => 1.0,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
+function check(it; d1 = 0.04, d2= 1.0)
+	par = Dict(:d1 => d1, :d2 => d2,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
 
 	x0,M,p = run(Param(par = par))
 	m = M[it]  # period 
@@ -164,7 +164,9 @@ function check(it)
 		# push!(ϕvs,ϕs)
 		# push!(dϕvs,dϕs)
 	
-	(sols,C,p) # solutions, models, and parameter
+	# (sols,C,p) # solutions, models, and parameter
+
+	m.ϕ - c.R[1].ϕ
 end
 
 
