@@ -112,6 +112,9 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :
 		push!(x,m.Lu)
 	end
 	for ik in 1:p.K
+		push!(x,m.ϕ)
+	end
+	for ik in 1:p.K
 		push!(x,p.θu)
 	end
 	runk_impl(x,p, estimateθ = estimateθ)
@@ -136,6 +139,9 @@ function feas_check(it; d1 = 0.04, d2= 1.0)
 	end
 	for ik in 1:p.K
 		push!(x,m.Lu)
+	end
+	for ik in 1:p.K
+		push!(x,m.ϕ)
 	end
 	for ik in 1:p.K
 		push!(x,p.θu)
@@ -217,6 +223,9 @@ function check(it; d1 = 0.04, d2= 1.0)
 	end
 	for ik in 1:p.K
 		push!(x,m.Lu)
+	end
+	for ik in 1:p.K
+		push!(x,m.ϕ)
 	end
 	for ik in 1:p.K
 		push!(x,p.θu)
@@ -306,6 +315,9 @@ function check2()
 		push!(x,m.Lu)
 	end
 	for ik in 1:p.K
+		push!(x,m.ϕ)
+	end
+	for ik in 1:p.K
 		push!(x,p.θu)
 	end
 	push!(sols, x)
@@ -327,6 +339,7 @@ function check2()
 		# x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
 		# x,ϕs,dϕs = jc(c,sols[it],estimateθ = estimateθ)
 		push!(sols,x)
+		# println(sols)
 		if it == 1
 			for ik in 1:p.K
 				c.pp[ik].ϕ1 = ϕs[ik] * c.pp[ik].ϕ1x
