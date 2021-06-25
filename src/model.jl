@@ -438,9 +438,12 @@ lofmode(m::Float64, p::Param,Lu::Float64) = ((2*p.ζ)/cτ(Lu,p))^(-1/(1-p.ηl)) 
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
+"commuting distance"
+d(l::Float64,p::Param) = p.d1 + p.d2 * l
+
 "commuting cost: location x → cost"
 # τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.ξl)
-τ(x::Float64,p::Param,Lu::Float64) = a(Lu,p) * wu0(Lu, p)^(p.ξw) * x^(p.ξl)
+τ(x::Float64,p::Param,Lu::Float64) = a(Lu,p) * wu0(Lu, p)^(p.ξw) * d(x,p)^(p.ξl)
 
 
 

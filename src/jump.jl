@@ -274,8 +274,8 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true)
 		# prepare variable index
 		raw_index(v::MOI.VariableIndex) = v.value
 		allvars = JuMP.all_variables(m)
-		i = Dict(zip(allvars,raw_index.(JuMP.index.(allvars))))
-		m
+		i = Dict(zip(JuMP.name.(allvars),raw_index.(JuMP.index.(allvars))))
+		m,i
 	end
 end
 

@@ -142,17 +142,17 @@ function feas_check(it; d1 = 0.04, d2= 1.0)
 	end
 	push!(sols, x)
 	c = Country(p)  # performs scaling of productivity upon creation
-	mo = jc(c,sols[1],estimateθ = false,solve = false) # returns a JuMP model as last element
+	mo,i = jc(c,sols[1],estimateθ = false,solve = false) # returns a JuMP model as last element
+	xmod = jc(c,sols[1],estimateθ = false,solve = true) #
 
-	ct = JuMP.list_of_constraint_types(mo)
-	JuMP.all_constraints(m, ct[1]...)
-	JuMP.all_constraints(m, ct[2]...)
+
+	# ct = JuMP.list_of_constraint_types(mo)
+	# ct = JuMP.list_of_constraint_types(mo)
+	# JuMP.all_constraints(m, ct[1]...)
+	# JuMP.all_constraints(m, ct[2]...)
+
+	# n = JuMP.all_variables(mo)
 	
-
-	d = JuMP.NLPEvaluator(mo)
-	MOI.initialize(d, [:Grad])
-	MOI.eval_constraint(d, x)
-
 
 	# https://jump.dev/JuMP.jl/stable/manual/nlp/#Querying-derivatives-from-a-JuMP-model
 	# raw_index(v::MOI.VariableIndex) = v.value
@@ -160,14 +160,40 @@ function feas_check(it; d1 = 0.04, d2= 1.0)
 	# @variable(model, x)
 	# @variable(model, y)
 	# @NLobjective(model, Min, sin(x) + sin(y))
-	# values = zeros(2)
-	# x_index = raw_index(JuMP.index(x))
-	# y_index = raw_index(JuMP.index(y))
-	# values[x_index] = 2.0
-	# values[y_index] = 3.0
-	# d = NLPEvaluator(model)
-	# MOI.initialize(d, [:Grad])
-	# MOI.eval_objective(d, values) # == sin(2.0) + sin(3.0)
+	values = zeros(length(i))
+	values[i["LS"]] = x[1]
+	values[i["r"]] = x[2]
+	values[i["pr"]] = x[3]
+	values[i["Sr[1]"]] = x[4]
+	values[i["Sr[2]"]] = x[5]
+	values[i["Lu[1]"]] = x[6]
+	values[i["Lu[2]"]] = x[7]
+	values[i["ϕ[1]"]] = m.ϕ
+	values[i["ϕ[2]"]] = m.ϕ
+
+	g0 = zeros(JuMP.num_nl_constraints(mo))
+
+	d = NLPEvaluator(mo)
+	MOI.initialize(d, [:Grad])
+	MOI.eval_constraint(d, g0, values) 
+
+	# now the solved model
+	values[i["LS"]]    = xmod[1][1]
+	values[i["r"]]     = xmod[1][2]
+	values[i["pr"]]    = xmod[1][3]
+	values[i["Sr[1]"]] = xmod[1][4]
+	values[i["Sr[2]"]] = xmod[1][5]
+	values[i["Lu[1]"]] = xmod[1][6]
+	values[i["Lu[2]"]] = xmod[1][7]
+	values[i["ϕ[1]"]]  = xmod[2][1]
+	values[i["ϕ[2]"]]  = xmod[2][2]
+
+	g1 = zeros(JuMP.num_nl_constraints(mo))
+
+	MOI.eval_constraint(d, g1, values) 
+
+
+	return g0,g1
 		
 end
 
@@ -179,6 +205,7 @@ function check(it; d1 = 0.04, d2= 1.0)
 	setperiod!(p,it)
 	sols =Vector{Float64}[]
 	C = Country[]  # an emtpy array of countries
+	
 
 
 	x = Float64[]
@@ -209,7 +236,7 @@ function check(it; d1 = 0.04, d2= 1.0)
 			println(JuMP.all_variables(xmod[end]))
 			return JuMP.primal_feasibility_report(xmod[end])
 		end
-		update!(c,x,estimateθ = false)
+		update!(c,x,estimateθ = false, ϕs = ϕs)
 
 		push!(C,c)
 		# push!(ϕvs,ϕs)

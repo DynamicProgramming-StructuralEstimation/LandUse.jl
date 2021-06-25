@@ -129,7 +129,7 @@ The ordering in `x` is:
 5. (K+4) : (2K+3), Lu: urban pop in each k
 5. (2K+4) : end, θu: urban prod in each k
 """
-function update!(c::Country,x::Vector{Float64};estimateθ=false)
+function update!(c::Country,x::Vector{Float64};estimateθ=false, ϕs = nothing)
 	K = c.K
 	p = c.pp
 
@@ -142,6 +142,7 @@ function update!(c::Country,x::Vector{Float64};estimateθ=false)
 	if estimateθ
 		θus    = x[(2K+3+1):end]  # θu for each region k
 	end
+
 
 	@assert K == length(c.R)
 
@@ -159,7 +160,7 @@ function update!(c::Country,x::Vector{Float64};estimateθ=false)
 	# 2. update other equations in each region
 	for ik in 1:K
 		cx = [c.ρr, 
-		      getfringe(Lu[ik],wu0(Lu[ik],p[ik]), c.wr, p[ik]), 
+		      !isnothing(ϕs) ? ϕs[ik] : getfringe(Lu[ik],wu0(Lu[ik],p[ik]), c.wr, p[ik]), 
 			  c.r, 
 			  c.LS * Srk[ik], 
 			  c.pr, 
