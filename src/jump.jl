@@ -31,7 +31,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 
 	@NLexpression(m, Lu, p.L - Lr)
 	@NLexpression(m, wu0, θu * (p.L - Lr)^p.η)
-	@NLexpression(m, wr , p.Ψ * (wu0 - (p.a * Lu^p.ηa) * (wu0^(p.ξw)) * ( (p.d1  + p.d2 * ϕ )^(p.ξl))) )
+	@NLexpression(m, wr , p.Ψ * (wu0 - (p.a * Lu^p.ηa) * (wu0^(p.ξw)) * ( (p.d1 * ϕ + ϕ / ( 1 + p.d2 * ϕ ) )^(p.ξl))) )
 	@NLexpression(m, qr , ((1+p.ϵr) * ρr)^(1.0/(1+p.ϵr)) )
 	@NLexpression(m, r_pr_csbar, r - pr * p.cbar + p.sbar )
 	@NLexpression(m, xsr, wr + r_pr_csbar )
@@ -49,7 +49,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	else
 		@NLexpression(m, ϵ[i = 1:p.int_nodes], p.ϵr * nodes[i] / ϕ + p.ϵs * (ϕ - nodes[i])/ϕ)
 	end
-	@NLexpression(m, dnodes[i = 1:p.int_nodes], p.d1 + nodes[i] * p.d2 )
+	@NLexpression(m, dnodes[i = 1:p.int_nodes], p.d1 * ϕ + nodes[i] / ( 1 + p.d2 * ϕ ) )
 	@NLexpression(m, τ[i = 1:p.int_nodes], (p.a * Lu^p.ηa) * wu0^(p.ξw) * dnodes[i]^(p.ξl) )
 	@NLexpression(m, w[i = 1:p.int_nodes], wu0 - τ[i] )
 	# @warn "hard coding abs() for q function" maxlog=1
@@ -197,9 +197,9 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true)
 		# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) ,  )  
 		@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
 
-		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 + p.d2 *  nodes[i,ik] )
+		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
 		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
-		@NLexpression(m, dϕ[ik = 1:K], p.d1 + p.d2 * ϕ[ik] )
+		@NLexpression(m, dϕ[ik = 1:K], p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik]) )
 
 		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dϕ[ik]^(p.ξl) ) )
 

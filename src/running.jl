@@ -203,7 +203,7 @@ function feas_check(it; d1 = 0.04, d2= 1.0)
 		
 end
 
-function check(it; d1 = 0.04, d2= 1.0)
+function check(it; d1 = 0.0, d2= 0.0)
 	par = Dict(:d1 => d1, :d2 => d2,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
 
 	x0,M,p = run(Param(par = par))
@@ -292,8 +292,8 @@ function check(it; d1 = 0.04, d2= 1.0)
 end
 
 
-function check2()
-	par = Dict(:d1 => 0.04, :d2 => 0.8,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
+function check2(;d1 = 0.0, d2= 0.0)
+	par = Dict(:d1 => d2, :d2 => d2,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
 
 	x0,M,p = run(Param(par = par))
 	m = M[1]  # period 2
