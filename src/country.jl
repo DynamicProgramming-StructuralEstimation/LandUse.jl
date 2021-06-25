@@ -129,7 +129,7 @@ The ordering in `x` is:
 5. (K+4) : (2K+3), Lu: urban pop in each k
 5. (2K+4) : end, θu: urban prod in each k
 """
-function update!(c::Country,x::Vector{Float64};estimateθ=false, ϕs = nothing)
+function update!(c::Country,x::Vector{Float64};estimateθ=false)
 	K = c.K
 	p = c.pp
 
@@ -139,8 +139,9 @@ function update!(c::Country,x::Vector{Float64};estimateθ=false, ϕs = nothing)
 	c.pr   = x[3]   # relative price rural good
 	Srk    = x[4:(K+3)]  # Sr for each region k
 	Lu     = x[(K+4):(2K+3)]  # Lu for each region k
+	ϕs     = x[(2K+4):(3K+3)]  # Lu for each region k
 	if estimateθ
-		θus    = x[(2K+3+1):end]  # θu for each region k
+		θus    = x[(3K+3+1):end]  # θu for each region k
 	end
 
 
@@ -160,7 +161,7 @@ function update!(c::Country,x::Vector{Float64};estimateθ=false, ϕs = nothing)
 	# 2. update other equations in each region
 	for ik in 1:K
 		cx = [c.ρr, 
-		      !isnothing(ϕs) ? ϕs[ik] : getfringe(Lu[ik],wu0(Lu[ik],p[ik]), c.wr, p[ik]), 
+		      ϕs[ik], 
 			  c.r, 
 			  c.LS * Srk[ik], 
 			  c.pr, 

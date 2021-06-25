@@ -212,8 +212,6 @@ function check(it; d1 = 0.04, d2= 1.0)
 	sols =Vector{Float64}[]
 	C = Country[]  # an emtpy array of countries
 	
-
-
 	x = Float64[]
 	push!(x, m.Lr / m.Sr)
 	push!(x, m.r)
@@ -245,7 +243,7 @@ function check(it; d1 = 0.04, d2= 1.0)
 			println(JuMP.all_variables(xmod[end]))
 			return JuMP.primal_feasibility_report(xmod[end])
 		end
-		update!(c,x,estimateθ = false, ϕs = ϕs)
+		update!(c,x,estimateθ = false)
 
 		push!(C,c)
 		# push!(ϕvs,ϕs)
@@ -295,7 +293,7 @@ end
 
 
 function check2()
-	par = Dict(:d1 => 0.04, :d2 => 1.0,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
+	par = Dict(:d1 => 0.04, :d2 => 0.8,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
 
 	x0,M,p = run(Param(par = par))
 	m = M[1]  # period 2
@@ -405,7 +403,7 @@ function runk_impl(x0::Vector,p::Param; estimateθ = false)
 		# overwrite θu if estimated
 		if estimateθ
 			for ik in 1:p.K
-				c.pp[ik].θu = x[3 + 2p.K + ik]
+				c.pp[ik].θu = x[3 + 3p.K + ik]
 			end
 		end
 
