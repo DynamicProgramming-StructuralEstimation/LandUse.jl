@@ -59,14 +59,16 @@ function i0()
 					xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
 					eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
 					etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange,
+					d1 in slider(0.0:0.0001:0.1, value = 0.0, label = "d1") |> onchange,
+					d2 in slider(0.0:0.01:1.0, value = 0.0, label = "d2") |> onchange,
 					flat in checkbox(label = "flat ϵ?")
 
 					p0 = LandUse.Param(par = Dict(:ξl => xil, :ξw => xiw,
 											  :cbar => cbar, :sbar => sbar, :a => a, :γ => gamma, :ϵs => es,
-											  :ϕ1x => ϕx, :ϵflat => flat, :η => eta, :ηa => etaa),
+											  :ϕ1x => ϕx, :ϵflat => flat, :η => eta, :ηa => etaa, :d1 => d1, :d2 => d2),
 									   use_estimatedθ = false)
 
-					try
+					# try
 						x,M,p = LandUse.run(p0, estimateθ = false)
 						# pl = LandUse.ts_plots(M,p0,fixy = false)
 						# pc = LandUse.cs_plots(M[it], p0, it)
@@ -76,10 +78,10 @@ function i0()
 						# 	 pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
 						# 	 pc[:ϵ] , pc[:D], pc[:q] , pc[:H],
 						# 	 layout = (4,4),size = (1200,800))
-					catch e
-						wdg = alert("Error!")
-						print(wdg())
-					end
+					# catch e
+					# 	wdg = alert("Error!")
+					# 	print(wdg())
+					# end
 
 					# plot(pl[:phi], pl[:avdensity],pl[:mode],pl[:ctime],pl[:dist_vs_time],plot(), l = (2,3))
 					# plot(pl[:Lr_data],pl[:spending],pl[:qbar_real],pl[:productivity],pl[:n_densities], pl[:avdensity], layout = (2,3),link = :x)
@@ -87,7 +89,7 @@ function i0()
 	end
 	@layout! mp vbox(hbox(:it, :ϕx , :flat, :eta, :etaa),
 	                 hbox(:sbar, :cbar,:gamma,:es),
-	                 hbox(:a, :xil, :xiw),
+	                 hbox(:a, :xil, :xiw, :d1, :d2),
 					 observe(_))
 	w = Window()
 	body!(w,mp)
@@ -108,20 +110,22 @@ function ik3()
 		xil in slider(xis, value = p1.ξl, label = "ξl") |> onchange,
 		xiw in slider(xis, value = p1.ξw, label = "ξw") |> onchange,
 		eta in slider(0.0:0.01:0.1, value = 0.0, label = "η-agglo") |> onchange,
+		d1 in slider(0.0:0.001:0.1, value = 0.01, label = "d1") |> onchange,
+		d2 in slider(0.0:0.01:2.0, value = 1.5, label = "d2") |> onchange,
 		etaa in slider(0.0:0.01:0.1, value = 0.0, label = "η-congest") |> onchange
 
 		# try
 			x,C,p = runk(par = Dict(:K => 20, :kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20),
 									:ξl => xil, :ξw => xiw,
 									:cbar => cbar, :sbar => sbar, 
-									:a => a, :γ => gamma, :η => eta, :ηa => etaa), estimateθ = true)
+									:a => a, :γ => gamma, :η => eta, :ηa => etaa, :d1 => d1, :d2 => d2), estimateθ = true)
 			d = dataframe(C)
 			p0 = @df select(subset(d, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "year 2020")
 			p01 = @df select(subset(d, :year => x->x.== 2020,  :region => x->x.> 1 ), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "year 2020")
 			pl = dashk20(d)
 			dd = select(subset(d, :year => x->x.== 2020, :region => x->x.>1), :year, :Lu, :citydensity, :region)
 			xx = lm(@formula( log(citydensity) ~ log(Lu)), dd)
-			plot(pl[:relpop],pl[:avg_density], bar([coef(xx)[2]],ylims = (0,1)), p01, layout = (2,2), size = (800,500))
+			plot(pl[:relpop],pl[:avg_density], bar([coef(xx)[2]],ylims = (0,1)), p0, layout = (2,2), size = (800,500))
 		# catch e
 		# 	wdg = alert("Error!")
 		# 	print(wdg())
@@ -129,7 +133,7 @@ function ik3()
 	end
 	@layout! mp vbox(hbox(:eta, :etaa),
 	                 hbox(:sbar, :cbar,:gamma,:es),
-	                 hbox(:a, :xil, :xiw, :it),
+	                 hbox(:a, :xil, :xiw, :it, :d1, :d2),
 					 observe(_))
 	w = Window()
 	body!(w,mp)

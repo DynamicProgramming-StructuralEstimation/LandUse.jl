@@ -25,7 +25,7 @@ mutable struct Country
 	Sk :: Vector{Float64}  # total space for each region
 	L  :: Float64  # total population
 	S  :: Float64 # total space
-	T  :: StepRange{Int64,Int64}
+	T  :: StepRange{Int,Int}
 
 	"""
 		Country constructor
@@ -44,9 +44,9 @@ mutable struct Country
 		this.pp = Param[deepcopy(p) for _ in 1:p.K]
 
 		# modify θus for each
-		@warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
+		# @warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
 		for ik in 1:p.K
-			p.θu = max(p.θu, 1.0)
+			# p.θu = max(p.θu, 1.0)
 			this.pp[ik].θu =  p.θu * p.factors[ik] * exp(p.gs[ik] * (p.it-1))
 		end
 
@@ -139,9 +139,11 @@ function update!(c::Country,x::Vector{Float64};estimateθ=false)
 	c.pr   = x[3]   # relative price rural good
 	Srk    = x[4:(K+3)]  # Sr for each region k
 	Lu     = x[(K+4):(2K+3)]  # Lu for each region k
+	ϕs     = x[(2K+4):(3K+3)]  # Lu for each region k
 	if estimateθ
-		θus    = x[(2K+3+1):end]  # θu for each region k
+		θus    = x[(3K+3+1):end]  # θu for each region k
 	end
+
 
 	@assert K == length(c.R)
 
@@ -159,7 +161,7 @@ function update!(c::Country,x::Vector{Float64};estimateθ=false)
 	# 2. update other equations in each region
 	for ik in 1:K
 		cx = [c.ρr, 
-		      getfringe(Lu[ik],wu0(Lu[ik],p[ik]), c.wr, p[ik]), 
+		      ϕs[ik], 
 			  c.r, 
 			  c.LS * Srk[ik], 
 			  c.pr, 

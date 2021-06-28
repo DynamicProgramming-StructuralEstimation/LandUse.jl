@@ -247,7 +247,7 @@ function update!(m::Region,p::Param,x::Vector{Float64}; Lu...)
 		m.Lu = Lu[1]
 	end
 	m.wu0  = wu0(m.Lu,p)   # wage rate urban sector at city center (distance = 0)
-	m.wr   = m.wu0 - τ(m.ϕ,p,m.Lu)
+	m.wr   = m.wu0 - τ(m.ϕ,m.ϕ,p,m.Lu)
 	# m.wr   = foc_Lr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = foc_Sr(m.Lr / m.Sr , m.pr, p)
 	# m.ρr   = 0.059
@@ -438,9 +438,12 @@ lofmode(m::Float64, p::Param,Lu::Float64) = ((2*p.ζ)/cτ(Lu,p))^(-1/(1-p.ηl)) 
 
 γ(l::Float64,ϕ::Float64,p::Param) = p.γ / (1.0 + ϵ(l,ϕ,p))
 
+"commuting distance"
+d(l::Float64,ϕ::Float64, p::Param) = p.d1 * ϕ + l / (1 + p.d2 * ϕ)
+
 "commuting cost: location x → cost"
 # τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.ξl)
-τ(x::Float64,p::Param,Lu::Float64) = a(Lu,p) * wu0(Lu, p)^(p.ξw) * x^(p.ξl)
+τ(x::Float64,ϕ::Float64,p::Param,Lu::Float64) = a(Lu,p) * wu0(Lu, p)^(p.ξw) * d(x,ϕ,p)^(p.ξl)
 
 
 
@@ -466,13 +469,16 @@ The function takes ``w(0) - w_r`` as argument `x`. then we give ``\\tau(\\phi)``
 getfringe(Lu::Float64,w0::Float64,wr::Float64,p::Param) = w0 > wr ? invτ(Lu,wr,w0,p) : 0.0
 
 "urban wage at location ``l``"
-wu(Lu::Float64,l::Float64,p::Param) = wu0(Lu,p) .- τ(l,p,Lu)
+wu(Lu::Float64,ϕ::Float64,l::Float64,p::Param) = wu0(Lu,p) .- τ(l,ϕ,p,Lu)
+
+"wage at location ``l``"
+w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,ϕ,l,p)
 
 "urban wage at center"
 wu0(Lu::Float64,p::Param) = p.Ψ * p.θu * Lu^p.η
 
 "rural wage from indifference condition at ϕ. Eq (11)"
-wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(ϕ,p,Lu)
+wr(Lu::Float64,ϕ::Float64,p::Param) = wu0(Lu,p) .- τ(ϕ,ϕ,p,Lu)
 
 "FOC of rural firm wrt labor Lr"
 foc_Lr(L_over_S::Float64,pr::Float64, p::Param) = p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0/ L_over_S )^((p.σ-1)/p.σ))^(1.0 / (p.σ-1))
@@ -480,8 +486,6 @@ foc_Lr(L_over_S::Float64,pr::Float64, p::Param) = p.α * pr * p.θr * (p.α + (1
 "FOC of rural firm wrt land Sr"
 foc_Sr(L_over_S::Float64,pr::Float64, p::Param) = (1-p.α)* pr * p.θr * (p.α * (L_over_S)^((p.σ-1)/p.σ) + (1-p.α))^(1.0 / (p.σ-1))
 
-"wage at location ``l``"
-w(Lu::Float64,l::Float64,ϕ::Float64,p::Param) = l >= ϕ ? wr(Lu,ϕ,p) : wu(Lu,l,p)
 
 "excess subsistence urban worker"
 xsu(l::Float64,p::Param,m::Model) = w(m.Lu,l,m.ϕ,p) .+ m.r .- m.pr .* p.cbar .+ p.sbar
@@ -600,7 +604,7 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	df[1,:p_index] = M[1].pr
 	for i in 1:tt
 		setperiod!(p,i)
-		df[i, :τ_ts] = τ(initϕ, p, M[i].Lu)
+		df[i, :τ_ts] = τ(initϕ,initϕ, p, M[i].Lu)
 		df[i, :rural_emp_model] = M[i].Lr / p.L
 		if i > 1
 			df[i, :p_laspeyres] = ( M[i].pr * M[i-1].Yr + M[i-1].Yu ) / ( M[i-1].pr *  M[i-1].Yr + M[i-1].Yu )

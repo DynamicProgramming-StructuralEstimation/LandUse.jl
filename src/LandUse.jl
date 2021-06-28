@@ -1,6 +1,7 @@
 module LandUse
 
 	# dependendencies
+	using Base: root_module
 	using JSON
 	using NLsolve
 	using FastGaussQuadrature
@@ -11,7 +12,7 @@ module LandUse
 	using StatsPlots
 	using DataFramesMeta
 	using Printf
-	using NLopt
+	# using NLopt
 	using LineSearches
 	using Formatting
 	using Roots
@@ -38,25 +39,40 @@ module LandUse
 	using Latexify
 	using GLM
 	using FileIO
-	using StatsBase: median
+	using StatsBase
+
 	# constants
 	const PEN = 100.0  # penalty for nl solver
+
+	# set up file paths
+	isCI = if haskey(ENV,"CI")
+			true 
+		else
+			false
+		end
+
+	# root dir
+	root = joinpath(@__DIR__,"..")
+	indir = joinpath(root,"in")
+	intables = joinpath(indir,"tables")
+
 	user = splitdir(homedir())[end]
 	host = gethostname()
 	isflo = (user == "florian.oswald") || (user == "74097")
-	const dbpath = if isflo
+	dbpath = if isflo
 					joinpath(ENV["HOME"],"Dropbox","research","LandUse")
 				elseif (contains(host,"cnode") || contains(host,"malbec"))
 					"/home/oswald/LandUseDropbox"
 				elseif host == "scpo-floswald"
 					"/home/floswald/LandUseDropbox"	
+				elseif isCI
+					joinpath(@__DIR__,"..","in")
 				end				
-	const dbplots = joinpath(dbpath,"output","model","plots")
-	const dboutdata = joinpath(dbpath,"output","data")
-	const dbindata = joinpath(dbpath,"data")
-	const dbdataplots = joinpath(dbpath,"output","data","plots")
-	const dbtables = joinpath(dbpath,"output","model","tables")
-	const CTRY_MAXTRY = 100
+	dbplots = joinpath(dbpath,"output","model","plots")
+	dboutdata = joinpath(dbpath,"output","data")
+	dbdataplots = joinpath(dbpath,"output","data","plots")
+	dbtables = joinpath(dbpath,"output","model","tables")
+	CTRY_MAXTRY = 100
 
 	# imports
 	import Base.show, Base.convert
@@ -79,7 +95,7 @@ module LandUse
 	include("learning.jl")
 	include("data.jl")
 
-	cpslides(name) = cp(joinpath(@__DIR__,"..","tex","slides","COT_slides.pdf"),
+	cpslides(name) = cp(joinpath(root,"tex","slides","COT_slides.pdf"),
 	                   joinpath(dbpath,"slides","flo-slides","COT_slides-$name.pdf"),
 					   force = true)
 

@@ -1,4 +1,57 @@
 
+
+function k20output(k;d1_ = 0.0,d2_ = 0.0, a = nothing, estimateθ = false)
+
+    K = k
+    x,C0,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k)),estimateθ = estimateθ)
+    x,C1,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k), :d1 => d1_, :d2 => d2_, :a => a),estimateθ = estimateθ)
+    d0 = dataframe(C0)
+    d1 = dataframe(C1)
+    p0x = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) 
+    p0 = @df p0x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "baseline")
+    annotate!(p0, [(2,0.5, Plots.text("$(round(p0x[2,:fn],digits = 6))"))])
+
+    p1x = select(subset(d1, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region)
+    p1 = @df p1x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "d1 = $d1_, d2 = $d2_")
+    annotate!(p1, [(2,0.5, Plots.text("$(round(p1x[2,:fn],digits = 6))"))])
+
+    dd0 = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :cityarea, :citydensity, :region)
+    dd1 = select(subset(d1, :year => x->x.== 2020), :year, :Lu, :cityarea, :citydensity, :region)
+    xx0 = lm(@formula( log(cityarea) ~ log(Lu) ), dd0)
+    xx1 = lm(@formula( log(cityarea) ~ log(Lu) ), dd1)
+    # return (d0, d1)
+    # (xx0, xx1, d0, d1)
+    b0 = bar([coef(xx0)[2]],ylims = (0,1), title = "baseline",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx0)[2],digits = 6))")))
+    b1 = bar([coef(xx1)[2]],ylims = (0,1), title = "d1 = $d1_, d2 = $d2_",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx1)[2],digits = 6))")))
+
+    ts0 = ts_plots([C0[i].R[1] for i in 1:length(p.T)], p)
+    ts1 = ts_plots([C1[i].R[1] for i in 1:length(p.T)], p)
+
+    ts20 = ts_plots([C0[i].R[2] for i in 1:length(p.T)], p)
+    ts21 = ts_plots([C1[i].R[2] for i in 1:length(p.T)], p)
+
+    avg0 = select(d0, :year, :region, :citydensity, :cityarea, :d0)
+    avg1 = select(d1, :year, :region, :citydensity, :cityarea, :d0)
+
+    a0 = @df avg0 plot(:year, :citydensity, group = :region, title = "baseline av density" ,ylims = (0,maximum(avg0.citydensity)))
+    a1 = @df avg1 plot(:year, :citydensity, group = :region, title = "d1 = $d1_, d2 = $d2_ av dens",ylims = (0,maximum(avg0.citydensity)))
+
+    phi0 = @df avg0 plot(:year, :cityarea, group = :region, title = "baseline cityarea", leg = :left, ylims = (0,maximum(avg1.cityarea)))
+    phi1 = @df avg1 plot(:year, :cityarea, group = :region, title = "city area d1 = $d1_, d2 = $d2_", leg = :left, ylims = (0,maximum(avg1.cityarea)))
+
+    pout = plot(b0,b1, plot(ts0[:n_densities],title = "baseline, k=1"), 
+         plot(ts1[:n_densities], title = "d1 = $d1_, d2 = $d2_, k=1"),
+         plot(ts20[:n_densities],title = "baseline, k=2"),
+         plot(ts21[:n_densities],title = "d1 = $d1_, d2 = $d2_, k=2"),
+         a0,a1,
+         phi0,
+         phi1, layout = (5,2), size = (800,1100))
+    (d0,d1,pout)
+end
+
+
+
+
 """
 run model with flat epsilon
 
@@ -206,7 +259,7 @@ function issue67()
     # =======
 
     # cross section: bigger cities are denser, in all periods
-    pl[:cross] = @df dd plot(:year, :citydensity, group = :region, yaxis = :log, ylab = "log density", title = "Bigger cities are always denser.")
+    pl[:cross] = @df dd plot(:year, :citydensity, group = :region, yaxis = :log10, ylab = "log density", title = "Bigger cities are always denser.")
     savefig(pl[:cross], joinpath(dbplots,"five-city-cross.pdf"))
     
     # over time, the fall in density is more pronounced in large cities than in smaller ones
@@ -328,8 +381,8 @@ function issue10()
                       legend = :bottomright,
                       l = (:black,2),
                       m = (:circle, 5, :red),
-                      yaxis = (L"\log \phi", :log, (0.0001, 0.06)),
-                      xaxis = (L"\log L_u", :log, (0.001, 0.6)))
+                      yaxis = (L"\log \phi", :log10, (0.0001, 0.06)),
+                      xaxis = (L"\log L_u", :log10, (0.001, 0.6)))
                       # yaxis = (L"\phi", (-1.,6)),
                       # xaxis = (L"L_u", (1.01,7)))
             plot!(pl,Lus2, ϕs2,

@@ -39,7 +39,9 @@ function popdata(; maxrank = 20)
     pl2 = @df subset(d20, :group => x -> x .> 1) plot(:year, :relpop_data, group = :LIBGEO, marker = :circle, title = "Population Data relative to Paris")
 
     CSV.write(joinpath(LandUse.dboutdata, "relpop-means.csv"), dm)
+    CSV.write(joinpath(intables, "relpop-means.csv"), dm)
     CSV.write(joinpath(LandUse.dboutdata, "relpop-full.csv"), d20)
+    CSV.write(joinpath(intables, "relpop-full.csv"), d20)
 
     return (pl, pl2, d20, dm)
 end
@@ -48,7 +50,7 @@ end
 find closest year in population data to model years
 """
 function popdata_mapyears(p::Param)
-    d = CSV.read(joinpath(LandUse.dboutdata, "relpop-full.csv"), DataFrame)
+    d = CSV.read(joinpath(intables, "relpop-full.csv"), DataFrame)
     # find closest year in data
     datayears = unique(d.year)
     modelyears = p.T
@@ -63,5 +65,5 @@ end
 load population and area data
 """
 function poparea_data()
-    CSV.read(joinpath(LandUse.dboutdata, "france_final.csv"), DataFrame)
+    CSV.read(joinpath(intables, "france_final.csv"), DataFrame)
 end

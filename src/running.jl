@@ -41,7 +41,7 @@ function run(p::Param; estimateθ = false)
 		push!(M,m)
 		if it == 1
 			# adjust relative price in data to first period solution
-			px = x.pr / p.moments[1,:P_rural]
+			# px = x.pr / p.moments[1,:P_rural]
 			# transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
 		end
 
@@ -101,20 +101,34 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :
 	x0 = jm(p,m,x0, estimateθ = false)
 	update!(m,p,[x0...])
 
+	x = Float64[]
+	push!(x, m.Lr / m.Sr)
+	push!(x, m.r)
+	push!(x, m.pr)
+	for ik in 1:p.K
+		push!(x,m.Sr)
+	end
+	for ik in 1:p.K
+		push!(x,m.Lu)
+	end
+	for ik in 1:p.K
+		push!(x,m.ϕ)
+	end
+	for ik in 1:p.K
+		push!(x,p.θu)
+	end
+	runk_impl(x,p, estimateθ = estimateθ)
+end
 
-	# # starting value for country solution
-	# θu
 
-	# names = [:LS,:r,:pr, 
-	# 	[Symbol("Sr_$ik") for ik in 1:K]..., 
-	# 	[Symbol("Lu_$ik") for ik in 1:K]...,
-	# 	[Symbol("θu_$ik") for ik in 1:K]...]
-	# values = [m.Lr / m.Sr,m.r, m.pr,
-	# 		[m.Sr  for ik in 1:K]..., 
-	# 		[m.Lu  for ik in 1:K]...,
-	# 		[m.θu for ik in 1:K]...]
+function feas_check(it; d1 = 0.04, d2= 1.0)
+	par = Dict(:d1 => d1, :d2 => d2,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
 
-	# x = (; zip(names, values)...)  # named tuple
+	x0,M,p = run(Param(par = par))
+	m = M[it]  # period 
+	setperiod!(p,it)
+	sols =Vector{Float64}[]
+	C = Country[]  # an emtpy array of countries
 
 	x = Float64[]
 	push!(x, m.Lr / m.Sr)
@@ -127,14 +141,234 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :
 		push!(x,m.Lu)
 	end
 	for ik in 1:p.K
+		push!(x,m.ϕ)
+	end
+	for ik in 1:p.K
 		push!(x,p.θu)
 	end
-	runk_impl(x,p, estimateθ = estimateθ)
+	push!(sols, x)
+	c = Country(p)  # performs scaling of productivity upon creation
+	mo,i = jc(c,sols[1],estimateθ = false,solve = false) # returns a JuMP model as last element
+	xmod = jc(c,sols[1],estimateθ = false,solve = true) #
+
+
+	# ct = JuMP.list_of_constraint_types(mo)
+	# ct = JuMP.list_of_constraint_types(mo)
+	# JuMP.all_constraints(m, ct[1]...)
+	# JuMP.all_constraints(m, ct[2]...)
+
+	# n = JuMP.all_variables(mo)
+	
+
+	# https://jump.dev/JuMP.jl/stable/manual/nlp/#Querying-derivatives-from-a-JuMP-model
+	# raw_index(v::MOI.VariableIndex) = v.value
+	# model = Model()
+	# @variable(model, x)
+	# @variable(model, y)
+	# @NLobjective(model, Min, sin(x) + sin(y))
+	values = zeros(length(i))
+	values[i["LS"]] = x[1]
+	values[i["r"]] = x[2]
+	values[i["pr"]] = x[3]
+	values[i["Sr[1]"]] = x[4]
+	values[i["Sr[2]"]] = x[5]
+	values[i["Lu[1]"]] = x[6]
+	values[i["Lu[2]"]] = x[7]
+	values[i["ϕ[1]"]] = m.ϕ
+	values[i["ϕ[2]"]] = m.ϕ
+
+	g0 = zeros(JuMP.num_nl_constraints(mo))
+
+	d = NLPEvaluator(mo)
+	MOI.initialize(d, [:Grad])
+	MOI.eval_constraint(d, g0, values) 
+
+	# now the solved model
+	values[i["LS"]]    = xmod[1][1]
+	values[i["r"]]     = xmod[1][2]
+	values[i["pr"]]    = xmod[1][3]
+	values[i["Sr[1]"]] = xmod[1][4]
+	values[i["Sr[2]"]] = xmod[1][5]
+	values[i["Lu[1]"]] = xmod[1][6]
+	values[i["Lu[2]"]] = xmod[1][7]
+	values[i["ϕ[1]"]]  = xmod[2][1]
+	values[i["ϕ[2]"]]  = xmod[2][2]
+
+	g1 = zeros(JuMP.num_nl_constraints(mo))
+
+	MOI.eval_constraint(d, g1, values) 
+
+
+	return g0,g1
+		
+end
+
+function check(it; d1 = 0.0, d2= 0.0)
+	par = Dict(:d1 => d1, :d2 => d2,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
+
+	x0,M,p = run(Param(par = par))
+	m = M[it]  # period 
+	setperiod!(p,it)
+	sols =Vector{Float64}[]
+	C = Country[]  # an emtpy array of countries
+	
+	x = Float64[]
+	push!(x, m.Lr / m.Sr)
+	push!(x, m.r)
+	push!(x, m.pr)
+	for ik in 1:p.K
+		push!(x,m.Sr)
+	end
+	for ik in 1:p.K
+		push!(x,m.Lu)
+	end
+	for ik in 1:p.K
+		push!(x,m.ϕ)
+	end
+	for ik in 1:p.K
+		push!(x,p.θu)
+	end
+	push!(sols, x)
+	# for it in 1:length(p.T)
+		# println(it)
+		# setperiod!(p,it)
+		c = Country(p)  # performs scaling of productivity upon creation
+		xmod = jc(c,sols[1],estimateθ = false) # returns a JuMP model as last element
+		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
+			# clean up results and save
+			x,ϕs = xmod[1], xmod[2]
+		else		
+			println("period = $it")
+			println(termination_status(xmod[end]))  # error
+			println(JuMP.all_variables(xmod[end]))
+			return JuMP.primal_feasibility_report(xmod[end])
+		end
+		update!(c,x,estimateθ = false)
+
+		push!(C,c)
+		# push!(ϕvs,ϕs)
+		# push!(dϕvs,dϕs)
+	
+	# (sols,C,p) # solutions, models, and parameter
+
+	println("percent difference in radius: $(round(100 * (m.ϕ - c.R[1].ϕ) / m.ϕ,digits = 6)) ")
+	println("radius single:    $(m.ϕ)")
+	println("radius multi (1): $(c.R[1].ϕ) ")
+	println("radius multi (2): $(c.R[2].ϕ) ")
+	println()
+	println("Lr single:    $(m.Lr)")
+	println("Lr multi (1): $(c.R[1].Lr) ")
+	println("Lr multi (2): $(c.R[2].Lr) ")
+	println()
+	println("Lu single:    $(m.Lu)")
+	println("Lu multi (1): $(c.R[1].Lu) ")
+	println("Lu multi (2): $(c.R[2].Lu) ")
+
+	println()
+	println("pr single:    $(m.pr)")
+	println("pr multi (1): $(c.R[1].pr) ")
+	println("pr multi (2): $(c.R[2].pr) ")
+
+	println()
+	println("Sr single:    $(m.Sr)")
+	println("Sr multi (1): $(c.R[1].Sr) ")
+	println("Sr multi (2): $(c.R[2].Sr) ")
+
+	println()
+	println("Srh single:    $(m.Srh)")
+	println("Srh multi (1): $(c.R[1].Srh) ")
+	println("Srh multi (2): $(c.R[2].Srh) ")
+
+	println()
+	println("Srh - cityarea single:    $(m.Srh      - π* (m.ϕ)^2)")
+	println("Srh - cityarea multi (1): $(c.R[1].Srh - π* (c.R[1].ϕ)^2) ")
+	println("Srh - cityarea multi (2): $(c.R[2].Srh - π* (c.R[2].ϕ)^2) ")
+
+	println()
+	println("Sr + cityarea + Srh single:    $(m.Srh      + m.Sr      + π* (m.ϕ)^2)")
+	println("Sr + cityarea + Srh multi (1): $(c.R[1].Srh + c.R[1].Sr + π* (c.R[1].ϕ)^2) ")
+	println("Sr + cityarea + Srh multi (2): $(c.R[2].Srh + c.R[2].Sr + π* (c.R[2].ϕ)^2) ")
+
+end
+
+
+function check2(;d1 = 0.0, d2= 0.0)
+	par = Dict(:d1 => d2, :d2 => d2,:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2))
+
+	x0,M,p = run(Param(par = par))
+	m = M[1]  # period 2
+	setperiod!(p,1)
+	sols =Vector{Float64}[]
+	C = Country[]  # an emtpy array of countries
+
+
+	x = Float64[]
+	push!(x, m.Lr / m.Sr)
+	push!(x, m.r)
+	push!(x, m.pr)
+	for ik in 1:p.K
+		push!(x,m.Sr)
+	end
+	for ik in 1:p.K
+		push!(x,m.Lu)
+	end
+	for ik in 1:p.K
+		push!(x,m.ϕ)
+	end
+	for ik in 1:p.K
+		push!(x,p.θu)
+	end
+	push!(sols, x)
+	for it in 1:length(p.T)
+		# println(it)
+		setperiod!(p,it)
+		c = Country(p)  # performs scaling of productivity upon creation
+		xmod = jc(c,sols[it],estimateθ = false) # returns a JuMP model as last element
+		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
+			# clean up results and save
+			x,ϕs = xmod[1], xmod[2]
+		else		
+			println("period = $it")
+			println(termination_status(xmod[end]))  # error
+			println(JuMP.all_variables(xmod[end]))
+			return JuMP.primal_feasibility_report(xmod[end])
+		end
+
+		# x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
+		# x,ϕs,dϕs = jc(c,sols[it],estimateθ = estimateθ)
+		push!(sols,x)
+		# println(sols)
+		if it == 1
+			for ik in 1:p.K
+				c.pp[ik].ϕ1 = ϕs[ik] * c.pp[ik].ϕ1x
+			end
+		else
+			for ik in 1:p.K
+				c.pp[ik].ϕ1 = C[1].R[ik].ϕ * c.pp[ik].ϕ1x
+			end
+		end
+		# overwrite θu if estimated
+		# if estimateθ
+		# 	for ik in 1:p.K
+		# 		c.pp[ik].θu = x[3 + 2p.K + ik]
+		# 	end
+		# end
+
+		update!(c,x,estimateθ = false)
+
+		push!(C,c)
+		# push!(ϕvs,ϕs)
+		# push!(dϕvs,dϕs)
+	end
+	
+	(sols,C,p) # solutions, models, and parameter
 end
 
 
 function runk_impl(x0::Vector,p::Param; estimateθ = false)
 	sols =Vector{Float64}[]
+	# ϕvs =Vector{Float64}[]
+	# dϕvs =Vector{Float64}[]
 	push!(sols,x0)
 
 	C = Country[]  # an emtpy array of countries
@@ -143,7 +377,19 @@ function runk_impl(x0::Vector,p::Param; estimateθ = false)
 		# println(it)
 		setperiod!(p,it)
 		c = Country(p)  # performs scaling of productivity upon creation
-		x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
+		xmod = jc(c,sols[it],estimateθ = estimateθ) # returns a JuMP model as last element
+		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
+			# clean up results and save
+			x,ϕs = xmod[1], xmod[2]
+		else		
+			println("period = $it")
+			println(termination_status(xmod[end]))  # error
+			println(JuMP.all_variables(xmod[end]))
+			return JuMP.primal_feasibility_report(xmod[end])
+		end
+
+		# x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
+		# x,ϕs,dϕs = jc(c,sols[it],estimateθ = estimateθ)
 		push!(sols,x)
 		if it == 1
 			for ik in 1:p.K
@@ -157,14 +403,17 @@ function runk_impl(x0::Vector,p::Param; estimateθ = false)
 		# overwrite θu if estimated
 		if estimateθ
 			for ik in 1:p.K
-				c.pp[ik].θu = x[3 + 2p.K + ik]
+				c.pp[ik].θu = x[3 + 3p.K + ik]
 			end
 		end
 
 		update!(c,x,estimateθ = estimateθ)
 
 		push!(C,c)
+		# push!(ϕvs,ϕs)
+		# push!(dϕvs,dϕs)
 	end
+	# (sols,C,p, ϕvs, dϕvs) # solutions, models, and parameter
 	(sols,C,p) # solutions, models, and parameter
 end
 
@@ -266,16 +515,20 @@ function relpop(C::Vector{Country})
 	combine(groupby(g2, [:grouplabel, :year]),  :rel_Lu => mean, :region) # mean amongst groups
 end
 
+function k(K;pars = Dict(),estimateθ = true)
+	LandUse.runk(par = merge(Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K)), pars),estimateθ = estimateθ)
+end
+
 function k20(;overwrite = false)
 	if overwrite
 		x,C,p = LandUse.runk(par = Dict(:K => 20,:kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20)),estimateθ = true)
 		d = dataframe(C)
 
-		FileIO.save(joinpath(LandUse.dboutdata, "k20.jld2"), Dict("df" => d))
+		FileIO.save(joinpath(intables, "k20.jld2"), Dict("df" => d))
 		
 		x,C,p,d
 	else
-		df = FileIO.load(joinpath(LandUse.dboutdata, "k20.jld2"))
+		df = FileIO.load(joinpath(intables, "k20.jld2"))
 		df["df"]
 	end
 
@@ -317,7 +570,9 @@ function export_params()
 	latex_param()
 	d = DataFrame(year = collect(p.T), thetau = p.θut, thetar = p.θrt, pr = [M[it].pr for it in 1:length(M)], Lt = p.Lt)
 	CSV.write(joinpath(dbtables,"export_theta_pr.csv"),d)
+	CSV.write(joinpath(intables,"export_theta_pr.csv"),d)
 
 	x0 = LandUse.nearstart(Param())
 	CSV.write(joinpath(dbtables,"export_x0.csv"),DataFrame([x0]))
+	CSV.write(joinpath(intables,"export_x0.csv"),DataFrame([x0]))
 end

@@ -18,13 +18,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	@variable(m, 0.1 * x0.Lr <= Lr <= p.L   , start = x0.Lr)
 	@variable(m, pr >=        0.05 * x0.pr  , start = x0.pr)
 	@variable(m, 0.05 * x0.Sr <= Sr <= p.S   , start = x0.Sr)
-	#
-	# @variable(m, ρr       , start = x0.ρr)
-	# @variable(m,  ϕ   , start = x0.ϕ )
-	# @variable(m, r       , start = x0.r )
-	# @variable(m, Lr  , start = x0.Lr)
-	# @variable(m, pr          , start = x0.pr)
-	# @variable(m,  Sr   , start = x0.Sr)
+	
 	if estimateθ
 		@variable(m, θu , start = x0.θu)
 		@variable(m, θr , start = x0.θr)
@@ -37,7 +31,7 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 
 	@NLexpression(m, Lu, p.L - Lr)
 	@NLexpression(m, wu0, θu * (p.L - Lr)^p.η)
-	@NLexpression(m, wr , p.Ψ * (wu0 - (p.a * Lu^p.ηa) * (wu0^(p.ξw)) * (ϕ^(p.ξl))) )
+	@NLexpression(m, wr , p.Ψ * (wu0 - (p.a * Lu^p.ηa) * (wu0^(p.ξw)) * ( (p.d1 * ϕ + ϕ / ( 1 + p.d2 * ϕ ) )^(p.ξl))) )
 	@NLexpression(m, qr , ((1+p.ϵr) * ρr)^(1.0/(1+p.ϵr)) )
 	@NLexpression(m, r_pr_csbar, r - pr * p.cbar + p.sbar )
 	@NLexpression(m, xsr, wr + r_pr_csbar )
@@ -55,7 +49,8 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	else
 		@NLexpression(m, ϵ[i = 1:p.int_nodes], p.ϵr * nodes[i] / ϕ + p.ϵs * (ϕ - nodes[i])/ϕ)
 	end
-	@NLexpression(m, τ[i = 1:p.int_nodes], (p.a * Lu^p.ηa) * wu0^(p.ξw) * nodes[i]^(p.ξl) )
+	@NLexpression(m, dnodes[i = 1:p.int_nodes], p.d1 * ϕ + nodes[i] / ( 1 + p.d2 * ϕ ) )
+	@NLexpression(m, τ[i = 1:p.int_nodes], (p.a * Lu^p.ηa) * wu0^(p.ξw) * dnodes[i]^(p.ξl) )
 	@NLexpression(m, w[i = 1:p.int_nodes], wu0 - τ[i] )
 	# @warn "hard coding abs() for q function" maxlog=1
 	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
@@ -68,23 +63,16 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	@NLexpression(m, cu_input[i = 1:p.int_nodes], q[i] * H[i] * ϵ[i] / (1.0+ϵ[i]) )
 
 
-
 	# integrals
 	@NLexpression(m, iDensity,  (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * D[i] for i in 1:p.int_nodes))
 	@NLexpression(m, iρ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * ρ[i] for i in 1:p.int_nodes))
 	@NLexpression(m, icu,       (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * cu[i] * D[i] for i in 1:p.int_nodes))
 	@NLexpression(m, icu_input, (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * cu_input[i] for i in 1:p.int_nodes))
-	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * (wu0 - w[i]) * D[i] for i in 1:p.int_nodes))
+	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * τ[i] * D[i] for i in 1:p.int_nodes))
 
-	# objective
-	# if estimateθ
-		# if p.it == 1
-			# @objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2)
-		# else
-			@objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
-			# @objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
-		# end
-	# end
+
+	@objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
+	# @objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
 
 	# nonlinear constraints (they are actually linear but contain nonlinear expressions - which means we need the nonlinear setup)
 	# F[1] = m.wr - foc_Lr(m.Lr / m.Sr , m.pr, p)
@@ -109,57 +97,16 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	# @NLconstraint(m, cui[i = 1:p.int_nodes], cu[i] >= 0)
 	# @NLconstraint(m, xsr >= 0)
 
-
 	if p.it == 1 && estimateθ
 		@constraint(m, θu == θr)
 	end
 
 	JuMP.optimize!(m)
-		# println("qr = $(value(qr))")
-		# println("q = $(value(q[1]))")
-		# println("wr         = $(value(wr        ))")
-		# println("qr         = $(value(qr        ))")
-		# println("r_pr_csbar = $(value(r_pr_csbar))")
-		# println("xsr        = $(value(xsr       ))")
-		# println("hr         = $(value(hr        ))")
-
-	# println("rhor = $(value(ρr))")
-	# println("ϕ    = $(value(ϕ ))")
-	# println("r    = $(value(r ))")
-	# println("Lr   = $(value(Lr))")
-	# println("pr   = $(value(pr))")
-	# println("Sr   = $(value(Sr))")
-	# println("θr   = $(value(θr))")
-	# println("θu   = $(value(θu))")
 
 	# check termination status
 	if termination_status(m) != MOI.LOCALLY_SOLVED
-		# println("error in period $(p.it)")
-		# println("Termination status: $(termination_status(m))")
-		# println("rhor = $(value(ρr))")
-		# println("ϕ    = $(value(ϕ ))")
-		# println("r    = $(value(r ))")
-		# println("Lr   = $(value(Lr))")
-		# println("pr   = $(value(pr))")
-		# println("Sr   = $(value(Sr))")
-		# println("θr   = $(value(θr))")
-		# println("θu   = $(value(θu))")
 		error("model not locally solved")
 	else
-		# if p.it == 1
-			# println("period $(p.it) solution")
-			#
-			# println("rhor = $(value(ρr))")
-			# println("ϕ    = $(value(ϕ ))")
-			# println("r    = $(value(r ))")
-			# println("Lr   = $(value(Lr))")
-			# println("pr   = $(value(pr))")
-			# println("Sr   = $(value(Sr))")
-			# println("θr   = $(value(θr))")
-			# println("θu   = $(value(θu))")
-		# end
-
-
 		(ρr = value(ρr), ϕ = value(ϕ), r = value(r), Lr = value(Lr), pr = value(pr), Sr = value(Sr), θu = estimateθ ? value(θu) : θu, θr = estimateθ ? value(θr) : θr)
 	end
 end
@@ -168,7 +115,7 @@ end
 """
 solve a `Country` at point x0
 """
-function jc(C::Country,x0::Vector; estimateθ = false)
+function jc(C::Country,x0::Vector; estimateθ = false, solve = true)
 
 	pp = C.pp   # vector of params
 	p  = pp[1]   # param of region 1
@@ -193,14 +140,18 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
 	set_optimizer_attribute(m, MOI.Silent(), true)
+	set_optimizer_attribute(m, "constr_viol_tol", 1e-9)
 	# lbs = [x0...] .* 0.3
 
 	# variables
 	@variable(m, LS >=  0.1 * x0[1]  , start = x0[1])
 	@variable(m, r  >=   0.1 * x0[2]  , start = x0[2])
 	@variable(m, pr >=  0.05 * x0[3]  , start = x0[3])
-	@variable(m, 0.1 * x0[3 + ik]   <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
+
+	@variable(m, 0.1 * x0[3 + ik]    <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
 	@variable(m, 0.05 * x0[3+K + ik] <= Lu[ik = 1:K] <= C.L     , start = x0[3+K + ik])
+	@variable(m,  ϕ[ik = 1:K] , start = x0[3+2K + ik])
+
 	# @variable(m, minimum([pp[ik].θu for ik in 1:K]) >= wr >= 0.0)
 
 	if estimateθ
@@ -219,6 +170,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 
 	# rural pop
 
+	# @variable(m, wr >= 0, start = p.α * x0[3] * p.θr * (p.α + (1-p.α)*( 1.0 / x0[1] )^(σ1))^(σ2) )
 
 	# constant expressions in each country's rural part
 	@NLexpression(m, ρr , (1-p.α)* pr * p.θr * (p.α * (LS)^(σ1) + (1-p.α))^σ2)
@@ -234,16 +186,26 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	# indexed by only k
 	@NLexpression(m, Lr[ik = 1:K], LS * Sr[ik])  # rural pop from labor to land share LS
 	@NLexpression(m, Srh[ik = 1:K], Lr[ik] * hr / Hr )   # housing space for rural pop
-	@NLexpression(m, wu0[ik = 1:K], θu[ik] * Lu[ik]^p.η)  # urban wage in each city
+	@NLexpression(m, wu0[ik = 1:K], θu[ik] * Lu[ik]^p.η)  # urban wage in each city center
 
 	# fringe for each region from inverse moving cost function
-	@NLexpression(m, ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
+	# if (p.d1 > 0.0) || (p.d2 < 1.0)
+		# @variable(m, dϕ[ik = 1:K] >= 0)
 
+		# @NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
+		# add constraint that pins down ϕ via the transformation from residence location to commuting distance
+		# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) ,  )  
+		@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
+
+		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
+		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
+		@NLexpression(m, dϕ[ik = 1:K], p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik]) )
+
+		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dϕ[ik]^(p.ξl) ) )
 
 	# expressions indexed at location l in each k
-	@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] )
+
 	@NLexpression(m, ϵ[i = 1:p.int_nodes, ik = 1:K], p.ϵr * nodes[i,ik] / ϕ[ik] + p.ϵs * (ϕ[ik] - nodes[i,ik])/ϕ[ik])
-	@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * nodes[i,ik]^(p.ξl) )
 	@NLexpression(m, w[i = 1:p.int_nodes,ik = 1:K], wu0[ik] - τ[i,ik] )
 	# @warn "hard coding abs() for q function" maxlog=1
 	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
@@ -260,7 +222,7 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	@NLexpression(m, iρ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * ρ[i,ik] for i in 1:p.int_nodes))
 	@NLexpression(m, icu[ik = 1:K],       (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * cu[i,ik] * D[i,ik] for i in 1:p.int_nodes))
 	@NLexpression(m, icu_input[ik = 1:K], (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * cu_input[i,ik] for i in 1:p.int_nodes))
-	@NLexpression(m, iτ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * (wu0[ik] - w[i,ik]) * D[i,ik] for i in 1:p.int_nodes))
+	@NLexpression(m, iτ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * τ[i,ik] * D[i,ik] for i in 1:p.int_nodes))
 
 	# constraints
 	# @NLconstraint(m, aux_con_wr, wr == p.α * pr * θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
@@ -272,65 +234,50 @@ function jc(C::Country,x0::Vector; estimateθ = false)
 	@NLconstraint(m, sum(Lr[ik] * cur + icu[ik] + Srh[ik] * cu_inputr + icu_input[ik] + iτ[ik] for ik in 1:K) == sum(wu0[ik] * Lu[ik] for ik in 1:K))
 	@NLconstraint(m, city_size[ik = 1:K], Lu[ik] == iDensity[ik])
 
+
 	# choose urban productivities so that their population-weighted sum reproduces the data series for average θu
 	if estimateθ
 		# @NLconstraint(m, 0.6 * θu[1] + 0.4 * θu[2] == p.θu)
-		@NLconstraint(m, uwage[ik = 1:K], θu[ik] >= wr)
+		@NLconstraint(m, uwage[ik = 1:K], wu0[ik] >= wr)
+
 		@NLconstraint(m, sum( popwgt[ik] * θu[ik] for ik in 1:K ) == p.θu)   # weighted average productivity is equal to aggregate
 		@NLobjective(m, Min, sum( ((Lu[ik] / Lu[1]) - relpop[ik])^2 for ik in 2:K))
 	else
 		@objective(m, Min, 1.0)  # constant function
 	end
 
-	# urban population shares relative to largest city ( number 1 )
-	# @NLobjective(m, Min, sum( ((Lu[1] / Lu[ik]) - 2.0)^2 for ik in 2:K))
-
-	# objective function
-	# @objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
-
-	# @NLobjective(m, Min, ((sum(Lr[ik] for ik in 1:K) / C.L)  - p.moments[1,:Employment_rural])^2)
-
-
-
-	JuMP.optimize!(m)
-
-	if termination_status(m) == MOI.LOCALLY_SOLVED
-		out = zeros(3 + 3K)
+	if solve 
+		JuMP.optimize!(m) 
+		out = zeros(3 + 4K)
 		out[1] = value(LS)
 		out[2] = value(r)
 		out[3] = value(pr)
 		for ik in 1:K
 			out[3 + ik] = value(Sr[ik])
 			out[3 + K + ik] = value(Lu[ik])
+			out[3 + 2K + ik] = value(ϕ[ik])
 			if estimateθ
-				out[3 + 2K + ik] = value(θu[ik])
+				out[3 + 3K + ik] = value(θu[ik])
 			end
 		end
-		return (out,value.(ϕ))
-
-		# 		names = [:LS,:r,:pr, 
-		# 		[Symbol("Sr_$ik") for ik in 1:K]..., 
-		# 		[Symbol("Lu_$ik") for ik in 1:K]...,
-		# 		[Symbol("ϕ_$ik") for ik in 1:K]...]
-		# values = [value(LS),value(r), value(pr),
-		# 		 [value(Sr[ik])  for ik in 1:K]..., 
-		# 		 [value(Lu[ik])  for ik in 1:K]...,
-		# 		 [value(ϕ[ik]) for ik in 1:K]...]
-
-		# (; zip(names, values)...)  # return as named tuple
+		if (p.d1 > 0.0) || (p.d2 > 0.0)
+			return (out,value.(ϕ),m)
+		else 
+			return (out,value.(ϕ),m)
+		end
 	else
-		println(termination_status(m))
-		for ik in 1:K
-			println("k = $ik")
-			if estimateθ
-				println("θu[ik]=$(value(θu[ik])),xx=$(value(θu[ik]) - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
-			else
-				println("θu[ik]=$(θu[ik]),xx=$(θu[ik] - value(wr)),wr=$(value(wr)),  ϕ = $(value(ϕ[ik])),iρ = $(value(iρ[ik])),ρr=$(value(ρr)),Sr=$(value(Sr[ik])),Srh = $(value(Srh[ik]))")
-			end
-		end
-	    error("The model was not solved correctly.")
+		# return model, no solving done
+		# prepare variable index
+		raw_index(v::MOI.VariableIndex) = v.value
+		allvars = JuMP.all_variables(m)
+		i = Dict(zip(JuMP.name.(allvars),raw_index.(JuMP.index.(allvars))))
+		m,i
 	end
 end
+
+
+
+# archive
 
 function jjc()
 	m = runm()
