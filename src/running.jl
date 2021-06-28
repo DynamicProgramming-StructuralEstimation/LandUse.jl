@@ -570,7 +570,9 @@ function export_params()
 	latex_param()
 	d = DataFrame(year = collect(p.T), thetau = p.θut, thetar = p.θrt, pr = [M[it].pr for it in 1:length(M)], Lt = p.Lt)
 	CSV.write(joinpath(dbtables,"export_theta_pr.csv"),d)
+	CSV.write(joinpath(intables,"export_theta_pr.csv"),d)
 
 	x0 = LandUse.nearstart(Param())
 	CSV.write(joinpath(dbtables,"export_x0.csv"),DataFrame([x0]))
+	CSV.write(joinpath(intables,"export_x0.csv"),DataFrame([x0]))
 end

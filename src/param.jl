@@ -116,16 +116,16 @@ mutable struct Param
 
 		# read data from disk
 		# this.thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
-		moments = CSV.read(joinpath(LandUse.dbtables,"data-moments.csv"), DataFrame)
+		moments = CSV.read(joinpath(intables,"data-moments.csv"), DataFrame)
 		this.thetas = select(moments, :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
 
 		if use_estimatedθ
-			this.thetas = CSV.read(joinpath(dbtables,"export_theta_pr.csv"), DataFrame)
+			this.thetas = CSV.read(joinpath(intables,"export_theta_pr.csv"), DataFrame)
 		end
 
 		this.moments = moments[ moments.year .∈ Ref(this.T), : ]
 
-		Lt = CSV.read(joinpath(LandUse.dbtables,"population.csv"), DataFrame)
+		Lt = CSV.read(joinpath(intables,"population.csv"), DataFrame)
 		Lt = Lt[ Lt.year .∈ Ref(this.T), : ]
 		this.Lt = Lt.population ./ Lt.population[1]
 		# this.Lt = exp.(collect(range(log(1.0),log(2.42),length = T)))
@@ -204,9 +204,9 @@ mutable struct Param
 		this.Chain = BSON.load(joinpath(@__DIR__,"..","out","mymodel.bson"))[:model]
 
 		# data size classifications
-		this.citylist = CSV.read(joinpath(dboutdata, "relpop-full.csv"), DataFrame, types = Dict(:CODGEO => String))
+		this.citylist = CSV.read(joinpath(intables, "relpop-full.csv"), DataFrame, types = Dict(:CODGEO => String))
 		sort!(this.citylist, [:year, :rank])
-		this.citygroups = CSV.read(joinpath(dboutdata, "relpop-means.csv"), DataFrame, types = Dict(:CODGEO => String))
+		this.citygroups = CSV.read(joinpath(intables, "relpop-means.csv"), DataFrame, types = Dict(:CODGEO => String))
 
 
     	return this
@@ -265,6 +265,11 @@ function latex_param()
 
 end
 
+"copy dropbox data to in/ folder"
+function copydb()
+	cp(LandUse.dbpath)
+end
+
 
 function show(io::IO, ::MIME"text/plain", p::Param)
     print(io,"LandUse Param:\n")
@@ -312,6 +317,7 @@ function prepare_data(p::Param; digits = 9)
 	itp = interpolate((pop.year,), pop.population, Gridded(Linear()))
 	popd = DataFrame(year = 1815:2050, population = itp(1815:2050))
 	CSV.write(joinpath(dbtables,"population.csv"),popd)
+	CSV.write(joinpath(intables,"population.csv"),popd)
 
 
 	# productivity and employment moments
@@ -385,7 +391,7 @@ function prepare_data(p::Param; digits = 9)
 	p6 = plot(p4,p5,layout = (2,1),size = (800,500))
 	savefig(p6, joinpath(dbplots,"smooth-thetas-data-model.pdf"))
 
-	CSV.write(joinpath(dbtables,"data-moments.csv"),x)
+	CSV.write(joinpath(intables,"data-moments.csv"),x)
 	#
 	#
 	# (ret, pl)
