@@ -2,7 +2,7 @@ module LandUse
 
 	# dependendencies
 	using Base: root_module
-using JSON
+	using JSON
 	using NLsolve
 	using FastGaussQuadrature
 	using Plots
@@ -46,9 +46,9 @@ using JSON
 
 	# set up file paths
 	isCI = if haskey(ENV,"CI")
-			false 
+			true 
 		else
-			true
+			false
 		end
 
 	# root dir
