@@ -524,11 +524,11 @@ function k20(;overwrite = false)
 		x,C,p = LandUse.runk(par = Dict(:K => 20,:kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20)),estimateθ = true)
 		d = dataframe(C)
 
-		FileIO.save(joinpath(LandUse.dboutdata, "k20.jld2"), Dict("df" => d))
+		FileIO.save(joinpath(intables, "k20.jld2"), Dict("df" => d))
 		
 		x,C,p,d
 	else
-		df = FileIO.load(joinpath(LandUse.dboutdata, "k20.jld2"))
+		df = FileIO.load(joinpath(intables, "k20.jld2"))
 		df["df"]
 	end
 

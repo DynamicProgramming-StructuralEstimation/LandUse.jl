@@ -65,5 +65,5 @@ end
 load population and area data
 """
 function poparea_data()
-    CSV.read(joinpath(LandUse.dboutdata, "france_final.csv"), DataFrame)
+    CSV.read(joinpath(intables, "france_final.csv"), DataFrame)
 end
