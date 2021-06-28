@@ -79,7 +79,8 @@ mutable struct Param
 
 	function Param(;par=Dict(),use_estimatedθ = false)
         f = open(joinpath(dirname(@__FILE__),"params.json"))
-        j = JSON.parse(f)
+        # j = JSON.parse(f,inttype = Sys.ARCH == :x86_64 ? Int64 : Int32)
+        j = JSON.parse(f,inttype = Int)
         close(f)
         this = new()
 

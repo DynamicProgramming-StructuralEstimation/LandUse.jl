@@ -2,9 +2,9 @@
 
 function k20output(k;d1_ = 0.0,d2_ = 0.0, a = nothing, estimateθ = false)
 
-     K = k
-    x,C0,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => [1.0,1.0], :gs => [0.00, 0.0]),estimateθ = estimateθ)
-    x,C1,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => [1.0,1.0], :gs => [0.00, 0.0], :d1 => d1_, :d2 => d2_, :a => 2.4),estimateθ = estimateθ)
+    K = k
+    x,C0,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k)),estimateθ = estimateθ)
+    x,C1,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k), :d1 => d1_, :d2 => d2_, :a => a),estimateθ = estimateθ)
     d0 = dataframe(C0)
     d1 = dataframe(C1)
     p0x = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) 
@@ -259,7 +259,7 @@ function issue67()
     # =======
 
     # cross section: bigger cities are denser, in all periods
-    pl[:cross] = @df dd plot(:year, :citydensity, group = :region, yaxis = :log, ylab = "log density", title = "Bigger cities are always denser.")
+    pl[:cross] = @df dd plot(:year, :citydensity, group = :region, yaxis = :log10, ylab = "log density", title = "Bigger cities are always denser.")
     savefig(pl[:cross], joinpath(dbplots,"five-city-cross.pdf"))
     
     # over time, the fall in density is more pronounced in large cities than in smaller ones
@@ -381,8 +381,8 @@ function issue10()
                       legend = :bottomright,
                       l = (:black,2),
                       m = (:circle, 5, :red),
-                      yaxis = (L"\log \phi", :log, (0.0001, 0.06)),
-                      xaxis = (L"\log L_u", :log, (0.001, 0.6)))
+                      yaxis = (L"\log \phi", :log10, (0.0001, 0.06)),
+                      xaxis = (L"\log L_u", :log10, (0.001, 0.6)))
                       # yaxis = (L"\phi", (-1.,6)),
                       # xaxis = (L"L_u", (1.01,7)))
             plot!(pl,Lus2, ϕs2,
