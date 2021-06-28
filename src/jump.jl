@@ -115,7 +115,7 @@ end
 """
 solve a `Country` at point x0
 """
-function jc(C::Country,x0::Vector; estimateθ = false, solve = true)
+function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyears = false)
 
 	pp = C.pp   # vector of params
 	p  = pp[1]   # param of region 1
@@ -128,7 +128,9 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true)
 		# find closest year in data
 		datayears = unique(data.year)
 		modelyears = p.T
-		iyear = argmin( abs.(datayears .- modelyears[p.it]) )
+		i1920 = argmin( abs.(modelyears .- 1920) )
+		itx = fit_allyears ? p.it : i1920
+		iyear = argmin( abs.(datayears .- modelyears[itx]) )
 		yyear = datayears[iyear]
 		ydata = subset(data, :year => x -> x .== yyear)
 		sort!(ydata, :rank)
@@ -136,6 +138,7 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true)
 		popwgt = ydata[!,:pop_data]  ./ sum(ydata[!,:pop_data])
 		relpop = ydata[!,:pop_data]  ./  ydata[1,:pop_data]
 	end
+
 
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)

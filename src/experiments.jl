@@ -1,10 +1,11 @@
 
 
-function k20output(k;d1_ = 0.0,d2_ = 0.0, a = nothing, estimateθ = false)
+function k20output(k;d1_ = 0.0,d2_ = 0.0, a = 2.14, estimateθ = false, fit_allyears = true)
 
     K = k
-    x,C0,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k)),estimateθ = estimateθ)
-    x,C1,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k), :d1 => d1_, :d2 => d2_, :a => a),estimateθ = estimateθ)
+    x,C0,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k)),estimateθ = estimateθ,fit_allyears = fit_allyears)
+    println("baseline done")
+    x,C1,p1 = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k), :d1 => d1_, :d2 => d2_, :a => a),estimateθ = estimateθ,fit_allyears = fit_allyears)
     d0 = dataframe(C0)
     d1 = dataframe(C1)
     p0x = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) 

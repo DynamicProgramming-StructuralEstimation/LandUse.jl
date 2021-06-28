@@ -89,7 +89,7 @@ end
 run Multi-region model for all time periods starting from 
 the single city starting value. Works only for not too different θu values.
 """
-function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2)), estimateθ = false)
+function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2)), estimateθ = false,fit_allyears = true)
 
 	# get single city solution in first period
 	p = LandUse.Param(par = par, use_estimatedθ = false)
@@ -117,7 +117,7 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :
 	for ik in 1:p.K
 		push!(x,p.θu)
 	end
-	runk_impl(x,p, estimateθ = estimateθ)
+	runk_impl(x,p, estimateθ = estimateθ,fit_allyears = fit_allyears)
 end
 
 
@@ -365,7 +365,7 @@ function check2(;d1 = 0.0, d2= 0.0)
 end
 
 
-function runk_impl(x0::Vector,p::Param; estimateθ = false)
+function runk_impl(x0::Vector,p::Param; estimateθ = false,fit_allyears = true)
 	sols =Vector{Float64}[]
 	# ϕvs =Vector{Float64}[]
 	# dϕvs =Vector{Float64}[]
@@ -377,7 +377,7 @@ function runk_impl(x0::Vector,p::Param; estimateθ = false)
 		# println(it)
 		setperiod!(p,it)
 		c = Country(p)  # performs scaling of productivity upon creation
-		xmod = jc(c,sols[it],estimateθ = estimateθ) # returns a JuMP model as last element
+		xmod = jc(c,sols[it],estimateθ = estimateθ,fit_allyears = fit_allyears) # returns a JuMP model as last element
 		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
 			# clean up results and save
 			x,ϕs = xmod[1], xmod[2]
