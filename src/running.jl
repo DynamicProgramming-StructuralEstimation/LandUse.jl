@@ -41,7 +41,7 @@ function run(p::Param; estimateθ = false)
 		push!(M,m)
 		if it == 1
 			# adjust relative price in data to first period solution
-			px = x.pr / p.moments[1,:P_rural]
+			# px = x.pr / p.moments[1,:P_rural]
 			# transform!(p.moments,:P_rural => (x -> x .* px) => :P_rural)
 		end
 

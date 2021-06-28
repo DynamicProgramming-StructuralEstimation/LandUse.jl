@@ -1,13 +1,13 @@
 # LandUse documentation
 
-This is the documentation for [LandUse](https://floswald.gitlab.io/LandUse.jl).
+This is the documentation for [LandUse](https://floswald.github.io/LandUse.jl).
 
-The package repository is <https://gitlab.com/floswald/LandUse.jl>.
+The package repository is <https://github.com/floswald/LandUse.jl>.
 
 This placeholder page demonstrates generated documentation.
 
-```@docs
-LandUse.Region
+```@autodocs
+Modules = [LandUse]
 ```
 
 ## Version and timestamp

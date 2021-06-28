@@ -1,9 +1,6 @@
+
 using Documenter, LandUse
 
-makedocs(
-    modules = [LandUse],
-    checkdocs = :exports,
-    sitename = "LandUse.jl",
-    pages = Any["index.md"],
-    repo = "https://gitlab.com/floswald/LandUse.jl/blob/{commit}{path}#{line}"
-)
+makedocs(modules = [LandUse], sitename = "LandUse.jl")
+
+deploydocs(repo = "github.com/floswald/LandUse.jl.git")

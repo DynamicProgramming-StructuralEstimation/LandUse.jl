@@ -1,11 +1,12 @@
-@testset "Single Region" begin
+@testset "Single Baseline Region" begin
+	x,M,p = LandUse.runm()  # run baseline model
+
 	@testset "components in general model checks" begin
 		
-		x,M,p = LandUse.runm()  # run baseline model
-	
-		# for m in M[1]
-			m = M[1]
-			LandUse.setperiod!(p,1)
+		for it in 1:length(p.T)
+
+			LandUse.setperiod!(p,it)
+			m = M[it]
 			# commuting cost
 			@test LandUse.τ(0.4,m.ϕ,p,m.Lu) > 0
 			@test LandUse.τ(0.5,m.ϕ,p,m.Lu) > 0
@@ -23,23 +24,23 @@
 		
 			# test optimal consumption rules
 			@test LandUse.cu(0.0,p,m) == (1.0 - p.γ)*(1.0 - p.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
-			@test LandUse.cu(0.9,p,m) == (1.0 - p.γ)*(1.0 - p.ν)*(LandUse.w(m.Lu,0.9,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
+			@test LandUse.cu(m.ϕ,p,m) == (1.0 - p.γ)*(1.0 - p.ν)*(LandUse.w(m.Lu,m.ϕ,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) - p.sbar
 			@test LandUse.cr(0.0,p,m) ≈ p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
-			@test LandUse.cr(0.9,p,m) == p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,0.9,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
+			@test LandUse.cr(m.ϕ,p,m) ≈ p.cbar + (1.0 - p.γ)*(p.ν)*(LandUse.w(m.Lu,m.ϕ,m.ϕ,p) .+ (m.r + p.sbar - m.pr * p.cbar)) ./ m.pr
 		
 		
 			# test excess consumption
 			@test LandUse.xsr(p,m) ≈ m.wr + m.r + p.sbar - m.pr * p.cbar
-			@test LandUse.xsu(0.0,p,m) == LandUse.w(m.Lu,0.0,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar
+			@test LandUse.xsu(0.0,p,m) ≈ LandUse.w(m.Lu,0.0,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar
 			@test LandUse.xsu(0.0,p,m) > LandUse.xsr(p,m)
-			@test LandUse.xsu(m.ϕ,p,m) == LandUse.xsr(p,m)
-			@test LandUse.xsu(1.0,p,m) == LandUse.xsr(p,m)
+			@test LandUse.xsu(m.ϕ,p,m) ≈ LandUse.xsr(p,m)
+			@test LandUse.xsu(1.0,p,m) ≈ LandUse.xsr(p,m)
 		
 			# test house price function
 			@test LandUse.q(0.0,p,m) >   LandUse.q(1.0,p,m)
 			@test LandUse.q(0.0,p,m) >   m.qr
 			@test LandUse.q(m.ϕ,p,m) ==  m.qr
-			@test LandUse.q(1.0,p,m) ==  m.qr
+			@test LandUse.q(p.S,p,m) ==  m.qr
 		
 			# test housing consumption
 			@test LandUse.h(0.0,p,m) <   LandUse.h(m.ϕ,p,m)
@@ -50,72 +51,182 @@
 		
 			# equation (17)
 			l = 0.05
-			@test LandUse.D(l,p,m) ≈ (LandUse.χ(l,m.ϕ,p) * LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar))
+			@test LandUse.D(l,p,m) ≈ (LandUse.q(l,p,m)^(1+LandUse.ϵ(l,m.ϕ,p))) / (p.γ * (LandUse.w(m.Lu,l,m.ϕ,p) + m.r + p.sbar - m.pr * p.cbar))
 		
 			@test LandUse.Yu(m,p) == p.θu * m.Lu
-		# end
+		end
 	end
 
-	# @testset "test full solution" begin
-	# 	p = LandUse.Param(par = Dict( :ηm => 1.1 ))
+	@testset "full baseline solution" begin	
+		tol =  p.S == 1 ? 0.02 : 0.02
+		# rutol = 1.0e-2
+		# @warn("utility at precision $tol, rural cons $rutol")
+		# for it in 1:length(p.T)
+		# it = 1
+		for it in 1:length(p.T)
+			# if it > 8
+			# 	tol = 1e-1
+			# 	@warn "period $it on requires low tol=$tol" maxlog=1
+			# end
+			@testset "period $it" begin
+				LandUse.setperiod!(p,it)
 	
-	# 	x,M,p = LandUse.run(LandUse.Region,p)
+				@test M[it].Sr ≈ p.S - M[it].ϕ^2 * π - M[it].Srh
+				@test M[it].Lu ≈ M[it].iDensity
+				@test p.ϵr ≈ LandUse.ϵ(M[it].ϕ,M[it].ϕ,p)
+				@test M[it].ρr ≈ (1.0/(1+LandUse.ϵ(M[it].ϕ,M[it].ϕ,p))) * M[it].qr^(1+LandUse.ϵ(M[it].ϕ,M[it].ϕ,p))
+				# @test M[it].ρr ≈ (1-p.α) * M[it].pr * p.θr * (p.α * (M[it].Lr / M[it].Sr)^((p.σ-1)/p.σ) + (1-p.α))^(1/(p.σ-1))
+				@test p.L  ≈ M[it].Lu + M[it].Lr
 	
-	# 	tol =  p.S == 1 ? 0.02 : 0.02
-	# 	# rutol = 1.0e-2
-	# 	# @warn("utility at precision $tol, rural cons $rutol")
-	# 	# for it in 1:length(p.T)
-	# 	for it in 1:length(p.T)
-	# 		if it > 8
-	# 			tol = 1e-1
-	# 			@warn "period $it on requires low tol=$tol" maxlog=1
-	# 		end
-	# 		@testset "period $it" begin
-	# 			LandUse.setperiod!(p,it)
+				# equation (23)
+				@test M[it].r * p.L ≈ M[it].iq + M[it].ρr * (p.S - M[it].ϕ^2 * π)
+		
+				# test walras' law: also the rural goods market must clear at equilibrium:
+				# equation (25)
+				@testset "Walras' Law" begin
+					@test p.ν * (1 - p.γ) * (LandUse.pcy(M[it],p) + p.sbar) + M[it].pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) ≈  M[it].pr * LandUse.Yr(M[it],p) / p.L atol=tol
+					# @test isapprox( p.ν * (1 - p.γ) * (LandUse.pcy(M[it],p) - M[it].pr * p.cbar) + M[it].pr * p.cbar , M[it].pr * LandUse.Yr(M[it],p) /	 p.L, atol = rutol)
+					@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(M[it],p) + p.sbar) + M[it].pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) - M[it].pr * LandUse.Yr(M[it],p) / p.L  , 0.0, atol = tol)
+					@test isapprox(LandUse.Rmk(M[it],p), 0.0,  atol = tol)
 	
-	# 			@test M[it].Sr ≈ p.S - M[it].ϕ - M[it].Srh
-	# 			@test M[it].Lu ≈ M[it].iDensity
-	# 			@test p.ϵr == LandUse.ϵ(1.0,M[it].ϕ,p)
-	# 			@test M[it].ρr ≈ (LandUse.χ(1.0,M[it].ϕ,p)/(1+LandUse.ϵ(1.0,M[it].ϕ,p))) * M[it].qr^(1+LandUse.ϵ(1.0,M[it].ϕ,p))
-	# 			# @test M[it].ρr ≈ (1-p.α) * M[it].pr * p.θr * (p.α * (M[it].Lr / M[it].Sr)^((p.σ-1)/p.σ) + (1-p.α))^(1/(p.σ-1))
-	# 			@test p.L  ≈ M[it].Lu + M[it].Lr
+					# try with different formulation of total rural demand:
+					# rural cons in city + rural cons for each rural worker == total rural good production
+					@test isapprox(M[it].icr + M[it].Lr * LandUse.cr(M[it].ϕ,p,M[it]), LandUse.Yr(M[it],p), atol = tol)
+				end
+				# tight tol on utility
+				l = rand()
+				utol = 1e-9
+				@test LandUse.D(l,p,M[it]) ≈ (LandUse.q(l,p,M[it])^(1+LandUse.ϵ(l,M[it].ϕ,p))) / (p.γ * (LandUse.w(M[it].Lu,l,M[it].ϕ,p) + M[it].r + p.sbar - M[it].pr * p.cbar))
+				@test isapprox(LandUse.utility(1.0,p,M[it]), M[it].U, atol = utol)
+				@test isapprox(LandUse.utility(0.1,p,M[it]), M[it].U, atol = utol)
+				@test isapprox(LandUse.utility(M[it].ϕ,p,M[it]), M[it].U, atol = utol)
+			end
+		end
+	end
+
+	@testset "Single Region with d1d2" begin
+		p1 = LandUse.Param(par = Dict(:d1 => 0.04, :d2 => 1.0))
+		x1,M1,p1 = LandUse.run(p1)
 	
-	# 			# equation (23)
-	# 			@test M[it].r * p.L ≈ M[it].iq + M[it].ρr * (p.S - M[it].ϕ)
+		@testset "components" begin
+			
+			for it in 1:length(p1.T)
 	
-	# 			# test equation (24)
-	# 			# no longer true with nonlinear commcost
-	# 			# @test isapprox(M[it].r * p.L , M[it].ρr + M[it].wu0 * M[it].iτ, atol = tol)
+				LandUse.setperiod!(p1,it)
+				m = M1[it]
+				# commuting distance
+				@test LandUse.d(0.0,m.ϕ,p1) > 0
+				if it > 2
+					@test LandUse.d(m.ϕ,m.ϕ,p1) < m.ϕ
+				end
+				@test LandUse.d(m.ϕ,m.ϕ,p1) == p1.d1 * m.ϕ + m.ϕ / (1 + p1.d2 * m.ϕ)
+				@test LandUse.d(10 * eps(),m.ϕ,p1) == p1.d1 * m.ϕ + 10 * eps() / (1 + p1.d2 * m.ϕ)
+
+				# commuting cost
+				@test LandUse.τ(0.4,m.ϕ,p1,m.Lu) > 0
+				@test LandUse.τ(0.5,m.ϕ,p1,m.Lu) > 0
+				@test LandUse.τ(0.0,m.ϕ,p1,m.Lu) > 0
+			
+			
+				# test wage function
+				@test LandUse.w(m.Lu,0.0,m.ϕ,p1) > LandUse.w(m.Lu,m.ϕ,m.ϕ,p1)
+				@test LandUse.w(m.Lu,0.0,m.ϕ,p1) > LandUse.w(m.Lu,m.ϕ,m.ϕ,p1)
+				@test LandUse.w(m.Lu,m.ϕ-eps(),m.ϕ,p1) > LandUse.wu(m.Lu,m.ϕ,m.ϕ,p1)
+				@test LandUse.w(m.Lu,0.0,m.ϕ,p1) == LandUse.wu(m.Lu,m.ϕ,0.0,p1)
+				@test LandUse.w(m.Lu,1.0,m.ϕ,p1) < LandUse.wu0(m.Lu,p1)
+				@test m.wu0 > LandUse.w(m.Lu,0.0,m.ϕ,p1)
+				@test LandUse.wu0(m.Lu,p1) > LandUse.w(m.Lu,0.0,m.ϕ,p1)
+			
+				# test optimal consumption rules
+				@test LandUse.cu(0.0,p1,m) == (1.0 - p1.γ)*(1.0 - p1.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p1) .+ (m.r + p1.sbar - m.pr * p1.cbar)) - p1.sbar
+				@test LandUse.cu(m.ϕ,p1,m) == (1.0 - p1.γ)*(1.0 - p1.ν)*(LandUse.w(m.Lu,m.ϕ,m.ϕ,p1) .+ (m.r + p1.sbar - m.pr * p1.cbar)) - p1.sbar
+				@test LandUse.cr(0.0,p1,m) ≈ p1.cbar + (1.0 - p1.γ)*(p1.ν)*(LandUse.w(m.Lu,0.0,m.ϕ,p1) .+ (m.r + p1.sbar - m.pr * p1.cbar)) ./ m.pr
+				@test LandUse.cr(m.ϕ,p1,m) ≈ p1.cbar + (1.0 - p1.γ)*(p1.ν)*(LandUse.w(m.Lu,m.ϕ,m.ϕ,p1) .+ (m.r + p1.sbar - m.pr * p1.cbar)) ./ m.pr
+			
+			
+				# test excess consumption
+				@test LandUse.xsr(p1,m) ≈ m.wr + m.r + p1.sbar - m.pr * p1.cbar
+				@test LandUse.xsu(0.0,p1,m) ≈ LandUse.w(m.Lu,0.0,m.ϕ,p1) + m.r + p1.sbar - m.pr * p1.cbar
+				@test LandUse.xsu(0.0,p1,m) > LandUse.xsr(p1,m)
+				@test LandUse.xsu(m.ϕ,p1,m) ≈ LandUse.xsr(p1,m)
+				@test LandUse.xsu(1.0,p1,m) ≈ LandUse.xsr(p1,m)
+			
+				# test house price function
+				@test LandUse.q(0.0,p1,m) >   LandUse.q(1.0,p1,m)
+				@test LandUse.q(0.0,p1,m) >   m.qr
+				@test LandUse.q(m.ϕ,p1,m) ==  m.qr
+				@test LandUse.q(p1.S,p1,m) ==  m.qr
+			
+				# test housing consumption
+				@test LandUse.h(0.0,p1,m) <   LandUse.h(m.ϕ,p1,m)
+				@test LandUse.h(1.0,p1,m) ≈  p1.γ * (m.wr + m.r + p1.sbar - m.pr * p1.cbar) / m.qr
+				@test LandUse.h(0.0,p1,m) ≈  p1.γ * (LandUse.w(m.Lu,0.0,m.ϕ,p1) + m.r + p1.sbar - m.pr * p1.cbar) / LandUse.q(0.0,p1,m)
+				@test LandUse.Srh(p1,m) ≈ m.Lr * LandUse.γ(m.ϕ,m.ϕ,p1) * (m.wr + m.r + p1.sbar - m.pr * p1.cbar) / m.ρr
+			
+				# equation (17)
+				l = 0.05
+				@test LandUse.D(l,p1,m) ≈ (LandUse.q(l,p1,m)^(1+LandUse.ϵ(l,m.ϕ,p1))) / (p1.γ * (LandUse.w(m.Lu,l,m.ϕ,p1) + m.r + p1.sbar - m.pr * p1.cbar))
+			
+				@test LandUse.Yu(m,p1) == p1.θu * m.Lu
+			end
+		end
 	
-	# 			# test per capita income formulation - equivalent in both formulations
-	# 			# pcy(m,p) = M[it].r + wr(M[it].Lu,M[it].ϕ,p) * M[it].Lr / p.L + M[it].iy / p.L
-	# 			@testset "per capita aggregate income" begin
-	# 				@test LandUse.τ(M[it].ϕ,M[it].ϕ,p) > 0.0
-	# 				# @test isapprox( LandUse.pcy(M[it],p) , M[it].ρr / p.L + M[it].wu0 * (1.0 - LandUse.τ(M[it].ϕ,M[it].ϕ,p) * M[it].Lr / p.L), atol = tol)
-	# 			end
-	
-	# 			# test walras' law: also the rural goods market must clear at equilibrium:
-	# 			# equation (25)
-	# 			@testset "Walras' Law" begin
-	# 				@test p.ν * (1 - p.γ) * (LandUse.pcy(M[it],p) + p.sbar) + M[it].pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) ≈  M[it].pr * LandUse.Yr(M[it],p) / p.L atol=tol
-	# 				# @test isapprox( p.ν * (1 - p.γ) * (LandUse.pcy(M[it],p) - M[it].pr * p.cbar) + M[it].pr * p.cbar , M[it].pr * LandUse.Yr(M[it],p) /	 p.L, atol = rutol)
-	# 				@test isapprox(p.ν * (1 - p.γ) * (LandUse.pcy(M[it],p) + p.sbar) + M[it].pr * p.cbar * (1.0 - p.ν * (1 - p.γ)) - M[it].pr * LandUse.Yr(M[it],p) / p.L  , 0.0, atol = tol)
-	# 				@test isapprox(LandUse.Rmk(M[it],p), 0.0,  atol = tol)
-	
-	# 				# try with different formulation of total rural demand:
-	# 				# rural cons in city + rural cons for each rural worker == total rural good production
-	# 				@test isapprox(M[it].icr + M[it].Lr * LandUse.cr(M[it].ϕ,p,M[it]), LandUse.Yr(M[it],p), atol = tol)
-	
-	# 			end
-	
-	# 			# tight tol on utility
-	# 			l = rand()
-	# 			utol = 1e-9
-	# 			@test LandUse.D(l,p,M[it]) ≈ (LandUse.χ(l,M[it].ϕ,p) * LandUse.q(l,p,M[it])^(1+LandUse.ϵ(l,M[it].ϕ,p))) / (p.γ * (LandUse.w(M[it].Lu,l,M[it].ϕ,p) + M[it].r + p.sbar - M[it].pr * p.cbar))
-	# 			@test isapprox(LandUse.utility(1.0,p,M[it]), M[it].U, atol = utol)
-	# 			@test isapprox(LandUse.utility(0.1,p,M[it]), M[it].U, atol = utol)
-	# 			@test isapprox(LandUse.utility(M[it].ϕ,p,M[it]), M[it].U, atol = utol)
-	# 		end
-	# 	end
-	# end
+		@testset "full solution" begin	
+			tol =  p1.S == 1 ? 0.02 : 0.02
+			# rutol = 1.0e-2
+			# @warn("utility at precision $tol, rural cons $rutol")
+			# for it in 1:length(p.T)
+			# it = 1
+			for it in 1:length(p.T)
+				# if it > 8
+				# 	tol = 1e-1
+				# 	@warn "period $it on requires low tol=$tol" maxlog=1
+				# end
+				@testset "period $it" begin
+					LandUse.setperiod!(p1,it)
+		
+					@test M[it].Sr ≈ p1.S - M[it].ϕ^2 * π - M[it].Srh
+					@test M[it].Lu ≈ M[it].iDensity
+					@test p1.ϵr ≈ LandUse.ϵ(M[it].ϕ,M[it].ϕ,p1)
+					@test M[it].ρr ≈ (1.0/(1+LandUse.ϵ(M[it].ϕ,M[it].ϕ,p1))) * M[it].qr^(1+LandUse.ϵ(M[it].ϕ,M[it].ϕ,p1))
+					# @test M[it].ρr ≈ (1-p1.α) * M[it].pr * p1.θr * (p1.α * (M[it].Lr / M[it].Sr)^((p1.σ-1)/p1.σ) + (1-p1.α))^(1/(p1.σ-1))
+					@test p1.L  ≈ M[it].Lu + M[it].Lr
+		
+					# equation (23)
+					@test M[it].r * p1.L ≈ M[it].iq + M[it].ρr * (p1.S - M[it].ϕ^2 * π)
+			
+					# test walras' law: also the rural goods market must clear at equilibrium:
+					# equation (25)
+					@testset "Walras' Law" begin
+						@test p1.ν * (1 - p1.γ) * (LandUse.pcy(M[it],p1) + p1.sbar) + M[it].pr * p1.cbar * (1.0 - p1.ν * (1 - p1.γ)) ≈  M[it].pr * LandUse.Yr(M[it],p1) / p1.L atol=tol
+						# @test isapprox( p1.ν * (1 - p1.γ) * (LandUse.pcy(M[it],p1) - M[it].pr * p1.cbar) + M[it].pr * p1.cbar , M[it].pr * LandUse.Yr(M[it],p1) /	 p1.L, atol = rutol)
+						@test isapprox(p1.ν * (1 - p1.γ) * (LandUse.pcy(M[it],p1) + p1.sbar) + M[it].pr * p1.cbar * (1.0 - p1.ν * (1 - p1.γ)) - M[it].pr * LandUse.Yr(M[it],p1) / p1.L  , 0.0, atol = tol)
+						@test isapprox(LandUse.Rmk(M[it],p1), 0.0,  atol = tol)
+		
+						# try with different formulation of total rural demand:
+						# rural cons in city + rural cons for each rural worker == total rural good production
+						@test isapprox(M[it].icr + M[it].Lr * LandUse.cr(M[it].ϕ,p1,M[it]), LandUse.Yr(M[it],p1), atol = tol)
+					end
+					# tight tol on utility
+					l = rand()
+					utol = 1e-9
+					@test LandUse.D(l,p1,M[it]) ≈ (LandUse.q(l,p1,M[it])^(1+LandUse.ϵ(l,M[it].ϕ,p1))) / (p1.γ * (LandUse.w(M[it].Lu,l,M[it].ϕ,p1) + M[it].r + p1.sbar - M[it].pr * p1.cbar))
+					@test isapprox(LandUse.utility(1.0,p1,M[it]), M[it].U, atol = utol)
+					@test isapprox(LandUse.utility(0.1,p1,M[it]), M[it].U, atol = utol)
+					@test isapprox(LandUse.utility(M[it].ϕ,p1,M[it]), M[it].U, atol = utol)
+				end
+			end
+		end
+
+		@testset "compare to baseline" begin
+			
+			for it in 1:length(p1.T)
+				@test M[it].ϕ < M1[it].ϕ
+				@test LandUse.cityarea(M[it]) < LandUse.cityarea(M1[it])
+			end
+		end
+	end
+
+
 end
+
