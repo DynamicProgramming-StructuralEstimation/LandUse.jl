@@ -82,6 +82,7 @@ CLC_measure <- function(){
     names(colnames) <- df2[, as.character(legend)]
     gg = ggplot(df2[1:15], aes(x = reorder(legend,avg_prop) ,y = avg_prop)) + geom_bar(stat = "identity", aes(fill = legend)) + coord_flip() + ggtitle("Average Land Use Outside top 100 Cities")  + scale_fill_manual(values = colnames) + theme_bw()  + theme(legend.position = "none") + scale_x_discrete(name = "") + scale_y_continuous("Proportion")
 
+    fwrite(df2, file = file.path(outdatadir(),"CLC-landuse.csv"))
     ggsave(gg, file = file.path(dataplots(),"CLC-landuse-top100.pdf"), width = 8 , height = 4.5)
     gg
 }

@@ -9,3 +9,4 @@ images/*.pdf
 .Rproj.user
 /tex/slides/*.pdf
 *.Rd
+tex/slides/*.synctex.gz

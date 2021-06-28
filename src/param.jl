@@ -72,6 +72,7 @@ mutable struct Param
 
 	moments :: DataFrame
 	thetas :: DataFrame
+	poparea_data :: DataFrame
 
 	# neural network of starting values
 	Chain :: Flux.Chain
@@ -118,6 +119,18 @@ mutable struct Param
 		# this.thetas = select(CSV.read(joinpath(LandUse.dbtables,"thetas_data.csv"), DataFrame), :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
 		moments = CSV.read(joinpath(intables,"data-moments.csv"), DataFrame)
 		this.thetas = select(moments, :year , :stheta_rural => :thetar, :stheta_urban => :thetau)
+
+		poparea = poparea_data()
+		pda = dropmissing(select(poparea, :year, :pop, :area, :CODGEO))
+		pda1 = subset(pda, :year => c->c.==1876)
+		rename!(pda1, :pop => :pop1)
+		pda = leftjoin(pda, select(pda1, :CODGEO, :pop1), on = :CODGEO)
+		dropmissing!(pda)
+
+		this.poparea_data = combine(groupby(pda,:year), 
+		                            [:pop, :pop1] => ((a,b) -> mean(a, weights(b))) => :population, 
+									[:area, :pop1] => ((a,b) -> mean( a , weights(b))) => :area,
+									[:area, :pop, :pop1] => ((a,b,c) -> mean( b ./ a, weights(c))) => :density)
 
 		if use_estimatedθ
 			this.thetas = CSV.read(joinpath(intables,"export_theta_pr.csv"), DataFrame)

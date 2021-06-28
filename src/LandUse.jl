@@ -40,6 +40,7 @@ using JSON
 	using GLM
 	using FileIO
 	using StatsBase
+
 	# constants
 	const PEN = 100.0  # penalty for nl solver
 
