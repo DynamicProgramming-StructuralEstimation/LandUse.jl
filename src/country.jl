@@ -25,7 +25,7 @@ mutable struct Country
 	Sk :: Vector{Float64}  # total space for each region
 	L  :: Float64  # total population
 	S  :: Float64 # total space
-	T  :: StepRange{Int64,Int64}
+	T  :: StepRange{Int,Int}
 
 	"""
 		Country constructor

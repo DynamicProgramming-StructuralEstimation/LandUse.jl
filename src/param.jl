@@ -42,9 +42,9 @@ mutable struct Param
 
 	L     :: Float64 # total population
 	Lt     :: Vector{Float64} # total population by year
-	T     :: StepRange{Int64,Int64}
-	t     :: Int64
-	it     :: Int64
+	T     :: StepRange{Int,Int}
+	t     :: Int
+	it     :: Int
 	Ψ     :: Float64  # urban ammenities rel to rural
 	int_nodes :: Int  # number of integration nodes
 	int_bins :: Int  # number of bins into which to split distance
@@ -67,7 +67,7 @@ mutable struct Param
 
 	trace :: Bool  # whether to trace solver
 	iters :: Int  # max iterations
-	ma    :: Int64  # moving average window size
+	ma    :: Int  # moving average window size
 	mag    :: Float64  # assumed growth for extraploating producivities.
 
 	moments :: DataFrame
