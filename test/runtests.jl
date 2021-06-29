@@ -215,6 +215,6 @@ using LinearAlgebra
 # end
 
 @testset "LandUse.jl" begin
-	# include("model_test.jl")
+	include("model_test.jl")
 	include("country_test.jl")
 end

@@ -154,7 +154,10 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 
 	@variable(m, 0.1 * x0[3 + ik]    <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
 	@variable(m, 0.05 * x0[3+K + ik] <= Lu[ik = 1:K] <= C.L     , start = x0[3+K + ik])
-	@variable(m,  ϕ[ik = 1:K] , start = x0[3+2K + ik])
+	if (p.d1 > 0) || (p.d2 > 0)
+		@variable(m,  ϕ[ik = 1:K] , start = x0[3+2K + ik])
+	end
+	# @variable(m,  0.05 * x0[3+3K + ik] <= Lr[ik = 1:K] <= C.L    , start = x0[3+3K + ik])
 
 	# @variable(m, minimum([pp[ik].θu for ik in 1:K]) >= wr >= 0.0)
 
@@ -169,17 +172,11 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 	σ1 = (p.σ - 1) / p.σ
 	σ2 = 1 / (p.σ - 1)
 
-	# most rural sector expressions are identical in all regions
-	# rural land price
-
-	# rural pop
-
-	# @variable(m, wr >= 0, start = p.α * x0[3] * p.θr * (p.α + (1-p.α)*( 1.0 / x0[1] )^(σ1))^(σ2) )
-
 	# constant expressions in each country's rural part
+	@NLexpression(m, wr , p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
 	@NLexpression(m, ρr , (1-p.α)* pr * p.θr * (p.α * (LS)^(σ1) + (1-p.α))^σ2)
 	@NLexpression(m, qr , ((1+p.ϵr) * ρr)^(1.0/(1+p.ϵr)) )
-	@NLexpression(m, wr , p.α * pr * p.θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
+
 	@NLexpression(m, r_pr_csbar, r - pr * p.cbar + p.sbar )
 	@NLexpression(m, xsr, wr + r_pr_csbar )
 	@NLexpression(m, hr, p.γ * xsr / qr )
@@ -195,18 +192,31 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 	# getting the fringe of each city
 
 	# approach 1: using equation τ(d(ϕ)) = wu - wr => d(ϕ) = τ^-1(wu - wr)
-	# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) )  # add constraint that pins down ϕ via the transformation from residence location to commuting distance
+	# @variable(m, dϕ[ik=1:K] >= 0.0	)
+	if (p.d1 > 0) || (p.d2 > 0)
+		@NLexpression(m,        dϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl)) 
+		@NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) )  # add constraint that pins down ϕ via the transformation from residence location to commuting distance
+		@NLexpression(m,  nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
+		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
+		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
+	else
+		@NLexpression(m,             ϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl)) 
+		@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
+		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * nodes[i,ik]^(p.ξl) )
+	end
 
 	# @NLconstraint(m, dϕ_con[ik = 1:K], p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
 
 	# approach 2: using wage indifference condition in each city
-	@NLexpression(m, dϕ[ik = 1:K], p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik]) )
-	@NLconstraint(m, wr_con[ik = 1:K] , wr == wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dϕ[ik]^(p.ξl) )
+	# @NLexpression(m, dϕ[ik = 1:K], p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik]) )
+	# @NLconstraint(m, wr_con[ik = 1:K] , wr == wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dϕ[ik]^(p.ξl) )
+
+	# approach 3: like before - get d(phi) from inverse moving cost
 	
 	# defining nodes, dnodes and commuting cost(dnodes)
-	@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
-	@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
-	@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
+	# @NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
+	# @NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
+	# @NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
 
 
 	# expressions indexed at location l in each k
@@ -244,8 +254,8 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 	# choose urban productivities so that their population-weighted sum reproduces the data series for average θu
 	if estimateθ
 		# @NLconstraint(m, 0.6 * θu[1] + 0.4 * θu[2] == p.θu)
-		# @NLconstraint(m, uwage[ik = 1:K], wu0[ik] >= wr)
-		@NLconstraint(m, uwage[ik = 1:K], θu[ik] >= wr)
+		@NLconstraint(m, uwage[ik = 1:K], wu0[ik] >= wr)
+		# @NLconstraint(m, uwage[ik = 1:K], θu[ik] >= wr)
 
 		@NLconstraint(m, sum( popwgt[ik] * θu[ik] for ik in 1:K ) == p.θu)   # weighted average productivity is equal to aggregate
 		@NLobjective(m, Min, sum( ((Lu[ik] / Lu[1]) - relpop[ik])^2 for ik in 2:K))
@@ -265,6 +275,7 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 			out[3 + ik] = value(Sr[ik])
 			out[3 + K + ik] = value(Lu[ik])
 			out[3 + 2K + ik] = value(ϕ[ik])
+			# out[3 + 3K + ik] = value(Lr[ik])
 			if estimateθ
 				out[3 + 3K + ik] = value(θu[ik])
 			end
