@@ -120,6 +120,7 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 	pp = C.pp   # vector of params
 	p  = pp[1]   # param of region 1
 	K = C.K
+	# println("fit all years = $fit_allyears")
 	if K > 20 
 		error("city data only for top 20 prepared")
 	else
@@ -143,7 +144,7 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
 	set_optimizer_attribute(m, MOI.Silent(), true)
-	set_optimizer_attribute(m, "constr_viol_tol", 1e-9)
+	# set_optimizer_attribute(m, "constr_viol_tol", 1e-9)
 	# lbs = [x0...] .* 0.3
 
 	# variables
@@ -198,13 +199,19 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 		# @NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
 		# add constraint that pins down ϕ via the transformation from residence location to commuting distance
 		# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) ,  )  
-		@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
 
+	@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
+	if (p.d1 > 0.0) || (p.d2 > 0.0)
 		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
-		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
 		@NLexpression(m, dϕ[ik = 1:K], p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik]) )
-
+		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
 		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dϕ[ik]^(p.ξl) ) )
+	else		
+		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * nodes[i,ik]^(p.ξl) )
+		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * ϕ[ik]^(p.ξl) ) )
+	end
+
+
 
 	# expressions indexed at location l in each k
 
@@ -241,16 +248,19 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 	# choose urban productivities so that their population-weighted sum reproduces the data series for average θu
 	if estimateθ
 		# @NLconstraint(m, 0.6 * θu[1] + 0.4 * θu[2] == p.θu)
-		@NLconstraint(m, uwage[ik = 1:K], wu0[ik] >= wr)
+		# @NLconstraint(m, uwage[ik = 1:K], wu0[ik] >= wr)
+		@NLconstraint(m, uwage[ik = 1:K], θu[ik] >= wr)
 
 		@NLconstraint(m, sum( popwgt[ik] * θu[ik] for ik in 1:K ) == p.θu)   # weighted average productivity is equal to aggregate
 		@NLobjective(m, Min, sum( ((Lu[ik] / Lu[1]) - relpop[ik])^2 for ik in 2:K))
+
 	else
 		@objective(m, Min, 1.0)  # constant function
 	end
 
 	if solve 
 		JuMP.optimize!(m) 
+
 		out = zeros(3 + 4K)
 		out[1] = value(LS)
 		out[2] = value(r)
@@ -263,11 +273,21 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 				out[3 + 3K + ik] = value(θu[ik])
 			end
 		end
-		if (p.d1 > 0.0) || (p.d2 > 0.0)
-			return (out,value.(ϕ),m)
-		else 
-			return (out,value.(ϕ),m)
+
+		if termination_status(m) == MOI.LOCALLY_SOLVED
+
+			if (p.d1 > 0.0) || (p.d2 > 0.0)
+				return (out,value.(ϕ),m)
+			else 
+				return (out,value.(ϕ),m)
+			end
+		else		
+			println("period = $(p.it)")
+			println(termination_status(m))  # error
+			println(out)
+			error()
 		end
+		
 	else
 		# return model, no solving done
 		# prepare variable index

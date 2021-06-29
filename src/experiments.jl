@@ -25,6 +25,9 @@ function k20output(k;d1_ = 0.0,d2_ = 0.0, a = 2.14, estimateθ = false, fit_ally
     b0 = bar([coef(xx0)[2]],ylims = (0,1), title = "baseline",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx0)[2],digits = 6))")))
     b1 = bar([coef(xx1)[2]],ylims = (0,1), title = "d1 = $d1_, d2 = $d2_",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx1)[2],digits = 6))")))
 
+    s0 = @df dd0 scatter(:Lu, :cityarea, title = "baseline")
+    s1 = @df dd1 scatter(:Lu, :cityarea, title = "d1 = $d1_, d2 = $d2_, a=$a")
+
     ts0 = ts_plots([C0[i].R[1] for i in 1:length(p.T)], p)
     ts1 = ts_plots([C1[i].R[1] for i in 1:length(p.T)], p)
 
@@ -35,18 +38,20 @@ function k20output(k;d1_ = 0.0,d2_ = 0.0, a = 2.14, estimateθ = false, fit_ally
     avg1 = select(d1, :year, :region, :citydensity, :cityarea, :d0)
 
     a0 = @df avg0 plot(:year, :citydensity, group = :region, title = "baseline av density" ,ylims = (0,maximum(avg0.citydensity)))
-    a1 = @df avg1 plot(:year, :citydensity, group = :region, title = "d1 = $d1_, d2 = $d2_ av dens",ylims = (0,maximum(avg0.citydensity)))
+    a1 = @df avg1 plot(:year, :citydensity, group = :region, title = "d1 = $d1_, d2 = $d2_, a=$a",ylims = (0,maximum(avg0.citydensity)))
 
     phi0 = @df avg0 plot(:year, :cityarea, group = :region, title = "baseline cityarea", leg = :left, ylims = (0,maximum(avg1.cityarea)))
-    phi1 = @df avg1 plot(:year, :cityarea, group = :region, title = "city area d1 = $d1_, d2 = $d2_", leg = :left, ylims = (0,maximum(avg1.cityarea)))
+    phi1 = @df avg1 plot(:year, :cityarea, group = :region, title = "d1 = $d1_, d2 = $d2_, a=$a", leg = :left, ylims = (0,maximum(avg1.cityarea)))
 
-    pout = plot(b0,b1, plot(ts0[:n_densities],title = "baseline, k=1"), 
-         plot(ts1[:n_densities], title = "d1 = $d1_, d2 = $d2_, k=1"),
-         plot(ts20[:n_densities],title = "baseline, k=2"),
-         plot(ts21[:n_densities],title = "d1 = $d1_, d2 = $d2_, k=2"),
+    pout = plot(b0,b1, 
+        #  plot(ts0[:n_densities],title = "baseline, k=1"), 
+        #  plot(ts1[:n_densities], title = "d1 = $d1_, d2 = $d2_, k=1"),
+        #  plot(ts20[:n_densities],title = "baseline, k=2"),
+        #  plot(ts21[:n_densities],title = "d1 = $d1_, d2 = $d2_, k=2"),
          a0,a1,
-         phi0,
-         phi1, layout = (5,2), size = (800,1100))
+         phi0,phi1, 
+        #  layout = (5,2), size = (800,1100))
+         layout = (3,2), size = (800,800))
     (d0,d1,pout)
 end
 
