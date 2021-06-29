@@ -192,25 +192,21 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 	@NLexpression(m, Srh[ik = 1:K], Lr[ik] * hr / Hr )   # housing space for rural pop
 	@NLexpression(m, wu0[ik = 1:K], θu[ik] * Lu[ik]^p.η)  # urban wage in each city center
 
-	# fringe for each region from inverse moving cost function
-	# if (p.d1 > 0.0) || (p.d2 < 1.0)
-		# @variable(m, dϕ[ik = 1:K] >= 0)
+	# getting the fringe of each city
 
-		# @NLconstraint(m, dϕ_con[ik = 1:K], dϕ[ik] == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
-		# add constraint that pins down ϕ via the transformation from residence location to commuting distance
-		# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) ,  )  
+	# approach 1: using equation τ(d(ϕ)) = wu - wr => d(ϕ) = τ^-1(wu - wr)
+	# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) )  # add constraint that pins down ϕ via the transformation from residence location to commuting distance
 
+	# @NLconstraint(m, dϕ_con[ik = 1:K], p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) == ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl))  
+
+	# approach 2: using wage indifference condition in each city
+	@NLexpression(m, dϕ[ik = 1:K], p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik]) )
+	@NLconstraint(m, wr_con[ik = 1:K] , wr == wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dϕ[ik]^(p.ξl) )
+	
+	# defining nodes, dnodes and commuting cost(dnodes)
 	@NLexpression(m, nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
-	if (p.d1 > 0.0) || (p.d2 > 0.0)
-		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
-		@NLexpression(m, dϕ[ik = 1:K], p.d1 * ϕ[ik] + ϕ[ik] / (1 + p.d2 * ϕ[ik]) )
-		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
-		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dϕ[ik]^(p.ξl) ) )
-	else		
-		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * nodes[i,ik]^(p.ξl) )
-		@NLconstraint(m, wr_con[ik = 1:K] , wr == p.Ψ * (wu0[ik] - (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * ϕ[ik]^(p.ξl) ) )
-	end
-
+	@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
+	@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
 
 
 	# expressions indexed at location l in each k
