@@ -41,17 +41,55 @@ function dashboard(C::Vector{Country},it::Int)
 end
 
 "plots for 20 city cross section"
-function dashk20(d::DataFrame)
-	di = Dict()
-	K = maximum(d.region)
+function dashk20(;save = false)
 
 	# compare model to data
 	# =====================
 	# get a single city to compare
 	x,M,p = runm()
-	yearmap = popdata_mapyears(p)
-	d = leftjoin(d, yearmap, on = :year => :modelyears)
-	d = leftjoin(d, p.citylist, on = [:region => :rank, :datayears => :year])
+
+	di = Dict()
+
+	ddd = k20_dfexport()
+	K = maximum(ddd[1].region)
+
+	ddd[1][!,:scenario] .= "baseline"
+	ddd[2][!,:scenario] .= "d1-d2"
+	dd = vcat(ddd[1],ddd[2])
+	d = ddd[1]
+	d2 = ddd[2]
+
+	# baseline vs policy
+	# ==================
+
+	# exponential coefficient
+	for yr in p.T[[1,5,10,15,19]]
+		x = select(subset(dd, :year => x -> x.== yr), :exp_coef => (x -> abs.(x)) => :exp_coef, :region, :scenario)
+		di[Symbol("d1d2_coefs_$yr")] = @df x plot(:region, :exp_coef, group = :scenario, marker = (:auto, 3), leg = :bottomright,
+									ylab = "exponential exponent (abs)", xlab = "city rank", title = "Exponential coefs in $yr")
+
+		if save
+			savefig(di[Symbol("d1d2_coefs_$yr")], joinpath(LandUse.dbplots,"k20-exp-coefs-$yr.pdf"))
+		end
+	end
+
+	r0 = lm(@formula( log(density_data) ~ log(citydensity)), d)
+	r1 = lm(@formula( log(density_data) ~ log(citydensity)), d2)
+
+	di[:dens_mod_data_base] = @df d scatter(:citydensity, :density_data, xscale = :log10, yscale = :log10, group = :LIBGEO, leg = :outerright, xlab = "model", ylab = "data", title = "Urban Density X-section over time")
+	plot!(di[:dens_mod_data_base], x -> exp(coef(r0)[1] + coef(r0)[2] * log(x)), lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_base], [(10, 10^4.5, Plots.text("coef = $(round(coef(r0)[2],digits = 3))"))])
+	
+	di[:dens_mod_data_d1d2] = @df d2 scatter(:citydensity, :density_data, xscale = :log10, yscale = :log10, group = :LIBGEO, leg = :outerright, xlab = "model", ylab = "data", title = "Urban Density X-section over time")
+	plot!(di[:dens_mod_data_d1d2], x -> exp(coef(r1)[1] + coef(r1)[2] * log(x)), lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_d1d2], [(10, 10^4.5, Plots.text("coef = $(round(coef(r1)[2],digits = 3))"))])
+	
+	if save
+		savefig(di[:dens_mod_data_base], joinpath(LandUse.dbplots,"k20-xsect-time.pdf"))
+		savefig(di[:dens_mod_data_d1d2], joinpath(LandUse.dbplots,"k20-xsect-time-d1d2.pdf"))
+	end
+
+
 
 	# add rel pop and rel dens
 	d = transform(groupby(d,:year), [:Lu, :region]          => ((a,b) -> a ./ a[b .== 1]) => :rel_Lu,
@@ -72,11 +110,11 @@ function dashk20(d::DataFrame)
 	end
 	title!(pl, "Model (Lines) vs Data (Points)")
 
-	di[:relpop] = pl
-	savefig(pl, joinpath(LandUse.dbplots,"k20-relpop-model-data.pdf"))
+	di[:relpop_data] = pl
+	
 
-	di[:relpop] = @df nop plot(:year, :rel_Lu, group = :LIBGEO, leg = :outertopright, col = palette(:tab20))
-	@df nop scatter!(:datayears, :relpop_data, group = :LIBGEO, lab = false, col = palette(:tab20))
+	di[:relpop_nop] = @df nop plot(:year, :rel_Lu, group = :LIBGEO, leg = :outertopright, col = palette(:tab20))
+	@df nop scatter!(di[:relpop_nop],:datayears, :relpop_data, group = :LIBGEO, lab = false, col = palette(:tab20))
 
 	di[:rpop] = @df d plot(:year,:Lr, group = :region, ylab = "Share of Rural Population")
 	di[:pop] = @df d plot(:year,:Lu, group = :region, ylab = "Urban Population")
@@ -118,16 +156,20 @@ function dashk20(d::DataFrame)
 								title = "Density Cross Section over Time")
 
 
-	savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
 	
 
 	# within density in year 2020
 	de2020 = hcat( Matrix(select(subset(d , :year => x -> x .== 2020 ),  :iDensities))... )
-	dens_2020 = wireframe(1:K,1:p.int_bins,de2020, 
+	di[:dens_2020] = wireframe(1:K,1:p.int_bins,de2020, 
 	                          xlab = "city rank", ylab = "distance bin",
 							  zlab = "density",camera = (70,40),
 							  title = "year 2020 within city gradients")
-	savefig(dens_2020, joinpath(LandUse.dbplots,"k20-density3D-2020.pdf"))
+
+	if save
+		savefig(di[:dens_2020], joinpath(LandUse.dbplots,"k20-density3D-2020.pdf"))
+		savefig(di[:relpop_data], joinpath(LandUse.dbplots,"k20-relpop-model-data.pdf"))
+		savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
+	end
 
 
 	# compare model to data
