@@ -89,7 +89,7 @@ end
 run Multi-region model for all time periods starting from 
 the single city starting value. Works only for not too different θu values.
 """
-function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2)), estimateθ = true,fit_allyears = true)
+function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2)), estimateθ = true,fit_allyears = true, istest = false)
 
 	# get single city solution in first period
 	p = LandUse.Param(par = par, use_estimatedθ = false)
@@ -117,10 +117,10 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :
 	for ik in 1:p.K
 		push!(x,p.θu)
 	end
-	runk_impl(x,p, estimateθ = estimateθ,fit_allyears = fit_allyears)
+	runk_impl(x,p, estimateθ = estimateθ,fit_allyears = fit_allyears, istest = istest)
 end
 
-function runk_impl(x0::Vector,p::Param; estimateθ = false,fit_allyears = true)
+function runk_impl(x0::Vector,p::Param; estimateθ = false,fit_allyears = true, istest = false)
 	sols =Vector{Float64}[]
 	# ϕvs =Vector{Float64}[]
 	# dϕvs =Vector{Float64}[]
@@ -131,7 +131,7 @@ function runk_impl(x0::Vector,p::Param; estimateθ = false,fit_allyears = true)
 	for it in 1:length(p.T)
 		# println(it)
 		setperiod!(p,it)
-		c = Country(p)  # performs scaling of productivity upon creation
+		c = Country(p,istest = istest)  # performs scaling of productivity upon creation
 		xmod = jc(c,sols[it],estimateθ = estimateθ,fit_allyears = fit_allyears) # returns a JuMP model as last element
 		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
 			# clean up results and save

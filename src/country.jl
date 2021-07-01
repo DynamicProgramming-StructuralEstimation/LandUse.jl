@@ -33,7 +33,7 @@ mutable struct Country
 	want to give single p and get back
 	differnet theta series for each country
 	"""
-	function Country(p::Param)
+	function Country(p::Param;istest = false)
 		this = new()
 		@assert p.K == length(p.factors)
 		@assert p.K == length(p.gs)
@@ -44,9 +44,12 @@ mutable struct Country
 		this.pp = Param[deepcopy(p) for _ in 1:p.K]
 
 		# modify θus for each
-		# @warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
+		@warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
+
 		for ik in 1:p.K
-			# p.θu = max(p.θu, 1.0)
+			if !istest 
+				p.θu = max(p.θu, 1.0) 
+			end
 			this.pp[ik].θu =  p.θu * p.factors[ik] * exp(p.gs[ik] * (p.it-1))
 		end
 

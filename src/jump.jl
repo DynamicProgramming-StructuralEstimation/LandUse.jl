@@ -154,9 +154,9 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 
 	@variable(m, 0.1 * x0[3 + ik]    <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
 	@variable(m, 0.05 * x0[3+K + ik] <= Lu[ik = 1:K] <= C.L     , start = x0[3+K + ik])
-	if (p.d1 > 0) || (p.d2 > 0)
-		@variable(m,  ϕ[ik = 1:K] , start = x0[3+2K + ik])
-	end
+	# if (p.d1 > 0) || (p.d2 > 0)
+	# 	@variable(m,  ϕ[ik = 1:K] , start = x0[3+2K + ik])
+	# end
 	# @variable(m,  0.05 * x0[3+3K + ik] <= Lr[ik = 1:K] <= C.L    , start = x0[3+3K + ik])
 
 	# @variable(m, minimum([pp[ik].θu for ik in 1:K]) >= wr >= 0.0)
@@ -195,7 +195,8 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 	# @variable(m, dϕ[ik=1:K] >= 0.0	)
 	if (p.d1 > 0) || (p.d2 > 0)
 		@NLexpression(m,        dϕ[ik = 1:K], ( (wu0[ik] - wr) / ((p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw)) )^(1.0/p.ξl)) 
-		@NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) )  # add constraint that pins down ϕ via the transformation from residence location to commuting distance
+		# @NLconstraint(m,  constr_ϕ[ik = 1:K], dϕ[ik] == p.d1 * ϕ[ik] + (ϕ[ik] / (1 + p.d2 * ϕ[ik])) )  # add constraint that pins down ϕ via the transformation from residence location to commuting distance
+		@NLexpression(m,  ϕ[ik = 1:K], (-(1 + p.d1 - p.d2 * dϕ[ik]) + sqrt( (1 + p.d1 - p.d2 * dϕ[ik])^2 + 4 * p.d1 * p.d2 * dϕ[ik])) / (2 * p.d1 * p.d2) )  # closed form solution to 2nd order polynomial equation
 		@NLexpression(m,  nodes[i = 1:p.int_nodes, ik = 1:K], ϕ[ik] / 2 + ϕ[ik] / 2 * p.inodes[i] ) 
 		@NLexpression(m, dnodes[i = 1:p.int_nodes, ik = 1:K], p.d1 * ϕ[ik] + nodes[i,ik] / (1 + p.d2 * ϕ[ik]) )
 		@NLexpression(m, τ[i = 1:p.int_nodes,ik = 1:K], (p.a * Lu[ik]^p.ηa) * wu0[ik]^(p.ξw) * dnodes[i,ik]^(p.ξl) )
