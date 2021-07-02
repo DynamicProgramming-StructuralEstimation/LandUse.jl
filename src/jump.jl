@@ -9,14 +9,13 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	# setup Model object
 	m = JuMP.Model(Ipopt.Optimizer)
 	set_optimizer_attribute(m, MOI.Silent(), true)
-	# lbs = [x0...] .* 0.3
 
 	# variables
 	@variable(m, ρr >=         0.01 * x0.ρr  , start = x0.ρr)
 	@variable(m, 0.01 * x0.ϕ <= ϕ <= p.S     , start = x0.ϕ )
-	@variable(m, r >=      0.1 * x0.r       , start = x0.r )
-	@variable(m, 0.1 * x0.Lr <= Lr <= p.L   , start = x0.Lr)
-	@variable(m, pr >=        0.05 * x0.pr  , start = x0.pr)
+	@variable(m, r >=      0.1 * x0.r        , start = x0.r )
+	@variable(m, 0.1 * x0.Lr <= Lr <= p.L    , start = x0.Lr)
+	@variable(m, pr >=        0.05 * x0.pr   , start = x0.pr)
 	@variable(m, 0.05 * x0.Sr <= Sr <= p.S   , start = x0.Sr)
 	
 	if estimateθ
@@ -71,7 +70,8 @@ function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = fal
 	@NLexpression(m, iτ,        (ϕ/2) * sum(mo.iweights[i] * 2π * nodes[i] * τ[i] * D[i] for i in 1:p.int_nodes))
 
 
-	@objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
+	@objective(m, Min, 1.0)
+	# @objective(m, Min, (pr - p.moments[p.it,:P_rural])^2)
 	# @objective(m, Min, (Lr / p.Lt[p.it] - p.moments[p.it,:Employment_rural])^2 + (pr - p.moments[p.it,:P_rural])^2)
 
 	# nonlinear constraints (they are actually linear but contain nonlinear expressions - which means we need the nonlinear setup)

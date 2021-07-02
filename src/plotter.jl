@@ -59,6 +59,7 @@ function dashk20(;save = false)
 	d = ddd[1]
 	d2 = ddd[2]
 
+
 	# baseline vs policy
 	# ==================
 
@@ -73,14 +74,21 @@ function dashk20(;save = false)
 		end
 	end
 
-	r0 = lm(@formula( log(density_data) ~ log(citydensity)), d)
-	r1 = lm(@formula( log(density_data) ~ log(citydensity)), d2)
+	densyears = [1870, 1950,1970,1990,2015]
 
-	di[:dens_mod_data_base] = @df d scatter(:citydensity, :density_data, xscale = :log10, yscale = :log10, group = :LIBGEO, leg = :outerright, xlab = "model", ylab = "data", title = "Urban Density X-section over time")
+	dy = subset(d, :year => x -> x .∈ Ref(densyears))
+	d2y = subset(d2, :year => x -> x .∈ Ref(densyears))
+
+	r0 = lm(@formula( log(density_data) ~ log(citydensity)), dy)
+	r1 = lm(@formula( log(density_data) ~ log(citydensity)), d2y)
+
+	di[:dens_mod_data_base] = @df dy scatter(:citydensity, :density_data, xscale = :log10, yscale = :log10, group = :LIBGEO, leg = :outerright, 
+	                                          xlab = "model", ylab = "data", title = "Urban Density X-section over time",
+											  color = reshape(palette(:tab20)[1:20], 1,20))
 	plot!(di[:dens_mod_data_base], x -> exp(coef(r0)[1] + coef(r0)[2] * log(x)), lab = "", linewidth = 2, color = "black")
 	annotate!(di[:dens_mod_data_base], [(10, 10^4.5, Plots.text("coef = $(round(coef(r0)[2],digits = 3))"))])
 	
-	di[:dens_mod_data_d1d2] = @df d2 scatter(:citydensity, :density_data, xscale = :log10, yscale = :log10, group = :LIBGEO, leg = :outerright, xlab = "model", ylab = "data", title = "Urban Density X-section over time")
+	di[:dens_mod_data_d1d2] = @df d2y scatter(:citydensity, :density_data, xscale = :log10, yscale = :log10, group = :LIBGEO, leg = :outerright, xlab = "model", ylab = "data", title = "Urban Density X-section over time")
 	plot!(di[:dens_mod_data_d1d2], x -> exp(coef(r1)[1] + coef(r1)[2] * log(x)), lab = "", linewidth = 2, color = "black")
 	annotate!(di[:dens_mod_data_d1d2], [(10, 10^4.5, Plots.text("coef = $(round(coef(r1)[2],digits = 3))"))])
 	
