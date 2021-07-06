@@ -1,19 +1,86 @@
 
+function k20_dfexport(;overwrite = false)
+    if overwrite
+        df = FileIO.load(joinpath(intables, "d1d220.jld2"))
+        d0 = df["d0"]
+        d1 = df["d1"]
+        C0 = df["C0"]
+        C1 = df["C1"]
+        p1 = df["p1"]
+        p0 = df["p0"]
 
-function k20output(k;d1_ = 0.0,d2_ = 0.0, a = nothing, estimateθ = false)
+        # get exponential coefs for each city
+        coefs0 = [Array(hcat(expmodel(c)[1]...)')[:,2] for c in C0]
+        coefs1 = [Array(hcat(expmodel(c)[1]...)')[:,2] for c in C1]
+
+        dc0 = DataFrame(gridmake(1:20, p0.T) , [:region, :year])
+        dc0.exp_coef = vcat(coefs0...)
+        dc0[!,:d1] .= 0.0
+        dc0[!,:d2] .= 0.0
+        dc0[!,:a ] .= p0.a
+
+        dc1 = DataFrame(gridmake(1:20, p0.T) , [:region, :year])
+        dc1.exp_coef = vcat(coefs1...)
+        dc1[!,:d1] .= p1.d1
+        dc1[!,:d2] .= p1.d2
+        dc1[!,:a ] .= p1.a
+
+        d0 = leftjoin(d0,dc0,on = [:region, :year])
+        d1 = leftjoin(d1,dc1,on = [:region, :year])
+
+        # build data export
+        yearmap = popdata_mapyears(p0)
+        # popdata_mapyears(p0)
+        d0 = leftjoin(d0, yearmap, on = :year => :modelyears)
+        d1 = leftjoin(d1, yearmap, on = :year => :modelyears)
+        d0 = leftjoin(d0, p0.citylist, on = [:region => :rank, :datayears => :year])
+        d1 = leftjoin(d1, p0.citylist, on = [:region => :rank, :datayears => :year])
+
+        CSV.write(joinpath(dbtables, "k20-baseline.csv"), d0)
+        CSV.write(joinpath(dbtables, "k20-d1d2.csv"), d1)
+        FileIO.save(joinpath(intables, "k20-d1d2.jld2"), Dict("d0" => d0, "d1" => d1))
+
+    else
+		df = FileIO.load(joinpath(intables, "k20-d1d2.jld2"))
+		d0 = df["d0"]
+		d1 = df["d1"]
+    end
+    d0,d1
+end
+
+
+
+function k20output(k;d1_ = 0.05,d2_ = 2.0, a = 2.67, overwrite = false)
 
     K = k
-    x,C0,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k)),estimateθ = estimateθ)
-    x,C1,p = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k), :d1 => d1_, :d2 => d2_, :a => a),estimateθ = estimateθ)
-    d0 = dataframe(C0)
-    d1 = dataframe(C1)
+    if overwrite
+        x,C0,p0 = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k)))
+        println("baseline done")
+        x,C1,p1 = LandUse.runk(par = Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(k), :gs => zeros(k), :d1 => d1_, :d2 => d2_, :a => a))
+        d0 = dataframe(C0)
+        d1 = dataframe(C1)
+
+		FileIO.save(joinpath(intables, "d1d2$k.jld2"), Dict("d0" => d0, "d1" => d1, "p0" => p0, "p1" => p1, "C1" => C1, "C0" => C0))	
+
+       
+
+    else
+        df = FileIO.load(joinpath(intables, "d1d2$k.jld2"))
+		d0 = df["d0"]
+		d1 = df["d1"]
+        C0 = df["C0"]
+		C1 = df["C1"]
+		p1 = df["p1"]
+		p0 = df["p0"]
+    end
+
     p0x = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) 
-    p0 = @df p0x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "baseline")
-    annotate!(p0, [(2,0.5, Plots.text("$(round(p0x[2,:fn],digits = 6))"))])
+    pl0 = @df p0x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "baseline")
+    annotate!(pl0, [(2,0.5, Plots.text("$(round(p0x[2,:fn],digits = 6))"))])
 
     p1x = select(subset(d1, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region)
-    p1 = @df p1x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "d1 = $d1_, d2 = $d2_")
-    annotate!(p1, [(2,0.5, Plots.text("$(round(p1x[2,:fn],digits = 6))"))])
+    pl1 = @df p1x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "d1 = $d1_, d2 = $d2_")
+    annotate!(pl1, [(2,0.5, Plots.text("$(round(p1x[2,:fn],digits = 6))"))])
 
     dd0 = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :cityarea, :citydensity, :region)
     dd1 = select(subset(d1, :year => x->x.== 2020), :year, :Lu, :cityarea, :citydensity, :region)
@@ -24,29 +91,34 @@ function k20output(k;d1_ = 0.0,d2_ = 0.0, a = nothing, estimateθ = false)
     b0 = bar([coef(xx0)[2]],ylims = (0,1), title = "baseline",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx0)[2],digits = 6))")))
     b1 = bar([coef(xx1)[2]],ylims = (0,1), title = "d1 = $d1_, d2 = $d2_",annotations = (1.0, 0.8, Plots.text("coef = $(round(coef(xx1)[2],digits = 6))")))
 
-    ts0 = ts_plots([C0[i].R[1] for i in 1:length(p.T)], p)
-    ts1 = ts_plots([C1[i].R[1] for i in 1:length(p.T)], p)
+    s0 = @df dd0 scatter(:Lu, :cityarea, title = "baseline")
+    s1 = @df dd1 scatter(:Lu, :cityarea, title = "d1 = $d1_, d2 = $d2_, a=$a")
 
-    ts20 = ts_plots([C0[i].R[2] for i in 1:length(p.T)], p)
-    ts21 = ts_plots([C1[i].R[2] for i in 1:length(p.T)], p)
+    ts0 = ts_plots([C0[i].R[1] for i in 1:length(p0.T)], p0)
+    ts1 = ts_plots([C1[i].R[1] for i in 1:length(p0.T)], p0)
+
+    ts20 = ts_plots([C0[i].R[2] for i in 1:length(p0.T)], p0)
+    ts21 = ts_plots([C1[i].R[2] for i in 1:length(p0.T)], p0)
 
     avg0 = select(d0, :year, :region, :citydensity, :cityarea, :d0)
     avg1 = select(d1, :year, :region, :citydensity, :cityarea, :d0)
 
-    a0 = @df avg0 plot(:year, :citydensity, group = :region, title = "baseline av density" ,ylims = (0,maximum(avg0.citydensity)))
-    a1 = @df avg1 plot(:year, :citydensity, group = :region, title = "d1 = $d1_, d2 = $d2_ av dens",ylims = (0,maximum(avg0.citydensity)))
+    a0 = @df avg0 plot(:year, :citydensity, group = :region, title = "baseline av density" ,ylims = (0,maximum(avg0.citydensity)), leg = false)
+    a1 = @df avg1 plot(:year, :citydensity, group = :region, title = "d1 = $d1_, d2 = $d2_, a=$a",ylims = (0,maximum(avg0.citydensity)), leg = false)
 
-    phi0 = @df avg0 plot(:year, :cityarea, group = :region, title = "baseline cityarea", leg = :left, ylims = (0,maximum(avg1.cityarea)))
-    phi1 = @df avg1 plot(:year, :cityarea, group = :region, title = "city area d1 = $d1_, d2 = $d2_", leg = :left, ylims = (0,maximum(avg1.cityarea)))
+    phi0 = @df avg0 plot(:year, :cityarea, group = :region, title = "baseline cityarea", ylims = (0,maximum(avg1.cityarea)), leg = false)
+    phi1 = @df avg1 plot(:year, :cityarea, group = :region, title = "d1 = $d1_, d2 = $d2_, a=$a", ylims = (0,maximum(avg1.cityarea)), leg = false)
 
-    pout = plot(b0,b1, plot(ts0[:n_densities],title = "baseline, k=1"), 
-         plot(ts1[:n_densities], title = "d1 = $d1_, d2 = $d2_, k=1"),
-         plot(ts20[:n_densities],title = "baseline, k=2"),
-         plot(ts21[:n_densities],title = "d1 = $d1_, d2 = $d2_, k=2"),
+    pout = plot(b0,b1, 
+        #  plot(ts0[:n_densities],title = "baseline, k=1"), 
+        #  plot(ts1[:n_densities], title = "d1 = $d1_, d2 = $d2_, k=1"),
+        #  plot(ts20[:n_densities],title = "baseline, k=2"),
+        #  plot(ts21[:n_densities],title = "d1 = $d1_, d2 = $d2_, k=2"),
          a0,a1,
-         phi0,
-         phi1, layout = (5,2), size = (800,1100))
-    (d0,d1,pout)
+         phi0,phi1, 
+        #  layout = (5,2), size = (800,1100))
+         layout = (3,2), size = (800,800))
+    Dict(:C0 => C0,:p0=>p0, :C1 => C1, :p1=>p1, :d0=>d0 , :d1=>d1 ,:plot=>pout)
 end
 
 

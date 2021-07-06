@@ -36,7 +36,8 @@ function popdata(; maxrank = 20)
 
     # plots
     pl = @df subset(dm, :group => x -> x .> 1) plot(:year, :relpop_data, group = :grouplabel, marker = :circle, title = "Population Data relative to Paris")
-    pl2 = @df subset(d20, :group => x -> x .> 1) plot(:year, :relpop_data, group = :LIBGEO, marker = :circle, title = "Population Data relative to Paris")
+    pl2 = @df subset(d20, :group => x -> x .> 1) plot(:year, :relpop_data, group = :LIBGEO, marker = :circle, title = "Population Data relative to Paris",
+                    legend = :outerright)
 
     CSV.write(joinpath(LandUse.dboutdata, "relpop-means.csv"), dm)
     CSV.write(joinpath(intables, "relpop-means.csv"), dm)

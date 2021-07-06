@@ -2,7 +2,7 @@
 @testset "A Country" begin
 
 	x,M,p = LandUse.runm()  # the baseline model
-	xk,C,pk = LandUse.runk()  # 2 identical regions in a country
+	xk,C,pk = LandUse.runk(estimateθ = false, istest = true)  # 2 identical regions in a country
 	
 	@test length(C[1].R) == 2
 	@test isa(C[1].R[1], LandUse.Region)
@@ -37,6 +37,11 @@
 			@test c.R[2].Srh + c.R[2].Sr + π * (c.R[2].ϕ)^2 ≈ c.Sk[2]
 			@test c.R[2].Srh + c.R[2].Sr + π * (c.R[2].ϕ)^2 ≈ p.S
 		end
+	end
+	@testset "20 region country runs" begin
+		K = 20
+		x,C1,p1 = LandUse.k(K)
+		@test length(C1[1].R) == K
 	end
 	# @testset "updating" begin
 	# 	xs = rand(2*2)
