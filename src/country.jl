@@ -33,7 +33,7 @@ mutable struct Country
 	want to give single p and get back
 	differnet theta series for each country
 	"""
-	function Country(p::Param)
+	function Country(p::Param;istest = false)
 		this = new()
 		@assert p.K == length(p.factors)
 		@assert p.K == length(p.gs)
@@ -44,9 +44,12 @@ mutable struct Country
 		this.pp = Param[deepcopy(p) for _ in 1:p.K]
 
 		# modify θus for each
-		# @warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
+		@warn "modifying θu data in periods 2 and 3 to be == 1.0" maxlog=1
+
 		for ik in 1:p.K
-			# p.θu = max(p.θu, 1.0)
+			if !istest 
+				p.θu = max(p.θu, 1.0) 
+			end
 			this.pp[ik].θu =  p.θu * p.factors[ik] * exp(p.gs[ik] * (p.it-1))
 		end
 
@@ -172,6 +175,43 @@ function update!(c::Country,x::Vector{Float64};estimateθ=false)
 		update!(c.R[ik],p[ik],cx, Lu = Lu[ik])
 	end
 end
+
+
+"""
+Compute exponential decay model of density for each region in a country
+"""
+function expmodel(C::Country)
+	p = C.pp[1]  # get country 1's param vector
+	K = p.K
+
+	coefs = Vector{Float64}[]
+	bins  = Vector{Float64}[]
+	# bins  = StepRangeLen[]
+	densities  = Vector{Float64}[]
+
+	# country 1 is assumed largest
+	for ik in 1:K
+		# need ratio of radii between each region
+		# ϕratio = C.R[ik].ϕ / C.R[1].ϕ
+		# ikbins = range(1.0 * ϕratio, p.int_bins * ϕratio, length = p.int_bins)
+		# ikbins = range(1.0 , p.int_bins, length = p.int_bins)
+		ikbins = C.R[ik].ϕmids
+		ndensities = C.R[ik].iDensities ./ C.R[ik].iDensities[1]
+		gradient,emod = expmodel(ikbins, ndensities)
+		push!(coefs, gradient)
+		push!(densities, ndensities)
+		push!(bins, ikbins)
+	end
+	(coefs, densities, bins)
+end
+
+
+
+
+##########
+# archive
+
+
 
 """
 Computes the entries of the residual vector ``u``
@@ -341,20 +381,6 @@ function step_country(x0::Vector{Float64},pp::Param,it::Int; do_traceplot = true
 		# end
 	end
 end
-
-
-# archive
-# NLopt implementation
-# r = LandUse.nlopt_solveC(pp,C0,x0)
-# if (r[3] == :ROUNDOFF_LIMITED) | (r[3] == :SUCCESS)
-#       LandUse.update!(C0,pp,r[2])
-#       println("eq system:")
-#       LandUse.EqSys!(x0,C0,pp)
-#       println(x0)
-	   #        return C0, r[2]
-# else
-#       error("not converged")
-# end
 
 # for each period, start all countries at eps = 0 and
 # step wise increase the slope until maxeps

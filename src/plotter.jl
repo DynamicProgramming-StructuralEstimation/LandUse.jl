@@ -41,17 +41,63 @@ function dashboard(C::Vector{Country},it::Int)
 end
 
 "plots for 20 city cross section"
-function dashk20(d::DataFrame)
-	di = Dict()
-	K = maximum(d.region)
+function dashk20(;save = false)
 
 	# compare model to data
 	# =====================
 	# get a single city to compare
 	x,M,p = runm()
-	yearmap = popdata_mapyears(p)
-	d = leftjoin(d, yearmap, on = :year => :modelyears)
-	d = leftjoin(d, p.citylist, on = [:region => :rank, :datayears => :year])
+
+	di = Dict()
+
+	ddd = k20_dfexport()
+	K = maximum(ddd[1].region)
+
+	ddd[1][!,:scenario] .= "baseline"
+	ddd[2][!,:scenario] .= "d1-d2"
+	dd = vcat(ddd[1],ddd[2])
+	d = ddd[1]
+	d2 = ddd[2]
+
+
+	# baseline vs policy
+	# ==================
+
+	# exponential coefficient
+	for yr in p.T[[1,5,10,15,19]]
+		x = select(subset(dd, :year => x -> x.== yr), :exp_coef => (x -> abs.(x)) => :exp_coef, :region, :scenario)
+		di[Symbol("d1d2_coefs_$yr")] = @df x plot(:region, :exp_coef, group = :scenario, marker = (:auto, 3), leg = :bottomright,
+									ylab = "exponential exponent (abs)", xlab = "city rank", title = "Exponential coefs in $yr")
+
+		if save
+			savefig(di[Symbol("d1d2_coefs_$yr")], joinpath(LandUse.dbplots,"k20-exp-coefs-$yr.pdf"))
+		end
+	end
+
+	densyears = [1870, 1950,1970,1990,2015]
+
+	dy = subset(d, :year => x -> x .∈ Ref(densyears))
+	d2y = subset(d2, :year => x -> x .∈ Ref(densyears))
+
+	r0 = lm(@formula( log(density_data) ~ log(citydensity)), dy)
+	r1 = lm(@formula( log(density_data) ~ log(citydensity)), d2y)
+
+	di[:dens_mod_data_base] = @df dy scatter(:citydensity, :density_data, xscale = :log10, yscale = :log10, group = :LIBGEO, leg = :outerright, 
+	                                          xlab = "model", ylab = "data", title = "Urban Density X-section over time",
+											  color = reshape(palette(:tab20)[1:20], 1,20))
+	plot!(di[:dens_mod_data_base], x -> exp(coef(r0)[1] + coef(r0)[2] * log(x)), lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_base], [(10, 10^4.5, Plots.text("coef = $(round(coef(r0)[2],digits = 3))"))])
+	
+	di[:dens_mod_data_d1d2] = @df d2y scatter(:citydensity, :density_data, xscale = :log10, yscale = :log10, group = :LIBGEO, leg = :outerright, xlab = "model", ylab = "data", title = "Urban Density X-section over time")
+	plot!(di[:dens_mod_data_d1d2], x -> exp(coef(r1)[1] + coef(r1)[2] * log(x)), lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_d1d2], [(10, 10^4.5, Plots.text("coef = $(round(coef(r1)[2],digits = 3))"))])
+	
+	if save
+		savefig(di[:dens_mod_data_base], joinpath(LandUse.dbplots,"k20-xsect-time.pdf"))
+		savefig(di[:dens_mod_data_d1d2], joinpath(LandUse.dbplots,"k20-xsect-time-d1d2.pdf"))
+	end
+
+
 
 	# add rel pop and rel dens
 	d = transform(groupby(d,:year), [:Lu, :region]          => ((a,b) -> a ./ a[b .== 1]) => :rel_Lu,
@@ -72,11 +118,11 @@ function dashk20(d::DataFrame)
 	end
 	title!(pl, "Model (Lines) vs Data (Points)")
 
-	di[:relpop] = pl
-	savefig(pl, joinpath(LandUse.dbplots,"k20-relpop-model-data.pdf"))
+	di[:relpop_data] = pl
+	
 
-	di[:relpop] = @df nop plot(:year, :rel_Lu, group = :LIBGEO, leg = :outertopright, col = palette(:tab20))
-	@df nop scatter!(:datayears, :relpop_data, group = :LIBGEO, lab = false, col = palette(:tab20))
+	di[:relpop_nop] = @df nop plot(:year, :rel_Lu, group = :LIBGEO, leg = :outertopright, col = palette(:tab20))
+	@df nop scatter!(di[:relpop_nop],:datayears, :relpop_data, group = :LIBGEO, lab = false, col = palette(:tab20))
 
 	di[:rpop] = @df d plot(:year,:Lr, group = :region, ylab = "Share of Rural Population")
 	di[:pop] = @df d plot(:year,:Lu, group = :region, ylab = "Urban Population")
@@ -84,7 +130,7 @@ function dashk20(d::DataFrame)
 	di[:relpop] = @df nop plot(:year,:rel_Lu, group = :region,
 	                   ylab = "Population relative to Biggest City")
 	di[:dens_pop] = @df d plot(:Lu, :citydensity, group = :region, 
-	                    xaxis = ("log urban pop", :log), yaxis = ("log density", :log), leg = false)
+	                    xaxis = ("log urban pop", :log10), yaxis = ("log density", :log10), leg = false)
 
 	dparis = subset(d, :region => x-> x.==1)
 	di[:dens_paris] = @df dparis plot(:year, :citydensity, label = "Average", lw = 2, title = "Paris Density", ylab = "Density")
@@ -118,16 +164,20 @@ function dashk20(d::DataFrame)
 								title = "Density Cross Section over Time")
 
 
-	savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
 	
 
 	# within density in year 2020
 	de2020 = hcat( Matrix(select(subset(d , :year => x -> x .== 2020 ),  :iDensities))... )
-	dens_2020 = wireframe(1:K,1:p.int_bins,de2020, 
+	di[:dens_2020] = wireframe(1:K,1:p.int_bins,de2020, 
 	                          xlab = "city rank", ylab = "distance bin",
 							  zlab = "density",camera = (70,40),
 							  title = "year 2020 within city gradients")
-	savefig(dens_2020, joinpath(LandUse.dbplots,"k20-density3D-2020.pdf"))
+
+	if save
+		savefig(di[:dens_2020], joinpath(LandUse.dbplots,"k20-density3D-2020.pdf"))
+		savefig(di[:relpop_data], joinpath(LandUse.dbplots,"k20-relpop-model-data.pdf"))
+		savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
+	end
 
 
 	# compare model to data
@@ -191,7 +241,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false, objvalue = nothing)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")         , ylims = (-0.1 , 15)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")     , ylims = (-0.1 , 10)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")         , ylims = (0.5  , 5.5) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
-		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, annotations = manno)
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log1010, yscale = :log1010, annotations = manno)
 	else
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
 		d[:D] = Plots.scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
@@ -200,7 +250,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false, objvalue = nothing)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
-		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, annotations = manno)
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log1010, yscale = :log1010, annotations = manno)
 	end
 	d
 end
@@ -334,7 +384,7 @@ function ts_plots(M,p::Param;fixy = false)
 	ds3 = stack(d3, Not(:year))
 	dd[:productivity] = @df ds3 plot(:year, :value, group = :variable,
 					  linewidth = 2, title = "Log Productivity", ylims = fixy ? (0,20) : false, marker = mmark,
-					  legend = :left, yscale = :log10)
+					  legend = :left, yscale = :log1010)
 	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	ds4 = select(d,:year,:cityarea)
 	incphi = round(d1880.cityarea[end] / d1880.cityarea[1],digits = 1)
