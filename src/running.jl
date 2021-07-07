@@ -89,7 +89,7 @@ end
 run Multi-region model for all time periods starting from 
 the single city starting value. Works only for not too different θu values.
 """
-function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2)), estimateθ = false)
+function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2)), estimateθ = true,fit_allyears = true, istest = false)
 
 	# get single city solution in first period
 	p = LandUse.Param(par = par, use_estimatedθ = false)
@@ -117,7 +117,91 @@ function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :
 	for ik in 1:p.K
 		push!(x,p.θu)
 	end
-	runk_impl(x,p, estimateθ = estimateθ)
+	runk_impl(x,p, estimateθ = estimateθ,fit_allyears = fit_allyears, istest = istest)
+end
+
+function runk_impl(x0::Vector,p::Param; estimateθ = false,fit_allyears = true, istest = false)
+	sols =Vector{Float64}[]
+	# ϕvs =Vector{Float64}[]
+	# dϕvs =Vector{Float64}[]
+	push!(sols,x0)
+
+	C = Country[]  # an emtpy array of countries
+
+	for it in 1:length(p.T)
+		# println(it)
+		setperiod!(p,it)
+		c = Country(p,istest = istest)  # performs scaling of productivity upon creation
+		xmod = jc(c,sols[it],estimateθ = estimateθ,fit_allyears = fit_allyears) # returns a JuMP model as last element
+		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
+			# clean up results and save
+			x,ϕs = xmod[1], xmod[2]
+		else		
+			println("period = $it")
+			println(termination_status(xmod[end]))  # error
+			println(JuMP.all_variables(xmod[end]))
+			return JuMP.primal_feasibility_report(xmod[end])
+		end
+
+		# x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
+		# x,ϕs,dϕs = jc(c,sols[it],estimateθ = estimateθ)
+		push!(sols,x)
+		if it == 1
+			for ik in 1:p.K
+				c.pp[ik].ϕ1 = ϕs[ik] * c.pp[ik].ϕ1x
+			end
+		else
+			for ik in 1:p.K
+				c.pp[ik].ϕ1 = C[1].R[ik].ϕ * c.pp[ik].ϕ1x
+			end
+		end
+		# overwrite θu if estimated
+		if estimateθ
+			for ik in 1:p.K
+				c.pp[ik].θu = x[3 + 3p.K + ik]
+			end
+		end
+
+		update!(c,x,estimateθ = estimateθ)
+
+		push!(C,c)
+		# push!(ϕvs,ϕs)
+		# push!(dϕvs,dϕs)
+	end
+	# (sols,C,p, ϕvs, dϕvs) # solutions, models, and parameter
+	(sols,C,p) # solutions, models, and parameter
+end
+
+
+function k(K;pars = Dict(),estimateθ = true, fit_allyears = true)
+	LandUse.runk(par = merge(Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K)), pars),estimateθ = estimateθ, fit_allyears = fit_allyears)
+end
+
+function k20(;overwrite = false)
+	if overwrite
+		x,C,p = LandUse.runk(par = Dict(:K => 20,:kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20)),estimateθ = true)
+		d = dataframe(C)
+
+		FileIO.save(joinpath(intables, "k20.jld2"), Dict("df" => d))
+		
+		x,C,p,d
+	else
+		df = FileIO.load(joinpath(intables, "k20.jld2"))
+		df["df"]
+	end
+
+	# K = 20
+	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.09, 1.02, 1.02, 1.01,1.01, [1.005 for i in 1:7]...,ones(8)...], :gs => [0.003,zeros(K-1)...])
+	# par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K))
+	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.1, 1.01, 1.01, 1.005,1.005, [1.0025 for i in 1:7]...,ones(8)...], :gs => [0.0025,zeros(K-1)...])
+	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.05, 1.01, 1.01, 1.005,1.005, [1.0025 for i in 1:7]...,ones(8)...], :gs => [0.002,zeros(K-1)...])
+	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.02, 1.001, 1.001, 1.01,1.01, [1.005 for i in 1:7]...,ones(8)...], :gs => [0.001,zeros(K-1)...])
+	# # x,C,p = runk(par = par)
+	# runk(par = par)
+	# # relpop(C)
+	# # dd = relpop(C)
+	# @df subset(dd, :region => x-> x.> 1, :year => x-> x.> 1870) plot(:year, :rel_Lu_mean, group = :grouplabel, title = "model relative to paris")
+	
 end
 
 
@@ -365,57 +449,7 @@ function check2(;d1 = 0.0, d2= 0.0)
 end
 
 
-function runk_impl(x0::Vector,p::Param; estimateθ = false)
-	sols =Vector{Float64}[]
-	# ϕvs =Vector{Float64}[]
-	# dϕvs =Vector{Float64}[]
-	push!(sols,x0)
 
-	C = Country[]  # an emtpy array of countries
-
-	for it in 1:length(p.T)
-		# println(it)
-		setperiod!(p,it)
-		c = Country(p)  # performs scaling of productivity upon creation
-		xmod = jc(c,sols[it],estimateθ = estimateθ) # returns a JuMP model as last element
-		if termination_status(xmod[end]) == MOI.LOCALLY_SOLVED
-			# clean up results and save
-			x,ϕs = xmod[1], xmod[2]
-		else		
-			println("period = $it")
-			println(termination_status(xmod[end]))  # error
-			println(JuMP.all_variables(xmod[end]))
-			return JuMP.primal_feasibility_report(xmod[end])
-		end
-
-		# x,ϕs = jc(c,sols[it],estimateθ = estimateθ)
-		# x,ϕs,dϕs = jc(c,sols[it],estimateθ = estimateθ)
-		push!(sols,x)
-		if it == 1
-			for ik in 1:p.K
-				c.pp[ik].ϕ1 = ϕs[ik] * c.pp[ik].ϕ1x
-			end
-		else
-			for ik in 1:p.K
-				c.pp[ik].ϕ1 = C[1].R[ik].ϕ * c.pp[ik].ϕ1x
-			end
-		end
-		# overwrite θu if estimated
-		if estimateθ
-			for ik in 1:p.K
-				c.pp[ik].θu = x[3 + 3p.K + ik]
-			end
-		end
-
-		update!(c,x,estimateθ = estimateθ)
-
-		push!(C,c)
-		# push!(ϕvs,ϕs)
-		# push!(dϕvs,dϕs)
-	end
-	# (sols,C,p, ϕvs, dϕvs) # solutions, models, and parameter
-	(sols,C,p) # solutions, models, and parameter
-end
 
 
 "helper function to prepare country param"
@@ -515,36 +549,7 @@ function relpop(C::Vector{Country})
 	combine(groupby(g2, [:grouplabel, :year]),  :rel_Lu => mean, :region) # mean amongst groups
 end
 
-function k(K;pars = Dict(),estimateθ = true)
-	LandUse.runk(par = merge(Dict(:K => K,:kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K)), pars),estimateθ = estimateθ)
-end
 
-function k20(;overwrite = false)
-	if overwrite
-		x,C,p = LandUse.runk(par = Dict(:K => 20,:kshare => [1/20 for i in 1:20], :factors => ones(20), :gs => zeros(20)),estimateθ = true)
-		d = dataframe(C)
-
-		FileIO.save(joinpath(intables, "k20.jld2"), Dict("df" => d))
-		
-		x,C,p,d
-	else
-		df = FileIO.load(joinpath(intables, "k20.jld2"))
-		df["df"]
-	end
-
-	# K = 20
-	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.09, 1.02, 1.02, 1.01,1.01, [1.005 for i in 1:7]...,ones(8)...], :gs => [0.003,zeros(K-1)...])
-	# par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => ones(K), :gs => zeros(K))
-	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.1, 1.01, 1.01, 1.005,1.005, [1.0025 for i in 1:7]...,ones(8)...], :gs => [0.0025,zeros(K-1)...])
-	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.05, 1.01, 1.01, 1.005,1.005, [1.0025 for i in 1:7]...,ones(8)...], :gs => [0.002,zeros(K-1)...])
-	# # par = Dict(:K => K, :kshare => [1/K for i in 1:K], :factors => [1.02, 1.001, 1.001, 1.01,1.01, [1.005 for i in 1:7]...,ones(8)...], :gs => [0.001,zeros(K-1)...])
-	# # x,C,p = runk(par = par)
-	# runk(par = par)
-	# # relpop(C)
-	# # dd = relpop(C)
-	# @df subset(dd, :region => x-> x.> 1, :year => x-> x.> 1870) plot(:year, :rel_Lu_mean, group = :grouplabel, title = "model relative to paris")
-	
-end
 
 function runm()
 	run(Param())
