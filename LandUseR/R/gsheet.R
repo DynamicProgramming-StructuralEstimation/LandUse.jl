@@ -1,7 +1,9 @@
 
+# Functions to read manual data from google drive.
 
 
 gsheet <- function(){"https://docs.google.com/spreadsheets/d/1IotLzprM5Os-06MpfU895VOgHieYkQfY3WOLBBiTKZA/edit#gid=0"}
+browse <- function(){googlesheets4::sheets_browse(gsheet())}
 
 export_sheet <- function(topn = 110){
     p = readpop()
@@ -26,6 +28,12 @@ import_sheet <- function(sheet = NULL){
     googlesheets4::read_sheet(LandUseR:::gsheet(),sheet = sheet)
 }
 
+#' Get Manual Measurements
+#'
+#' @param reload TRUE/FALSE whether to fetch from google drive or from disk
+#'
+#' Notice in google drive sheet area2016 = 0 or \code{is.na(which_city_2016)} means the city historic has been absorbed
+#' by another city in modern times. Hence we do not consider such a city.
 get_manuals <- function(reload = FALSE){
     if (reload){
         s = LandUseR:::import_sheet(sheet = "master-list") %>% dplyr::filter(area_2016 != 0.0 & is.na(which_city_2016))
@@ -59,7 +67,10 @@ readpop <- function(){
 
 #' Complement Census Data with Toutain
 #'
-#' Tableau 1: Evolution de la Population des menages agricoles de 1789 a 1968
+#' This function complements INSEE population count data with Toutain's series.
+#' The output of this is our measure for \emph{Population} in the model.
+#'
+#' Source: Toutain (1991) Tableau 1: Evolution de la Population des menages agricoles de 1789 a 1968
 census_add_toutain <- function(){
     toutain = tribble(
         ~year, ~population, ~rural_pop, ~menage_agricoles,
@@ -110,6 +121,9 @@ census_add_toutain <- function(){
 }
 
 
+#' Plot Reims
+#'
+#' make plot for motivation of slides
 plot_reims <- function(){
     p = readpop()
     y=p %>% dplyr::filter(CODGEO=="51454", year %in% c(1876,2015))

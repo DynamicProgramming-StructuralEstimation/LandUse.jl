@@ -3,7 +3,6 @@
 export("%>%")
 export(pipe)
 export(plot_top100_densities)
-export(read_areas_gsheet)
 export(read_output)
 export(readpop)
 export(relative_pop_area)

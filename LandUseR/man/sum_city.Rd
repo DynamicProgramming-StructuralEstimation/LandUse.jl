@@ -2,7 +2,7 @@
 % Please edit documentation in R/cities-defs.R
 \name{sum_city}
 \alias{sum_city}
-\title{sum city populaiotn over communes}
+\title{sum city population over communes}
 \usage{
 sum_city(dt, li)
 }

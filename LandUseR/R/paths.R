@@ -1,4 +1,7 @@
 
+# file path setup
+
+
 setup_gsheet <- function(){
     googledrive::drive_upload(file.path(datadir(),"france_cities.csv"), type = "spreadsheet")
 }

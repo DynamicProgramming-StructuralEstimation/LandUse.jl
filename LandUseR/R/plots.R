@@ -1,8 +1,20 @@
 
+# Plotting Functions
+
+
 #' Plot distance from center
 #'
-#' usign GHS grid data, plot average density at a certain distance
-#' from the center of a city
+#' using GHS grid data, plot average density at a certain distance
+#' from the center of a city.
+#'
+#' This function uses output of \code{\link{dist_from_center}} and
+#' estimates an exponential decay model via NLS.
+#'
+#' @param city_name vector of city names
+#'
+#' @return list with plots
+#'
+#' @references https://douglas-watson.github.io/post/2018-09_exponential_curve_fitting/
 plot_density_center <- function(city_name = c("Paris","Lyon")){
     d0 = dist_from_center()
     d0[, distance := distance / 1000]
@@ -39,46 +51,14 @@ plot_density_center <- function(city_name = c("Paris","Lyon")){
             ggtitle(paste("Density over time in",ic)) +
             scale_x_continuous(name = "Distance to Center in km")
 
-
-
         ggsave(l[[ic]], filename = file.path(dataplots(),paste0("density-center-",ic,".pdf")))
     }
     l
 }
 
-
-plot_sat_built <- function(){
-    cc = LandUseR:::measure_cities()  # first index level is years
-
-    error("broken")
-
-    ci = bboxes_top100()[LIBGEO %in% tops()]  # 5 cities we want to see
-    out = list()
-    for (ir in 1:nrow(ci)){
-        cci = ci[ir,]
-        # indices 1,2,3,4 are years
-        ss = raster::stack(cc[[1]][[cci$CODGEO]]$built,cc[[2]][[cci$CODGEO]]$built,cc[[3]][[cci$CODGEO]]$built,cc[[4]][[cci$CODGEO]]$built)
-        pngname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.png"))
-        pdfname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.pdf"))
-
-        # plot
-        out[[ir]] = rasterVis::levelplot(ss,xlab = NULL, ylab = NULL, scales=list(draw=FALSE), names.attr=paste0(cci$LIBGEO,' ', LandUseR:::GHS_years()))
-
-        # write
-        png(pngname,width = 1000, height=700, res = 175)
-        print(out[[ir]])
-        dev.off()
-        lattice::trellis.device(pdfname,width = 11,height = 6)
-        print(out[[ir]])
-        dev.off()
-
-
-    }
-    out
-}
-
 #' plot manual vs satellite measurements 2015/2016
 #'
+#' makes a plot to compare our manual area measures in 2016 to the satellite measure in 2015
 plot_sat_vs_manual <- function(){
     f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
     cf = dcast.data.table(f[year > 2014,list(type, area, LIBGEO)], LIBGEO~ type, value.var = "area")
@@ -88,18 +68,13 @@ plot_sat_vs_manual <- function(){
     p
 }
 
-WIPfunc <- function(){
-    d = ff[, list(pop = median(pop), density = median(density)) , by = list(year,small)]
-    ggplot(d, aes(x = pop, y = density, color = small)) + geom_point() + geom_line()
-    ggplot(d, aes(x = pop, y = density, color = year)) + geom_point() + geom_line()
-    ggplot(d, aes(x = pop, y = density, color = factor(year))) + geom_point() + geom_line()
-}
-
-
 #' plot top 100 cities densities over time
 #' https://github.com/floswald/LandUse.jl/issues/42
 #'
-#'@export
+#' @param w plot width in inches
+#' @param h plot height in inches
+#'
+#' @export
 plot_top100_densities <- function(save = FALSE,w=9,h=6){
     f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
     f[,density := pop / area]
@@ -205,13 +180,19 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
     p
 }
 
-
+#' Write Paris Arrondissement Areas to Disk
+#'
 write_paris_areas <- function(){
     sh = sf::st_read(file.path("~/git/intro-to-r/data","CONTOURS-IRIS","1_DONNEES_LIVRAISON_2018-06-00105","CONTOURS-IRIS_2-1_SHP_LAMB93_FXX-2017","CONTOURS-IRIS.shp"),stringsAsFactors=FALSE)
     a=sh %>% filter(INSEE_COM > 75100 & INSEE_COM < 75121) %>% group_by(INSEE_COM) %>% summarise(n=n()) %>% mutate(area = units::set_units(sf::st_area(.), km^2), CODGEO = INSEE_COM) %>% sf::st_set_geometry(NULL) %>% dplyr::select(CODGEO,area)
     saveRDS(a, file.path(LandUseR:::datadir(),"paris-areas.Rds"))
 }
 
+
+#' Plot Density for Central vs Fringe Paris
+#'
+#' Reads area data from \code{\link{write_paris_areas}}, merges with paris census data
+#' and computes densitiy for each arrondissement over time.
 plot_paris_densities <- function(){
     a = readRDS(file.path(LandUseR:::datadir(),"paris-areas.Rds"))
     p = readpop() %>%
@@ -271,6 +252,17 @@ plot_sat_densities <- function(){
 
     lapply(pg, function(x) theme_set(theme_bw()))
     return(list(growth = pg, area = parea, pop = ppop))
+
+}
+
+
+plot_paris <- function(d){
+    pl = d %>%
+        dplyr::filter(DEP == 75) %>%
+        dplyr::mutate(Arrond = as.factor(as.numeric(CODGEO)-75100)) %>%
+        ggplot2::ggplot(aes(x = year, y = population, group = CODGEO, color = Arrond)) + ggplot2::geom_line(size=1.1) + ggplot2::scale_y_continuous(labels = scales::comma) + ggplot2::labs(title = "Central Paris Population by Arrondissement",subtitle = "Equivalent to `Density` (Area is constant)") + ggplot2::theme_bw()
+    ggplot2::ggsave(file.path(outdir(),"plots","paris.pdf"),plot = pl, width = 8, height = 6)
+    pl
 
 }
 

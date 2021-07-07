@@ -37,6 +37,12 @@ relative_pop_area <- function(cities = top5now(), overwrite = FALSE){
     }
 }
 
+#' Main Population Count Output File
+#'
+#' reads output of manual and satellite measures via \code{\link{read_output}}
+#' and amends Paris Population to also include the Seine department as well before WW2.
+#'
+#' The csv output of this file is used in the model.
 pop_allyears <- function(){
     x = read_output()
     p0 = data.table(readpop())
