@@ -8,6 +8,7 @@ setup_gsheet <- function(){
 dboxdir <- function(){file.path(Sys.getenv("HOME"),"Dropbox","research","LandUse")}
 datadir <- function(){file.path(dboxdir(),"data")}
 dataplots <- function(){file.path(outdir(),"data","plots")}
+datatables <- function(){file.path(outdir(),"data","tables")}
 
 entddir <- function(){file.path(datadir(),"ENTD")}
 

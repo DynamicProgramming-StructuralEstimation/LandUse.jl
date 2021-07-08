@@ -39,6 +39,7 @@ get_manuals <- function(reload = FALSE){
         s = LandUseR:::import_sheet(sheet = "master-list") %>% dplyr::filter(area_2016 != 0.0 & is.na(which_city_2016))
         sd = data.table(s)
         sd[,which_city_2016 := NULL]
+        sd[ , rank := order(pop_1876,decreasing = TRUE)]
         saveRDS(sd,file = file.path(datadir(),"top100.Rds"))
     } else {
         sd = readRDS(file = file.path(datadir(),"top100.Rds"))

@@ -103,11 +103,28 @@ pop_1950_2 <- function(overwrite = FALSE){
         xp[,population := NULL]
 
         saveRDS(xp, file.path(datadir(),"top100bbox.Rds"))
+        saveRDS(cc, file.path(datadir(),"top100bbox-components.Rds"))
 
     } else {
         xp = readRDS(file.path(datadir(),"top100bbox.Rds"))
     }
     xp
+}
+
+#' Print France 1950 Population to Latex
+#'
+#'
+print_pop_1950 <- function(){
+    x = readRDS(file.path(datadir(),"top100bbox-components.Rds"))
+    y = x[!(unlist(lapply(components,is.null))), !"population"]
+    ta = knitr::kable(y, format = "latex",
+                      booktabs = TRUE,
+                      longtable = FALSE,
+                      caption = "France 1950 Population Classification. Cities containing more than one INSEE administrative area by 1950.",
+                      label = "france-1950-pop"
+    ) %>% kableExtra::column_spec(4, width = "10cm")
+    # cat(kableExtra::landscape(ta), file = file.path(LandUseR:::datatables(), "france-pop-1950.tex"))
+    cat(ta, file = file.path(LandUseR:::datatables(), "france-pop-1950.tex"))
 }
 
 
@@ -128,9 +145,9 @@ sum_city <- function(dt,li){
 #' Our definition of Paris is much greater than the administrative boundary of the City of Paris in 1950.
 #'
 #' We manually check which surrounding communities fall within our classification of the Paris area in 1950 and
-#' add the name of those communities to our list of consitituting jurisidictions making up the greater Paris population
-#'  paris region candidate communes from https://fr.wikipedia.org/wiki/Réorganisation_de_la_région_parisienne_en_1964
-#'  these are *all* the communes. Some will not be part of our delineation of Paris.
+#' add the name of those communities to our list of constituting jurisdictions making up the greater Paris population.
+#' Paris region candidate communes from https://fr.wikipedia.org/wiki/Réorganisation_de_la_région_parisienne_en_1964.
+#' These are *all* the communes. Some will not be part of our delineation of Paris.
 #' need to check manually one by one against our screen shot of the Paris area in 1950.
 get_paris_pop_1950 <- function(p){
 
@@ -175,6 +192,23 @@ get_paris_pop_1950 <- function(p){
 
     paris_1954 <- dplyr::bind_rows(p75,p93_paris,p94_paris,p92_paris)
     return(paris_1954)
+}
+
+
+#' Print Paris 1950 Population to Latex
+#'
+#'
+print_paris_pop_1950 <- function(){
+    p0 = readpop()
+    p = as.data.table(p0)
+    x = LandUseR:::get_paris_pop_1950(p)
+    ta = knitr::kable(x, format = "latex",
+                      booktabs = TRUE,
+                      longtable = TRUE,
+                      caption = "Paris 1950 Population Classification",
+                      label = "paris-1950-pop"
+                      )
+    cat(kableExtra::kable_styling(ta,latex_options = c("repeat_header")), file = file.path(LandUseR:::datatables(), "paris-pop-1950.tex"))
 }
 
 

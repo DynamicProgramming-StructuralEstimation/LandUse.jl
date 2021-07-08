@@ -164,7 +164,6 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
     d = ff[, list(pop = median(pop), density = median(density)) , by = list(year,small)]
     p$xsect[[5]] = ggplot(d, aes(x = pop, y = density, color = small)) + geom_point() + geom_line()
     p$xsect[[6]] = ggplot(d, aes(x = pop, y = density, color = factor(year))) + geom_point() + geom_line()
-    p$xsect[[7]] =
 
     if (save) {
         ggsave(p$violin, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))
@@ -177,6 +176,54 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
 
     }
 
+    p
+}
+
+#' plot top 100 cities densities cutoff sensitivity
+#'
+#' @param w plot width in inches
+#' @param h plot height in inches
+#'
+#' @export
+plot_top100_cutoff <- function(save = FALSE,w=9,h=6){
+    # for all files with this structure
+    z = LandUseR:::cutoff_sensitivity()
+    y = lapply(names(z), function(x){
+        y = z[[x]]
+        y[,cutoff := x]
+        y
+    })
+    f = rbindlist(y)
+    f[,density := pop / area]
+    ff = f[,list(LIBGEO,year,density,rank,pop, cutoff)]
+    ff = ff[complete.cases(ff)]
+
+    p = list()
+
+    # aggregate time series
+    d4 = ff[,.(density = median(density),wdensity = weighted.mean(density, w = pop)),by=list(year, cutoff)]
+    fall = d4[,round(max(density)/min(density),0), by = cutoff]
+    wfall = d4[,round(max(wdensity)/min(wdensity),0), by = cutoff]
+    p$ts = ggplot(d4,aes(x=year, y = density, color = cutoff)) +
+        geom_point() +
+        scale_x_continuous(breaks = d4[,year]) +
+        scale_y_continuous(name = "median density (pop / km2)", breaks = c(3000,5000,10000,25000)) +
+        geom_path(size = 1.1) + theme_bw() +
+        ggtitle("Median Urban Density Cutoff Sensitivity") +
+        theme(panel.grid.minor = element_blank())
+
+    p$ts_w = ggplot(d4,aes(x=year, y = wdensity, color = cutoff)) +
+        geom_point() +
+        scale_x_continuous(breaks = d4[,year]) +
+        scale_y_continuous(name = "weighted mean density (pop / km2)", breaks = c(3000,5000,10000,25000)) +
+        geom_path(size = 1.1) + theme_bw() +
+        ggtitle("Mean Urban Density Cutoff Sensitivity") +
+        theme(panel.grid.minor = element_blank()) + labs(caption = "mean weighted by population")
+
+        if (save) {
+            ggsave(p$ts, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-cutoff.pdf"))
+            ggsave(p$ts_w, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-wtd-cutoff.pdf"))
+        }
     p
 }
 
