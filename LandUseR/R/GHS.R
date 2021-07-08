@@ -232,9 +232,33 @@ combine_measures <- function(overwrite = FALSE,cutoff = 30){
     m2[,type := "satellite"]
     z = rbind(m,m2,fill = TRUE)
     setkey(z, year, rank)
-    saveRDS(z, file.path(LandUseR:::outdir(),"data","france_final.Rds") )
-    fwrite(z[,!"extent"],  file.path(LandUseR:::outdir(),"data","france_final.csv"))
+    saveRDS(z, file.path(LandUseR:::outdir(),"data",paste0("france_final_cutoff",cutoff,".Rds")) )
+    fwrite(z[,!"extent"],  file.path(LandUseR:::outdir(),"data",paste0("france_final_cutoff",cutoff,".csv")))
     z
+}
+
+
+#' Cutoff Sensitivity Analysis for `measure_cities`
+#'
+#' @param cuts desired cutoff levels
+#'
+#' compute output measures for different values of `cutoff`
+cutoff_sensitivity <- function(cuts = c(25,30,35,50),overwrite = FALSE){
+
+    if (overwrite) {
+        L = list()
+        for (cu in cuts) {
+            futile.logger::flog.info("Computing City measures for cutoff %d",cu)
+            L[[paste(cu)]] = combine_measures(overwrite = TRUE, cutoff = cu)
+        }
+    } else {
+        L = list()
+        for (cu in cuts) {
+            futile.logger::flog.info("Reading cutoff %d from disk",cu)
+            L[[paste(cu)]] = readRDS(file.path(LandUseR:::outdir(),"data",paste0("france_final_cutoff",cu,".Rds")) )
+        }
+    }
+    L
 }
 
 
