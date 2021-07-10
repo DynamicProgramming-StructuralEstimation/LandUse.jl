@@ -22,7 +22,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, r: 'release'}
           - {os: macOS-latest, r: 'release'}
 
     env:
@@ -54,12 +53,11 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
 
       - name: Install system dependencies
-        if: runner.os == 'Linux'
         run: |
-          while read -r cmd
-          do
-            eval sudo $cmd
-          done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
+          brew install udunits cairo freetype
+          brew install udunits cairo
+          brew reinstall freetype
+          Rscript -e "install.packages('sf', type='mac.binary', dependencies=TRUE)"
 
       - name: Install dependencies
         run: |

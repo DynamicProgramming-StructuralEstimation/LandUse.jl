@@ -31,7 +31,8 @@ Imports:
     purrr,
     rgdal,
     knitr,
-    kableExtra
+    kableExtra,
+    pkgdown
 RoxygenNote: 7.1.1
 Suggests: 
     testthat
