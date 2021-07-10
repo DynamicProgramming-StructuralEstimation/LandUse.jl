@@ -46,7 +46,6 @@ jobs:
       - name: R Install dependencies
         run: |
           remotes::install_deps(pkgdir = "LandUseR",dependencies = TRUE)
-          remotes::install_cran(pkgs = "LandUseR","rcmdcheck")
         shell: Rscript {0}
 
       - name: R Install package
