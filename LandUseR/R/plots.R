@@ -59,12 +59,12 @@ plot_density_center <- function(city_name = c("Paris","Lyon")){
 #' plot manual vs satellite measurements 2015/2016
 #'
 #' makes a plot to compare our manual area measures in 2016 to the satellite measure in 2015
-plot_sat_vs_manual <- function(){
+plot_sat_vs_manual <- function(w=9,h=6){
     f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
     cf = dcast.data.table(f[year > 2014,list(type, area, LIBGEO)], LIBGEO~ type, value.var = "area")
     cf[ , error := manual - satellite]
-    p = ggplot(dcast.data.table(f[year > 2014,list(type, area, LIBGEO)], LIBGEO~ type, value.var = "area"), aes(x= manual, y = satellite)) + geom_point() + geom_abline(slope=1) + ggtitle("manual (2016) vs satellite (2015) area measures", subtitle = "solid line is slope 1") + scale_x_log10("km2 manual 2016") + scale_y_log10("km2 satellite 2015")
-    ggsave(p, filename = file.path(LandUseR:::outdir(),"data","plots","areas-manual-satellite.pdf"))
+    p = ggplot(dcast.data.table(f[year > 2014,list(type, area, LIBGEO)], LIBGEO~ type, value.var = "area"), aes(x= manual, y = satellite)) + geom_point() + ggtitle("Manual (2016) vs GHSL (2015) Area Measures", subtitle = "solid line is 45 degrees") + scale_x_log10("km2 manual 2016") + scale_y_log10("km2 satellite 2015") + theme_bw() + geom_segment(x = 0,y = 0,xend=1000,yend=1000)
+    ggsave(p, filename = file.path(LandUseR:::outdir(),"data","plots","areas-manual-satellite.pdf"),width = w, height = h)
     p
 }
 
@@ -207,7 +207,7 @@ plot_top100_cutoff <- function(save = FALSE,w=9,h=6){
     p$ts = ggplot(d4,aes(x=year, y = density, color = cutoff)) +
         geom_point() +
         scale_x_continuous(breaks = d4[,year]) +
-        scale_y_continuous(name = "median density (pop / km2)", breaks = c(3000,5000,10000,25000)) +
+        scale_y_continuous(name = "median density (pop / km2)", breaks = c(3000,5000,10000,15000,20000, 25000)) +
         geom_path(size = 1.1) + theme_bw() +
         ggtitle("Median Urban Density Cutoff Sensitivity") +
         theme(panel.grid.minor = element_blank())
@@ -215,7 +215,7 @@ plot_top100_cutoff <- function(save = FALSE,w=9,h=6){
     p$ts_w = ggplot(d4,aes(x=year, y = wdensity, color = cutoff)) +
         geom_point() +
         scale_x_continuous(breaks = d4[,year]) +
-        scale_y_continuous(name = "weighted mean density (pop / km2)", breaks = c(3000,5000,10000,25000)) +
+        scale_y_continuous(name = "weighted mean density (pop / km2)", breaks = c(3000,5000,10000,15000,20000, 25000, 30000,35000)) +
         geom_path(size = 1.1) + theme_bw() +
         ggtitle("Mean Urban Density Cutoff Sensitivity") +
         theme(panel.grid.minor = element_blank()) + labs(caption = "mean weighted by population")
@@ -226,6 +226,36 @@ plot_top100_cutoff <- function(save = FALSE,w=9,h=6){
         }
     p
 }
+
+
+#' Plot GHSL Built Grids
+#'
+#' make plots for top 5 cities
+#'
+GHSL_plots <- function(){
+    L = LandUseR:::measure_cities()$cropped
+    ns = names(L[["1975"]])[1:5]
+
+    OL = list()
+    for (ci in ns) {
+        name = L[["1975"]][[ci]]$cityname
+        ss = raster::stack(L[["1975"]][[ci]]$built,
+                           L[["1990"]][[ci]]$built,
+                           L[["2000"]][[ci]]$built,
+                           L[["2015"]][[ci]]$built
+                           )
+        OL[[ci]] = rasterVis::levelplot(ss,
+                                  xlab = NULL,
+                                  ylab = NULL,
+                                  scales=list(draw=FALSE),
+                                  names.attr=paste0(name,' ', LandUseR:::GHS_years()))
+        lattice::trellis.device(pdf, file=file.path(dataplots(),paste0("GHSL-Built-",name,".pdf")),height=7, width=8)
+        print(OL[[ci]])
+        dev.off()
+    }
+    OL
+}
+
 
 #' Write Paris Arrondissement Areas to Disk
 #'
