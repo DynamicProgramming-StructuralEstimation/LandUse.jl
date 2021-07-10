@@ -7,9 +7,10 @@ on:
 jobs:
   docs:
     name: Documentation
-      runs-on: macOS-latest
-      env:
-        GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: macOS-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      
     steps:
       - uses: actions/checkout@v2
 
