@@ -290,8 +290,13 @@ crop_rasters <- function(r,e){
 #' get CRS of GHS raster data
 #'
 get_raster_CRS <- function(){
-  pop <- raster::raster(file.path(LandUseR:::datadir(),paste0("GHS/GHS_POP_E",1975,"_GLOBE_R2019A_54009_250_V1_0_18_3/GHS_POP_E",1975,"_GLOBE_R2019A_54009_250_V1_0_18_3",".tif")))
-  crs(pop)
+  fi = file.path(LandUseR:::datadir(),paste0("GHS/GHS_POP_E",1975,"_GLOBE_R2019A_54009_250_V1_0_17_3/GHS_POP_E",1975,"_GLOBE_R2019A_54009_250_V1_0_17_3",".tif"))
+  if (!file.exists(fi)) {
+    stop(sprintf("file %s does not exist. dropbox synced?",fi))
+  } else {
+    pop <- raster::raster(fi)
+    raster::crs(pop)
+  }
 }
 
 

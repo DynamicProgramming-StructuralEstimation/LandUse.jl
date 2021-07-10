@@ -121,27 +121,3 @@ census_add_toutain <- function(){
     ggsave(file.path(dataplots(), "France-population.pdf"))
 }
 
-
-#' Plot Reims
-#'
-#' make plot for motivation of slides
-plot_reims <- function(){
-    p = readpop()
-    y=p %>% dplyr::filter(CODGEO=="51454", year %in% c(1876,2015))
-    y %<>% dplyr::mutate(area = c(50.52,3.29),density = population / area)
-    d1 = data.table(variable = c("population","area","density"), increase = unlist(c(y[1,"population"] / y[2,"population"], y[1,"area"] / y[2,"area"], NA)))
-
-
-    d2 = data.table(variable = factor(c("population","area","density"), levels = c("population","area","density")), increase = unlist(c(y[1,"population"] / y[2,"population"], y[1,"area"] / y[2,"area"], -y[2,"density"] / y[1,"density"])))
-
-    cols <- c("area" = "red", "population" = "green", "density" = "grey")
-
-    p1 = ggplot(d1,aes(x=variable,increase)) + geom_col(aes(fill=variable),alpha=0.6,color = "black") + theme_bw() + scale_fill_manual(values = cols) + scale_y_continuous(name = "Increased by Factor",limits = c(-10,16),breaks = c(-7,0,3,10,15),minor_breaks = NULL) + geom_hline(yintercept = 0,size = 1) + ggtitle("Reims from 1866 to 2015")  + scale_x_discrete(name = "") + theme(legend.position = "none")
-
-    p2 = ggplot(d2,aes(x=variable,increase)) + geom_col(aes(fill=variable),alpha=0.6,color = "black") + theme_bw() + scale_fill_manual(values = cols) + scale_y_continuous(name = "Increased by Factor",limits = c(-10,16),breaks = c(-7,0,3,10,15),minor_breaks = NULL) + geom_hline(yintercept = 0,size = 1) + ggtitle("Reims from 1866 to 2015") + scale_x_discrete(name = "")+ theme(legend.position = "none")
-
-    ggsave(plot = p1, filename=file.path(dataplots(),"reims1.pdf"),width=7,height=5)
-    ggsave(plot = p2, filename=file.path(dataplots(),"reims2.pdf"),width=7,height=5)
-
-   return(list(p1,p2))
-}
