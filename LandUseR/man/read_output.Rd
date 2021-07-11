@@ -4,8 +4,8 @@
 \alias{read_output}
 \title{Read main output table}
 \usage{
-read_output()
+read_output(cutoff = 30)
 }
 \description{
-Read main output table
+By default selects the version with `cutoff = 30`
 }

@@ -1,5 +1,5 @@
 Package: LandUseR
-Title: What the Package Does (One Line, Title Case)
+Title: Measurement for Coeurdacier, Oswald and Teignier
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Florian",
@@ -7,8 +7,8 @@ Authors@R:
            role = c("aut", "cre"),
            email = "florian.oswald@gmail.com",
            comment = c(ORCID = "https://orcid.org/0000-0001-7737-2038"))
-Description: What the package does (one paragraph).
-License: What license it uses
+Description: This package combines functions for manual and satellite measurements used in "Structural Change, Land Use and Urban Expansion" by Coerdacier, Oswald and Teignier.
+License: MIT
 Encoding: UTF-8
 LazyData: true
 Imports: 
@@ -29,5 +29,11 @@ Imports:
     ggplot2,
     futile.logger,
     purrr,
-    rgdal
+    rgdal,
+    knitr,
+    kableExtra,
+    pkgdown,
+    here
 RoxygenNote: 7.1.1
+Suggests: 
+    testthat

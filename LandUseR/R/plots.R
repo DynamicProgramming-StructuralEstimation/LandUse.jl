@@ -1,8 +1,20 @@
 
+# Plotting Functions
+
+
 #' Plot distance from center
 #'
-#' usign GHS grid data, plot average density at a certain distance
-#' from the center of a city
+#' using GHS grid data, plot average density at a certain distance
+#' from the center of a city.
+#'
+#' This function uses output of \code{\link{dist_from_center}} and
+#' estimates an exponential decay model via NLS.
+#'
+#' @param city_name vector of city names
+#'
+#' @return list with plots
+#'
+#' @references https://douglas-watson.github.io/post/2018-09_exponential_curve_fitting/
 plot_density_center <- function(city_name = c("Paris","Lyon")){
     d0 = dist_from_center()
     d0[, distance := distance / 1000]
@@ -39,67 +51,30 @@ plot_density_center <- function(city_name = c("Paris","Lyon")){
             ggtitle(paste("Density over time in",ic)) +
             scale_x_continuous(name = "Distance to Center in km")
 
-
-
         ggsave(l[[ic]], filename = file.path(dataplots(),paste0("density-center-",ic,".pdf")))
     }
     l
 }
 
-
-plot_sat_built <- function(){
-    cc = LandUseR:::measure_cities()  # first index level is years
-
-    error("broken")
-
-    ci = bboxes_top100()[LIBGEO %in% tops()]  # 5 cities we want to see
-    out = list()
-    for (ir in 1:nrow(ci)){
-        cci = ci[ir,]
-        # indices 1,2,3,4 are years
-        ss = raster::stack(cc[[1]][[cci$CODGEO]]$built,cc[[2]][[cci$CODGEO]]$built,cc[[3]][[cci$CODGEO]]$built,cc[[4]][[cci$CODGEO]]$built)
-        pngname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.png"))
-        pdfname = file.path(LandUseR:::outdir(),"data","plots",paste0(cci$LIBGEO,"-sat-area.pdf"))
-
-        # plot
-        out[[ir]] = rasterVis::levelplot(ss,xlab = NULL, ylab = NULL, scales=list(draw=FALSE), names.attr=paste0(cci$LIBGEO,' ', LandUseR:::GHS_years()))
-
-        # write
-        png(pngname,width = 1000, height=700, res = 175)
-        print(out[[ir]])
-        dev.off()
-        lattice::trellis.device(pdfname,width = 11,height = 6)
-        print(out[[ir]])
-        dev.off()
-
-
-    }
-    out
-}
-
 #' plot manual vs satellite measurements 2015/2016
 #'
-plot_sat_vs_manual <- function(){
+#' makes a plot to compare our manual area measures in 2016 to the satellite measure in 2015
+plot_sat_vs_manual <- function(w=9,h=6){
     f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
     cf = dcast.data.table(f[year > 2014,list(type, area, LIBGEO)], LIBGEO~ type, value.var = "area")
     cf[ , error := manual - satellite]
-    p = ggplot(dcast.data.table(f[year > 2014,list(type, area, LIBGEO)], LIBGEO~ type, value.var = "area"), aes(x= manual, y = satellite)) + geom_point() + geom_abline(slope=1) + ggtitle("manual (2016) vs satellite (2015) area measures", subtitle = "solid line is slope 1") + scale_x_log10("km2 manual 2016") + scale_y_log10("km2 satellite 2015")
-    ggsave(p, filename = file.path(LandUseR:::outdir(),"data","plots","areas-manual-satellite.pdf"))
+    p = ggplot(dcast.data.table(f[year > 2014,list(type, area, LIBGEO)], LIBGEO~ type, value.var = "area"), aes(x= manual, y = satellite)) + geom_point() + ggtitle("Manual (2016) vs GHSL (2015) Area Measures", subtitle = "solid line is 45 degrees") + scale_x_log10("km2 manual 2016") + scale_y_log10("km2 satellite 2015") + theme_bw() + geom_segment(x = 0,y = 0,xend=1000,yend=1000)
+    ggsave(p, filename = file.path(LandUseR:::outdir(),"data","plots","areas-manual-satellite.pdf"),width = w, height = h)
     p
 }
-
-WIPfunc <- function(){
-    d = ff[, list(pop = median(pop), density = median(density)) , by = list(year,small)]
-    ggplot(d, aes(x = pop, y = density, color = small)) + geom_point() + geom_line()
-    ggplot(d, aes(x = pop, y = density, color = year)) + geom_point() + geom_line()
-    ggplot(d, aes(x = pop, y = density, color = factor(year))) + geom_point() + geom_line()
-}
-
 
 #' plot top 100 cities densities over time
 #' https://github.com/floswald/LandUse.jl/issues/42
 #'
-#'@export
+#' @param w plot width in inches
+#' @param h plot height in inches
+#'
+#' @export
 plot_top100_densities <- function(save = FALSE,w=9,h=6){
     f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
     f[,density := pop / area]
@@ -189,7 +164,6 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
     d = ff[, list(pop = median(pop), density = median(density)) , by = list(year,small)]
     p$xsect[[5]] = ggplot(d, aes(x = pop, y = density, color = small)) + geom_point() + geom_line()
     p$xsect[[6]] = ggplot(d, aes(x = pop, y = density, color = factor(year))) + geom_point() + geom_line()
-    p$xsect[[7]] =
 
     if (save) {
         ggsave(p$violin, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-violins.pdf"))
@@ -205,13 +179,97 @@ plot_top100_densities <- function(save = FALSE,w=9,h=6){
     p
 }
 
+#' plot top 100 cities densities cutoff sensitivity
+#'
+#' @param w plot width in inches
+#' @param h plot height in inches
+#'
+#' @export
+plot_top100_cutoff <- function(save = FALSE,w=9,h=6){
+    # for all files with this structure
+    z = LandUseR:::cutoff_sensitivity()
+    y = lapply(names(z), function(x){
+        y = z[[x]]
+        y[,cutoff := x]
+        y
+    })
+    f = rbindlist(y)
+    f[,density := pop / area]
+    ff = f[,list(LIBGEO,year,density,rank,pop, cutoff)]
+    ff = ff[complete.cases(ff)]
 
+    p = list()
+
+    # aggregate time series
+    d4 = ff[,.(density = median(density),wdensity = weighted.mean(density, w = pop)),by=list(year, cutoff)]
+    fall = d4[,round(max(density)/min(density),0), by = cutoff]
+    wfall = d4[,round(max(wdensity)/min(wdensity),0), by = cutoff]
+    p$ts = ggplot(d4,aes(x=year, y = density, color = cutoff)) +
+        geom_point() +
+        scale_x_continuous(breaks = d4[,year]) +
+        scale_y_continuous(name = "median density (pop / km2)", breaks = c(3000,5000,10000,15000,20000, 25000)) +
+        geom_path(size = 1.1) + theme_bw() +
+        ggtitle("Median Urban Density Cutoff Sensitivity") +
+        theme(panel.grid.minor = element_blank())
+
+    p$ts_w = ggplot(d4,aes(x=year, y = wdensity, color = cutoff)) +
+        geom_point() +
+        scale_x_continuous(breaks = d4[,year]) +
+        scale_y_continuous(name = "weighted mean density (pop / km2)", breaks = c(3000,5000,10000,15000,20000, 25000, 30000,35000)) +
+        geom_path(size = 1.1) + theme_bw() +
+        ggtitle("Mean Urban Density Cutoff Sensitivity") +
+        theme(panel.grid.minor = element_blank()) + labs(caption = "mean weighted by population")
+
+        if (save) {
+            ggsave(p$ts, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-cutoff.pdf"))
+            ggsave(p$ts_w, width = w, height = h,filename = file.path(LandUseR:::outdir(),"data","plots","densities-time-wtd-cutoff.pdf"))
+        }
+    p
+}
+
+
+#' Plot GHSL Built Grids
+#'
+#' make plots for top 5 cities
+#'
+GHSL_plots <- function(){
+    L = LandUseR:::measure_cities()$cropped
+    ns = names(L[["1975"]])[1:5]
+
+    OL = list()
+    for (ci in ns) {
+        name = L[["1975"]][[ci]]$cityname
+        ss = raster::stack(L[["1975"]][[ci]]$built,
+                           L[["1990"]][[ci]]$built,
+                           L[["2000"]][[ci]]$built,
+                           L[["2015"]][[ci]]$built
+                           )
+        OL[[ci]] = rasterVis::levelplot(ss,
+                                  xlab = NULL,
+                                  ylab = NULL,
+                                  scales=list(draw=FALSE),
+                                  names.attr=paste0(name,' ', LandUseR:::GHS_years()))
+        lattice::trellis.device(pdf, file=file.path(dataplots(),paste0("GHSL-Built-",name,".pdf")),height=7, width=8)
+        print(OL[[ci]])
+        dev.off()
+    }
+    OL
+}
+
+
+#' Write Paris Arrondissement Areas to Disk
+#'
 write_paris_areas <- function(){
     sh = sf::st_read(file.path("~/git/intro-to-r/data","CONTOURS-IRIS","1_DONNEES_LIVRAISON_2018-06-00105","CONTOURS-IRIS_2-1_SHP_LAMB93_FXX-2017","CONTOURS-IRIS.shp"),stringsAsFactors=FALSE)
     a=sh %>% filter(INSEE_COM > 75100 & INSEE_COM < 75121) %>% group_by(INSEE_COM) %>% summarise(n=n()) %>% mutate(area = units::set_units(sf::st_area(.), km^2), CODGEO = INSEE_COM) %>% sf::st_set_geometry(NULL) %>% dplyr::select(CODGEO,area)
     saveRDS(a, file.path(LandUseR:::datadir(),"paris-areas.Rds"))
 }
 
+
+#' Plot Density for Central vs Fringe Paris
+#'
+#' Reads area data from \code{\link{write_paris_areas}}, merges with paris census data
+#' and computes densitiy for each arrondissement over time.
 plot_paris_densities <- function(){
     a = readRDS(file.path(LandUseR:::datadir(),"paris-areas.Rds"))
     p = readpop() %>%
@@ -274,3 +332,40 @@ plot_sat_densities <- function(){
 
 }
 
+
+plot_paris <- function(d){
+    pl = d %>%
+        dplyr::filter(DEP == 75) %>%
+        dplyr::mutate(Arrond = as.factor(as.numeric(CODGEO)-75100)) %>%
+        ggplot2::ggplot(aes(x = year, y = population, group = CODGEO, color = Arrond)) + ggplot2::geom_line(size=1.1) + ggplot2::scale_y_continuous(labels = scales::comma) + ggplot2::labs(title = "Central Paris Population by Arrondissement",subtitle = "Equivalent to `Density` (Area is constant)") + ggplot2::theme_bw()
+    ggplot2::ggsave(file.path(outdir(),"plots","paris.pdf"),plot = pl, width = 8, height = 6)
+    pl
+
+}
+
+
+
+
+#' Plot Reims
+#'
+#' make plot for motivation of slides
+plot_reims <- function(){
+    p = readpop()
+    y=p %>% dplyr::filter(CODGEO=="51454", year %in% c(1876,2015))
+    y %<>% dplyr::mutate(area = c(50.52,3.29),density = population / area)
+    d1 = data.table(variable = c("population","area","density"), increase = unlist(c(y[1,"population"] / y[2,"population"], y[1,"area"] / y[2,"area"], NA)))
+
+
+    d2 = data.table(variable = factor(c("population","area","density"), levels = c("population","area","density")), increase = unlist(c(y[1,"population"] / y[2,"population"], y[1,"area"] / y[2,"area"], -y[2,"density"] / y[1,"density"])))
+
+    cols <- c("area" = "red", "population" = "green", "density" = "grey")
+
+    p1 = ggplot(d1,aes(x=variable,increase)) + geom_col(aes(fill=variable),alpha=0.6,color = "black") + theme_bw() + scale_fill_manual(values = cols) + scale_y_continuous(name = "Increased by Factor",limits = c(-10,16),breaks = c(-7,0,3,10,15),minor_breaks = NULL) + geom_hline(yintercept = 0,size = 1) + ggtitle("Reims from 1866 to 2015")  + scale_x_discrete(name = "") + theme(legend.position = "none")
+
+    p2 = ggplot(d2,aes(x=variable,increase)) + geom_col(aes(fill=variable),alpha=0.6,color = "black") + theme_bw() + scale_fill_manual(values = cols) + scale_y_continuous(name = "Increased by Factor",limits = c(-10,16),breaks = c(-7,0,3,10,15),minor_breaks = NULL) + geom_hline(yintercept = 0,size = 1) + ggtitle("Reims from 1866 to 2015") + scale_x_discrete(name = "")+ theme(legend.position = "none")
+
+    ggsave(plot = p1, filename=file.path(dataplots(),"reims1.pdf"),width=7,height=5)
+    ggsave(plot = p2, filename=file.path(dataplots(),"reims2.pdf"),width=7,height=5)
+
+    return(list(p1,p2))
+}

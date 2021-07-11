@@ -1,4 +1,9 @@
 
+# This file has functionality to define city populations manually.
+
+
+
+
 #' Compute French 1954 City Population
 #'
 #' This function aggregates `communes` into greater urban areas according to our own definition.
@@ -98,6 +103,7 @@ pop_1950_2 <- function(overwrite = FALSE){
         xp[,population := NULL]
 
         saveRDS(xp, file.path(datadir(),"top100bbox.Rds"))
+        saveRDS(cc, file.path(datadir(),"top100bbox-components.Rds"))
 
     } else {
         xp = readRDS(file.path(datadir(),"top100bbox.Rds"))
@@ -105,9 +111,25 @@ pop_1950_2 <- function(overwrite = FALSE){
     xp
 }
 
+#' Print France 1950 Population to Latex
+#'
+#'
+print_pop_1950 <- function(){
+    x = readRDS(file.path(datadir(),"top100bbox-components.Rds"))
+    y = x[!(unlist(lapply(components,is.null))), !"population"]
+    ta = knitr::kable(y, format = "latex",
+                      booktabs = TRUE,
+                      longtable = FALSE,
+                      caption = "France 1950 Population Classification. Cities containing more than one INSEE administrative area by 1950.",
+                      label = "france-1950-pop"
+    ) %>% kableExtra::column_spec(4, width = "10cm")
+    # cat(kableExtra::landscape(ta), file = file.path(LandUseR:::datatables(), "france-pop-1950.tex"))
+    cat(ta, file = file.path(LandUseR:::datatables(), "france-pop-1950.tex"))
+}
 
 
-#' sum city populaiotn over communes
+
+#' sum city population over communes
 #'
 #' assumes that list of communes li has the main city as first entry!
 sum_city <- function(dt,li){
@@ -118,122 +140,17 @@ sum_city <- function(dt,li){
 
 
 
-pop_1950 <- function(p){
-
-    pp = as.data.table(p)
-
-    li = list()
-    li[[1]] = pp[DEP == 13 & year == 1954 & grepl("Marseille",LIBGEO)]
-
-    #Only half of Caluire-et-Cuire is taken in the measurements. I thought of including it as I am guessing that most of the population is close to Lyon anyway
-    lyon <- c("Lyon","Villeurbanne","Caluire-et-Cuire", "Oullins")
-    li[[2]] <- sum_city(pp[DEP==69 & year==1954 & LIBGEO %in% lyon], lyon)
-
-    # https://www.toulouse-metropole.fr/collectivite/communes
-    # https://www.plan.toulouse.fr/map/?t=TOULOUSE_METROPOLE
-    li[[3]] <- pp[DEP==31 & year==1954 & CODGEO == "31555"]
-
-    # https://fr.wikipedia.org/wiki/Nice#Localisation
-    nice <- c("Nice")
-    li[[4]] <- pp[DEP==6 & year==1954 & LIBGEO == "Nice"]
-
-    nantes <- c("Nantes", "Rezé")
-    li[[5]] <- sum_city(pp[DEP==44 & year==1954 & LIBGEO %in% nantes],nantes)
-
-    strasbourg <- c("Strasbourg","Schiltigheim","Bischheim", "Hoenheim")
-    li[[6]] <- sum_city(pp[DEP==67 & year==1954 & LIBGEO %in% strasbourg],strasbourg)
-
-    montpellier <- c("Montpellier")
-    li[[7]] <- pp[DEP==34 & year==1954 & LIBGEO %in% montpellier]
-
-    bordeaux <- c("Bordeaux","Talence","Bègles","Le Bouscat") #As with Tours, Caudéran was a commune until 1965
-    li[[8]] <- sum_city(pp[DEP==33 & year==1954 & LIBGEO %in% bordeaux],bordeaux)
-
-    lille <- c("Lille","La Madeleine")
-    li[[9]] <- sum_city(pp[DEP==59 & year==1954 & LIBGEO %in% lille],lille)
-
-    rennes <- c("Rennes")
-    li[[10]] <- pp[DEP==35 & year==1954 & LIBGEO %in% rennes]
-
-    reims <- c("Reims", "Cormontreuil") #As with Tours the town of Neuvillette was included in Reims since 1970 but is not in the list
-    li[[11]] <- sum_city(pp[DEP==51 & year==1954 & LIBGEO %in% reims],reims)
-
-    lehavre <- c("Le Havre", "Sainte-Adresse")
-    li[[12]] <- sum_city(pp[DEP==76 & year==1954 & LIBGEO %in% lehavre],lehavre)
-
-    saintetienne <- c("Saint-Étienne")
-    li[[13]] <- pp[DEP==42 & year==1954 & LIBGEO %in% saintetienne]
-
-    toulon <- c("Toulon", "La Valette-du-Var")
-    li[[14]] <- sum_city(pp[DEP==83 & year==1954 & LIBGEO %in% toulon],toulon)
-
-    grenoble <- c("Grenoble")
-    li[[15]] <- pp[DEP==38 & year==1954 & LIBGEO %in% grenoble]
-
-    dijon <- c("Dijon")
-    li[[16]] <- pp[DEP==21 & year==1954 & LIBGEO %in% dijon]
-
-    nimes <- c("Nîmes")
-    li[[17]] <- pp[DEP==30 & year==1954 & LIBGEO %in% nimes]
-
-    angers <- c("Angers")
-    li[[18]] <- pp[DEP==49 & year==1954 & LIBGEO %in% angers]
-
-    lemans <- c("Le Mans")
-    li[[19]] <- pp[DEP==72 & year==1954 & LIBGEO %in% lemans]
-
-    aixenprovence <- c("Aix-en-Provence")
-    li[[20]] <- pp[DEP==13 & year==1954 & LIBGEO %in% aixenprovence]
-
-    clermontferrand <- c("Clermont-Ferrand", "Chamalières")
-    li[[21]] <- sum_city(pp[DEP==63 & year==1954 & LIBGEO %in% clermontferrand],clermontferrand)
-
-    brest <- c("Brest")
-    li[[22]] <- pp[DEP==29 & year==1954 & LIBGEO %in% brest]
-
-    limoges <- c("Limoges")
-    li[[23]] <- pp[DEP==87 & year==1954 & LIBGEO %in% limoges]
-
-    tours <- c("Tours") #St Symphorien and St Radegonde are not in the list of the 1954 cities even though they were incorporated only in 1964 in Tours
-    li[[24]] <- pp[DEP==37 & year==1954 & LIBGEO %in% tours]
-
-    amiens <- c("Amiens")
-    li[[25]] <- pp[DEP==80 & year==1954 & LIBGEO %in% amiens]
-
-    perpignan <- c("Perpignan")
-    li[[26]] <- pp[DEP==66 & year==1954 & LIBGEO %in% perpignan]
-
-    metz <- c("Metz", "Montigny-lès-Metz", "Longeville-lès-Metz")
-    li[[27]] <- sum_city(pp[DEP==57 & year==1954 & LIBGEO %in% metz],metz)
-
-    orleans <- "Orléans"
-    li[[28]] <- pp[DEP==45 & year==1954 & LIBGEO %in% orleans]
-
-    besancon <- "Besançon"
-    li[[29]] <- pp[grepl("Besan",LIBGEO) & year == 1954]
-
-    pa=LandUseR:::get_paris_pop_1950(p)
-    li[[30]] <- pp[CODGEO == "75101" & year == 1954]
-    li[[30]][,c("CODGEO","LIBGEO","population") := list("75000", "Paris", sum(pa$population))]
-
-    caen <- "Caen"
-    li[[31]] <- pp[DEP==14 & year==1954 & LIBGEO %in% caen]
-
-    li[[32]] <- pp[LIBGEO %in% "Nancy" & year==1954]
-    li[[33]] <- pp[LIBGEO %in% "Mulhouse" & year==1954]
-    li[[34]] <- pp[LIBGEO %in% "Rouen" & year==1954]
-    li[[35]] <- pp[LIBGEO %in% "Dunkerque" & year==1954]
-    li[[36]] <- pp[LIBGEO %in% "Pau" & year==1954]
-
-    rbindlist(li)
-}
-
-
-
+#' Get Paris Population in 1950
+#'
+#' Our definition of Paris is much greater than the administrative boundary of the City of Paris in 1950.
+#'
+#' We manually check which surrounding communities fall within our classification of the Paris area in 1950 and
+#' add the name of those communities to our list of constituting jurisdictions making up the greater Paris population.
+#' Paris region candidate communes from https://fr.wikipedia.org/wiki/Réorganisation_de_la_région_parisienne_en_1964.
+#' These are *all* the communes. Some will not be part of our delineation of Paris.
+#' need to check manually one by one against our screen shot of the Paris area in 1950.
 get_paris_pop_1950 <- function(p){
-    # paris region candidate communes from https://fr.wikipedia.org/wiki/Réorganisation_de_la_région_parisienne_en_1964
-    # these are *all* the communes. Some will not be part of our delineation of Paris.
-    # need to check manually one by one against our screen shot of the Paris area in 1950.
+
     haute_seine_92 <- c("Antony", "Asnières-sur-Seine", "Bagneux", "Bois-Colombes", "Boulogne-Billancourt", "Bourg-la-Reine", "Châtenay-Malabry", "Châtillon", "Chaville", "Clamart", "Clichy", "Colombes", "Courbevoie", "Fontenay-aux-Roses", "Garches", "La Garenne-Colombes", "Gennevilliers", "Issy-les-Moulineaux", "Levallois-Perret", "Malakoff", "Marnes-la-Coquette", "Meudon", "Montrouge", "Nanterre", "Neuilly-sur-Seine", "Le Plessis-Robinson", "Puteaux", "Rueil-Malmaison", "Saint-Cloud", "Sceaux", "Sèvres", "Suresnes", "Vanves", "Vaucresson", "Ville-d'Avray", "Villeneuve-la-Garenne")
 
     p92 = p %>%
@@ -275,6 +192,23 @@ get_paris_pop_1950 <- function(p){
 
     paris_1954 <- dplyr::bind_rows(p75,p93_paris,p94_paris,p92_paris)
     return(paris_1954)
+}
+
+
+#' Print Paris 1950 Population to Latex
+#'
+#'
+print_paris_pop_1950 <- function(){
+    p0 = readpop()
+    p = as.data.table(p0)
+    x = LandUseR:::get_paris_pop_1950(p)
+    ta = knitr::kable(x, format = "latex",
+                      booktabs = TRUE,
+                      longtable = TRUE,
+                      caption = "Paris 1950 Population Classification",
+                      label = "paris-1950-pop"
+                      )
+    cat(kableExtra::kable_styling(ta,latex_options = c("repeat_header")), file = file.path(LandUseR:::datatables(), "paris-pop-1950.tex"))
 }
 
 
@@ -407,238 +341,17 @@ merge_centers <- function(overwrite = FALSE){
             mutate(center_x = cc[ ,"X"], center_y = cc[ ,"Y"]) %>%
             sf::st_set_geometry(NULL)
 
-
         bb_cl = merge(bb, cl, by.x = "CODGEO", by.y = "insee_com", all.x = FALSE)
         paris = sf::st_as_sf(data.frame(x = 2.349020, y = 48.853481),coords = c("x","y"), crs = 4326) %>%
             sf::st_transform(raster_crs) %>%
             sf::st_coordinates()
         bb_cl = rbind(bb_cl,bb[LIBGEO == "Paris",list(LIBGEO,CODGEO,extent, center_x = paris[,"X"], center_y = paris[,"Y"],nom_chf = "Notre Dame")] )
-        saveRDS(bb_cl, file.path(datadir(), "IGN-chef-lieux.RDS"))
+        saveRDS(bb_cl, file.path(instindir(), "IGN-chef-lieux.RDS"))
         bb_cl
 
     } else {
-        readRDS(file.path(datadir(), "IGN-chef-lieux.RDS"))
+        readRDS(file.path(instoutdir(), "IGN-chef-lieux.RDS"))
     }
 }
 
 # archive
-# get_pop_1950_lyon <- function(){
-#     pp=as.data.table(readpop())
-#     lyon <- c("Lyon","Villeurbanne","Caluire-et-Cuire", "Oullins") #Only half of Caluire-et-Cuire is taken in the measurements. I thought of including it as I am guessing that most of the population is close to Lyon anyway
-#     pop_lyon_table=pp[DEP==69 & year==1954 & LIBGEO %in% lyon]
-#     pop_lyon=pop_lyon_table[,sum(population)]
-#     return(pop_lyon)
-# }
-#
-# get_pop_1950_toulouse <- function(){
-#     pp=as.data.table(readpop())
-#     toulouse <- c("Toulouse")
-#     pop_toulouse_table=pp[DEP==31 & year==1954 & LIBGEO %in% toulouse]
-#     pop_toulouse=pop_toulouse_table[,sum(population)]
-#     return(pop_toulouse)
-# }
-#
-# get_pop_1950_nice <- function(){
-#     pp=as.data.table(readpop())
-#     nice <- c("Nice")
-#     pop_nice_table=pp[DEP==6 & year==1954 & LIBGEO %in% nice]
-#     pop_nice=pop_nice_table[,sum(population)]
-#     return(pop_nice)
-# }
-#
-# get_pop_1950_nantes <- function(){
-#     pp=as.data.table(readpop())
-#     nantes <- c("Nantes", "Rezé")
-#     pop_nantes_table=pp[DEP==44 & year==1954 & LIBGEO %in% nantes]
-#     pop_nantes=pop_nantes_table[,sum(population)]
-#     return(pop_nantes)
-# }
-#
-# get_pop_1950_strasbourg <- function(){
-#     pp=as.data.table(readpop())
-#     strasbourg <- c("Strasbourg","Schiltigheim","Bischheim", "Hoenheim")
-#     pop_strasbourg_table=pp[DEP==67 & year==1954 & LIBGEO %in% strasbourg]
-#     pop_strasbourg=pop_strasbourg_table[,sum(population)]
-#     return(pop_strasbourg)
-# }
-#
-# get_pop_1950_montpellier <- function(){
-#     pp=as.data.table(readpop())
-#     montpellier <- c("Montpellier")
-#     pop_montpellier_table=pp[DEP==34 & year==1954 & LIBGEO %in% montpellier]
-#     pop_montpellier=pop_montpellier_table[,sum(population)]
-#     return(pop_montpellier)
-# }
-#
-# get_pop_1950_bordeaux <- function(){
-#     pp=as.data.table(readpop())
-#     bordeaux <- c("Bordeaux","Talence","Bègles","Le Bouscat") #As with Tours, Caudéran was a commune until 1965
-#     pop_bordeaux_table=pp[DEP==33 & year==1954 & LIBGEO %in% bordeaux]
-#     pop_bordeaux=pop_bordeaux_table[,sum(population)]
-#     return(pop_bordeaux)
-# }
-#
-# get_pop_1950_lille <- function(){
-#     pp=as.data.table(readpop())
-#     lille <- c("Lille","La Madeleine")
-#     pop_lille_table=pp[DEP==59 & year==1954 & LIBGEO %in% lille]
-#     pop_lille=pop_lille_table[,sum(population)]
-#     return(pop_lille)
-# }
-#
-# get_pop_1950_rennes <- function(){
-#     pp=as.data.table(readpop())
-#     rennes <- c("Rennes")
-#     pop_rennes_table=pp[DEP==35 & year==1954 & LIBGEO %in% rennes]
-#     pop_rennes=pop_rennes_table[,sum(population)]
-#     return(pop_rennes)
-# }
-#
-# get_pop_1950_reims <- function(){
-#     pp=as.data.table(readpop())
-#     reims <- c("Reims", "Cormontreuil") #As with Tours the town of Neuvillette was included in Reims since 1970 but is not in the list
-#     pop_reims_table=pp[DEP==51 & year==1954 & LIBGEO %in% reims]
-#     pop_reims=pop_reims_table[,sum(population)]
-#     return(pop_reims)
-# }
-#
-# get_pop_1950_lehavre <- function(){
-#     pp=as.data.table(readpop())
-#     lehavre <- c("Le Havre", "Sainte-Adresse")
-#     pop_lehavre_table=pp[DEP==76 & year==1954 & LIBGEO %in% lehavre]
-#     pop_lehavre=pop_lehavre_table[,sum(population)]
-#     return(pop_lehavre)
-# }
-#
-# get_pop_1950_saintetienne <- function(){
-#     pp=as.data.table(readpop())
-#     saintetienne <- c("Saint-Étienne")
-#     pop_saintetienne_table=pp[DEP==42 & year==1954 & LIBGEO %in% saintetienne]
-#     pop_saintetienne=pop_saintetienne_table[,sum(population)]
-#     return(pop_saintetienne)
-# }
-#
-# get_pop_1950_toulon <- function(){
-#     pp=as.data.table(readpop())
-#     toulon <- c("Toulon", "La Valette-du-Var")
-#     pop_table=pp[DEP==83 & year==1954 & LIBGEO %in% toulon]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_grenoble <- function(){
-#     pp=as.data.table(readpop())
-#     grenoble <- c("Grenoble")
-#     pop_table=pp[DEP==38 & year==1954 & LIBGEO %in% grenoble]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_dijon <- function(){
-#     pp=as.data.table(readpop())
-#     dijon <- c("Dijon")
-#     pop_table=pp[DEP==21 & year==1954 & LIBGEO %in% dijon]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_nimes <- function(){
-#     pp=as.data.table(readpop())
-#     nimes <- c("Nîmes")
-#     pop_table=pp[DEP==30 & year==1954 & LIBGEO %in% nimes]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_angers <- function(){
-#     pp=as.data.table(readpop())
-#     angers <- c("Angers")
-#     pop_table=pp[DEP==49 & year==1954 & LIBGEO %in% angers]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_lemans <- function(){
-#     pp=as.data.table(readpop())
-#     lemans <- c("Le Mans")
-#     pop_table=pp[DEP==72 & year==1954 & LIBGEO %in% lemans]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_saintdenis <- function(){
-#     pp=as.data.table(readpop())
-#     saintdenis <- c("Saint-Denis") #Attention: I refer to the Ile de la Reunion one, so DEP==974
-#     pop_table=pp[DEP==974 & year==1954 & LIBGEO %in% saintdenis]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_aixenprovence <- function(){
-#     pp=as.data.table(readpop())
-#     aixenprovence <- c("Aix-en-Provence")
-#     pop_table=pp[DEP==13 & year==1954 & LIBGEO %in% aixenprovence]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_clermontferrand <- function(){
-#     pp=as.data.table(readpop())
-#     clermontferrand <- c("Clermont-Ferrand", "Chamalières")
-#     pop_table=pp[DEP==63 & year==1954 & LIBGEO %in% clermontferrand]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_brest <- function(){
-#     pp=as.data.table(readpop())
-#     brest <- c("Brest")
-#     pop_table=pp[DEP==29 & year==1954 & LIBGEO %in% brest]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_limoges <- function(){
-#     pp=as.data.table(readpop())
-#     limoges <- c("Limoges")
-#     pop_table=pp[DEP==87 & year==1954 & LIBGEO %in% limoges]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_tours <- function(){
-#     pp=as.data.table(readpop())
-#     tours <- c("Tours") #St Symphorien and St Radegonde are not in the list of the 1954 cities even though they were incorporated only in 1964 in Tours
-#     pop_table=pp[DEP==37 & year==1954 & LIBGEO %in% tours]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_amiens <- function(){
-#     pp=as.data.table(readpop())
-#     amiens <- c("Amiens")
-#     pop_table=pp[DEP==80 & year==1954 & LIBGEO %in% amiens]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_perpignan <- function(){
-#     pp=as.data.table(readpop())
-#     perpignan <- c("Perpignan")
-#     pop_table=pp[DEP==66 & year==1954 & LIBGEO %in% perpignan]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# get_pop_1950_metz <- function(){
-#     pp=as.data.table(readpop())
-#     metz <- c("Metz", "Montigny-lès-Metz", "Longeville-lès-Metz")
-#     pop_table=pp[DEP==57 & year==1954 & LIBGEO %in% metz]
-#     pop=pop_table[,sum(population)]
-#     return(pop)
-# }
-#
-# ### FINAL NOTES ###
-#
-# # We should review how population is computed in 2016, some of the trajectories are not credible (see Bordeaux).
-# # We should recompute Paris in 1850, it's bigger than just Paris (already inglobating other towns)
