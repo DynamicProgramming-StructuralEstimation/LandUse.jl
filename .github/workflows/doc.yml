@@ -49,13 +49,22 @@ jobs:
       - name: R Install dependencies
         run: |
           remotes::install_deps(pkgdir = "LandUseR",dependencies = TRUE)
+          remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
 
       - name: R Install package
         run: R CMD INSTALL LandUseR
 
+      - name: Check
+        env:
+          _R_CHECK_CRAN_INCOMING_REMOTE_: false
+        run: |
+          options(crayon.enabled = TRUE)
+          rcmdcheck::rcmdcheck(path = "LandUseR", args = c("--no-manual", "--as-cran"), error_on = "error", check_dir = "check")
+        shell: Rscript {0}
+
       - name: build R docs
-        run: Rscript -e 'pkgdown::build_site(pkg = "./LandUseR")'
+        run: Rscript -e 'pkgdown::build_site(pkg = "/Users/runner/work/LandUse.jl/LandUseR")'
 
       - name: build julia project
         run: |

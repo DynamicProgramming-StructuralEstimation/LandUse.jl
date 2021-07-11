@@ -32,7 +32,8 @@ Imports:
     rgdal,
     knitr,
     kableExtra,
-    pkgdown
+    pkgdown,
+    here
 RoxygenNote: 7.1.1
 Suggests: 
     testthat
