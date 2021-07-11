@@ -36,7 +36,6 @@ module LandUse
 	using DelimitedFiles
 	using BSON
 	using Flux
-	using Latexify
 	using GLM
 	using FileIO
 	using StatsBase
