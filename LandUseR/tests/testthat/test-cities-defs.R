@@ -3,7 +3,7 @@ context("city definitions")
 
 x = LandUseR:::merge_centers(overwrite = FALSE)
 test_that("city center of Niort", {
-    s = sf::st_as_sf(x[LIBGEO %in% c("Niort","Limoges","Rouen"), list(LIBGEO, CODGEO, center_x, center_y)], coords = c("center_x","center_y"), crs = LandUseR:::get_raster_CRS()) %>%
+    s = sf::st_as_sf(x[LIBGEO %in% c("Niort","Limoges","Rouen"), list(LIBGEO, CODGEO, center_x, center_y)], coords = c("center_x","center_y"), crs = "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs") %>%
         sf::st_transform(4326)
 
     mairies = data.frame(LIBGEO = c("Niort","Limoges","Rouen"), x = c(-0.465020, 1.260870, 1.099697), y = c(46.323658, 45.826664, 49.443339) )
