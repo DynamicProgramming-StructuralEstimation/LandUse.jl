@@ -120,7 +120,7 @@ function objective(x; moments = false, plot = false, save = false)
     di = x2dict(x)
 
     p = Param(par = di, use_estimatedθ = false)
-    try
+    # try
         # find index of year 2020
         i1870 = argmin( abs.(p.moments.year .- 1870) )
         i1900 = argmin( abs.(p.moments.year .- 1900) )
@@ -192,9 +192,7 @@ function objective(x; moments = false, plot = false, save = false)
                 po = dashboard(M1,p1,i2020, objvalue = vv)
                 if save 
                     savefig(po, joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf")) 
-                    open(joinpath(dbtables,"moments.tex"),"w") do f
-                        print(f,latexify(da, fmt = "%.3f",env = :table))
-                    end
+                    latex_moments(da)
                 end
                 return (vv , da, po)
             else
@@ -206,10 +204,26 @@ function objective(x; moments = false, plot = false, save = false)
         end
 
         
-    catch 
-        # @info "error at $(di)"
-        return Inf
-    end
+    # catch 
+    #     # @info "error at $(di)"
+    #     return Inf
+    # end
+end
+
+function latex_moments(d::DataFrame)
+
+    sanitize(x) = replace(x, "_" => "\\_")
+    getline(x;digits = 4) = [sanitize(x[:moment]), round(x[:data],digits = digits), round(x[:model],digits = digits), x[:weights]]
+
+	latex_tabular(joinpath(dbtables,"moments.tex"), Tabular("l D{.}{.}{1.3}@{}  D{.}{.}{3.3}@{}  D{.}{.}{8.2}@{}"), [
+	   Rule(:top),
+       ["Moment", MultiColumn(1,:c,"Data"), MultiColumn(1,:r,"Model") , MultiColumn(1,:r,"Weight")],
+       Rule(:mid),
+       [getline(i) for i in eachrow(d)]...,
+       Rule(:bottom)
+	   ]
+	)
+
 end
 
 function runestim(;steps = 1000)

@@ -35,7 +35,6 @@ module fl
         x = (input .- mean(input, dims = 2)) ./ std(input, dims = 2)
         y = (output .- mean(output, dims = 2)) ./ std(output, dims = 2)
 
-
         n = size(input)[2]
 
         # split into training and testing
