@@ -20,7 +20,7 @@ pipe <- function(overwrite = FALSE){
 #' By default selects the version with `cutoff = 30`
 #' @export
 read_output <- function(cutoff = 30){
-    readRDS(file.path(outdatadir(),paste0("france_final_cutoff",30,".Rds")))
+    readRDS(file.path(instoutdir(),paste0("france_final_cutoff",30,".Rds")))
 }
 
 #' Show Relative population and area

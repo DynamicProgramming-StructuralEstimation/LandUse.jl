@@ -41,8 +41,9 @@ get_manuals <- function(reload = FALSE){
         sd[,which_city_2016 := NULL]
         sd[ , rank := order(pop_1876,decreasing = TRUE)]
         saveRDS(sd,file = file.path(datadir(),"top100.Rds"))
+        saveRDS(sd,file = file.path(instindir(),"top100.Rds"))
     } else {
-        sd = readRDS(file = file.path(datadir(),"top100.Rds"))
+        sd = readRDS(file = file.path(instoutdir(),"top100.Rds"))
     }
     sd
 

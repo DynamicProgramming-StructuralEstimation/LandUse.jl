@@ -1,7 +1,7 @@
 
 context("city definitions")
 
-x = LandUseR:::merge_centers(overwrite = TRUE)
+x = LandUseR:::merge_centers(overwrite = FALSE)
 test_that("city center of Niort", {
     s = sf::st_as_sf(x[LIBGEO %in% c("Niort","Limoges","Rouen"), list(LIBGEO, CODGEO, center_x, center_y)], coords = c("center_x","center_y"), crs = LandUseR:::get_raster_CRS()) %>%
         sf::st_transform(4326)

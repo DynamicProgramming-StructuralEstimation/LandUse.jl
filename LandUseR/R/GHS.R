@@ -233,6 +233,7 @@ combine_measures <- function(overwrite = FALSE,cutoff = 30){
     z = rbind(m,m2,fill = TRUE)
     setkey(z, year, rank)
     saveRDS(z, file.path(LandUseR:::outdir(),"data",paste0("france_final_cutoff",cutoff,".Rds")) )
+    saveRDS(z, file.path(instindir(),paste0("france_final_cutoff",cutoff,".Rds")) )  # write to package internatl store
     fwrite(z[,!"extent"],  file.path(LandUseR:::outdir(),"data",paste0("france_final_cutoff",cutoff,".csv")))
     z
 }

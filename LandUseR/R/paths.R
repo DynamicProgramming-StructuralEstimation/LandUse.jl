@@ -14,3 +14,5 @@ entddir <- function(){file.path(datadir(),"ENTD")}
 
 outdir <- function(){file.path(dboxdir(),"output")}
 outdatadir <- function(){file.path(dboxdir(),"output","data")}
+instoutdir <- function(){system.file("data",package = "LandUseR")}
+instindir <- function(){file.path(here::here(),"inst","data")}

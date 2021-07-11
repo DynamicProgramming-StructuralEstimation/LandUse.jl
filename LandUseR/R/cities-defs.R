@@ -346,11 +346,11 @@ merge_centers <- function(overwrite = FALSE){
             sf::st_transform(raster_crs) %>%
             sf::st_coordinates()
         bb_cl = rbind(bb_cl,bb[LIBGEO == "Paris",list(LIBGEO,CODGEO,extent, center_x = paris[,"X"], center_y = paris[,"Y"],nom_chf = "Notre Dame")] )
-        saveRDS(bb_cl, file.path(datadir(), "IGN-chef-lieux.RDS"))
+        saveRDS(bb_cl, file.path(instindir(), "IGN-chef-lieux.RDS"))
         bb_cl
 
     } else {
-        readRDS(file.path(datadir(), "IGN-chef-lieux.RDS"))
+        readRDS(file.path(instoutdir(), "IGN-chef-lieux.RDS"))
     }
 }
 
