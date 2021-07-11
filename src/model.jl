@@ -176,6 +176,7 @@ function show(io::IO, ::MIME"text/plain", m::Model)
     print(io,"    θr    : $(m.θr  ) \n")
     print(io,"    ϕ    : $(m.ϕ  ) \n")
     print(io,"    cityarea    : $(m.cityarea  ) \n")
+    print(io,"    rel_cityarea    : $(rel_cityarea(m))\n")
     print(io,"    Sr   : $(m.Sr ) \n")
     print(io,"    Srh  : $(m.Srh) \n")
     print(io,"    ρr   : $(m.ρr ) \n")
@@ -190,13 +191,21 @@ end
 
 function show(io::IO, m::Model)
     # print(io,"Region: ϕ=$(round(m.ϕ,digits=3)), pop=$(pop(m)), area=$(round(area(m),digits=2))")
-    @printf(io,"Region: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f, pr=%1.3f",m.θu, m.θr, m.ϕ, area(m), m.Lu, m.Lr,pop(m),m.pr)
+    @printf(io,"Region: θu=%1.3f, θr=%1.3f, ϕ=%1.4f, area=%1.2f, rel_cityarea=%1.2f, Lu=%1.3f, Lr=%1.3f, pop=%1.3f, pr=%1.3f",m.θu, m.θr, m.ϕ, area(m), rel_cityarea(m), m.Lu, m.Lr,pop(m),m.pr)
 end
 
 
 pop(m::Model) = m.Lu + m.Lr
 cityarea(m::Model) = m.ϕ^2 * π
 area(m::Model) = cityarea(m) + m.Sr + m.Srh
+
+"""
+	rel_cityarea(m::Model)
+
+Computes city area relative to total rural land use. This is the model moment related to the data moment *artificialized land relative to agricultural land in 2015*.
+We measure this to be 18.3% in the data.
+"""
+rel_cityarea(m::Model) = cityarea(m) / (m.Sr + m.Srh)
 
 
 """
