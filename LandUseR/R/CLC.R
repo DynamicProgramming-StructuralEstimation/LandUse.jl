@@ -4,7 +4,8 @@
 
 #' Crop CLC 2018 raster to 2015 French Cities
 #'
-#' load CLC raster and cut out our bounding boxes of French cities
+#' load CLC raster and cut out our bounding boxes of French cities.
+#' Boxes are obtained via \code{\link{measure_cities}}
 CLC_bboxes <- function(overwrite = FALSE){
     if (overwrite) {
         ms = measure_cities()$cropped$`2015`
@@ -62,7 +63,7 @@ CLC_read_legend <- function(){
 
 #' Measure Landuse Around Cities with CLC
 #'
-#' takes cropped CLC rasters for top 100 cities and counts the proportion of land
+#' takes cropped CLC rasters from \code{\link{CLC_bboxes}} for top 100 cities and counts the proportion of land
 #' outside city falling into each category
 #'
 CLC_measure <- function(){

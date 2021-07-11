@@ -17,9 +17,10 @@ pipe <- function(overwrite = FALSE){
 
 #' Read main output table
 #'
+#' By default selects the version with `cutoff = 30`
 #' @export
-read_output <- function(){
-    readRDS(file.path(outdatadir(),"france_final.Rds"))
+read_output <- function(cutoff = 30){
+    readRDS(file.path(instoutdir(),paste0("france_final_cutoff",30,".Rds")))
 }
 
 #' Show Relative population and area
@@ -37,6 +38,12 @@ relative_pop_area <- function(cities = top5now(), overwrite = FALSE){
     }
 }
 
+#' Main Population Count Output File
+#'
+#' reads output of manual and satellite measures via \code{\link{read_output}}
+#' and amends Paris Population to also include the Seine department as well before WW2.
+#'
+#' The csv output of this file is used in the model.
 pop_allyears <- function(){
     x = read_output()
     p0 = data.table(readpop())
