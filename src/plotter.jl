@@ -241,7 +241,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false, objvalue = nothing)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")         , ylims = (-0.1 , 15)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")     , ylims = (-0.1 , 10)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")         , ylims = (0.5  , 5.5) , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
-		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log1010, yscale = :log1010, annotations = manno)
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, annotations = manno)
 	else
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
 		d[:D] = Plots.scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
@@ -250,7 +250,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false, objvalue = nothing)
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
-		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log1010, yscale = :log1010, annotations = manno)
+		d[:mode] = plot(lvec0 , md , title = latexstring("mode(l,$(ti))")       , linewidth = 2 , leg = false , xlab = "distance (log scale)" , xscale = :log10, yscale = :log10, annotations = manno)
 	end
 	d
 end
@@ -384,7 +384,7 @@ function ts_plots(M,p::Param;fixy = false)
 	ds3 = stack(d3, Not(:year))
 	dd[:productivity] = @df ds3 plot(:year, :value, group = :variable,
 					  linewidth = 2, title = "Log Productivity", ylims = fixy ? (0,20) : false, marker = mmark,
-					  legend = :left, yscale = :log1010)
+					  legend = :left, yscale = :log10)
 	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	ds4 = select(d,:year,:cityarea)
 	incphi = round(d1880.cityarea[end] / d1880.cityarea[1],digits = 1)
