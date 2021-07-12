@@ -562,10 +562,12 @@ function plot1cs(it)
 	x,M,p = run(Param())
 	cs_plots(M[it],p,it)
 end
-function dash(it)
-	x,M,p = run(Param())
+function dash(it;par = Dict())
+	x,M,p = run(Param(par = par))
 	dashboard(M,p,it)
 end
+
+
 function cdash(it)
 	x,M,p = k3()
 	dashboard(M,it)

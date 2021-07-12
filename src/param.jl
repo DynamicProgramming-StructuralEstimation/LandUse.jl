@@ -123,7 +123,7 @@ mutable struct Param
 
 		poparea = poparea_data()
 		pda = dropmissing(select(poparea, :year, :pop, :area, :CODGEO))
-		pda1 = subset(pda, :year => c->c.==1876)
+		pda1 = subset(pda, :year => c -> c .== 2015)  # which year to take as weights?
 		rename!(pda1, :pop => :pop1)
 		pda = leftjoin(pda, select(pda1, :CODGEO, :pop1), on = :CODGEO)
 		dropmissing!(pda)
@@ -306,6 +306,26 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      t       : $(p.t   )\n")
 	print(io,"      σ       : $(p.σ   )\n")
 	print(io,"      K       : $(p.K  )\n")
+end
+
+
+@doc raw"""
+	compute_ξw()
+
+Computes input parameter ξw directly from data. Notice that ``1 - \xi_w`` is the 
+elasticity of speed to wage income. We measure from individual commuting data in ENL (Enquete National de Logement)
+an increase in commuting speed of about 11% from 1984 to 2013. This function returns 
+
+``\xi_w = 1 - \frac{11}{\%\Delta \theta_u}``
+
+where ``\%\Delta \theta_u`` stands for the percentage increase in urban wage from 1984 to 2013.
+"""
+function compute_ξw(;  ENL = 0.109)
+	d = DataFrame(CSV.File(joinpath(LandUse.dbpath,"data","nico-output","FRA_model.csv")))
+	y = subset(select(d, :year, :theta_urban), :year => x -> x .∈ Ref([1984, 2013]))
+	sort!(y, :year)
+	dθ = (y.theta_urban[2] - y.theta_urban[1]) / y.theta_urban[1]
+	1 - ENL / dθ
 end
 
 

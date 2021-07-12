@@ -43,7 +43,7 @@
 		"symbol" : "\\xi_l"
 	},
 	"ξw" : {
-		"value" : 0.75187788,
+		"value" : 0.75,
 		"description" : "Elasticity of commuting cost wrt urban wage",
 		"symbol" : "\\xi_w"
 	},
