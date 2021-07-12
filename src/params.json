@@ -13,7 +13,7 @@
 		"symbol" : "L"
 	},
 	"γ" : {
-		"value" : 0.311104,
+		"value" : 0.3017057,
 		"description" : "Utility Weight of Housing",
 		"symbol" : "\\gamma"
 	},
@@ -28,7 +28,7 @@
 		"symbol" : "\\eta"
 	},
 	"a" : {
-		"value" : 2.1230735,
+		"value" : 2.2491673,
 		"description" : "Commuting Costs Base Parameter",
 		"symbol" : "a"
 	},
@@ -48,17 +48,17 @@
 		"symbol" : "\\xi_w"
 	},
 	"ν" : {
-		"value" : 0.025,
+		"value" : 0.029633,
 		"description" : "Preference Weight for Rural Consumption Good",
 		"symbol" : "\\nu"
 	},
 	"cbar" : {
-		"value" : 0.763753,
+		"value" : 0.7368016,
 		"description" : "Rural Consumption Good Subsistence Level",
 		"symbol" : "\\underline{c}"
 	},
 	"sbar" : {
-		"value" : 0.211069,
+		"value" : 0.2106496,
 		"description" : "Initial Urban Good Endowment",
 		"symbol" : "\\underline{s}"
 	},
