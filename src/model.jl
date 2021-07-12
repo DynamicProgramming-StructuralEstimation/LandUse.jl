@@ -42,6 +42,7 @@ mutable struct Region <: Model
 	ϕ10    :: Float64   # 0.1 of radius
 	ϕ90    :: Float64   # 0.9 of radius
 	cityarea    :: Float64   # area of the city
+	rel_cityarea    :: Float64   # area of the city relative to rural area
 	citydensity    :: Float64   # average density of the city
 	ϕbreaks :: StepRangeLen  # bins of distance
 	speedbreaks :: Vector{Float64}  # breaks of speed
@@ -121,6 +122,7 @@ mutable struct Region <: Model
 		m.ϕ10           = NaN
 		m.ϕ90           = NaN
 		m.cityarea    = NaN
+		m.rel_cityarea    = NaN
 		m.citydensity = NaN
 		m.ϕbreaks       = range(0,stop = 1, length = p.int_bins+1)
 		m.speedbreaks   = zeros(p.nspeeds + 1)  # [0, lofmode(0.25), lofmode(0.41), ϕ]
@@ -266,6 +268,10 @@ function update!(m::Region,p::Param,x::Vector{Float64}; Lu...)
 
 	m.xsr  = xsr(p,m)
 	m.Srh  = Srh(p,m)
+
+	# now can update rel_cityarea
+	m.rel_cityarea = rel_cityarea(m)
+
 	m.qr   = qr(p,m)
 	m.q0   = q(0.0,p,m)
 	m.qq1   = q(m.ϕ / 5,p,m)

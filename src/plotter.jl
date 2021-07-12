@@ -21,7 +21,7 @@ function dashboard(M::Vector{Region},p::Param,i::Int; objvalue = nothing)
 	pc = LandUse.cs_plots(M[i], p, i, objvalue = objvalue)
 	po = plot(pl[:Lr_data],pl[:spending],pl[:pr_data],pl[:productivity],
 			pl[:n_densities], pl[:densities], pl[:mode], pl[:ctime],
-			pl[:phi] , pl[:qbar_real], pl[:r_y], pl[:r_rho],
+			pl[:phi] , plot(pl[:phi_Lu_data], title = "",ylab = ""), pl[:r_y], pl[:r_rho],
 			pc[:ϵ] , pc[:D], pc[:mode] , pl[:speedshares],
 			layout = (4,4),size = (1200,800))
 	po
@@ -234,7 +234,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false, objvalue = nothing)
 
 		d[:D] = Plots.scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
 		plot!(d[:D],1:p.int_bins, x -> gradient[1] .* exp.(gradient[2] * x), linewidth = 2, xlab = "distance", 
-		            annotations = ([p.int_bins*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
+		            annotations = ([p.int_bins*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=2))\n10/90=$(d1090)\nMSE=$MSE"]))
 
 		# d[:D] = plot(lvec , Dd , title = latexstring("D(l,$(ti))")         , ylims = (-3   , 60)  , linewidth = 2 , leg = false , xlab = "distance" , annotations = ([m.ϕ*0.7 ] , [0.9*maximum(Dd)], ["10/90=$(round(m.iDensity_q10,digits=1))/$(round(m.iDensity_q90,digits=1))\n=$(d1090)"]))
 		# vline!(d[:D],[m.ϕ10, m.ϕ90], color = :red,leg = false)
@@ -246,7 +246,7 @@ function cs_plots(m::Region,p::Param,it::Int; fixy = false, objvalue = nothing)
 		d[:ϵ] = plot(lvec , ϵd , title = latexstring("\\epsilon(l,$(ti))")     , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ϵd) , "$(ϵg)x"))
 		d[:D] = Plots.scatter(1:p.int_bins, ndensities, m = (:circle, :red, 4), leg = false,title = latexstring("D(l,$(ti))")  )
 		plot!(d[:D],1:p.int_bins, x -> gradient[1] .* exp.(gradient[2] * x), linewidth = 2, xlab = "distance", 
-		            annotations =  ([p.int_bins*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=1))\n10/90=$(d1090)\nMSE=$MSE"]))
+		            annotations =  ([p.int_bins*0.7 ] , [0.9], ["exp.coef=$(round(gradient[2],digits=2))\n10/90=$(d1090)\nMSE=$MSE"]))
 		d[:H] = plot(lvec , Hd , title = latexstring("H(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(Hd) , "$(Hg)x"))
 		d[:ρ] = plot(lvec , ρd , title = latexstring("\\rho(l,$(ti))")         , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(ρd) , "$(ρg)x"))
 		d[:q] = plot(lvec , qd , title = latexstring("q(l,$(ti))")             , linewidth = 2 , leg = false , xlab = "distance" , annotations = (m.ϕ*0.8 , 0.9*maximum(qd) , "$(qg)x"))
@@ -274,19 +274,20 @@ function ts_plots(M,p::Param;fixy = false)
 
 	# normalizations
 	transform!(d1880, :cityarea => firstnorm => :cityarea_n,
-	                   :Lu => firstnorm => :Lu_n)
+	                  :rel_cityarea => firstnorm => :rel_cityarea_n,
+	                  :Lu => firstnorm => :Lu_n)
 
-	t1900 = findmin(abs.(collect(p.T) .- 1900))[2]
+	i1900 = argmin( abs.(p.moments.year .- 1900) )
 	i2015 = argmin( abs.(p.moments.year .- 2015) )
-	i2010 = argmin( abs.(p.moments.year .- 2010) )
+	i2010 = argmin( abs.(p.moments.year .- 2015) )
 	i1870 = argmin( abs.(p.moments.year .- 1870) )
 
-	h1900 = df[t1900,:h]
-	hend = df[end,:h]
+	h1900 = df[i1900,:h]
+	hend = df[i2010,:h]
 	dd[:spending] = @df ds plot(:year,:value, group = :variable,
 			   linewidth = 2, title = "Spending Shares",
 			   ylims = (0.0,0.83), marker = mmark, legend = :right, color = brg,
-			   annotations = ([p.T[t1900],p.T.stop],[h1900-0.1, hend-0.1],["$(round(h1900,digits = 3))","$(round(hend,digits = 3))"]))
+			   annotations = ([p.T[i1900],p.T.stop],[h1900-0.1, hend-0.1],["$(round(h1900,digits = 3))","$(round(hend,digits = 3))"]))
 
     # dd[:spending_data] = plot!(dd[:spending], p.moments.year, p.moments[!,[:SpendingShare_Housing, :SpendingShare_Urban,:SpendingShare_Rural]], color = brg)
 
@@ -387,56 +388,50 @@ function ts_plots(M,p::Param;fixy = false)
 					  legend = :left, yscale = :log10)
 	# ds4 = stack(select(d,:year,:ϕ), Not(:year))
 	ds4 = select(d,:year,:cityarea)
-	incphi = round(d1880.cityarea[end] / d1880.cityarea[1],digits = 1)
+	incphi = round(d1880.rel_cityarea[end] / d1880.rel_cityarea[1],digits = 1)
 
-	dd[:phi] = @df d1880 plot(:year, :cityarea,
-					 linewidth = 2, title = "City Area. 2015=$(round(d.cityarea[i2015],digits=2))", color = "black",
-					 leg = fixy ? :topleft : false, marker = mmark, annotate = (p.T[end],0.2*maximum(d.cityarea),"$(round(incphi,digits=1))x"),
+	dd[:phi] = @df d1880 plot(:year, :rel_cityarea,
+					 linewidth = 2, title = "Rel City Area. 2010=$(round(d.rel_cityarea[i2010],digits=2))", color = "black",
+					 leg = fixy ? :topleft : false, marker = mmark, annotate = (p.T[end],0.2*maximum(d.rel_cityarea),"$(round(incphi,digits=1))x"),
 					 ylims = fixy ? (0.0,0.15) : false)
 
 
-	dd[:phi_Lu] = @df stack(select(d1880, :year, :Lu_n => :population, :cityarea_n => :area), Not(:year)) plot(:year, :value, 
+	dd[:phi_Lu] = @df stack(select(d1880, :year, :Lu_n => :population, :rel_cityarea_n => :rel_area), Not(:year)) plot(:year, :value, 
 	                       group = :variable, leg = :left, linewidth = 2,
 						   linecolor = ["orange" "red" ], marker = (:circle, ["orange" "red" ]),
-						   yscale = :auto, formatter = y->string(round(Int,y)))
+						   yscale = :identity, formatter = y->string(round(Int,y)),
+						   title = "Urban Population and Area (rel to rural)",
+						   ylab = "data (1876) = model (1880) = 1")
 
 	pad = copy(p.poparea_data)
 	transform!(pad, :population => firstnorm => :population, 
 	                :area => firstnorm => :area)
-	dd[:phi_Lu_data] = scatter!(dd[:phi_Lu], pad.year, [pad.area, pad.population],
-	                            marker = (:star5, ["orange" "red" ]), label = "")					   
+	dd[:phi_Lu_data] = scatter!(dd[:phi_Lu], pad.year, [pad.population, pad.area],
+	                            marker = (:star5, ["orange" "red" ]), label = ["pop data" "area data"])					   
     
 	dd[:Sr] = @df d plot(:year, :Sr,
 				  linewidth = 2, color = "black",title = "Agricultural Land",
 				  leg = false, marker = mmark, ylims = fixy ? (0.6,1.0) : false)
-	# ds4 = stack(select(d,:year,:pr), Not(:year))
-	# df4 = @linq d |>
-	# 	# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,x,p),:ϕ) .* :ϕ) ./ :pr)
-	# 	transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- map(x -> τ(x,p),:ϕ) .* :ϕ) )
-		# transform(avgd = :Lu ./ :ϕ, tauphi = (1 .- p.τ .* :ϕ))
-
-    # dens = select(df4,:year,:d0, :dq1, :dq2, :dq3, :dq4, :dr, :avgd)
-    dens = select(d,:year,:d0,  :dr, :citydensity => :avgd)
+	
+    dens = select(d,:year,:d0, :dr,:citydensity)
 	df4 = dens
-	# ndens = mapcols(x -> x ./ x[1],select(dens, Not(:year)))
-	# ndens[!,:year] .= dens.year
 	ds4 = stack(dens, Not(:year))
-	ds5 = select(dens,:year,:avgd)
 	# ds4 = stack(select(df4,:year, :avgd), Not(:year))
 	dd[:n_densities] = @df stack(select(d,:year,:d0_n, :dr_n, :avgd_n), Not(:year)) plot(:year, :value, group = :variable,
  					 linewidth = 2, title = "Normalized Densities", color = brg,
 					 leg = :topright, ylims = fixy ? (0,300) : false)
 
 
-    incdens = df4.avgd[i1870] / df4.avgd[i2010]
-    diffdens = df4.avgd[i1870] - df4.avgd[i2010]
-	ancdens = df4.avgd[end] + 0.2 * diffdens
-	dd[:avdensity] = @df ds5 plot(:year, :avgd,
+    incdens = d.citydensity[i1870] / d.citydensity[i2010]
+    diffdens = d.citydensity[i1870] - d.citydensity[i2010]
+	ancdens = d.citydensity[end] + 0.2 * diffdens
+	dd[:avdensity] = @df d plot(:year, :citydensity,
 					 linewidth = 2, title = "Avg Density", marker = mmark,
 					 legend = false,color = "black", ylims = fixy ? (0,200) : false, annotations = (p.T.stop,ancdens,"$(round(incdens,digits = 1))x"))
 
-	dd[:densities] = @df ds4 plot(:year, :value, group = :variable,
-					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false,annotations = (p.T[2],0.2*maximum(ds4.value),"$(round(incdens,digits = 1))x"))
+	dd[:densities] = @df stack(select(d,:year,:d0, :dr, :citydensity), Not(:year)) plot(:year, :value, group = :variable,
+					 linewidth = 2, title = "Densities", leg = :topright, ylims = fixy ? (0,300) : false,
+					 annotations = (p.T[2],0.2*maximum(d.d0),"$(round(incdens,digits = 2))x"))
 
 
     dss = stack(select(d,:year,:mode0,:modeϕ,:imode), Not(:year))

@@ -44,7 +44,7 @@ function targets(p::Param)
     # single value stuff: ratios of change etc
     # from average city over time
     m[:avg_density_fall] = DataFrame(moment = "avg_density_fall", data = 7.9, model = 0.0)
-    m[:city_area] = DataFrame(moment = "city_area",data = 0.18, model = 0.0)
+    m[:rel_city_area] = DataFrame(moment = "rel_city_area_2010",data = 0.173, model = 0.0)
     m[:max_mode_increase] =  DataFrame(moment = "max_mode_increase", data = 5.0, model = 0.0)
 
     # average city spatial moments in 2020
@@ -54,15 +54,9 @@ function targets(p::Param)
     m[:density_decay_MSE] =  DataFrame(moment = "density_decay_MSE", data = 0.0 , model = 0.0) 
 
     # housing spending Shares
-    m[:housing_share_1900] = DataFrame(moment = "housing_share_1900", data = 0.23 , model = 0.0)
-    m[:housing_share_2015] = DataFrame(moment = "housing_share_2015", data = 0.314 , model = 0.0)
-
-    # 
-
-    # cross city moments
-    # slope pop vs density
-    # m[:pop_vs_density_1876] = DataFrame(moment = "pop_vs_density_1876", data = 0.297, model = 0.0)
-    # m[:pop_vs_density_2015] = DataFrame(moment = "pop_vs_density_2015", data = 0.005, model = 0.0)
+    m[:housing_share_1900] = DataFrame(moment = "housing_share_1900", data = 0.237 , model = 0.0)
+    # m[:housing_share_2015] = DataFrame(moment = "housing_share_2015", data = 0.314 , model = 0.0)
+    m[:housing_share_2010] = DataFrame(moment = "housing_share_2010", data = 0.306 , model = 0.0)
 
     return m
     
@@ -86,14 +80,14 @@ map vector x to dict for [`Param`](@ref)
 function x2dict(x)
     di = Dict(:cbar => x[1],
     :sbar => x[2],
-    :ξw => x[3],
-    :a => x[4],
-    :γ => x[5],
+    :a => x[3],
+    :γ => x[4],
+    :ν => x[5],
     :ϕ1x => 0.15)
     di
 end
 
-search_over() = OrderedDict(zip([:cbar,:sbar, :ξw, :a, :gamma], [(0.7, 0.9),(0.2, 0.26), (0.5, 0.9), (2.0, 3.0), (0.28, 0.33)]))
+search_over() = OrderedDict(zip([:cbar,:sbar, :a, :gamma, :nu], [(0.7, 0.9),(0.2, 0.26), (2.0, 3.0), (0.28, 0.33), (0.02,0.03)]))
 # search_over() = OrderedDict(zip([:cbar], [(0.7, 0.88)]))
 symrange(x,pad,n) = range(x-pad, stop = x+pad, length = n)
 
@@ -107,9 +101,14 @@ map param to x for objective function quick eval
 this is the inverse of [`x2dict`](@ref).
 """
 function p2x(p::Param)
-    [ p.cbar,  p.sbar, p.ξw, p.a, p.γ ]
+    [ p.cbar,  p.sbar, p.a, p.γ , p.ν]
 end
 
+"""
+    objective1(;save = false)
+
+run objective function at default parameter
+"""
 objective1(;save = false) = objective(p2x(Param()), moments = true, plot = true, save = save)
 
 """
@@ -120,12 +119,13 @@ function objective(x; moments = false, plot = false, save = false)
     di = x2dict(x)
 
     p = Param(par = di, use_estimatedθ = false)
-    # try
+    try
         # find index of year 2020
         i1870 = argmin( abs.(p.moments.year .- 1870) )
         i1900 = argmin( abs.(p.moments.year .- 1900) )
         i2020 = argmin( abs.(p.moments.year .- 2020) )
         i2015 = argmin( abs.(p.moments.year .- 2015) )
+        i2010 = argmin( abs.(p.moments.year .- 2010) )
 
         # run single city
         x1,M1,p1 = LandUse.run(p, estimateθ = false)
@@ -144,11 +144,11 @@ function objective(x; moments = false, plot = false, save = false)
         ta[:avg_density_fall][!,:model] .= d1.citydensity[i1870] / d1.citydensity[i2015]
         ta[:avg_density_fall][!,:weights] .= 0.0
 
-        ta[:city_area][!,:model] .= d1.cityarea[i2015]
-        ta[:city_area][!,:weights] .= 50000.0
+        ta[:rel_city_area][!,:model] .= d1.rel_cityarea[i2010]
+        ta[:rel_city_area][!,:weights] .= 10.0
 
         ta[:max_mode_increase][!,:model] .= maximum(d1.imode ./ d1.imode[1])
-        ta[:max_mode_increase][!,:weights] .= 5.0
+        ta[:max_mode_increase][!,:weights] .= 0.0
 
         # ta[:density_gradient_2020][!,:model] .= M1[i2020].iDensity_q10 / M1[i2020].iDensity_q90
         # ta[:density_gradient_2020][!,:weights] .= 1.0
@@ -165,9 +165,9 @@ function objective(x; moments = false, plot = false, save = false)
     
         # housing spending Shares
         ta[:housing_share_1900][!,:model] .= d1[i1900,:Ch] / d1[i1900,:C]
-        ta[:housing_share_1900][!,:weights] .= 0.1
-        ta[:housing_share_2015][!,:model] .= d1[i2015,:Ch] / d1[i2015,:C]
-        ta[:housing_share_2015][!,:weights] .= 0.1
+        ta[:housing_share_1900][!,:weights] .= 5.0
+        ta[:housing_share_2010][!,:model] .= d1[i2010,:Ch] / d1[i2010,:C]
+        ta[:housing_share_2010][!,:weights] .= 5.0
         
         # ta[:pop_vs_density_1876][!,:model]   .= (C[1].R[2].cityarea - C[1].R[1].cityarea) / (C[1].R[2].Lu - C[1].R[1].Lu)
         # ta[:pop_vs_density_1876][!,:weights] .= 10.0
@@ -176,12 +176,12 @@ function objective(x; moments = false, plot = false, save = false)
 
         da = ta[:rural_empl]
         append!(da, ta[:avg_density_fall])
-        append!(da, ta[:city_area])
+        append!(da, ta[:rel_city_area])
         append!(da, ta[:max_mode_increase])
         append!(da, ta[:density_decay_coef])
         append!(da, ta[:density_decay_MSE])
         append!(da, ta[:housing_share_1900])
-        append!(da, ta[:housing_share_2015])
+        append!(da, ta[:housing_share_2010])
         # append!(da, ta[:density_gradient_2020])
         # append!(da, ta[:pop_vs_density_1876])
         # append!(da, ta[:pop_vs_density_2015])
@@ -204,10 +204,10 @@ function objective(x; moments = false, plot = false, save = false)
         end
 
         
-    # catch 
-    #     # @info "error at $(di)"
-    #     return Inf
-    # end
+    catch 
+        # @info "error at $(di)"
+        return Inf
+    end
 end
 
 function latex_moments(d::DataFrame)
