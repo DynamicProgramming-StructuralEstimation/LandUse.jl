@@ -214,15 +214,28 @@ function latex_moments(d::DataFrame)
 
     sanitize(x) = replace(x, "_" => "\\_")
     getline(x;digits = 4) = [sanitize(x[:moment]), round(x[:data],digits = digits), round(x[:model],digits = digits), x[:weights]]
+    getline2(x;digits = 4) = [sanitize(x[:moment]), round(x[:data],digits = digits), round(x[:model],digits = digits)]
+
+    d1 = subset(d, :weights => x -> x .> 0)
+    d2 = subset(d, :weights => x -> x .== 0)
 
 	latex_tabular(joinpath(dbtables,"moments.tex"), Tabular("l D{.}{.}{1.3}@{}  D{.}{.}{3.3}@{}  D{.}{.}{8.2}@{}"), [
 	   Rule(:top),
        ["Moment", MultiColumn(1,:c,"Data"), MultiColumn(1,:r,"Model") , MultiColumn(1,:r,"Weight")],
        Rule(:mid),
-       [getline(i) for i in eachrow(d)]...,
+       [getline(i) for i in eachrow(d1)]...,
        Rule(:bottom)
 	   ]
 	)
+
+    latex_tabular(joinpath(dbtables,"moments-nontarget.tex"), Tabular("l D{.}{.}{1.3}@{}  D{.}{.}{3.3}@{}"), [
+        Rule(:top),
+        ["Moment", MultiColumn(1,:c,"Data"), MultiColumn(1,:r,"Model")],
+        Rule(:mid),
+        [getline2(i) for i in eachrow(d2)]...,
+        Rule(:bottom)
+        ]
+     )
 
 end
 
