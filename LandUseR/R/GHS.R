@@ -187,6 +187,109 @@ dist_from_center <- function(overwrite = FALSE, ndists = 51){
     }
 }
 
+#' Summary For Exponential Decay
+#'
+#' takes output of \code{\link{exp_decay}} and summarises the
+#' distribution of estimated exponential decay coefficients. 27 out of 100
+#' cities do not converge for the estimation and are dropped from the sample.
+exp_decay_summary <- function(){
+    L = exp_decay()
+    na = length(L)
+    L = L[lapply(L,length) == 4]  # keep only the ones that converged
+    nn = length(L)
+    futile.logger::flog.info("%d out of %d have not converged",na-nn,na)
+
+    # get all coefs
+    co = do.call("rbind",lapply(L, function(x) x$tab))
+    med = round(median(co$lambda),2)
+    mea = round(mean(co$lambda),2)
+
+    # get pop weights
+    pops = do.call("rbind",lapply(L, function(x) x$pop[year == 1975,population]))
+    wm = round(weighted.mean(co$lambda,w = pops),2)
+
+    pdf(file = file.path(dataplots(),paste0("density-center-coefficients.pdf")), w = 9, h = 6)
+    hist(co$lambda,breaks = 20, main = paste("Exponential coefficients. median:",med,". mean:",mea,". wmean:",wm,". not converged:",na-nn))
+    dev.off()
+    return(list(lambdas = co$lambda, pops = pops))
+}
+
+#' Exponential Decay Parameters for All Cities
+#'
+#' uses function \code{\link{exp_decay_single}} to compute an exponential decay model
+#' for each city in the sample.
+#'
+#' @param by_year by default FALSE
+exp_decay <- function(by_year = FALSE){
+    d0 = dist_from_center()   # get data
+    L = list()
+    for (ci in d0[,unique(LIBGEO)]) {
+        L[[ci]] <- exp_decay_single(d0[LIBGEO == ci], by_year)
+    }
+    L
+}
+
+#' Estimate Exponential Density Decay Model
+#'
+#' Takes data from \code{\link{dist_from_center}} and computes an exponential decay
+#' model for a single city.
+#'
+exp_decay_single <- function(d, by_year = TRUE){
+
+    stopifnot(is.data.table(d))
+    stopifnot(names(d) == c("quantile" ,"density" , "pop"   ,   "distance", "CODGEO"  , "LIBGEO" ,  "year"))
+
+    futile.logger::flog.info("running for %s",d[,LIBGEO])
+    d[, distance := distance / 1000]
+    d = d[!is.na(distance)]
+
+    # estimate nls model of exponential decay
+    # https://douglas-watson.github.io/post/2018-09_exponential_curve_fitting/
+    # fit <- nls(density ~ SSasymp(distance, yf, y0, log_alpha), data = d)
+
+
+    tryCatch({
+
+        if (by_year) {
+            fitted <- d %>%
+                tidyr::nest(-year) %>%
+                mutate(
+                    fit = purrr::map(data, ~nls(density ~ SSasymp(distance, yf, y0, log_alpha), data = .)),
+                    tidied = purrr::map(fit, broom::tidy),
+                    augmented = purrr::map(fit, broom::augment)
+                )
+
+            tab = fitted %>%
+                tidyr::unnest(tidied) %>%
+                dplyr::select(year, term, estimate) %>%
+                tidyr::spread(term, estimate) %>%
+                mutate(lambda = exp(log_alpha))
+
+            augmented <- fitted %>%
+                tidyr::unnest(augmented)
+
+
+        } else {
+            fitted <- nls(density ~ SSasymp(distance, yf, y0, log_alpha), data = d)
+            tidied = broom::tidy(fitted)
+            augmented = broom::augment(fitted)
+            tab = tidied %>% dplyr::select(term, estimate) %>%
+                tidyr::spread(term, estimate) %>%
+                mutate(lambda = exp(log_alpha))
+
+        }
+
+        list(fitted = fitted,
+             tab = tab,
+             augmented = augmented,
+             pop = d[,list(population = sum(pop)),by = year]
+        )
+    },
+    error = function(e) e
+    )
+
+}
+
 
 #' Combine City Measures
 #'
