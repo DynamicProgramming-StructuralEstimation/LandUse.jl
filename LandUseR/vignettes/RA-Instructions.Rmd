@@ -1,53 +1,24 @@
+---
+title: "RA-Instructions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{RA-Instructions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
-# `LandUseR`: Measurement for Coeurdacier, Oswald and Teigner
-
-<!-- badges: start -->
-<!-- badges: end -->
-
-This `R` package contains the data measurement tools used in the paper *Structural Change, Land Use and Urban Expansion* by Coeurdacier, Oswald and Teignier.
-
-## Contents
-
-1. Overview
-2. Installation
-3. Data Requirements and File Directory Structure
-
-## Overview
-
-This R package operates our city area and population measurement exercise, as described in the online appendix. All documented functions are accessible via the Reference link in the top menu bar. Please also have a look at the Articles Menu.
-
-## Installation
-
-This package is not on CRAN, so you need to install directly from github via
-
-```R
-library(remotes)  # install if you don't have it
-remotes::install_github("floswald/LandUse.jl", subdir = "LandUseR")
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
 ```
 
-## Data Requirements
-
-
-
-
-
-## RA Instructions
 
 In the following you can find the instructions we gave our able Research Assistant [Alberto Nasi](https://sites.google.com/view/albertonasi/home?authuser=0), who helped us measure city extend on digitized maps.
 
-### Data 1975 - 2015
 
-the main datasource is EU Commission's [Global Human Settlement](https://ghslsys.jrc.ec.europa.eu/download.php?ds=pop) project. 
-
-
-### Data 1950 and before
-
-* Need to resort to manual measurement of a list of French cities. 
-* We use [geoportail](https://www.geoportail.gouv.fr/donnees/cartes-1950)
-* We can use maps from the 1950s
-* We also use maps from the 1860's produced for the Army by the Etat Major
-
-#### How to decide whether something is part of a city or not?
+## How to decide whether something is part of a city or not?
 
 We need to stick to a strict protocol to get anything useful out of this. 
 
@@ -66,7 +37,7 @@ We need to stick to a strict protocol to get anything useful out of this.
         * `1.32km2` is the measured area in square km.
 1. The same procedure applies for the earlier maps, i.e the Etat Major or Cassini's maps.
 
-#### Workflow
+## Workflow
 
 1. Go to [geoportail](https://www.geoportail.gouv.fr/donnees/cartes-1950)
 1. Search for one of th cities from below list
@@ -80,4 +51,3 @@ We need to stick to a strict protocol to get anything useful out of this.
 1. repeat measurement and screenshot
 1. save screenshots according to naming convention above
 1. Add measured areas to excel file in dropbox
-

@@ -4,7 +4,7 @@
 \alias{measure_cities}
 \title{Measure City Extents}
 \usage{
-measure_cities(overwrite = FALSE, cutoff = 30)
+measure_cities(overwrite = FALSE, cutoff = 30, w = 9, h = 6)
 }
 \arguments{
 \item{overwrite}{TRUE/FALSE}
