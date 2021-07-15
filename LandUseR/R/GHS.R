@@ -53,7 +53,7 @@ cropboxes <- function(overwrite = FALSE){
 #' \item Contiguity of grid cells. Given that classified grid cells could be separated in space, we check for the largest connect set. The check uses the "rook move" as criterion.
 #' }
 #'  As a second
-measure_cities <- function(overwrite = FALSE, cutoff = 30){
+measure_cities <- function(overwrite = FALSE, cutoff = 30, w = 9, h= 6){
     if (overwrite){
         # get list of cities
         L = readRDS(file.path(LandUseR:::outdir(),"data","france-cropped-boxes.Rds"))
@@ -72,6 +72,22 @@ measure_cities <- function(overwrite = FALSE, cutoff = 30){
             OL[[iy]] <- list()
 
             for (ic in names((L[[iy]]))){
+                cutmask = copy(L[[iy]][[ic]]$built)
+
+                # look at distribution of non-zero grid cells
+                pdf(file.path(dataplots(),"GHSL-check",paste0("GHSL-BUILT-",ic,"-",yr,".pdf")), width = w, height = h)
+                par(mfrow = c(1,2))
+                plot(quantile(cutmask[cutmask > 0],na.rm=T, probs = seq(0,1,length.out = 100)), main = paste(ct[CODGEO == ic, LIBGEO],yr,"positive built up"),ylab = "quantile")
+                hist(cutmask[cutmask > 0],breaks = 100, main = "Hist of positive built up")
+                dev.off()
+
+                pdf(file.path(dataplots(),"GHSL-check",paste0( "GHSL-POP-",ic,"-",yr,".pdf")), width = w, height = h)
+                par(mfrow = c(1,2))
+                plot(quantile(L[[iy]][[ic]]$pop[L[[iy]][[ic]]$pop > 0],na.rm=T, probs = seq(0,1,length.out = 100)), main = paste(ct[CODGEO == ic, LIBGEO],yr,"positive pop"),ylab = "quantile")
+                hist(L[[iy]][[ic]]$pop[L[[iy]][[ic]]$pop > 0],breaks = 100, main = "Hist of positive pop")
+                dev.off()
+                par(mfrow = c(1,1))
+
                 # cut out all cells above cutoff
                 cutmask = copy(L[[iy]][[ic]]$built)
                 raster::values(cutmask) <- (raster::values(L[[iy]][[ic]]$built) > cutoff)
