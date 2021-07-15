@@ -36,4 +36,6 @@ Imports:
     here
 RoxygenNote: 7.1.1
 Suggests: 
-    testthat
+    testthat,
+    rmarkdown
+VignetteBuilder: knitr
