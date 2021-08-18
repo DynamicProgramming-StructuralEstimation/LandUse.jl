@@ -3,7 +3,7 @@
 
 
 gsheet <- function(){"https://docs.google.com/spreadsheets/d/1IotLzprM5Os-06MpfU895VOgHieYkQfY3WOLBBiTKZA/edit#gid=0"}
-browse <- function(){googlesheets4::sheets_browse(gsheet())}
+browse <- function(){googlesheets4::gs4_browse(gsheet())}
 
 export_sheet <- function(topn = 110){
     p = readpop()

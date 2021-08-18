@@ -29,7 +29,7 @@ sharea <- function(){
 shcombine <- function(){
     d = sharea()
     d = d[,list(year,area = area_km2, pop = NA, type = "shlomo")]
-    f = readRDS(file.path(LandUseR:::outdir(),"data","france_final.Rds"))
+    f = read_output()
     f <- f[LIBGEO == "Paris", list(year,pop,area,type)]
     x = rbind(d,f)
     x <- x[order(year)]

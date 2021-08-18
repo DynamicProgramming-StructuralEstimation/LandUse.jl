@@ -1,16 +1,21 @@
 
-# `LandUseR`: Measurement for Coeurdacier, Oswald and Teigner
+# `LandUseR`: Urban Extent Measurement for Coeurdacier, Oswald and Teigner
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-This `R` package contains the data measurement tools used in the paper *Structural Change, Land Use and Urban Expansion* by Coeurdacier, Oswald and Teignier.
+This `R` package contains data measurement tools used in the paper *Structural Change, Land Use and Urban Expansion* by Coeurdacier, Oswald and Teignier. In particular, this contains code for
+
+1. Measuring city area extents and urban population via GHSL.
+2. Assessing current land use outside of cities via CLC.
+
+Basically, this is the code accompanying sections B.6 and B.7 of our online appendix. Section B.8 (Indidivual Commuting Data) uses confidential data on CASD, code for which is contained in a separate R package.
 
 ## Contents
 
 1. Overview
 2. Installation
-3. Data Requirements and File Directory Structure
+3. Replication Data Requirements and File Directory Structure
 
 ## Overview
 
@@ -25,19 +30,13 @@ library(remotes)  # install if you don't have it
 remotes::install_github("floswald/LandUse.jl", subdir = "LandUseR")
 ```
 
-## Data Requirements
+## Replication Data Requirements
 
 
-
-
-
-## RA Instructions
-
-In the following you can find the instructions we gave our able Research Assistant [Alberto Nasi](https://sites.google.com/view/albertonasi/home?authuser=0), who helped us measure city extend on digitized maps.
 
 ### Data 1975 - 2015
 
-the main datasource is EU Commission's [Global Human Settlement](https://ghslsys.jrc.ec.europa.eu/download.php?ds=pop) project. 
+Here the datasource is EU Commission's [Global Human Settlement](https://ghslsys.jrc.ec.europa.eu/download.php?ds=pop) project. Please check the online appendix for a thorough description.
 
 
 ### Data 1950 and before
@@ -47,37 +46,4 @@ the main datasource is EU Commission's [Global Human Settlement](https://ghslsys
 * We can use maps from the 1950s
 * We also use maps from the 1860's produced for the Army by the Etat Major
 
-#### How to decide whether something is part of a city or not?
-
-We need to stick to a strict protocol to get anything useful out of this. 
-
-1. Use mainly the "Cartes 1950" map. sometimes the arial fotos are better, or at least they can give you some good guidance about where the city ends.
-1. we want to get a contiguous shape covering the city area. Often the city does *not* suddenly end. Ideally we had a grid placed over the map, and would assess the *density of built up area* in each grid cell: if there are no houses, that number is 0, if there is no unbuilt space left, that number is 100. Some maps do actually have a grid on them, so use this to make the judgement. 
-1. Cutoff to be included into the city: at least 50% of all space in a grid cell is taken up by buildings/roads/etc, i.e. are *not* free open space.
-1. If you make an assumption about the city limit ("I assume city x does not extend beyond that river", for example), keep that assumption in each year. All such assumptions need to be discussed.
-1. Grenoble is a good example.
-1. Screenshots: 
-    * perform your measurement on screen. 
-    * when done, make a screenshot, making sure you incldue the scale info in the bottom left corner, as well as the result of the area measurement.
-    * screenshot location: all screenshots go into `LandUse/data/manual-measurement/screenshots`
-    * naming convention: name each screenshot like `grenoble-EM-1.32km2.png`. 
-        * `grenoble` is small caps city name
-        * `EM` stands for `Etat Major`. Else we put `1950` for maps from the 1950s.
-        * `1.32km2` is the measured area in square km.
-1. The same procedure applies for the earlier maps, i.e the Etat Major or Cassini's maps.
-
-#### Workflow
-
-1. Go to [geoportail](https://www.geoportail.gouv.fr/donnees/cartes-1950)
-1. Search for one of th cities from below list
-1. Add layer "Etat Major" (top left "cartes" switch)
-1. Zoom in so entire city is visible. buildings are in red. 
-1. click on the wrench top right to get tools. click on "mesures" and "mesurer une surface"
-1. Delineate the city surface. clicking on the final connecting dot closes the polygon and displays the measure.
-1. take a screen shot as described above
-1. save as described above.
-1. Add layer "Cartes 1950"
-1. repeat measurement and screenshot
-1. save screenshots according to naming convention above
-1. Add measured areas to excel file in dropbox
 

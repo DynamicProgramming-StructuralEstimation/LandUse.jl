@@ -89,33 +89,4 @@ CLC_measure <- function(){
 }
 
 
-#' Plot CLC Landuse patterns
-#'
-CLC_plots <- function(){
-    le = CLC_read_legend()
-    cuts = CLC_bboxes(FALSE)
-
-    OL = list()
-    for (insee in 1:4) {
-        r <- cuts[[insee]]$cut
-        v = raster::values(r)
-        raster::values(r) <- raster::as.factor(v)
-        rat <- raster::levels(r)[[1]]
-        rat = merge.data.table(rat, le[,list(mcode,legend,color)],by.x = "VALUE", by.y = "mcode")
-        setDT(rat)
-        setcolorder(rat, "ID")
-        setkey(rat,ID)
-        cols = rat[,color]
-        rat[, c("VALUE","color") := NULL]
-
-        levels(r) <- rat
-
-        OL[[insee]] <- rasterVis::levelplot(r,col.regions = cols,xlab=NULL, ylab=NULL, scales=list(draw=FALSE))
-        lattice::trellis.device(pdf, file=file.path(dataplots(),paste0("CLC-",cuts[[insee]]$cityname,".pdf")),height=4.5, width=8)
-        print(OL[[insee]])
-        dev.off()
-    }
-    OL
-}
-
 
