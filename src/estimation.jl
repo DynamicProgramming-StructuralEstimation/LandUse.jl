@@ -114,7 +114,7 @@ objective1(;save = false) = objective(p2x(Param()), moments = true, plot = true,
 """
 moment objective function for an optimizer
 """
-function objective(x; moments = false, plot = false, save = false)
+function objective(x; moments = false, plot = false, save = false, fname = "moments")
     # unpack X
     di = x2dict(x)
 
@@ -192,7 +192,7 @@ function objective(x; moments = false, plot = false, save = false)
                 po = dashboard(M1,p1,i2020, objvalue = vv)
                 if save 
                     savefig(po, joinpath(@__DIR__,"..","out","bboptim_$(Dates.today())_plot.pdf")) 
-                    latex_moments(da)
+                    latex_moments(da,fname = fname)
                 end
                 return (vv , da, po)
             else
@@ -210,7 +210,7 @@ function objective(x; moments = false, plot = false, save = false)
     end
 end
 
-function latex_moments(d::DataFrame)
+function latex_moments(d::DataFrame; fname = "moments")
 
     sanitize(x) = replace(x, "_" => "\\_")
     getline(x;digits = 4) = [sanitize(x[:moment]), round(x[:data],digits = digits), round(x[:model],digits = digits), x[:weights]]
@@ -219,7 +219,7 @@ function latex_moments(d::DataFrame)
     d1 = subset(d, :weights => x -> x .> 0)
     d2 = subset(d, :weights => x -> x .== 0)
 
-	latex_tabular(joinpath(dbtables,"moments.tex"), Tabular("l D{.}{.}{1.3}@{}  D{.}{.}{3.3}@{}  D{.}{.}{8.2}@{}"), [
+	latex_tabular(joinpath(dbtables,"$fname.tex"), Tabular("l D{.}{.}{1.3}@{}  D{.}{.}{3.3}@{}  D{.}{.}{8.2}@{}"), [
 	   Rule(:top),
        ["Moment", MultiColumn(1,:c,"Data"), MultiColumn(1,:r,"Model") , MultiColumn(1,:r,"Weight")],
        Rule(:mid),
@@ -228,7 +228,7 @@ function latex_moments(d::DataFrame)
 	   ]
 	)
 
-    latex_tabular(joinpath(dbtables,"moments-nontarget.tex"), Tabular("l D{.}{.}{1.3}@{}  D{.}{.}{3.3}@{}"), [
+    latex_tabular(joinpath(dbtables,"$fname-nontarget.tex"), Tabular("l D{.}{.}{1.3}@{}  D{.}{.}{3.3}@{}"), [
         Rule(:top),
         ["Moment", MultiColumn(1,:c,"Data"), MultiColumn(1,:r,"Model")],
         Rule(:mid),
@@ -239,7 +239,7 @@ function latex_moments(d::DataFrame)
 
 end
 
-function runestim(;steps = 1000)
+function runestim(;steps = 1000,fname = "moments")
     # check slack
     post_slack()
     post_file_slack()
@@ -293,7 +293,7 @@ function runestim(;steps = 1000)
     end
     
     try 
-        x,m,pl = objective(best, moments = true, plot = true, save = true)
+        x,m,pl = objective(best, moments = true, plot = true, save = true, fname = fname)
         txt = """
         [LandUse.jl] Estimation finished on $(gethostname()) after $steps steps:
 
