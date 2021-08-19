@@ -49,7 +49,9 @@ function k20_dfexport(;overwrite = false)
 end
 
 
-
+"""
+Produces output from 20-city model. In particular comparison with single city case, and extension with d1, d2.
+"""
 function k20output(k;d1_ = 0.05,d2_ = 2.0, a = 2.67, overwrite = false)
 
     K = k
@@ -61,9 +63,7 @@ function k20output(k;d1_ = 0.05,d2_ = 2.0, a = 2.67, overwrite = false)
         d1 = dataframe(C1)
 
 		FileIO.save(joinpath(intables, "d1d2$k.jld2"), Dict("d0" => d0, "d1" => d1, "p0" => p0, "p1" => p1, "C1" => C1, "C0" => C0))	
-
        
-
     else
         df = FileIO.load(joinpath(intables, "d1d2$k.jld2"))
 		d0 = df["d0"]
@@ -72,7 +72,11 @@ function k20output(k;d1_ = 0.05,d2_ = 2.0, a = 2.67, overwrite = false)
 		C1 = df["C1"]
 		p1 = df["p1"]
 		p0 = df["p0"]
+
     end
+
+    # run a single city
+    x,M,p = runm()
 
     p0x = select(subset(d0, :year => x->x.== 2020), :year, :Lu, :citydensity => LandUse.firstnorm => :fn, :region) 
     pl0 = @df p0x bar(:fn,xticks = ([1,2,3],["Paris","Lyon","Marseille"]), ylab = "rel density", title = "baseline")
@@ -118,7 +122,23 @@ function k20output(k;d1_ = 0.05,d2_ = 2.0, a = 2.67, overwrite = false)
          phi0,phi1, 
         #  layout = (5,2), size = (800,1100))
          layout = (3,2), size = (800,800))
-    Dict(:C0 => C0,:p0=>p0, :C1 => C1, :p1=>p1, :d0=>d0 , :d1=>d1 ,:plot=>pout)
+
+    # compare single city to top 5 after 1880
+    k5 = subset(d0, :region => x -> x .< 6, :year => x -> x .> 1870)
+
+    # get single city plots
+    tsp = ts_plots(M,p)
+
+    # area 
+    area1 = tsp[:phi]
+    for ik in 1:5
+        tk5 = subset(k5, :region => x -> x .== ik)
+        plot!(area1, tk5.year, tk5.rel_cityarea, color = :grey, label = tk5)
+    end
+
+    area1
+
+    # Dict(:C0 => C0,:p0=>p0, :C1 => C1, :p1=>p1, :d0=>d0 , :d1=>d1 ,:plot=>pout)
 end
 
 
