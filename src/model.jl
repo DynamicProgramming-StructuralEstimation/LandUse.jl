@@ -212,7 +212,7 @@ rel_cityarea(m::Model) = cityarea(m) / (m.Sr + m.Srh)
 """
 	update!(m::Region,p::Param,x::Vector{Float64})
 
-update a single region a parameter vector at choices `x`.
+update a single [`Region`](@ref) with a [`Param`](@ref) at choices `x`.
 """
 function update!(m::Region,p::Param,x::Vector{Float64}; Lu...)
 	# println(x)
@@ -338,8 +338,7 @@ end
 """
 	integrate!(m::Region,p::Param)
 
-could be made much faster by filling a matrix col-wise with integration nodes and
-doing a matmul on it? have to allocate memory though.
+perform numerical integration using gauss-laguerre. 
 """
 function integrate!(m::Region,p::Param)
 
@@ -375,17 +374,12 @@ function integrate!(m::Region,p::Param)
 		m.iDensitySpeeds[ib] = ((m.speedbreaks[ib+1] - m.speedbreaks[ib]) / 2) * sum(m.iweights[i] * 2π * nb[i] * D(nb[i],p,m) for i in 1:p.int_nodes)[1] # / speedrings[ib]
 	end
 
-
-
 	# averages
 	m.qbar      = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (q(m.nodes[i],p,m) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	m.imode     = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * (mode(m.nodes[i],p,m.Lu) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 	m.ictime    = (m.ϕ/(2 * m.Lu)) * sum(m.iweights[i] * two_π_l[i] * ((m.nodes[i] / mode(m.nodes[i],p,m.Lu)) * D(m.nodes[i],p,m)) for i in 1:p.int_nodes)[1]
 
 end
-
-
-
 
 
 """
@@ -434,11 +428,6 @@ function solve!(F,x,p::Param,m::Model)
 end
 
 
-
-
-
-
-
 #
 # Model Component Functions
 
@@ -456,13 +445,9 @@ lofmode(m::Float64, p::Param,Lu::Float64) = ((2*p.ζ)/cτ(Lu,p))^(-1/(1-p.ηl)) 
 d(l::Float64,ϕ::Float64, p::Param) = p.d1 * ϕ + l / (1 + p.d2 * ϕ)
 
 "commuting cost: location x → cost"
-# τ(x::Float64,ϕ::Float64,p::Param) = (x > ϕ) ? 0.0 : p.a * p.θu^(p.taum) * x^(p.ξl)
 τ(x::Float64,ϕ::Float64,p::Param,Lu::Float64) = a(Lu,p) * wu0(Lu, p)^(p.ξw) * d(x,ϕ,p)^(p.ξl)
 
-
-
 "inverse commuting cost. cost x → location. Notice we don't consider that cost is zero beyond ϕ: we want to find ϕ here to start with."
-# invτ(x::Float64,p::Param,Lu::Float64) = ( x / ( p.a * wu0(Lu, p)^(p.ξw)) )^(1.0/p.ξl)
 invτ(Lu::Float64,wr::Float64,wu::Float64,p::Param) = ( (wu - wr) / ( a(Lu,p) * wu^(p.ξw)) )^(1.0/p.ξl)
 
 
@@ -648,12 +633,6 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	               [:Cr, :C] => ((a,b) -> a ./b) => :rshare)
 
 	transform!(df, :Lr => (x -> x ./ (p.Lt .* p.K)) => :Lr_n, :Lu => (x -> x ./ (p.Lt .* p.K)) => :Lu_n)
-
-	
-	
-	
-	# ndens[!,:year] .= dens.year
-	
 
 	df
 end

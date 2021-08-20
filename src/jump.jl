@@ -2,7 +2,7 @@
 
 
 """
-solve model at current paramter p and starting at point x0
+solve model at current [`Param`](@ref) `p` and starting at point `x0`
 """
 function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = false)
 

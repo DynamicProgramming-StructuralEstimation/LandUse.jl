@@ -1,13 +1,18 @@
 push!(LOAD_PATH,"../src")
 using Documenter, LandUse
 
-makedocs(modules = [LandUse], sitename = "LandUse.jl")
+makedocs(modules = [LandUse], 
+         sitename = "LandUse.jl",
+         pages = [
+             "Home" => "index.md",
+             "Single Region" => "model.md",
+             "Country" => "country.md",
+             "Interactive Views" => "interact.md",
+             "Function Index" => "reference.md"
+         ]
+    )
 
 cp(joinpath(@__DIR__,"..","LandUseR","docs"), joinpath(@__DIR__,"build","Rdocs"),force = true)
 
 
-<<<<<<< HEAD
 deploydocs(repo = "github.com/floswald/LandUse.jl.git")
-=======
-# deploydocs(repo = "github.com/floswald/LandUse.jl.git")
->>>>>>> c788617d3058b4d9378b0a27b34fe0ba5f51b591

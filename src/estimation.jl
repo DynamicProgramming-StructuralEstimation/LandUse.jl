@@ -112,6 +112,8 @@ run objective function at default parameter
 objective1(;save = false) = objective(p2x(Param()), moments = true, plot = true, save = save)
 
 """
+    objective(x; moments = false, plot = false, save = false, fname = "moments")
+
 moment objective function for an optimizer
 """
 function objective(x; moments = false, plot = false, save = false, fname = "moments")
@@ -239,6 +241,12 @@ function latex_moments(d::DataFrame; fname = "moments")
 
 end
 
+"""
+    runestim(;steps = 1000,fname = "moments")
+
+Run the default differential evolution optimizer from [BlackBoxOptim.jl](https://github.com/robertfeldt/BlackBoxOptim.jl)
+
+"""
 function runestim(;steps = 1000,fname = "moments")
     # check slack
     post_slack()

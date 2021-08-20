@@ -1,3 +1,18 @@
+
+"""
+# Parameter Struct 
+
+This struct defines the parameter type for the model.
+It reads default values from the file `src/params.json`. Those values
+can be overridden by supplying a `Dict` to the constructor with `key => value` pairs:
+
+```julia
+p = LandUse.Param(par = Dict(:η => 0.1))
+```
+
+creates a `Param` instance with agglomeration forces set to 0.1
+
+"""
 mutable struct Param
 	γ     :: Float64 # housing weight
 	ϵr     :: Float64 # housing supply elasticity in rural sector

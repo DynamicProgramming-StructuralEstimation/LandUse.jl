@@ -9,7 +9,7 @@ This `R` package contains data measurement tools used in the paper *Structural C
 1. Measuring city area extents and urban population via GHSL.
 2. Assessing current land use outside of cities via CLC.
 
-Basically, this is the code accompanying sections B.6 and B.7 of our online appendix. Section B.8 (Indidivual Commuting Data) uses confidential data on CASD, code for which is contained in a separate R package.
+Basically, this is the code accompanying sections B.6 and B.7 of our online appendix. Please refer to this document for precise instructions and links to the relevant data downloads (we provide a full data package below). Section B.8 (Individual Commuting Data) uses confidential data on CASD, code for which is contained in a separate R package.
 
 ## Contents
 
@@ -32,18 +32,23 @@ remotes::install_github("floswald/LandUse.jl", subdir = "LandUseR")
 
 ## Replication Data Requirements
 
+In order to use the code in this package to replicate our results you need to download our data folder from dropbox (2.5GB). This contains all the data needed. Luckily there are no license restrictions and you are free to use the data as is. Then there are 2 steps:
 
+1. you need to tell this package the location of the downloaded data on your computer via an environment variable. Simple instructions can be followed (after you installed the package) via
 
-### Data 1975 - 2015
+```R
+library(LandUseR)
+dboxdir()   # will throw an error with instructions
+```
 
-Here the datasource is EU Commission's [Global Human Settlement](https://ghslsys.jrc.ec.europa.eu/download.php?ds=pop) project. Please check the online appendix for a thorough description.
+2. you need to create an `output` directory with 2 subdirectories in the same location that contains the data from point 1. That is, your computer needs to contain something like this:
 
-
-### Data 1950 and before
-
-* Need to resort to manual measurement of a list of French cities. 
-* We use [geoportail](https://www.geoportail.gouv.fr/donnees/cartes-1950)
-* We can use maps from the 1950s
-* We also use maps from the 1860's produced for the Army by the Etat Major
-
-
+```
+LandUse  (you set an environment variable in point 1. to this location)
+ |
+ |-- data  (you downloaded this from dropbox)
+ |-- output
+       |
+       |-- plots
+       |-- tables
+```       
