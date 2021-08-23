@@ -12,7 +12,4 @@ makedocs(modules = [LandUse],
          ]
     )
 
-cp(joinpath(@__DIR__,"..","LandUseR","docs"), joinpath(@__DIR__,"build","Rdocs"),force = true)
-
-
 deploydocs(repo = "github.com/floswald/LandUse.jl.git")

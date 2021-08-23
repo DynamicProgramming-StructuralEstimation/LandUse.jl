@@ -6,7 +6,7 @@
 
 This is the documentation for `julia` computation code used in [Structural Change, Land Use and Urban Expansion](https://floswald.github.io/project/landuse/) by Coeurdacier, Oswald and Teignier. The package repository is on github at <https://github.com/floswald/LandUse.jl>.
 
-There is an associated R package [documentation website](Rdocs/index.html), which provides documentation for the data measurement parts used in the paper, basically the code for appendix B.6 and B.7.
+There is an associated [R package `LandUseR`](https://github.com/floswald/LandUseR) whose [website](http://floswald.github.io/LandUseR), documents for the data measurement parts used in the paper, basically the code for appendix B.6 and B.7.
 
 ```@contents
 Pages = ["index.md", "model.md", "country.md", "interact.md", "reference.md"]
