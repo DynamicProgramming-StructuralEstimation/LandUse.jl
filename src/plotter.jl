@@ -75,7 +75,7 @@ function dashk20(;save = false)
 	d2 = ddd[2]
 
 
-	# baseline vs policy
+	# baseline vs policy: exponential coefs
 	# ==================
 
 	# exponential coefficient
@@ -88,6 +88,22 @@ function dashk20(;save = false)
 			savefig(di[Symbol("d1d2_coefs_$yr")], joinpath(LandUse.dbplots,"k20-exp-coefs-$yr.pdf"))
 		end
 	end
+
+	# radius of cities
+	radii = DataFrame(year = [2010, 2020], 
+	                  singleϕ = [M[end].ϕ, M[end-1].ϕ])
+
+	r2 = combine(groupby(subset(ddd[1], :year => x -> x .∈ Ref([2010, 2020])
+       ), :year), 
+	   :ϕ => mean => :meanϕ,
+	   [:ϕ, :Lu] => ((x,y) -> mean(x,fweights(y))) => :wgtmeanϕ
+	   )
+	radii = leftjoin(radii, r2, on = :year)
+
+	CSV.write(joinpath(LandUse.dbtables,"radii.csv"),radii)
+
+	# make x sectional plots data vs model
+	# ====================================
 
 	densyears = [1870, 1950,1970,1990,2010]
 
