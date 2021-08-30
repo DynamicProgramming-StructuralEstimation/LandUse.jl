@@ -56,7 +56,7 @@ end
 
 Produce and optionally save model output for 20 city version.
 """
-function dashk20(;save = false,h1 = 600, w1 = 900)
+function dashk20(;save = false)
 
 	# compare model to data
 	# =====================
@@ -150,7 +150,7 @@ function dashk20(;save = false,h1 = 600, w1 = 900)
 
 
 	di[:dens_mod_data_d1d2] = @df d2ly plot(:nlcitydensity, :ldensity_data, group = :LIBGEO, leg = :outerright, 
-		xlab = "log normalized model density", ylab = "log data density", title = "X-section with d1-d2",
+		xlab = "log normalized model density", ylab = "log data density", title = "X-section with d0, d1",
 		color = reshape(palette(:tab20)[1:20], 1,20),
 		arrow = 2, 
 		markershape = :circle,
@@ -158,11 +158,17 @@ function dashk20(;save = false,h1 = 600, w1 = 900)
 	plot!(di[:dens_mod_data_d1d2], x -> coef(r1)[1] + coef(r1)[2] * x, lab = "", linewidth = 2, color = "black")
 	annotate!(di[:dens_mod_data_d1d2], [(11.5, 11.8, Plots.text("slope=$(round(coef(r1)[2],digits = 3))", 12))])
 
+	di[:dens_mod_data_d1d2_nocolor] = @df d2ly scatter(:nlcitydensity, :ldensity_data, leg = false, 
+		xlab = "log normalized model density", ylab = "log data density", title = "X-section with d0, d1")
+	plot!(di[:dens_mod_data_d1d2_nocolor], x -> coef(r1)[1] + coef(r1)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_d1d2_nocolor], [(11.5, 11.8, Plots.text("slope=$(round(coef(r1)[2],digits = 3))", 12))])
+
 	
 	if save
 		savefig(di[:dens_mod_data_base], joinpath(LandUse.dbplots,"k20-xsect-time.pdf"))
 		savefig(di[:dens_mod_data_base2], joinpath(LandUse.dbplots,"k20-xsect-time-nocolor.pdf"))
-		savefig(di[:dens_mod_data_d1d2], joinpath(LandUse.dbplots,"k20-xsect-time-d1d2.pdf"))
+		savefig(di[:dens_mod_data_d1d2], joinpath(LandUse.dbplots,"k20-xsect-time-d0d1.pdf"))
+		savefig(di[:dens_mod_data_d1d2_nocolor], joinpath(LandUse.dbplots,"k20-xsect-time-d0d1-nocolor.pdf"))
 	end
 
 
@@ -241,24 +247,25 @@ function dashk20(;save = false,h1 = 600, w1 = 900)
 	sort!(d, [:year, :region])
 	x20 = subset(d,:year => x -> x.==2020)
 	w2020 = select(x20,:region,:Lu => :weights)
+
 	g3 = combine(groupby(d, :year), 
-	      :citydensity => mean => :avgdensity,
-	      :pr => mean => :avgpr,
+	      :avgd_n => mean => :avgdensity,
+	      :pr_1950 => mean => :avgpr,
 	      :Lr => mean => :avgLr)
 
 	gg4 = leftjoin(d,w2020,on = :region)
 	disallowmissing!(gg4,:weights)
 	g4 = combine(groupby(gg4, :year), 
-	     [:citydensity, :weights] => ((x,y) -> mean(x,fweights(y))) => :wtd_avgdensity,
-	     [:pr, :weights] => ((x,y) -> mean(x,fweights(y))) => :wtd_price,
+	     [:avgd_n, :weights] => ((x,y) -> mean(x,fweights(y))) => :wtd_avgdensity,
+	     [:pr_1950, :weights] => ((x,y) -> mean(x,fweights(y))) => :wtd_price,
 	     [:Lr, :weights] => ((x,y) -> mean(x,fweights(y))) => :wtd_Lr)
 
 	
 	di[:avg_density] = @df g3 plot(:year, :avgdensity, label = "Avg over $K" , title = "Urban Density", lw = 2)
-	plot!(di[:avg_density], d1.year, d1.citydensity, label = "Single city", lw = 2)
+	plot!(di[:avg_density], d1.year, d1.avgd_n, label = "Single city", lw = 2)
 
 	di[:avg_pr] = @df g3 plot(:year, :avgpr, label = "Avg over $K" , title = "Relative Price", lw = 2)
-	plot!(di[:avg_pr], d1.year, d1.pr, label = "Single city", lw = 2)
+	plot!(di[:avg_pr], d1.year, d1.pr_1950, label = "Single city", lw = 2)
 
 	di[:avg_Lr] = @df g3 plot(:year, :avgLr, label = "Avg over $K" , title = "Rural Employment", lw = 2)
 	plot!(di[:avg_Lr], d1.year, d1.Lr, label = "Single city", lw = 2)
@@ -308,7 +315,7 @@ function dashk20(;save = false,h1 = 600, w1 = 900)
 	di[:p1vsk] = plot(di[:avg_density],di[:avg_pr],di[:avg_Lr], layout = (1,3), size = (900,300))
 
 	if save
-		savefig(:di[:mod_vs_data_density], joinpath(LandUse.dbplots,"k20-density-data-model.pdf"))
+		savefig(di[:mod_vs_data_density], joinpath(LandUse.dbplots,"k20-density-data-model.pdf"))
 		savefig(di[:p1vsk], joinpath(LandUse.dbplots,"k20-density-vs1.pdf"))
 		savefig(di[:dens_2020], joinpath(LandUse.dbplots,"k20-density3D-2020.pdf"))
 		savefig(di[:relpop_data], joinpath(LandUse.dbplots,"k20-relpop-model-data.pdf"))

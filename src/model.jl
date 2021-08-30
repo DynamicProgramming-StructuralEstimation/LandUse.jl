@@ -621,13 +621,18 @@ function dataframe(M::Vector{T},p::Param) where T <: Model
 	df[!,:ρ0_real] = df[!,:ρ0] ./ df[!, :p_index]
 
 	# normalizations / transforms
+	# normalize densities at first period
 	sort!(df, :year)
 	dens = select(df,:d0,  :dr, :citydensity)
 	mapcols!(x -> x ./ x[1],dens)
 	rename!(dens, [:d0_n, :dr_n, :avgd_n] )
-
 	df = [df dens]
 
+	# normalize pr at 1950
+	i1950 = argmin( abs.(p.moments.year .- 1950) )
+	transform!(df, :pr => (x -> x ./ x[i1950]) => :pr_1950)
+
+	# compute spending shares
 	transform!(df, [:Ch, :C] => ((a,b) -> a ./b) => :hshare,
 	               [:Cu, :C] => ((a,b) -> a ./b) => :ushare,
 	               [:Cr, :C] => ((a,b) -> a ./b) => :rshare)
