@@ -262,32 +262,32 @@ end
 
 
 "print default param to latex table"
-function latex_param()
+function latex_param(;digits = 2)
 	f = open(joinpath(dirname(@__FILE__),"params.json"))
 	j = JSON.parse(f)
 	close(f)
 
-	getline(x;digits = 2) = [latexstring(x["symbol"]), x["description"], round(x["value"],digits = digits)]
+	getline(x,digits) = [latexstring(x["symbol"]), x["description"], round(x["value"],digits = digits)]
 
-	latex_tabular(joinpath(dbtables,"params.tex"), Tabular("l l D{.}{.}{1.2}@{}"), [
+	latex_tabular(joinpath(dbtables,"params-$digits-digits.tex"), Tabular("l l D{.}{.}{1.3}@{}"), [
 	   Rule(:top),
        ["Parameter", "Description", MultiColumn(1,:c,"Value")],
        Rule(:mid),
-	   getline(j["S"]),
+	   getline(j["S"],1),
 	   [latexstring("L_0"), j["L"]["description"], round(j["L"]["value"],digits = 2)],
 	   [latexstring("\\theta_0"), "Initial Productivity in 1840", 1.0],
-	   getline(j["α"]),
-	   getline(j["σ"]),
-	   getline(j["ν"]),
-	   getline(j["γ"]),
-	   getline(j["cbar"]),
-	   getline(j["sbar"]),
-	   getline(j["β"]),
-	   getline(j["ξl"]),
-	   getline(j["ξw"]),
-	   getline(j["a"]),
-	   getline(j["ϵr"]),
-	   getline(j["ϵs"]),
+	   getline(j["α"],digits),
+	   getline(j["σ"],digits),
+	   getline(j["ν"],digits),
+	   getline(j["γ"],digits),
+	   getline(j["cbar"],digits),
+	   getline(j["sbar"],digits),
+	   getline(j["β"],digits),
+	   getline(j["ξl"],digits),
+	   getline(j["ξw"],digits),
+	   getline(j["a"],digits),
+	   getline(j["ϵr"],digits),
+	   getline(j["ϵs"],digits),
        Rule(:bottom)
 	   ]
 	)

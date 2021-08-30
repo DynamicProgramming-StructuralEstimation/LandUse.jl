@@ -146,7 +146,7 @@ function dashk20(;save = false)
 		ylab = "Data", 
 		title = "Density")
 	plot!(di[:dens_mod_data_base2], x -> coef(r0)[1] + coef(r0)[2] * x, lab = "", linewidth = 2, color = "black")
-	annotate!(di[:dens_mod_data_base2], [(11.5, 11.0, Plots.text("slope=$(round(coef(r0)[2],digits = 3))", 12))])
+	annotate!(di[:dens_mod_data_base2], [(11, 10.0, Plots.text("slope=$(round(coef(r0)[2],digits = 3))", 12))])
 
 
 	di[:dens_mod_data_d1d2] = @df d2ly plot(:nlcitydensity, :ldensity_data, group = :LIBGEO, leg = :outerright, 
@@ -179,7 +179,7 @@ function dashk20(;save = false)
 	                                [:rel_cityarea, :region] => ((a,b) -> a ./ a[b .== 1]) => :nrel_cityarea)
 
 	# no paris
-	nop = subset(d, :region => x -> x .> 1)
+	nop = subset(d, :region => x -> x .> 1, :year => x -> x .∈ Ref(densyears))
 
 	# relative population
 	c20 = palette(:tab20)
@@ -200,7 +200,7 @@ function dashk20(;save = false)
 	           ylab = "Data", xlab = "Model",
 			   title = "Rel. Population")
 	plot!(di[:relpop_data2], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
-	annotate!(di[:relpop_data2], [(0.15, 0.15, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
+	annotate!(di[:relpop_data2], [(0.1, 0.075, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
 		   
 
 	r2 = lm(@formula( relarea_data ~ nrel_cityarea ), nop)
@@ -208,7 +208,17 @@ function dashk20(;save = false)
 	          leg = false, ylab = "Data", xlab = "Model",
 			  title = "Rel. Area")
 	plot!(di[:relarea_data], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
-	annotate!(di[:relarea_data], [(0.45, 0.17, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
+	annotate!(di[:relarea_data], [(0.25, 0.11, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
+
+	di[:relarea_data_color] = @df nop plot(:nrel_cityarea, :relarea_data, group = :LIBGEO, 
+	          leg = :outerright, ylab = "Data", xlab = "Model",
+			  color = reshape(palette(:tab20)[1:20], 1,20),
+			  arrow = 2, 
+			  markershape = :circle,
+			  markersize = 4,
+			  title = "Rel. Area by city")
+	plot!(di[:relarea_data_color], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:relarea_data_color], [(0.25, 0.11, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
 
 	di[:mod_vs_data_density] = plot(di[:relpop_data2], di[:relarea_data], di[:dens_mod_data_base2],
 	     size = (1100,400), 
@@ -321,6 +331,7 @@ function dashk20(;save = false)
 		savefig(di[:relpop_data], joinpath(LandUse.dbplots,"k20-relpop-model-data.pdf"))
 		savefig(di[:relpop_data2], joinpath(LandUse.dbplots,"k20-relpop-model-data-nocolor.pdf"))
 		savefig(di[:relarea_data], joinpath(LandUse.dbplots,"k20-relarea-model-data.pdf"))
+		savefig(di[:relarea_data_color], joinpath(LandUse.dbplots,"k20-relarea-model-data-color.pdf"))
 		savefig(di[:density_3d], joinpath(LandUse.dbplots,"k20-density3D.pdf"))
 	end
 
