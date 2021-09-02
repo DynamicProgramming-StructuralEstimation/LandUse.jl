@@ -354,9 +354,24 @@ function smooth_p_check(periods)
 			   labels = ["" "Smoothed"])
 end
 
-"""
+@doc raw"""
+	prepare_data(p::Param; digits = 9)
+
 Takes raw csv data and prepares to be used in model.
 writes to csv input files.
+
+## Smoothing of Productivity Series
+
+We take the following steps to obtain a smoothed series for ``\theta_r`` and ``\theta_u``:
+
+1. We obtain the estimated series at annual frequency.
+1. We subset both series to start in 1840 and end in 2015 (rural productivity ends in that year)
+1. We linearly interpolate the missing interwar years.
+1. Smoothing is done via the [`smooth`](@ref) function: we use the default [Hann window](https://en.wikipedia.org/wiki/Hann_function) and a 15-year window size. We experimented with the window size until high-frequency oscillations disappear.
+1. Our rural productivity series gets very noise from 2000 onwards, and in fact one would find a decreasing rural productivity series if we applied our smoother to post 2000 data. Therefore from the year 2000 onwards, we grow the smoothed series forward with 1% annual growth. Given that 2000 is very close to the final new steady state of the model, the actual choice of growth rate has only a small impact on our results.
+
+
+
 """
 function prepare_data(p::Param; digits = 9)
 
@@ -422,13 +437,22 @@ function prepare_data(p::Param; digits = 9)
 	x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
 	x = transform(x, :stheta_rural => (x -> x ./ x[1]) => :stheta_rural, :stheta_urban => (x -> x ./ x[1]) => :stheta_urban)
 
-
-    p1 = @df x plot(:year, [:theta_rural :stheta_rural],leg=:left, lw = 2)
+	s0 = ": Rural"
+	s1 = ": Urban"
+	s3 = "Smoothed"
+    p1 = @df x plot(:year, [:theta_rural :stheta_rural],leg=:left, lw = 2, label = ["Data"  "Smoothed"], title = L"\theta_r\textbf{%$s0}")
 	savefig(p1, joinpath(dbplots,"smooth-theta-rural.pdf"))
-	p2 = @df x plot(:year, [:theta_urban :stheta_urban],leg=:left, lw = 2)
+	p2 = @df x plot(:year, [:theta_urban :stheta_urban],leg=:left, lw = 2, label = ["Data"  "Smoothed"], title = L"\theta_u\textbf{%$s1}")
 	savefig(p2, joinpath(dbplots,"smooth-theta-urban.pdf"))
 
-	p3 = @df x plot(:year, [:stheta_rural :stheta_urban],leg=:left, lw = 2)
+	p3 = @df x plot(:year, [:stheta_rural :stheta_urban],leg=:left, lw = 2, label = [L"\theta_r" L"\theta_u"], title = L"\textbf{%$s3}")
+
+
+	p11 = plot(p1,p2,p3, layout = (1,3), size = (900,300))
+	savefig(p11, joinpath(dbplots,"smoothed-thetas.pdf"))
+
+
+	# p3 = @df x plot(:year, [:stheta_rural :stheta_urban],leg=:left, lw = 2)
 	savefig(p3, joinpath(dbplots,"smooth-thetas-model.pdf"))
 
 	p4 = @df x scatter(:year, :theta_rural, title = "Rural", label = "data",leg=:left)
@@ -444,7 +468,7 @@ function prepare_data(p::Param; digits = 9)
 	#
 	#
 	# (ret, pl)
-	(p1,p2,p3,p6)
+	(p1,p2,p3,p6,p11)
 end
 
 function plot_shares()
