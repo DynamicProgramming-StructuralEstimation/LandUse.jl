@@ -143,8 +143,7 @@ function dashk20(;save = false)
 
 	di[:dens_mod_data_base2] = @df dly scatter(:nlcitydensity, :ldensity_data, leg = false, 
 		xlab = "Model", 
-		ylab = "Data", 
-		title = "Density")
+		ylab = "Data")
 	plot!(di[:dens_mod_data_base2], x -> coef(r0)[1] + coef(r0)[2] * x, lab = "", linewidth = 2, color = "black")
 	annotate!(di[:dens_mod_data_base2], [(11, 10.0, Plots.text("slope=$(round(coef(r0)[2],digits = 3))", 12))])
 
@@ -163,9 +162,37 @@ function dashk20(;save = false)
 	plot!(di[:dens_mod_data_d1d2_nocolor], x -> coef(r1)[1] + coef(r1)[2] * x, lab = "", linewidth = 2, color = "black")
 	annotate!(di[:dens_mod_data_d1d2_nocolor], [(11.5, 11.8, Plots.text("slope=$(round(coef(r1)[2],digits = 3))", 12))])
 
+	# pick a year and do there
+	dly2010 = subset(dly, :year => x->x.==2010 )
+	d2ly2010 = subset(d2ly, :year => x->x.==2010)
+	
+	r0 = lm(@formula( ldensity_data ~ nlcitydensity), dly2010)
+	r1 = lm(@formula( ldensity_data ~ nlcitydensity), d2ly2010)
+
+	di[:dens_mod_data_base2010] = @df dly2010 scatter(:nlcitydensity, :ldensity_data, leg = false, 
+	xlab = "Model", 
+	ylab = "Data",
+	title = "Baseline")
+	plot!(di[:dens_mod_data_base2010], x -> coef(r0)[1] + coef(r0)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_base2010], [(9, 8.2, Plots.text("slope=$(round(coef(r0)[2],digits = 3))", 12))])
+
+	di[:dens_mod_data_d1d2_2010] = @df d2ly2010 scatter(:nlcitydensity, :ldensity_data, leg = false, 
+	xlab = "Model", 
+	ylab = "Data",
+	title = "d0, d1 Extension")
+	plot!(di[:dens_mod_data_d1d2_2010], x -> coef(r1)[1] + coef(r1)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_d1d2_2010], [(9, 8.2, Plots.text("slope=$(round(coef(r1)[2],digits = 3))", 12))])
+
+	di[:dens_mod_2010] = plot(di[:dens_mod_data_base2010],di[:dens_mod_data_d1d2_2010], 
+	       leg = (1,2), size = (800,400),
+		   link = :both,
+		   xlims = (7.5,10.5),
+		   left_margin = 5Plots.mm,
+		   bottom_margin = 5Plots.mm)
 	
 	if save
 		savefig(di[:dens_mod_data_base], joinpath(LandUse.dbplots,"k20-xsect-time.pdf"))
+		savefig(di[:dens_mod_2010], joinpath(LandUse.dbplots,"k20-xsect-2010.pdf"))
 		savefig(di[:dens_mod_data_base2], joinpath(LandUse.dbplots,"k20-xsect-time-nocolor.pdf"))
 		savefig(di[:dens_mod_data_d1d2], joinpath(LandUse.dbplots,"k20-xsect-time-d0d1.pdf"))
 		savefig(di[:dens_mod_data_d1d2_nocolor], joinpath(LandUse.dbplots,"k20-xsect-time-d0d1-nocolor.pdf"))
@@ -178,8 +205,16 @@ function dashk20(;save = false)
 	                                [:citydensity, :region] => ((a,b) -> a ./ a[b .== 1]) => :rel_density,
 	                                [:rel_cityarea, :region] => ((a,b) -> a ./ a[b .== 1]) => :nrel_cityarea)
 
+	# add rel pop, rel urban area and rel dens
+	d2 = transform(groupby(d2,:year), [:Lu, :region]          => ((a,b) -> a ./ a[b .== 1]) => :rel_Lu,
+	                                [:citydensity, :region] => ((a,b) -> a ./ a[b .== 1]) => :rel_density,
+	                                [:rel_cityarea, :region] => ((a,b) -> a ./ a[b .== 1]) => :nrel_cityarea)
+
+
 	# no paris
 	nop = subset(d, :region => x -> x .> 1, :year => x -> x .∈ Ref(densyears))
+	nop2010 = subset(d, :region => x -> x .> 1, :year => x -> x .== 2010)
+	nop22010 = subset(d2, :region => x -> x .> 1, :year => x -> x .== 2010)
 
 	# relative population
 	c20 = palette(:tab20)
@@ -220,12 +255,32 @@ function dashk20(;save = false)
 	plot!(di[:relarea_data_color], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
 	annotate!(di[:relarea_data_color], [(0.25, 0.11, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
 
-	di[:mod_vs_data_density] = plot(di[:relpop_data2], di[:relarea_data], di[:dens_mod_data_base2],
+	di[:mod_vs_data_density] = plot(di[:relpop_data2], di[:relarea_data], plot(di[:dens_mod_data_base2], title = "Density"),
 	     size = (1100,400), 
 		 layout = (1,3),
 		 left_margin = 5Plots.mm,
 		 bottom_margin = 5Plots.mm)
+
+	r2 = lm(@formula( relarea_data ~ nrel_cityarea ), nop2010)
+	di[:relarea_data_2010] = @df nop2010 scatter(:nrel_cityarea, :relarea_data, 
+			leg = false, ylab = "Data", xlab = "Model",
+			title = "Baseline")
+	plot!(di[:relarea_data_2010], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:relarea_data_2010], [(0.3, 0.11, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
+	 
+	r2 = lm(@formula( relarea_data ~ nrel_cityarea ), nop22010)
+	di[:relarea_data_2010_d1d2] = @df nop22010 scatter(:nrel_cityarea, :relarea_data, 
+			leg = false, ylab = "Data", xlab = "Model",
+			title = "d0,d1 Extension",
+			ylims = (-0.03,0.28))
+	plot!(di[:relarea_data_2010_d1d2], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:relarea_data_2010_d1d2], [(0.19, 0.11, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
 	
+	di[:relarea_data_2010] = plot(di[:relarea_data_2010],di[:relarea_data_2010_d1d2],
+								 link = :y,
+								 size = (800,400) ,
+								 left_margin = 5Plots.mm,
+								 bottom_margin = 5Plots.mm,aspect_ratio = 1)
 
 	di[:relpop_nop] = @df nop plot(:year, :rel_Lu, group = :LIBGEO, leg = :outertopright, col = palette(:tab20))
 	@df nop scatter!(di[:relpop_nop],:datayears, :relpop_data, group = :LIBGEO, lab = false, col = palette(:tab20))
@@ -325,6 +380,7 @@ function dashk20(;save = false)
 	di[:p1vsk] = plot(di[:avg_density],di[:avg_pr],di[:avg_Lr], layout = (1,3), size = (900,300))
 
 	if save
+		savefig(di[:relarea_data_2010], joinpath(LandUse.dbplots,"k20-relarea-data-model-2010.pdf"))
 		savefig(di[:mod_vs_data_density], joinpath(LandUse.dbplots,"k20-density-data-model.pdf"))
 		savefig(di[:p1vsk], joinpath(LandUse.dbplots,"k20-density-vs1.pdf"))
 		savefig(di[:dens_2020], joinpath(LandUse.dbplots,"k20-density3D-2020.pdf"))
