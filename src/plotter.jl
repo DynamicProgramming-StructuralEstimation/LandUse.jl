@@ -114,15 +114,44 @@ function dashk20(;save = false)
 
 	meandata = mean(dy.density_data)
 	meanmodel = mean(dy.citydensity)
-	transform!(dy, :citydensity => (x -> x .* (meandata / meanmodel)) => :ncitydensity)
+	disallowmissing!(dy)
+	disallowmissing!(d2y)
+
+	# transformations
+	# simple log
+	# zscores
+	# zscores
+
+	transform!(dy, :citydensity => (x -> x .* (meandata / meanmodel)) => :ncitydensity,
+				   :citydensity => (x -> log.(x)) => :lcitydensity,
+				   :citydensity => (x -> zscore(log.(x))) => :lcitydensity_dm,
+				   :density_data => (x -> zscore(log.(x))) => :ldensity_data_dm,
+				   :density_data => (x -> log.(x)) => :ldensity_data,
+				   :cityarea => zscore => :cityarea_dm,
+				   :cityarea => (x -> log.(x)) => :lcityarea,
+	               :area_data => (x -> log.(x)) => :larea_data,
+	               :area_data => zscore => :area_data_dm,
+				   :Lu => zscore => :Lu_dm,
+				   :pop_data => zscore => :pop_data_dm)
+
+	
 
 	meandata = mean(d2y.density_data)
 	meanmodel = mean(d2y.citydensity)
-	transform!(d2y, :citydensity => (x -> x .* (meandata / meanmodel)) => :ncitydensity)
+	transform!(d2y, :citydensity => (x -> x .* (meandata / meanmodel)) => :ncitydensity,
+				   :citydensity => (x -> zscore(log.(x))) => :lcitydensity_dm,
+				   :density_data => (x -> zscore(log.(x))) => :ldensity_data_dm,
+	               :cityarea => zscore => :cityarea_dm,
+	               :area_data => zscore => :area_data_dm,
+				   :Lu => zscore => :Lu_dm,
+				   :pop_data => zscore => :pop_data_dm)
 
 	dly = transform(dy, :density_data => (x -> log.(x)) => :ldensity_data, 
 	                    :citydensity => (x -> log.(x)) => :lcitydensity,
 						:ncitydensity => (x -> log.(x)) => :nlcitydensity)
+	transform!(dly, :ldensity_data => zscore => :ldensity_data_z,
+					:nlcitydensity => zscore => :nlcitydensity_z
+	)
 
 	d2ly = transform(d2y, :density_data => (x -> log.(x)) => :ldensity_data, 
 	                    :citydensity => (x -> log.(x)) => :lcitydensity,
@@ -148,6 +177,21 @@ function dashk20(;save = false)
 	annotate!(di[:dens_mod_data_base2], [(11, 10.0, Plots.text("slope=$(round(coef(r0)[2],digits = 3))", 12))])
 
 
+	r3 = lm(@formula( ldensity_data_dm ~ lcitydensity_dm), dy)
+	di[:dens_mod_data_base3] = @df dy scatter(:lcitydensity_dm, :ldensity_data_dm, leg = false, 
+	xlab = "z(log(Model))", 
+	ylab = "z(log(Data))",title = "Density")
+	plot!(di[:dens_mod_data_base3], x -> coef(r3)[1] + coef(r3)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_base3], [(0, 2, Plots.text("slope=$(round(coef(r3)[2],digits = 3))", 12))])
+
+	r4 = lm(@formula( ldensity_data ~ lcitydensity), dy)
+	di[:dens_mod_data_base4] = @df dy scatter(:lcitydensity, :ldensity_data, leg = false, 
+	xlab = "log(Model)", 
+	ylab = "log(Data)",title = "Density")
+	plot!(di[:dens_mod_data_base4], x -> coef(r4)[1] + coef(r4)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_base4], [(2.5, 11, Plots.text("slope=$(round(coef(r4)[2],digits = 3))", 12))])
+
+
 	di[:dens_mod_data_d1d2] = @df d2ly plot(:nlcitydensity, :ldensity_data, group = :LIBGEO, leg = :outerright, 
 		xlab = "log normalized model density", ylab = "log data density", title = "X-section with d0, d1",
 		color = reshape(palette(:tab20)[1:20], 1,20),
@@ -161,6 +205,17 @@ function dashk20(;save = false)
 		xlab = "log normalized model density", ylab = "log data density", title = "X-section with d0, d1")
 	plot!(di[:dens_mod_data_d1d2_nocolor], x -> coef(r1)[1] + coef(r1)[2] * x, lab = "", linewidth = 2, color = "black")
 	annotate!(di[:dens_mod_data_d1d2_nocolor], [(11.5, 11.8, Plots.text("slope=$(round(coef(r1)[2],digits = 3))", 12))])
+
+	r4 = lm(@formula( ldensity_data_dm ~ lcitydensity_dm), d2y)
+	di[:dens_mod_data_d1d2_nocolor] = @df d2y scatter(:lcitydensity_dm, :ldensity_data_dm, leg = false, 
+	xlab = "Model", 
+	ylab = "Data", title = "d0, d1 Extension")
+	plot!(di[:dens_mod_data_d1d2_nocolor], x -> coef(r4)[1] + coef(r4)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:dens_mod_data_d1d2_nocolor], [(0, 2, Plots.text("slope=$(round(coef(r4)[2],digits = 3))", 12))])
+
+	di[:dens_mod_data] = plot(plot(di[:dens_mod_data_base3],title = "Baseline"), 
+	                          di[:dens_mod_data_d1d2_nocolor], layout = (1,2), size = (800,400))
+
 
 	# pick a year and do there
 	dly2010 = subset(dly, :year => x->x.==2010 )
@@ -213,8 +268,7 @@ function dashk20(;save = false)
 
 	# no paris
 	nop = subset(d, :region => x -> x .> 1, :year => x -> x .∈ Ref(densyears))
-	nop2010 = subset(d, :region => x -> x .> 1, :year => x -> x .== 2010)
-	nop22010 = subset(d2, :region => x -> x .> 1, :year => x -> x .== 2010)
+
 
 	# relative population
 	c20 = palette(:tab20)
@@ -230,20 +284,20 @@ function dashk20(;save = false)
 
 	di[:relpop_data] = pl
 
-	r2 = lm(@formula( relpop_data ~ rel_Lu ), nop)
-	di[:relpop_data2] = @df nop scatter(:rel_Lu, :relpop_data, leg = false, 
+	r2 = lm(@formula( pop_data_dm ~ Lu_dm ), dy)
+	di[:relpop_data2] = @df dy scatter(:Lu_dm, :pop_data_dm, leg = false, 
 	           ylab = "Data", xlab = "Model",
-			   title = "Rel. Population")
+			   title = "Urban Population")
 	plot!(di[:relpop_data2], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
-	annotate!(di[:relpop_data2], [(0.1, 0.075, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
+	annotate!(di[:relpop_data2], [(2, 4, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
 		   
 
-	r2 = lm(@formula( relarea_data ~ nrel_cityarea ), nop)
-	di[:relarea_data] = @df nop scatter(:nrel_cityarea, :relarea_data, 
+	r2 = lm(@formula( area_data_dm ~ cityarea_dm ), dy)
+	di[:relarea_data] = @df dy scatter(:cityarea_dm, :area_data_dm, 
 	          leg = false, ylab = "Data", xlab = "Model",
-			  title = "Rel. Area")
+			  title = "Urban Area",aspect_ratio = 1)
 	plot!(di[:relarea_data], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
-	annotate!(di[:relarea_data], [(0.25, 0.11, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
+	annotate!(di[:relarea_data], [(3, 0, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
 
 	di[:relarea_data_color] = @df nop plot(:nrel_cityarea, :relarea_data, group = :LIBGEO, 
 	          leg = :outerright, ylab = "Data", xlab = "Model",
@@ -255,28 +309,41 @@ function dashk20(;save = false)
 	plot!(di[:relarea_data_color], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
 	annotate!(di[:relarea_data_color], [(0.25, 0.11, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
 
-	di[:mod_vs_data_density] = plot(di[:relpop_data2], di[:relarea_data], plot(di[:dens_mod_data_base2], title = "Density"),
+	di[:mod_vs_data_density] = plot(di[:relpop_data2], di[:relarea_data], plot(di[:dens_mod_data_base3], title = "Density"),
 	     size = (1100,400), 
 		 layout = (1,3),
 		 left_margin = 5Plots.mm,
 		 bottom_margin = 5Plots.mm)
 
-	r2 = lm(@formula( relarea_data ~ nrel_cityarea ), nop2010)
-	di[:relarea_data_2010] = @df nop2010 scatter(:nrel_cityarea, :relarea_data, 
+
+	# single year (2010) analysis
+	# ===========================
+
+	y2010 = subset(d, :year => x -> x .== 2010)
+	y22010 = subset(d2, :year => x -> x .== 2010)
+
+	# demean area
+	transform!(y2010, :cityarea => (x -> (x .- mean(x))./std(x)) => :cityarea_dm,
+	                  :area_data => (x -> (x .- mean(x))./std(x)) => :area_data_dm)
+
+	transform!(y22010, :cityarea => (x -> (x .- mean(x))./std(x)) => :cityarea_dm,
+		               :area_data => (x -> (x .- mean(x))./std(x)) => :area_data_dm)					  
+
+	r2 = lm(@formula( area_data_dm ~ cityarea_dm ), y2010)
+	di[:area_data_2010] = @df y2010 scatter(:cityarea_dm, :area_data_dm, 
 			leg = false, ylab = "Data", xlab = "Model",
 			title = "Baseline")
-	plot!(di[:relarea_data_2010], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
-	annotate!(di[:relarea_data_2010], [(0.3, 0.11, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
+	plot!(di[:area_data_2010], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:area_data_2010], [(1, 2, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
 	 
-	r2 = lm(@formula( relarea_data ~ nrel_cityarea ), nop22010)
-	di[:relarea_data_2010_d1d2] = @df nop22010 scatter(:nrel_cityarea, :relarea_data, 
+	r2 = lm(@formula( area_data_dm ~ cityarea_dm ), y22010)
+	di[:area_data_2010_d1d2] = @df y22010 scatter(:cityarea_dm, :area_data_dm, 
 			leg = false, ylab = "Data", xlab = "Model",
-			title = "d0,d1 Extension",
-			ylims = (-0.03,0.28))
-	plot!(di[:relarea_data_2010_d1d2], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
-	annotate!(di[:relarea_data_2010_d1d2], [(0.19, 0.11, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
+			title = "d0,d1 Extension")
+	plot!(di[:area_data_2010_d1d2], x -> coef(r2)[1] + coef(r2)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(di[:area_data_2010_d1d2], [(1, 2, Plots.text("slope=$(round(coef(r2)[2],digits = 3))", 12))])
 	
-	di[:relarea_data_2010] = plot(di[:relarea_data_2010],di[:relarea_data_2010_d1d2],
+	di[:area_data_2010] = plot(di[:area_data_2010],di[:area_data_2010_d1d2],
 								 link = :y,
 								 size = (800,400) ,
 								 left_margin = 5Plots.mm,
@@ -380,7 +447,7 @@ function dashk20(;save = false)
 	di[:p1vsk] = plot(di[:avg_density],di[:avg_pr],di[:avg_Lr], layout = (1,3), size = (900,300))
 
 	if save
-		savefig(di[:relarea_data_2010], joinpath(LandUse.dbplots,"k20-relarea-data-model-2010.pdf"))
+		savefig(di[:area_data_2010], joinpath(LandUse.dbplots,"k20-relarea-data-model-2010.pdf"))
 		savefig(di[:mod_vs_data_density], joinpath(LandUse.dbplots,"k20-density-data-model.pdf"))
 		savefig(di[:p1vsk], joinpath(LandUse.dbplots,"k20-density-vs1.pdf"))
 		savefig(di[:dens_2020], joinpath(LandUse.dbplots,"k20-density3D-2020.pdf"))

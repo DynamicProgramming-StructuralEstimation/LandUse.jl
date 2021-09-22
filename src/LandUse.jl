@@ -39,6 +39,7 @@ module LandUse
 	using GLM
 	using FileIO
 	using StatsBase
+	using Statistics
 
 	# constants
 	const PEN = 100.0  # penalty for nl solver
