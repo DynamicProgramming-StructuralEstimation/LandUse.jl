@@ -262,32 +262,32 @@ end
 
 
 "print default param to latex table"
-function latex_param()
+function latex_param(;digits = 2)
 	f = open(joinpath(dirname(@__FILE__),"params.json"))
 	j = JSON.parse(f)
 	close(f)
 
-	getline(x;digits = 2) = [latexstring(x["symbol"]), x["description"], round(x["value"],digits = digits)]
+	getline(x,digits) = [latexstring(x["symbol"]), x["description"], round(x["value"],digits = digits)]
 
-	latex_tabular(joinpath(dbtables,"params.tex"), Tabular("l l D{.}{.}{1.2}@{}"), [
+	latex_tabular(joinpath(dbtables,"params-$digits-digits.tex"), Tabular("l l D{.}{.}{1.3}@{}"), [
 	   Rule(:top),
        ["Parameter", "Description", MultiColumn(1,:c,"Value")],
        Rule(:mid),
-	   getline(j["S"]),
+	   getline(j["S"],1),
 	   [latexstring("L_0"), j["L"]["description"], round(j["L"]["value"],digits = 2)],
 	   [latexstring("\\theta_0"), "Initial Productivity in 1840", 1.0],
-	   getline(j["α"]),
-	   getline(j["σ"]),
-	   getline(j["ν"]),
-	   getline(j["γ"]),
-	   getline(j["cbar"]),
-	   getline(j["sbar"]),
-	   getline(j["β"]),
-	   getline(j["ξl"]),
-	   getline(j["ξw"]),
-	   getline(j["a"]),
-	   getline(j["ϵr"]),
-	   getline(j["ϵs"]),
+	   getline(j["α"],digits),
+	   getline(j["σ"],digits),
+	   getline(j["ν"],digits),
+	   getline(j["γ"],digits),
+	   getline(j["cbar"],digits),
+	   getline(j["sbar"],digits),
+	   getline(j["β"],digits),
+	   getline(j["ξl"],digits),
+	   getline(j["ξw"],digits),
+	   getline(j["a"],digits),
+	   getline(j["ϵr"],digits),
+	   getline(j["ϵs"],digits),
        Rule(:bottom)
 	   ]
 	)
@@ -305,7 +305,6 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      γ       : $(p.γ   )\n")
 	print(io,"      ϵr      : $(p.ϵr  )\n")
 	print(io,"      ϵs      : $(p.ϵs  )\n")
-	print(io,"      nsteps : $(p.nsteps  )\n")
 	print(io,"      η       : $(p.η   )\n")
 	print(io,"      ν       : $(p.ν   )\n")
 	print(io,"      cbar    : $(p.cbar)\n")
@@ -314,7 +313,7 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      θu      : $(p.θu  )\n")
 	print(io,"      α       : $(p.α   )\n")
 	print(io,"      λ       : $(p.λ   )\n")
-	print(io,"      cτ       : $(p.cτ   )\n")
+	print(io,"      a       : $(p.a   )\n")
 	print(io,"      L       : $(p.L   )\n")
 	print(io,"      S       : $(p.S   )\n")
 	print(io,"      T       : $(p.T   )\n")
@@ -354,9 +353,23 @@ function smooth_p_check(periods)
 			   labels = ["" "Smoothed"])
 end
 
-"""
+@doc raw"""
+	prepare_data(p::Param; digits = 9)
+
 Takes raw csv data and prepares to be used in model.
 writes to csv input files.
+
+## Smoothing of Productivity Series
+
+We take the following steps to obtain a smoothed series for ``\theta_r`` and ``\theta_u``:
+
+1. We obtain the estimated series at annual frequency.
+1. We subset both series to start in 1840 and end in 2015 (rural productivity ends in that year)
+1. We linearly interpolate the missing interwar years.
+1. Smoothing is done via the [`smooth`] function from the QuantEcon package: we use the default [Hann window](https://en.wikipedia.org/wiki/Hann_function) and a 15-year window size. We experimented with the window size until high-frequency oscillations disappear.
+1. Our rural productivity series gets very volatile from 2000 onwards, and in fact one would find a decreasing rural productivity series if we applied our smoother to post 2000 data. Therefore from the year 2000 onwards, we grow the smoothed series forward with 1% annual growth. Given that 2000 is very close to the final new steady state of the model, the actual choice of growth rate has only a small impact on our results.
+
+
 """
 function prepare_data(p::Param; digits = 9)
 
@@ -422,13 +435,33 @@ function prepare_data(p::Param; digits = 9)
 	x = transform(x, :theta_rural => (x -> x ./ x[1]) => :theta_rural, :theta_urban => (x -> x ./ x[1]) => :theta_urban)
 	x = transform(x, :stheta_rural => (x -> x ./ x[1]) => :stheta_rural, :stheta_urban => (x -> x ./ x[1]) => :stheta_urban)
 
-
-    p1 = @df x plot(:year, [:theta_rural :stheta_rural],leg=:left, lw = 2)
+	s0 = ": Rural"
+	s1 = ": Urban"
+	s3 = "Smoothed"
+    p1 = @df x plot(:year, [:theta_rural :stheta_rural],leg=:left, lw = 2, 
+	                 label = ["Data"  "Smoothed"], 
+					 title = L"\theta_r\textbf{%$s0}",
+					 yscale = :log10,
+					 yticks = [1, 2,4,8,16], ylabel = L"\log \theta")
 	savefig(p1, joinpath(dbplots,"smooth-theta-rural.pdf"))
-	p2 = @df x plot(:year, [:theta_urban :stheta_urban],leg=:left, lw = 2)
+	p2 = @df x plot(:year, [:theta_urban :stheta_urban],leg=:left, lw = 2, label = ["Data"  "Smoothed"], title = L"\theta_u\textbf{%$s1}",
+	yscale = :log10,
+	yticks = [1, 2,4,8,16])
 	savefig(p2, joinpath(dbplots,"smooth-theta-urban.pdf"))
 
-	p3 = @df x plot(:year, [:stheta_rural :stheta_urban],leg=:left, lw = 2)
+	p3 = @df x plot(:year, [:stheta_rural :stheta_urban],leg=:left, lw = 2, label = [L"\theta_r" L"\theta_u"], title = L"\textbf{%$s3}",
+	yscale = :log10)
+
+
+	p11 = plot(p1,p2,layout = (1,2), size = (900,450),
+	          yformatter = x -> Int(round(x,digits = 0)), 
+			  link = :y ,
+			  left_margin = 5Plots.mm)
+	# p11 = plot(p1,p2,p3, layout = (1,3), size = (900,300),yformatter = x -> round(x,digits = 1) )
+	savefig(p11, joinpath(dbplots,"smoothed-thetas.pdf"))
+
+
+	# p3 = @df x plot(:year, [:stheta_rural :stheta_urban],leg=:left, lw = 2)
 	savefig(p3, joinpath(dbplots,"smooth-thetas-model.pdf"))
 
 	p4 = @df x scatter(:year, :theta_rural, title = "Rural", label = "data",leg=:left)
@@ -444,7 +477,7 @@ function prepare_data(p::Param; digits = 9)
 	#
 	#
 	# (ret, pl)
-	(p1,p2,p3,p6)
+	(p1,p2,p3,p6,p11)
 end
 
 function plot_shares()

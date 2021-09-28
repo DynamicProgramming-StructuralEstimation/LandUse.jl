@@ -3,14 +3,18 @@
 """
 	Country
 
-A `Country` is a collection of single `Regions`. There is free migration
+A `Country` is a collection of single [`Region`](@ref)'s. There is free migration
 across regions (same utilty everywhere). What characterises a Region
-are different θs.
+are different θs in their respective urban sectors.
 
-## shared characteristics
+## Shared Characteristics
+
+In all regions, the following characteristics are shared:
 
 * total population
 * rural wage
+* rural productivity
+* rural land price ρ
 * rent and food price
 """
 mutable struct Country

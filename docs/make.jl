@@ -1,5 +1,5 @@
 push!(LOAD_PATH,"../src")
-using Documenter, LandUse
+using Documenter, LandUse, NNlib, Flux
 
 makedocs(modules = [LandUse], 
          sitename = "LandUse.jl",
@@ -9,7 +9,9 @@ makedocs(modules = [LandUse],
              "Country" => "country.md",
              "Interactive Views" => "interact.md",
              "Function Index" => "reference.md"
-         ]
+         ],
+         format = Documenter.HTML(
+         prettyurls = get(ENV, "CI", nothing) == "true")
     )
 
 deploydocs(repo = "github.com/floswald/LandUse.jl.git")

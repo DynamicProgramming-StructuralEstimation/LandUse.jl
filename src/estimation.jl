@@ -50,7 +50,7 @@ function targets(p::Param)
     # average city spatial moments in 2020
     # m[:density_9010_2020] =  DataFrame(moment = "density_gradient_2020", data = 6.0 , model = 0.0)   # 1st tenth is 6 times denser than last 10-th
     # exponential decay model. exponential coefficient:
-    m[:density_decay_coef] =  DataFrame(moment = "density_decay_coef", data = -0.15 , model = 0.0)   # on 21 points
+    m[:density_decay_coef] =  DataFrame(moment = "density_decay_coef", data = -0.16 , model = 0.0)   # on 21 points
     m[:density_decay_MSE] =  DataFrame(moment = "density_decay_MSE", data = 0.0 , model = 0.0) 
 
     # housing spending Shares

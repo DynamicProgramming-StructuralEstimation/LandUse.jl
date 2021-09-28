@@ -414,7 +414,7 @@ function issue9()
 end
 
 """
-plot ``\\phi_k`` vs ``\\L{u,k}`` for all regions ``k`` and different eps slopes.
+plot ``\\phi_k`` vs ``L_{u,k}`` for all regions ``k`` and different eps slopes.
 relates to https://github.com/floswald/LandUse.jl/issues/10
 """
 function issue10()

@@ -3,6 +3,11 @@
 
 """
 solve model at current [`Param`](@ref) `p` and starting at point `x0`
+
+## Keyword:
+
+* `estimateθ`: whether the sequence of ``\\theta_u`` should be a choice variable or not. default `false`.
+
 """
 function jm(p::LandUse.Param,mo::LandUse.Region,x0::NamedTuple; estimateθ = false)
 
@@ -114,8 +119,14 @@ end
 
 """
 solve a `Country` at point x0
+
+## keywords:
+
+* `estimateθ`: whether the sequence of ``\\theta_u`` should be a choice variable
+* `solve` : solve the model (`true`) or return the model object for debugging?
+* `fit_allyears` : try to match the population distribution in all available years or just a single year.
 """
-function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyears = false)
+function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyears = true)
 
 	pp = C.pp   # vector of params
 	p  = pp[1]   # param of region 1
@@ -154,16 +165,9 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 
 	@variable(m, 0.1 * x0[3 + ik]    <= Sr[ik = 1:K] <= C.Sk[ik], start = x0[3 + ik])
 	@variable(m, 0.05 * x0[3+K + ik] <= Lu[ik = 1:K] <= C.L     , start = x0[3+K + ik])
-	# if (p.d1 > 0) || (p.d2 > 0)
-	# 	@variable(m,  ϕ[ik = 1:K] , start = x0[3+2K + ik])
-	# end
-	# @variable(m,  0.05 * x0[3+3K + ik] <= Lr[ik = 1:K] <= C.L    , start = x0[3+3K + ik])
-
-	# @variable(m, minimum([pp[ik].θu for ik in 1:K]) >= wr >= 0.0)
 
 	if estimateθ
 		@variable(m, θu[ik = 1:K] , start = p.θu)  # everybody starts with θu of city 1
-		# @variable(m, 0.98 <= θu[ik = 1:K] <= 1.05, start = p.θu)  # everybody starts with θu of city 1
 	else
 		θu = [pp[ik].θu for ik in 1:K]
 	end
@@ -224,8 +228,6 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 
 	@NLexpression(m, ϵ[i = 1:p.int_nodes, ik = 1:K], p.ϵr * nodes[i,ik] / ϕ[ik] + p.ϵs * (ϕ[ik] - nodes[i,ik])/ϕ[ik])
 	@NLexpression(m, w[i = 1:p.int_nodes,ik = 1:K], wu0[ik] - τ[i,ik] )
-	# @warn "hard coding abs() for q function" maxlog=1
-	# @NLexpression(m, q[i = 1:p.int_nodes], qr * (abs((w[i] + r_pr_csbar) / xsr))^(1.0/p.γ))
 	@NLexpression(m,        q[i = 1:p.int_nodes,ik = 1:K], qr * ((w[i,ik] + r_pr_csbar) / xsr)^(1.0/p.γ))
 	@NLexpression(m,        H[i = 1:p.int_nodes,ik = 1:K], q[i,ik]^ϵ[i,ik])
 	@NLexpression(m,        h[i = 1:p.int_nodes,ik = 1:K], p.γ * (w[i,ik] + r_pr_csbar) / q[i,ik])
@@ -242,8 +244,6 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 	@NLexpression(m, iτ[ik = 1:K],        (ϕ[ik]/2) * sum(p.iweights[i] * 2π * nodes[i,ik] * τ[i,ik] * D[i,ik] for i in 1:p.int_nodes))
 
 	# constraints
-	# @NLconstraint(m, aux_con_wr, wr == p.α * pr * θr * (p.α + (1-p.α)*( 1.0 / LS )^(σ1))^(σ2) )
-	# @NLconstraint(m, aux_con_Srh[ik = 1:K], Srh[ik] >= 0.001 )
 	@NLconstraint(m, C.L == sum(Lr[ik] + Lu[ik] for ik in 1:K))   # agg labor market clearing
 	@NLconstraint(m, land_clearing[ik = 1:K], C.Sk[ik] == Sr[ik] + ϕ[ik]^2 * π + Srh[ik])   # land market clearing in each region
 	@NLconstraint(m, r * C.L == sum(iρ[ik] + ρr * (Sr[ik] + Srh[ik]) for ik in 1:K))   # agg land rent definition
@@ -254,10 +254,7 @@ function jc(C::Country,x0::Vector; estimateθ = false, solve = true, fit_allyear
 
 	# choose urban productivities so that their population-weighted sum reproduces the data series for average θu
 	if estimateθ
-		# @NLconstraint(m, 0.6 * θu[1] + 0.4 * θu[2] == p.θu)
 		@NLconstraint(m, uwage[ik = 1:K], wu0[ik] >= wr)
-		# @NLconstraint(m, uwage[ik = 1:K], θu[ik] >= wr)
-
 		@NLconstraint(m, sum( popwgt[ik] * θu[ik] for ik in 1:K ) == p.θu)   # weighted average productivity is equal to aggregate
 		@NLobjective(m, Min, sum( ((Lu[ik] / Lu[1]) - relpop[ik])^2 for ik in 2:K))
 
