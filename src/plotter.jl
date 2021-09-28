@@ -52,6 +52,19 @@ function dashboard(C::Vector{Country},it::Int)
 end
 
 
+function modvsdata(d::DataFrame, x::Symbol, y::Symbol; title = nothing, xan = 11, yan = 10)
+	r = lm( Term(y) ~ Term(x), d)
+	pred = GLM.predict(r, d, interval = :confidence, level = 0.95)
+	p = @df d scatter(cols(x), cols(y), leg = false, 
+	xlab = "Model", 
+	ylab = "Data")
+	# plot!(p, d[!,x], pred.prediction, linewidth = 2,
+			#  ribbon = (pred.prediction .- pred.lower, pred.upper .- pred.prediction))
+	plot!(p, x -> coef(r)[1] + coef(r)[2] * x, lab = "", linewidth = 2, color = "black")
+	annotate!(p, [(xan, yan, Plots.text("slope=$(round(coef(r)[2],digits = 3))", 12))])
+	p
+end
+
 """
 	plotk20(;save = false)
 
@@ -165,15 +178,7 @@ function plotk20(;save = false)
 	# 2. model vs data: urban population, area, density
 	# -------------------------------------------------
 	
-	function modvsdata(d::DataFrame, x::Symbol, y::Symbol; title = nothing, xan = 11, yan = 10)
-		r = lm( Term(y) ~ Term(x), d)
-		p = @df d scatter(cols(x), cols(y), leg = false, 
-		xlab = "Model", 
-		ylab = "Data")
-		plot!(p, x -> coef(r)[1] + coef(r)[2] * x, lab = "", linewidth = 2, color = "black")
-		annotate!(p, [(xan, yan, Plots.text("slope=$(round(coef(r)[2],digits = 3))", 12))])
-		p
-	end
+
 
 	di[:base][:log_dens_mvd] = modvsdata(dy, :lcitydensity, :ldensity_data,xan = 2.5,yan=11)
 	di[:base][:n_dens_mvd] = modvsdata(dy, :nlcitydensity, :ldensity_data)

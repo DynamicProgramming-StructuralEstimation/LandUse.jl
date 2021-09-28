@@ -309,11 +309,10 @@ Sources:
 \begin{frame}
 \frametitle{City Area and Population Measurement}
 \begin{columns}
-find a better city?
 \begin{column}{0.7\textwidth}
 	\begin{adjustbox}{center}
 	% \includegraphics[height=0.85\textheight]{\dataplots/Lyon-sat-area-2.png}\end{adjustbox}
-	\includegraphics[height=0.85\textheight]{\dataplots/Toulouse-sat-area.png}\end{adjustbox}
+	\includegraphics[height=0.85\textheight]{\dataplots/GHSL-Built-Bordeaux.pdf}\end{adjustbox}
 	\end{column}
 \begin{column}{0.3\textwidth}
 \begin{midi}
@@ -326,77 +325,26 @@ find a better city?
 \end{columns}
 \end{frame}
 
-\begin{v75mins}
-
-\begin{frame}
-\frametitle{Growth of City Areas}
-\framesubtitle{1866 versus 1950 (60 urban areas)}
-
-\begin{columns}
-\begin{column}{0.8\textwidth}
-	\begin{adjustbox}{right}
-	\includegraphics[scale=0.7]{\imgs/EMto1950.pdf}\end{adjustbox}
-\end{column}
-\begin{column}{0.3\textwidth}
-\begin{midi}
-\item Average city area multiplied by 8.
-\end{midi}
-\end{column}
-\end{columns}
-\end{frame}
-
-\begin{frame}
-\frametitle{Growth of City Areas}
-\framesubtitle{1950 versus 2015 (30 urban areas)}\begin{columns}
-\begin{column}{0.8\textwidth}
-	\begin{adjustbox}{right}
-	\includegraphics[scale=0.7]{\imgs/1950to2015_largemanual.pdf}\end{adjustbox}
-\end{column}
-\begin{column}{0.3\textwidth}
-\begin{midi}
-\item Average city area multiplied by 6.
-\end{midi}
-\end{column}
-\end{columns}
-\end{frame}\end{v75mins}
-%those 30 cities account for about 23 millions people in 2015
-
-% \begin{frame}[label=density]
-% \frametitle{The Historical Fall in Urban Density}
-% \framesubtitle{Average across Top 30 French Urban Areas}
-% \begin{figure}
-% 	%\caption{Share of spending on food and drinks (1895-2015)}
-% 	%\label{fig:1}
-% 	\begin{center}
-% 		\includegraphics[scale=0.6]{\imgs/logdensity_weighted.pdf}
-% 	\end{center}
-% \end{figure}\hyperlink{Paris}{\beamergotobutton{Paris}}
-% \hyperlink{Lyon}{\beamergotobutton{Lyon}}
-% \hyperlink{Marseille}{\beamergotobutton{Marseille}}
-% \hyperlink{Reims}{\beamergotobutton{Reims}}
-% \hyperlink{world_sample_city}{\beamergotobutton{World sample 1990-2015}}\\
-% {\tiny Source: Carte Etat-Major, IGN and GHSL. Census}
-
-% \end{frame}
-
 \begin{frame}[label=density]
 \frametitle{The Historical Fall in Urban Density}
-\begin{columns}
-\begin{column}{0.9\textwidth}
-\includegraphics[width=0.9\textwidth]{\dataplots/densities-time-log-wtd.pdf}
-\end{column}
-\begin{column}{0.2\textwidth}
-\begin{itemize}
-\item[] \hyperlink{Paris}{\beamergotobutton{Paris}}
-\item[] \hyperlink{violins}{\beamergotobutton{Distribution}}
-\item[] \hyperlink{Top5}{\beamergotobutton{Top 5}}
-\item[] \hyperlink{world_sample_city}{\beamergotobutton{World}}
-\end{itemize}
-\end{column}
-
-\end{columns}
+\includegraphics[width=\textwidth]{\dataplots/densities-time-log-wtd.pdf}
 \end{frame}
 
+\begin{frame}[label=Paris]
+	\frametitle{The Historical Fall in Urban Density: Within Paris}
+	\begin{columns}
+		\begin{column}{0.9\textwidth}
+			\includegraphics[height=0.9\textheight]{\imgs/logdensity_paris2.pdf}
+		\end{column}
+		\begin{column}{0.2\textwidth}
+		\begin{itemize}
+		\item[] \hyperlink{violins}{\beamergotobutton{Distribution}}
+		\item[] \hyperlink{Top5}{\beamergotobutton{Top 5}}
+		\item[] \hyperlink{world_sample_city}{\beamergotobutton{World}}
+		\end{itemize}
+		\end{column}
+		\end{columns}
+\end{frame}
 
 
 \subsection{Land Prices}
@@ -419,7 +367,7 @@ find a better city?
 
 
 \begin{frame}
-\frametitle{Hockey-stick in housing prices and Fall in Agricultural Value Share}
+\frametitle{Fall in Agricultural Value Share and \emph{Hockey-stick} in Housing Prices}
 	% \begin{adjustbox}{center}
 	% 	\includegraphics[scale=0.55]{\imgs/hpreal100_FRA.pdf}
 	% 	\includegraphics[scale=0.55]{\imgs/PikettyWealth_FRA.pdf}
@@ -518,7 +466,7 @@ with ($u$) good numeraire.
 
 \bigskip
 \pause
-Rural wage $w_r$ and price of rural land $\rho_r$,
+Rural wage $w_r$ and rental price of rural land $\rho_r$,
 \begin{eqnarray*}
 w_r&=&\alpha p\theta_r \left( \frac{S_r}{L_r} \right)^{1-\alpha}, \\
 \rho_r&=&(1-\alpha) p\theta_r \left( \frac{L_r}{S_r} \right)^{1-\alpha}
@@ -814,7 +762,7 @@ Closed forms for:
 \frametitle{Housing Market Equilibrium}
 \framesubtitle{Land developers}
 \bi
-\item Housing supply provided by land developers. \hyperlink{comics}{\beamergotobutton{land developers}}
+\item Housing supply provided by land developers.
 \item Use more or less intensively the land for residential purposes.
 \item Technology\\
 \medskip
@@ -1254,17 +1202,7 @@ Internal city structure, density fall, commuting speed, house price: not targete
 % \hyperlink{AreaMeasure}{\beamergotobutton{back}}\\
 % \end{frame}
 
-\begin{frame}[label=Paris]
-\frametitle{The historical fall in urban density}
-\framesubtitle{Paris}
-\begin{figure}
-	\begin{center}
-		\includegraphics[scale=0.65]{\imgs/logdensity_paris2.pdf}
-	\end{center}
-\end{figure}
-\hspace{-1cm}
-\hyperlink{density}{\beamergotobutton{back}}\\
-\end{frame}
+
 
 \begin{frame}[label=LandUseMeasureParis]
 	\frametitle{Land Use outside Paris 2020}

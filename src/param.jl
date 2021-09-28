@@ -305,7 +305,6 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      γ       : $(p.γ   )\n")
 	print(io,"      ϵr      : $(p.ϵr  )\n")
 	print(io,"      ϵs      : $(p.ϵs  )\n")
-	print(io,"      nsteps : $(p.nsteps  )\n")
 	print(io,"      η       : $(p.η   )\n")
 	print(io,"      ν       : $(p.ν   )\n")
 	print(io,"      cbar    : $(p.cbar)\n")
@@ -314,7 +313,7 @@ function show(io::IO, ::MIME"text/plain", p::Param)
 	print(io,"      θu      : $(p.θu  )\n")
 	print(io,"      α       : $(p.α   )\n")
 	print(io,"      λ       : $(p.λ   )\n")
-	print(io,"      cτ       : $(p.cτ   )\n")
+	print(io,"      a       : $(p.a   )\n")
 	print(io,"      L       : $(p.L   )\n")
 	print(io,"      S       : $(p.S   )\n")
 	print(io,"      T       : $(p.T   )\n")
@@ -367,9 +366,8 @@ We take the following steps to obtain a smoothed series for ``\theta_r`` and ``\
 1. We obtain the estimated series at annual frequency.
 1. We subset both series to start in 1840 and end in 2015 (rural productivity ends in that year)
 1. We linearly interpolate the missing interwar years.
-1. Smoothing is done via the [`smooth`](@ref smooth) function: we use the default [Hann window](https://en.wikipedia.org/wiki/Hann_function) and a 15-year window size. We experimented with the window size until high-frequency oscillations disappear.
-1. Our rural productivity series gets very noise from 2000 onwards, and in fact one would find a decreasing rural productivity series if we applied our smoother to post 2000 data. Therefore from the year 2000 onwards, we grow the smoothed series forward with 1% annual growth. Given that 2000 is very close to the final new steady state of the model, the actual choice of growth rate has only a small impact on our results.
-
+1. Smoothing is done via the [`smooth`] function from the QuantEcon package: we use the default [Hann window](https://en.wikipedia.org/wiki/Hann_function) and a 15-year window size. We experimented with the window size until high-frequency oscillations disappear.
+1. Our rural productivity series gets very volatile from 2000 onwards, and in fact one would find a decreasing rural productivity series if we applied our smoother to post 2000 data. Therefore from the year 2000 onwards, we grow the smoothed series forward with 1% annual growth. Given that 2000 is very close to the final new steady state of the model, the actual choice of growth rate has only a small impact on our results.
 
 
 """

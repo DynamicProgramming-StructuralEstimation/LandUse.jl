@@ -5,7 +5,7 @@
 	i0()
 
 interact with the baseline single city version of the model.
-This basically calls [`dashboard(M,p)`](@ref) after creating `p` from a set of user inputs.
+This basically calls [`dashboard(M::Vector{Region},p::Param,i::Int)`](@ref LandUse.dashboard) after creating `p` from a set of user inputs.
 """
 function i0()
 	xis = 0.0:0.01:1.0

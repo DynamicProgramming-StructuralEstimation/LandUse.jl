@@ -7,7 +7,7 @@ Region type
 
 Urban expansion model with flexible commuting cost and differential supply elasticity.
 This represents a single region. A region contains one potential urban area, and a rural area.
-A `Region` can be part of a wider `Country`.
+A `Region` can be part of a wider [`Country`](@ref).
 """
 mutable struct Region <: Model
 	ρr   :: Float64   # land price in rural sector

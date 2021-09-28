@@ -87,7 +87,7 @@ end
 
 """
 run Multi-region model for all time periods starting from 
-the single city starting value. Works only for not too different θu values.
+the single city starting value. 
 """
 function runk(;par = Dict(:K => 2,:kshare => [0.5,0.5], :factors => [1.0,1.0], :gs => zeros(2)), estimateθ = true,fit_allyears = true, istest = false)
 
@@ -562,14 +562,20 @@ function plot1cs(it)
 	x,M,p = run(Param())
 	cs_plots(M[it],p,it)
 end
+
+"""
+	dash(it;par = Dict())
+
+Helper function for quick Region dashboard.
+"""
 function dash(it;par = Dict())
 	x,M,p = run(Param(par = par))
 	dashboard(M,p,it)
 end
 
 
-function cdash(it)
-	x,M,p = k3()
+function cdash(ik,it)
+	x,M,p = k(ik)
 	dashboard(M,it)
 end
 function export_params()
