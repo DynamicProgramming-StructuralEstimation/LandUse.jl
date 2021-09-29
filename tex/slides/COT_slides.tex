@@ -11,7 +11,7 @@
 %\renewcommand{\inserttotalframenumber}{57}
 \title{\textbf{Structural Change, Land Use and Urban Expansion}}
 \author{Nicolas Coeurdacier (SciencesPo \& CEPR)\\ \ \\Florian Oswald (SciencesPo) \\ \ \\ Marc Teignier (U. Barcelona)}
-\date{U Carlos III Madrid, 2021}
+\date{U Carlos III Madrid, 2021\\\bigskip\url{https://floswald.github.io/publication/landuse/}}
 
 
 \frame{\titlepage}
@@ -59,7 +59,7 @@
 	\begin{columns}
 	\begin{column}{0.8\textwidth}
 		\begin{adjustbox}{center}
-			\includegraphics[height=0.8\paperheight]{\dataplots/CLC-landuse-top100.pdf}
+			\includegraphics[height=0.8\paperheight]{\dataplots/CLC-landuse-top100-agg.pdf}
 		\end{adjustbox}
 	\end{column}
 	\begin{column}{0.2\textwidth}
@@ -119,7 +119,7 @@
 \item Urban Economics:
 \begin{midi}
 \item Decline in commuting cost over time allows residing further away from city centre.
-\item New technologies (like train) push city fringe outwards. Suburbanisation.
+\item New technologies (like train) enable suburbanisation.
 \end{midi}
 
 \pause
@@ -1115,75 +1115,93 @@ Internal city structure, density fall, commuting speed, house price: not targete
 
 	\begin{mide}
 		\item Agglomeration and Congestion.
-		\item Relaxing Monocentricity.
 		\item Multiple Cities.
+		\item Relaxing Monocentricity.
 	\end{mide}
 \end{frame}
 
-
-\begin{frame}{Multiple Cities}
-
-\begin{midi}
-\item Larger cities are denser than smaller cities in the cross section.
-\item Over time, however, large cities get less dense at a faster rate.
-\item Our model can reproduce the French cross section of cities over time.
-
-\end{midi}
+\begin{frame}{Agglomeration and Congestion Effects}
+	
+	\begin{midi}
+		\item Agglomeration effects are thought to be important enablers of modern city growth.
+		\item Congestion costs act as significant inhibitors to city growth.
+		\item How will those effects play out in general equilibrium?
+	\end{midi}
 \end{frame}
+
+\begin{frame}{Agglomeration and Congestion}
+
+	\begin{adjustbox}{center}
+		\includegraphics[width=\textwidth]{\imgs/aggloforces.png}
+	\end{adjustbox}
+	
+\end{frame} 		
+
 
 \begin{frame}{Multiple Cities}{A \emph{Country} with $K$ \emph{Regions}}
-\begin{widei}
-\item Split total area into $K$ equal parts. (arbitrary)
+\begin{midi}
+\item Split total area into $K=20$ equal parts. (arbitrary)
 \item Assume that rural productivity $\theta_{r,k}=\theta_{r}, \forall k$.
-\item Initial level and growth of urban productivity $\theta_{u,k}$ determines city sizes.
-
-\end{widei}
+\item Initial level and growth of urban productivity $\theta_{u,k}$ determines city 
+sizes.
+\end{midi}
+\pause
+\bigskip
+We impose 2 constraints:
+\medskip
+\begin{mide}
+	\item The average over $\theta_{u,k}$ needs to be equal to our single city $\theta_{u}$
+	\item The population distribution in the data must be reproduced.
+\end{mide}
 \end{frame}
 
-\begin{frame}{\emph{French Top 20} Population Evolution relative to Paris}
-
+\begin{frame}{Multiple Cities: Cross Section Model vs Data}
 	\begin{adjustbox}{center}
-		\includegraphics[width=0.8\textwidth]{\modelplots/k20-relpop-model-data.pdf}
+		\includegraphics[width=\textwidth]{\modelplots/k20-pop-area-density.pdf}
 	\end{adjustbox}
-
-
 \end{frame}
 
-\begin{frame}{\emph{French Top 20}}
+\begin{frame}{Multiple Cities with Relaxed Monocentricity}
 
+	\begin{midi}
+		\item The biggest cities are not big enough in the model (in terms of space).
+		\item Bigger cities in data may have multiple employment centers.
+		\item We relax monocentricity via 
+		\begin{equation*}
+			d(\ell) = d_0(\phi) + d_1(\phi) \ell
+		\end{equation*}
+		where commuting distance $d$ increases \emph{less than one-for-one} with residential distance $\ell$.
+		\item We choose simple forms for $d_i(\phi)$'s and parameterize with individual commuting data.
+	\end{midi}
+	
+\end{frame}
+
+\begin{frame}{Multiple Cities with Relaxed Monocentricity}{Urban Area Cross Section}
 	\begin{adjustbox}{center}
-		\includegraphics[width=0.8\textwidth]{\modelplots/k20-density3D.pdf}
+		\includegraphics[width=\textwidth]{\modelplots/k20-area-x-sections.pdf}
 	\end{adjustbox}
-
 \end{frame}
-
-\begin{frame}{\emph{French Top 20}}
-
-	\begin{adjustbox}{center}
-		\includegraphics[width=0.8\textwidth]{\modelplots/k20-xsect-time.pdf}
-	\end{adjustbox}
-
-\end{frame}
-
-
 
 \begin{frame}
 \frametitle{Conclusion}
 
-\bi
-\item Spatial general equilibrium of land use to explain
-\smallskip
+We introduced a spatial general equilibrium model of land use to explain
 
-\bi\item The evolution of the sectoral allocation of economic activity across space.
-\smallskip
-\item The evolution of the density of settlements.
-\smallskip
-\item The evolution of the distribution of land values.
-\ei
-\bigskip
-\item Beyond positive implications, a potentially useful tool to evaluate the welfare effects of land use restrictions.\ei
+\begin{enumerate}
+	\item Evolution of sectoral allocation across space.
+	\item Evolution of Urban Density.
+	\item Evolution of the land value distribution.
+\end{enumerate}
 
 \bigskip
+We found: 
+
+\begin{midi}
+	\item Rural Productivity growth is crucial to understand urban expansion.
+	\item Quantitatively, both rural and urban productivity growth as well as falling commuting costs are needed to explain data.
+\end{midi}
+
+
 \begin{center}
   THANK YOU!
 \end{center}
