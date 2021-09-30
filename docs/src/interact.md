@@ -9,7 +9,7 @@ Both region and country have an associated `dashboard` function which outputs a 
 ```@example 3
 using LandUse   # hide
 using NNlib, Flux # hide
-LandUse.dash(5)
+LandUse.dash(19)
 LandUse.savefig("single-dash.png")
 ```   
 
@@ -37,4 +37,3 @@ and it opens a `Blink.jl` window like this one:
 
 ![](./assets/single-interact.gif)
 
-The multi region version is 

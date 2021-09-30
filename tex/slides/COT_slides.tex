@@ -633,26 +633,44 @@ $\mathbf{r}$ rental income per capita, equally distributed.
 \item High urban wage $\rightarrow$ demand faster commute.
 \end{midi}
 \end{column}
-\pause
 \begin{column}{0.5\textwidth}
-\begin{midi}
-\item Balance marginal cost/benefit of faster mode:
-\begin{equation*}
-\tau(\ell) = a \times (w_u \ell)^\xi
-\end{equation*}
-\begin{enumerate}
-\item Faster commutes for people further away.
-\item Speed increases with wage (opp. cost of time).
-\item Elasticity of $\tau(\ell)$ wrt wage is strictly less than unity% $\rightarrow$ people are willing to live further away as labor productivity increases.
-\end{enumerate}
-\end{midi}
+
+\includegraphics[width=0.4\textwidth]{\imgs/paris-horses.jpeg}\\
+\includegraphics[width=0.4\textwidth]{\imgs/paris-Omnibus.JPG}\\
+\includegraphics[width=0.4\textwidth]{\imgs/paris-renault.jpg}
 
 \end{column}
 \end{columns}
 
 \end{frame}
 
+\begin{frame}{Commuting Costs in units of Numeraire Good}{Based on DeSalvo and Huq (JUE 1996)}
 
+	\begin{columns}
+	\begin{column}{0.5\textwidth}
+	\begin{midi}
+	\item Commuters choose best mode of transport.
+	\item Opportunity cost of time (i.e. wage) and location matter.
+	\item High urban wage $\rightarrow$ demand faster commute.
+	\end{midi}
+	\end{column}
+	\begin{column}{0.5\textwidth}
+	\begin{midi}
+	\item Balance marginal cost/benefit of faster mode:
+	\begin{equation*}
+	\tau(\ell) = a \times (w_u \ell)^\xi
+	\end{equation*}
+	\begin{enumerate}
+	\item Faster commutes for people further away.
+	\item Speed increases with wage (opp. cost of time).
+	\item Elasticity of $\tau(\ell)$ wrt wage is strictly less than unity% $\rightarrow$ people are willing to live further away as labor productivity increases.
+	\end{enumerate}
+	\end{midi}
+	
+	\end{column}
+	\end{columns}
+	
+	\end{frame}
 
 \begin{frame}{Location Sorting}{Spatial Equilibrium}
 
@@ -927,11 +945,63 @@ Closed forms for:
 
 
 \begin{v75mins}
+% \begin{frame}{Numerical Illustration: Identical Growth (1.25\%) in Both Sectors}
+
+% 	\begin{adjustbox}{center}
+% 		\includegraphics[width=\textwidth]{\modelplots/baseline-6panel.png}
+% 	\end{adjustbox}
+	
+% \end{frame}
+
+
 \begin{frame}{Numerical Illustration: Identical Growth (1.25\%) in Both Sectors}
 
-	\begin{adjustbox}{center}
-		\includegraphics[width=\textwidth]{\modelplots/baseline-6panel.png}
-	\end{adjustbox}
+	\begin{columns}
+		\begin{column}{0.01\textwidth}
+			
+		\end{column}
+		\begin{column}{\textwidth}
+			\begin{figure}
+				% \centering
+				% \makebox[0pt][c]{%
+				% \begin{adjustbox}{center,figure}
+					% \adjustbox{center,figure}{
+					\centering
+					\parbox{\textwidth}{\lineskip=0pt
+						
+						\begin{subfigure}{0.29\textwidth}
+							\includegraphics[width=\linewidth]{\modelplots/AgrEmpl_baseline.pdf}
+							\caption{Rural Employment share.\label{fig:cf-city-comp-eta}}
+						\end{subfigure}\hfill%
+						\visible<2->{\begin{subfigure}{0.29\textwidth}
+							\includegraphics[width=\linewidth]{\modelplots/Expshares_baseline.pdf}
+							\caption{Expenditure Shares.\label{fig:cf-udens-comp-eta}}
+						\end{subfigure}}\hfill%
+						\visible<3->{\begin{subfigure}{0.29\textwidth}
+							\includegraphics[width=\linewidth]{\modelplots/AgrPrice_baseline.pdf}
+							\caption{$r$-price\label{fig:cf-ctrdens-comp-eta}}
+						\end{subfigure}}
+						
+						\visible<4->{\begin{subfigure}{0.29\textwidth}
+							\includegraphics[width=\linewidth]{\modelplots/CitySize_baseline.pdf}
+							\caption{City size (Index, 1840=1)\label{fig:cf-fringedens-comp-eta}}
+						\end{subfigure}}\hfill%
+						\visible<5->{\begin{subfigure}{0.29\textwidth}
+							\includegraphics[width=\linewidth]{\modelplots/UrbDens_baseline.pdf}
+							\caption{Densities (Index, 1840=1)\label{fig:cf-densgrad-comp-eta}}
+						\end{subfigure}}\hfill%
+						\visible<6->{\begin{subfigure}{0.29\textwidth}
+							\includegraphics[width=\linewidth]{\modelplots/LandRents_baseline.pdf}
+							\caption{Land rents (\%).\label{fig:cf-housingprice-comp-eta}}
+						\end{subfigure}}
+					}
+				% \end{adjustbox}
+				
+			\end{figure}
+		\end{column}
+	\end{columns}
+	
+	
 	
 \end{frame}
 
@@ -945,18 +1015,18 @@ Closed forms for:
 		\end{centering}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}[t]{0.32\textwidth}
+	\visible<2->{\begin{subfigure}[t]{0.32\textwidth}
 		\begin{centering}
 			\includegraphics[scale=0.4]{\modelplots/UrbDens_agrowth.pdf}
 			\caption{Urban Densities}
 		\end{centering}
-	\end{subfigure}
+	\end{subfigure}}
 	\hfill
-	\begin{subfigure}[t]{0.32\textwidth}
+	\visible<3->{\begin{subfigure}[t]{0.32\textwidth}
 		\begin{centering}
 			\includegraphics[scale=0.4]{\modelplots/FarmlandPrice_agrowthcomp.pdf}\end{centering}
 			\caption{Farmland Price}
-	\end{subfigure}
+	\end{subfigure}}
 \end{figure}
 \end{frame}
 
@@ -970,19 +1040,19 @@ Closed forms for:
 			\end{centering}
 		\end{subfigure}
 		\hfill
-		\begin{subfigure}[t]{0.32\textwidth}
+		\visible<2->{\begin{subfigure}[t]{0.32\textwidth}
 			\begin{centering}
 				\includegraphics[scale=0.4]{\modelplots/UrbDens_ugrowth.pdf}			
 				\caption{Urban Densities}
 			\end{centering}
-		\end{subfigure}
+		\end{subfigure}}
 		\hfill
-		\begin{subfigure}[t]{0.32\textwidth}
+		\visible<3->{\begin{subfigure}[t]{0.32\textwidth}
 			\begin{centering}
 				\includegraphics[scale=0.4]{\modelplots/LandRents_ugrowth.pdf}
 				\caption{Land rents over income}
 			\end{centering}
-		\end{subfigure}
+		\end{subfigure}}
 	\end{figure}
 	\end{frame}
 
@@ -1083,13 +1153,16 @@ Internal city structure, density fall, commuting speed, house price: not targete
 
 \begin{frame}{Numerical Model Results: Commuting Speed}
 
-	\begin{figure}[t]
-		\centering
-		
-				\includegraphics[width=0.65\textwidth]{\modelplots/CommSpeed_data.pdf}
-				\caption{Commuting Speed}
-			
-	\end{figure}
+\begin{columns}
+	\begin{column}{0.5\textwidth}
+		\includegraphics[width=0.9\textwidth]{\modelplots/CommSpeed_data.pdf}
+	\end{column}
+	\begin{column}{0.5\textwidth}
+		\includegraphics[height=0.4\textwidth]{\imgs/paris-1850.jpg}\includegraphics[height=0.4\textwidth]{\imgs/paris-horses.jpeg}\\
+		\includegraphics[width=0.4\textwidth]{\imgs/paris-bastille.jpg}
+		\includegraphics[height=0.4\textwidth]{\imgs/paris-renault.jpg}
+	\end{column}
+\end{columns}
 \end{frame}
 
 \begin{frame}{Numerical Model Results: Wealth Distribution and House Price}
