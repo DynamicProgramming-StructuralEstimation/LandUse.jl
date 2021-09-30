@@ -11,5 +11,13 @@ images/*.pdf
 /tex/slides/*.pdf
 *.Rd
 tex/slides/*.synctex.gz
+*.fls
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.aux
+*.fdb_latexmk
 in/tables/k20-d1d2.jld2
 in/tables/d1d220.jld2 

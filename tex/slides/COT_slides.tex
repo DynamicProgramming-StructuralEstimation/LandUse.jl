@@ -776,65 +776,14 @@ Closed forms for:
 
 
 % \begin{v75mins}
-% \begin{frame}[label=landdevelopers]
-% \frametitle{Housing Market Equilibrium}
-% \framesubtitle{Land developers}
-% \bi
-% \item Housing supply provided by land developers.
-% \item Use more or less intensively the land for residential purposes.
-% \item Technology\\
-% \medskip
-% In each location, developers supply housing space $H(\ell)$ per unit of land with a convex cost,
-% \begin{equation*}
-% \frac{H(\ell)^{1+1/\epsilon}}{1+1/\epsilon},
-% \end{equation*}
-% in units of the numeraire.\\
-%  \re{$\epsilon=$} cost parameter, possibly dependent on the location.
-%     %which is meant to capture that it might be more costly for developers to build closer to the city center than in the suburbs or the rural part of the economy. but needs toe be the same at the fringe and in the rural part
-% \ei
-% \end{frame}
 
-% \begin{frame}
-% \frametitle{Housing Market Equilibrium}
-% \framesubtitle{Housing supply}
-% \bi
-% \item Profits per unit of land at $\ell$,
-% \begin{equation*}
-% \pi(\ell)=q(\ell)H(\ell)-\frac{H(\ell)^{1+1/\epsilon_{\ell}}}{ 1+1/\epsilon_{\ell} }- \rho(\ell),
-% \end{equation*}
-% $\rho(\ell)$ the price of a unit of \textbf{land} in $\ell$.
-% \item Housing supply from profit maximization,
-% \begin{equation*}
-% H(\ell)=q(\ell) ^{\epsilon_{\ell}},
-% \end{equation*}
-% with housing supply elasticity  $\re{\epsilon_{\ell}\geq 0}$, $\re{\partial\epsilon_{\ell}/\partial \ell \geq 0}$.
-
-% see Baum-Snow and Huan (2019).  %important quantitatively but not qualitatively
-% \ei
-% \end{frame}
-
-% \begin{frame}
-% \frametitle{Housing Market Equilibrium: Supply}
-% \framesubtitle{Land Prices and Land Use}
-% \bi
-% \item Profit maximization and free entry of developers pins down land prices in $\ell$,
-% \begin{equation*}
-% \rho(\ell)=\frac{q(\ell)^{1+\epsilon_{\ell}}}{ 1+\epsilon_{\ell}},
-% \end{equation*}
-% \item Land use with the highest rental value (\re{Rivalry})
-% \item Indifference conditions across uses at the fringe,
-% \begin{equation*}
-%  \re{\rho_r=\frac{\left( q_r \right)^{1+\epsilon_r}}{1+\epsilon_r} = (1-\alpha)p\theta_r\left(\frac{L_r}{S_r}\right)^{\alpha} }.
-% \end{equation*}
-% \ei
-% \end{frame}
 % \end{v75mins}
 
 
-\begin{frame}{Equilibrium}
+\begin{frame}[label=eqm]{Equilibrium}
 
 	\begin{midi}
-		\item Land developers buy land and numeraire good to provide residential floorspace.
+		\item Land developers buy land and numeraire good to provide residential floorspace. \hyperlink{landdevelopers}{\beamergotobutton{Details!}}
 		\item Arbitrage across land use at the fringe pins down land values and house prices:
 		\begin{equation*}
 			\rho_r = \frac{q_r^{1+\epsilon}}{1+\epsilon} = (1-\alpha)p \theta_r \left(\frac{L_r}{S_r}\right)^\alpha
@@ -1557,6 +1506,60 @@ We found:
 %{\tiny Note: $\epsilon_{\ell}$, $\epsilon_{\phi}=4$, constant $\tau$, L=1.}\\
 %\hyperlink{res_agp}{\beamergotobutton{back}}
 %\end{frame}
+
+\begin{frame}[label=landdevelopers]
+\frametitle{Housing Market Equilibrium}
+\framesubtitle{Land developers}
+\bi
+\item Housing supply provided by land developers.
+\item Use more or less intensively the land for residential purposes.
+\item Technology\\
+\medskip
+In each location, developers supply housing space $H(\ell)$ per unit of land with a convex cost,
+\begin{equation*}
+\frac{H(\ell)^{1+1/\epsilon}}{1+1/\epsilon},
+\end{equation*}
+in units of the numeraire.\\
+ \re{$\epsilon=$} cost parameter, possibly dependent on the location.
+    %which is meant to capture that it might be more costly for developers to build closer to the city center than in the suburbs or the rural part of the economy. but needs toe be the same at the fringe and in the rural part
+\ei
+\end{frame}
+
+\begin{frame}
+\frametitle{Housing Market Equilibrium}
+\framesubtitle{Housing supply}
+\bi
+\item Profits per unit of land at $\ell$,
+\begin{equation*}
+\pi(\ell)=q(\ell)H(\ell)-\frac{H(\ell)^{1+1/\epsilon_{\ell}}}{ 1+1/\epsilon_{\ell} }- \rho(\ell),
+\end{equation*}
+$\rho(\ell)$ the price of a unit of \textbf{land} in $\ell$.
+\item Housing supply from profit maximization,
+\begin{equation*}
+H(\ell)=q(\ell) ^{\epsilon_{\ell}},
+\end{equation*}
+with housing supply elasticity  $\re{\epsilon_{\ell}\geq 0}$, $\re{\partial\epsilon_{\ell}/\partial \ell \geq 0}$.
+
+see Baum-Snow and Huan (2019).  %important quantitatively but not qualitatively
+\ei
+\end{frame}
+
+\begin{frame}
+\frametitle{Housing Market Equilibrium: Supply}
+\framesubtitle{Land Prices and Land Use}
+\bi
+\item Profit maximization and free entry of developers pins down land prices in $\ell$,
+\begin{equation*}
+\rho(\ell)=\frac{q(\ell)^{1+\epsilon_{\ell}}}{ 1+\epsilon_{\ell}},
+\end{equation*}
+\item Land use with the highest rental value (\re{Rivalry})
+\item Indifference conditions across uses at the fringe,
+\begin{equation*}
+ \re{\rho_r=\frac{\left( q_r \right)^{1+\epsilon_r}}{1+\epsilon_r} = (1-\alpha)p\theta_r\left(\frac{L_r}{S_r}\right)^{\alpha} }.
+\end{equation*}
+\hyperlink{eqm}{\beamergotobutton{back}}
+\ei
+\end{frame}
 
 
 \backupend

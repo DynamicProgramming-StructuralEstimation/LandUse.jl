@@ -1,7 +1,7 @@
 # LandUse
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://floswald.github.io/LandUse.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://floswald.github.io/LandUse.jl/dev)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://floswald.github.io/LandUse.jl)
+
 
 GitHub Actions : [![Build Status](https://github.com/floswald/LandUse.jl/workflows/CI/badge.svg)](https://github.com/floswald/LandUse.jl/actions?query=workflow%3ACI+branch%3Amaster)
 
@@ -25,7 +25,7 @@ GitHub Actions : [![Build Status](https://github.com/floswald/LandUse.jl/workflo
     ```
     (v1.2) pkg>
     ```
-4. Download this package by pasting this into the `(v1.2) pkg>` prompt and hitting enter. (Only works for authorized users - i.e you! :smile:)
+4. Download this package by pasting this into the `(v1.2) pkg>` prompt and hitting enter. 
     ```julia
     dev https://github.com/floswald/LandUse.jl.git
     ```
