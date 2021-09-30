@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Single Region · LandUse.jl</title><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="index.html">LandUse.jl</a></span></div><form class="docs-search" action="search.html"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="index.html">Home</a></li><li class="is-active"><a class="tocitem" href="model.html">Single Region</a><ul class="internal"><li><a class="tocitem" href="#Parameter-and-Region-Setup"><span>Parameter and <code>Region</code> Setup</span></a></li><li><a class="tocitem" href="#Change-Parameter-Values"><span>Change Parameter Values</span></a></li></ul></li><li><a class="tocitem" href="country.html">Country</a></li><li><a class="tocitem" href="interact.html">Interactive Views</a></li><li><a class="tocitem" href="reference.html">Function Index</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href="model.html">Single Region</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="model.html">Single Region</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/floswald/LandUse.jl/blob/master/docs/src/model.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Single-City-Model"><a class="docs-heading-anchor" href="#Single-City-Model">Single City Model</a><a id="Single-City-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Single-City-Model" title="Permalink"></a></h1><p>This page describes the how to use the single city model, what we call a <code>Region</code>.</p><h2 id="Parameter-and-Region-Setup"><a class="docs-heading-anchor" href="#Parameter-and-Region-Setup">Parameter and <code>Region</code> Setup</a><a id="Parameter-and-Region-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Parameter-and-Region-Setup" title="Permalink"></a></h2><p>The first step is to obtain a <a href="reference.html#LandUse.Param"><code>Param</code></a> type, like so:</p><pre><code class="language-julia hljs">using LandUse
+using NNlib, Flux
+p = LandUse.Param()
+p</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">LandUse Param:
+      γ       : 0.3017057
+      ϵr      : 5.0
+      ϵs      : 2.0
+      η       : 0.0
+      ν       : 0.029633
+      cbar    : 0.7368016
+      sbar    : 0.2106496
+      θr      : 1.0
+      θu      : 1.0
+      α       : 0.75
+      λ       : 0.0
+      a       : 2.2491673
+      L       : 1.0
+      S       : 1.0
+      T       : 1840:10:2020
+      t       : 1815
+      σ       : 0.9999
+      K       : 1
+</code></pre><p>and then we create a <a href="reference.html#LandUse.Region"><code>Region</code></a> :</p><pre><code class="language-julia hljs">m = LandUse.Region(p)
+typeof(m)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">LandUse.Region</code></pre><p><em>Running a model</em> refers to computing the solution to the equation system defined in the <a href="model.html#LandUse.jm"><code>jm</code></a> function via JuMP.jl at all periods:</p><article class="docstring"><header><a class="docstring-binding" id="LandUse.jm" href="#LandUse.jm"><code>LandUse.jm</code></a> — <span class="docstring-category">Function</span></header><section><div><p>solve model at current <a href="reference.html#LandUse.Param"><code>Param</code></a> <code>p</code> and starting at point <code>x0</code></p><p><strong>Keyword:</strong></p><ul><li><code>estimateθ</code>: whether the sequence of <span>$\theta_u$</span> should be a choice variable or not. default <code>false</code>.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/floswald/LandUse.jl/blob/8f8e70972bda79ce1e4649f3b5f0493ea4eae8a4/src/jump.jl#L4-L11">source</a></section></article><p>We compute a starting value <span>$x_0$</span>, and then supply the period <span>$t$</span> solution vector as starting value to the period <span>$t+1$</span> problem. We obtain this model run via</p><pre><code class="language-julia hljs">x,M,p = LandUse.run(p)  # solution vectors, Region in each period, Param
+M</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">19-element Vector{LandUse.Region}:
+ Region: θu=01.000, θr=01.000, ϕ=0.0305, cityarea=0.0029, rel_cityarea=0.00, area=1.00, Lu=0.297, Lr=0.703, pop=1.000, pr=0.839
+ Region: θu=00.940, θr=01.097, ϕ=0.0365, cityarea=0.0042, rel_cityarea=0.00, area=1.00, Lu=0.379, Lr=0.671, pop=1.050, pr=0.671
+ Region: θu=00.962, θr=01.234, ϕ=0.0433, cityarea=0.0059, rel_cityarea=0.01, area=1.00, Lu=0.478, Lr=0.611, pop=1.089, pr=0.566
+ Region: θu=01.199, θr=01.330, ϕ=0.0476, cityarea=0.0071, rel_cityarea=0.01, area=1.00, Lu=0.525, Lr=0.537, pop=1.062, pr=0.635
+ Region: θu=01.284, θr=01.328, ϕ=0.0468, cityarea=0.0069, rel_cityarea=0.01, area=1.00, Lu=0.549, Lr=0.585, pop=1.134, pr=0.708
+ Region: θu=01.400, θr=01.426, ϕ=0.0509, cityarea=0.0081, rel_cityarea=0.01, area=1.00, Lu=0.607, Lr=0.551, pop=1.158, pr=0.697
+ Region: θu=01.580, θr=01.618, ϕ=0.0581, cityarea=0.0106, rel_cityarea=0.01, area=1.00, Lu=0.694, Lr=0.483, pop=1.177, pr=0.652
+ Region: θu=01.770, θr=01.653, ϕ=0.0598, cityarea=0.0112, rel_cityarea=0.01, area=1.00, Lu=0.719, Lr=0.481, pop=1.200, pr=0.721
+ Region: θu=01.876, θr=01.619, ϕ=0.0595, cityarea=0.0111, rel_cityarea=0.01, area=1.00, Lu=0.685, Lr=0.467, pop=1.151, pr=0.783
+ Region: θu=02.437, θr=02.036, ϕ=0.0736, cityarea=0.0170, rel_cityarea=0.02, area=1.00, Lu=0.834, Lr=0.380, pop=1.214, pr=0.743
+ Region: θu=02.937, θr=02.347, ϕ=0.0833, cityarea=0.0218, rel_cityarea=0.02, area=1.00, Lu=0.889, Lr=0.319, pop=1.208, pr=0.734
+ Region: θu=03.177, θr=02.731, ϕ=0.0914, cityarea=0.0262, rel_cityarea=0.03, area=1.00, Lu=0.952, Lr=0.274, pop=1.226, pr=0.642
+ Region: θu=04.607, θr=04.182, ϕ=0.1169, cityarea=0.0430, rel_cityarea=0.04, area=1.00, Lu=1.159, Lr=0.196, pop=1.355, pr=0.542
+ Region: θu=07.228, θr=07.251, ϕ=0.1512, cityarea=0.0718, rel_cityarea=0.08, area=1.00, Lu=1.377, Lr=0.132, pop=1.509, pr=0.437
+ Region: θu=09.586, θr=09.454, ϕ=0.1722, cityarea=0.0931, rel_cityarea=0.10, area=1.00, Lu=1.494, Lr=0.115, pop=1.609, pr=0.431
+ Region: θu=11.423, θr=14.875, ϕ=0.1928, cityarea=0.1167, rel_cityarea=0.13, area=1.00, Lu=1.607, Lr=0.089, pop=1.696, pr=0.303
+ Region: θu=13.133, θr=21.842, ϕ=0.2087, cityarea=0.1368, rel_cityarea=0.16, area=1.00, Lu=1.694, Lr=0.076, pop=1.770, pr=0.228
+ Region: θu=14.507, θr=24.127, ϕ=0.2173, cityarea=0.1483, rel_cityarea=0.17, area=1.00, Lu=1.810, Lr=0.078, pop=1.888, pr=0.230
+ Region: θu=16.025, θr=26.651, ϕ=0.2260, cityarea=0.1604, rel_cityarea=0.19, area=1.00, Lu=1.889, Lr=0.078, pop=1.967, pr=0.232</code></pre><p>And you can just index the <code>M</code> vector to look at a certain period in detail:</p><pre><code class="language-julia hljs">M[4]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Single Region:
+    pop   : 1.0617217051298398 
+    Lr   : 0.5371196295702115 
+    Lu   : 0.5246020755596282 
+    area : 1.0 
+    θu    : 1.1989433367508264 
+    θr    : 1.3296906559188277 
+    ϕ    : 0.04759400261942313 
+    cityarea    : 0.007116301389488562 
+    rel_cityarea    : 0.007167306099845785
+    Sr   : 0.8772096995245554 
+    Srh  : 0.115673999085956 
+    ρr   : 0.1461571706451302 
+    qr   : 0.9783522082603613 
+    wu0  : 1.1989433367508264 
+    wr   : 0.7161353105564563 
+    r    : 0.16721119245481 
+    pr   : 0.6352150235943144 
+    xsr  : 0.6259686572829377 
+    U    : 0.3141258037344255 
+</code></pre><h2 id="Change-Parameter-Values"><a class="docs-heading-anchor" href="#Change-Parameter-Values">Change Parameter Values</a><a id="Change-Parameter-Values-1"></a><a class="docs-heading-anchor-permalink" href="#Change-Parameter-Values" title="Permalink"></a></h2><p>The constructor to the <code>Param</code> type accepts a keyword <code>par</code> which has to be dict. You can change the default values by using the appropriate <code>key =&gt; value</code> pairs:</p><pre><code class="language-julia hljs">p2 = LandUse.Param(par = Dict(:α =&gt; 0.5))
+p2.α</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.5</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="index.html">« Home</a><a class="docs-footer-nextpage" href="country.html">Country »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.5 on <span class="colophon-date" title="Thursday 30 September 2021 17:31">Thursday 30 September 2021</span>. Using Julia version 1.6.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
