@@ -3,8 +3,7 @@ uuid = "b17b9026-e8ed-11e9-1cc1-ff964e727923"
 authors = ["Florian Oswald <florian.oswald@gmail.com>"]
 version = "1.0.0"
 
-[deps]  
-Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+[deps]
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 BlackBoxOptim = "a134a8b2-14d6-55f6-9291-3336d3ab0209"
 Blink = "ad839575-38b3-5650-b840-f874b8c74a25"
@@ -17,8 +16,10 @@ DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 GLPK = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
@@ -53,11 +54,9 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 
 [compat]
-julia = "1.6"
-StatsBase = "0.33.1"
 JSON = "0.21.2"
-Plots = "1.22.3"
-
+StatsBase = "0.33.1"
+julia = "1.6"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
