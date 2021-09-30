@@ -1,4 +1,4 @@
-push!(LOAD_PATH,"../src")
+push!(LOAD_PATH,joinpath(@__DIR__,"..","src"))
 using Documenter, LandUse, NNlib, Flux
 
 makedocs(modules = [LandUse], 

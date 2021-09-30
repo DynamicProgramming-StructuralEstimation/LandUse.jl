@@ -12,7 +12,6 @@ module LandUse
 	using StatsPlots
 	using DataFramesMeta
 	using Printf
-	# using NLopt
 	using LineSearches
 	using Formatting
 	using Roots
