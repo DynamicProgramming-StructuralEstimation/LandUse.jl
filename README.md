@@ -10,22 +10,21 @@ GitHub Actions : [![Build Status](https://github.com/floswald/LandUse.jl/workflo
 1. [Download julia](https://julialang.org/downloads/)
 2. start julia. you see this:
     ```
-    ➜  LandUse git:(eps) ✗ julia
-               _
+                   _
        _       _ _(_)_     |  Documentation: https://docs.julialang.org
       (_)     | (_) (_)    |
        _ _   _| |_  __ _   |  Type "?" for help, "]?" for Pkg help.
       | | | | | | |/ _` |  |
-      | | |_| | | | (_| |  |  Version 1.2.0 (2019-08-20)
+      | | |_| | | | (_| |  |  Version 1.6.2 (2021-07-14)
      _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
     |__/                   |
 
     ```
 3. Hit the `]` key to switch to package manager mode. the prompt switches to
     ```
-    (v1.2) pkg>
+    (v1.6) pkg>
     ```
-4. Download this package by pasting this into the `(v1.2) pkg>` prompt and hitting enter. 
+4. Download this package by pasting this into the `(v1.6) pkg>` prompt and hitting enter. 
     ```julia
     dev https://github.com/floswald/LandUse.jl.git
     ```
@@ -35,37 +34,40 @@ GitHub Actions : [![Build Status](https://github.com/floswald/LandUse.jl/workflo
     ```
 6. Go back to package mode: type `]`. then:
     ```julia
-    (v1.2) pkg> activate .     # tell pkg manager to modify current directory as project
+    (v1.6) pkg> activate .     # tell pkg manager to modify current directory as project
     (LandUse) pkg> instantiate    # download all dependencies
     ```
-7. Done! :tada: Now try it out. Go back to command mode with `ctrl-c`. Run the standard model of a single region:
+7. Done! :tada: Now try it out. Go back to command mode with `ctrl-c`. Run the standard model of a single region. Notice that the first call is slow because it has to precompile (in particular Ipopt):
     ```julia
-    julia> using LandUse
+    julia> using LandUse, Flux
 
-    julia> @time (x,M,p) = LandUse.run(LandUse.Region,LandUse.Param());
-    8.649693 seconds (32.37 M allocations: 1.642 GiB, 8.71% gc time)
-    # first call needs to compile. slow.
-
-    julia> @time (x,M,p) = LandUse.run(LandUse.Region,LandUse.Param())();
-    0.061881 seconds (31.64 k allocations: 1.369 MiB)
+    julia> @time (x,M,p) = LandUse.runm();
+    
+    ******************************************************************************
+    This program contains Ipopt, a library for large-scale nonlinear optimization.
+     Ipopt is released as open source code under the Eclipse Public License (EPL).
+             For more information visit https://github.com/coin-or/Ipopt
+    ******************************************************************************
+    
+     48.071280 seconds (133.79 M allocations: 7.714 GiB, 4.13% gc time, 2.12% compilation time)
+    
+    julia> @time (x,M,p) = LandUse.runm();
+      0.278983 seconds (1.07 M allocations: 166.982 MiB)
+    
+    julia> 
 
     # fast!
     ```
 8. Run unit tests: (hit `]` to go back to pkg mode)
     ```julia
     (LandUse) pkg> test
-       Testing LandUse
-     Resolving package versions...
+     Testing Running tests...
+
     Test Summary: | Pass  Total
-    LandUse.jl    |   44     44
-       Testing LandUse tests passed
+    LandUse.jl    |  326    326
+         Testing LandUse tests passed 
     ```
 9. Run the interactives. (Go back to command mode with `ctrl-c`)
     ```julia
-    # hit ? to go to help mode:
-    help?> LandUse.i22
-       https://github.com/floswald/LandUse.jl/issues/22
-
-    # run it
-    julia> LandUse.i22()  
+    julia> LandUse.i0()  
     ```

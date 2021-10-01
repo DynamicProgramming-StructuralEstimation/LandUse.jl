@@ -217,10 +217,17 @@ Quantitative Spatial Economics. Redding and Rossi-Hansberg (2017). Sprawl/Densit
 \bigskip
 \item[3.] Quantitative analysis
 
+
 \smallskip
 \bi
-\item Richer multi-cities/regions model calibrated to French data since 1840.
+\item Simple Version to generate intuition
 \ei
+
+\smallskip
+\bi
+\item Extended Quantitative Model to Match French data since 1840
+\ei
+
 
 
 \end{itemize}
@@ -306,7 +313,7 @@ Sources:
 % \end{v75mins}
 
 
-\begin{frame}
+\begin{frame}[label=GHSL_measure]
 \frametitle{City Area and Population Measurement}
 \begin{columns}
 \begin{column}{0.7\textwidth}
@@ -319,6 +326,7 @@ Sources:
 \item 1866: Manual + Census
 \item 1950: Manual + Census
 \item 1975, 1990, 2000, 2015: GHSL
+\item \hyperlink{GHSL}{\beamergotobutton{More details please!}}
 \end{midi}
 	
 \end{column}
@@ -1006,14 +1014,14 @@ Closed forms for:
 	\end{frame}
 
 
-\begin{frame}{Full Quantitative Model and Parameterization}
-	\begin{midi}
+\begin{frame}[label=param]{Full Quantitative Model and Parameterization}
+	\begin{mide}
 		\item Extend the model to bring closer to the data.
 		\item We estimate the $\theta$ series from data.
 		\item Observed Population Growth.
-		\item We use individual commuting data to calibrate $\tau$ parameters.
+		\item We use individual commuting data to directly calibrate the $\tau$ parameters. \hyperlink{tau}{\beamergotobutton{How?}}
 		\item Jointly estimate preference parameters to match set of moments.
-	\end{midi}
+	\end{mide}
 \end{frame}
 
 \begin{frame}{Estimated $\theta$'s}
@@ -1029,7 +1037,7 @@ Closed forms for:
 	\begin{midi}
 		\item $L_{rt} / L_t$: employment share in each period.
 		\item City is 18\% of rural area in 2015.
-		\item spending share on housing 1900 and 2010.
+		\item Spending share on housing 1900 and 2010.
 	\end{midi}
 \vspace{1cm}
 Internal city structure, density fall, commuting speed, house price: not targeted!
@@ -1114,7 +1122,7 @@ Internal city structure, density fall, commuting speed, house price: not targete
 \end{columns}
 \end{frame}
 
-\begin{frame}{Numerical Model Results: Wealth Distribution and House Price}
+\begin{frame}[label=wealthdist]{Numerical Model Results: Wealth Distribution and House Price}
 
 	\begin{figure}[t]
 		\centering
@@ -1131,6 +1139,8 @@ Internal city structure, density fall, commuting speed, house price: not targete
 			\end{minipage}%
 		}
 	\end{figure}
+	\hyperlink{AGP}{\beamergotobutton{Agricultural Productivity Gap}}
+
 \end{frame}
 
 \begin{frame}{Extensions}
@@ -1559,6 +1569,82 @@ see Baum-Snow and Huan (2019).  %important quantitatively but not qualitatively
 \end{equation*}
 \hyperlink{eqm}{\beamergotobutton{back}}
 \ei
+\end{frame}
+
+\begin{frame}[label=AGP]{Agricultural Productivity Gap}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\begin{midi}
+				\item Gollin et al (2013) show that sizeable productivity gap between agricultural and other sectors: Value added is higher in non-agricultural sectors, particularly in developing countries.
+				\item Proposed mechanisms in literature: migration costs, selection of migrants.
+				\item Here spatial frictions together with $\ell$-specific housing:
+				\begin{equation*}
+					w(\phi) = w_u - \tau(\phi) = w_r
+				\end{equation*}
+			\end{midi}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{figure}
+				\includegraphics[width=0.9\textwidth]{\modelplots/APG.pdf}
+				\caption{Agricultural Productivity Gap}	
+			\end{figure}
+		\end{column}
+	\end{columns}
+	\hyperlink{wealthdist}{\beamergotobutton{back}}
+
+\end{frame}
+
+
+
+
+\begin{frame}[label=GHSL]{GHSL Measurement - Reims \hyperlink{GHSL_measure}{\beamergotobutton{back}}}
+
+	\centering
+	\makebox[0pt][c]{%
+	\begin{minipage}[h]{0.33\linewidth}
+		\includegraphics[height=0.4\textheight]{\screenshots/reims-EM.png}
+		\includegraphics[height=0.42\textheight]{\screenshots/reims-1950.png}
+		\vfill
+	\end{minipage}\hspace{0.02\linewidth}
+	\begin{minipage}[h]{0.66\linewidth}
+		\includegraphics[height=\textheight]{\dataplots/GHSL-Built-Cut-Reims.pdf}
+
+	\end{minipage}
+	}
+	% \begin{columns}
+	% 	\begin{column}{0.2\textwidth}
+			
+	% 	\end{column}
+	% 	\begin{column}{0.8\textwidth}
+	% 			\includegraphics[height=0.8\textheight]{\dataplots/GHSL-Built-Cut-Reims.pdf}
+	% 	\end{column}
+	% \end{columns}
+	
+
+\end{frame}
+
+
+\begin{frame}[label=tau]{Calibration of $\tau$}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\begin{midi}
+				\item Micro foundation yields:
+				\begin{equation*}
+					\tau(\ell) = a \cdot w_u^{\xi_w} \cdot \ell^{\xi_\ell}
+				\end{equation*}
+				\item The elasticites of commuting speed $m$ with respect to income and speed are defined and measured in individual commuting data as:
+				\begin{enumerate}
+					\item Income: $1 - \xi_w$. Given distance, increase in speed over increase in income (across years (see plot).
+					\item Distance: $1 - \xi_\ell$. Given income, elasticity of speed to distance (in a given year - see table III in \href{https://floswald.github.io/pdf/landuse-appendix.pdf}{appendix}).
+				\end{enumerate}
+			\end{midi}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+				\includegraphics[width=1.05\textwidth]{\ENL/plots/speed-dist-france-2013.pdf}
+		\end{column}
+	\end{columns}
+	\hyperlink{param}{\beamergotobutton{back}}
+
 \end{frame}
 
 
