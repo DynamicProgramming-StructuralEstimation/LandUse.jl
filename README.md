@@ -1,9 +1,11 @@
-# LandUse
+# LandUse.jl
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://floswald.github.io/LandUse.jl)
+This is the julia code repository for our paper [Structural Change, Land Use and Urban Expansion](https://floswald.github.io/publication/landuse/). It contains all code needed to produce model outputs. Notice that there is a separate [R package (link)](https://github.com/floswald/LandUseR) which is used to perform data measurements for the same paper.
+
+Online Documentation : [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://floswald.github.io/LandUse.jl)
 
 
-GitHub Actions : [![Build Status](https://github.com/floswald/LandUse.jl/workflows/CI/badge.svg)](https://github.com/floswald/LandUse.jl/actions?query=workflow%3ACI+branch%3Amaster)
+Unit Tests : [![Build Status](https://github.com/floswald/LandUse.jl/workflows/CI/badge.svg)](https://github.com/floswald/LandUse.jl/actions?query=workflow%3ACI+branch%3Amaster)
 
 ## How to Use this
 
@@ -71,3 +73,5 @@ GitHub Actions : [![Build Status](https://github.com/floswald/LandUse.jl/workflo
     ```julia
     julia> LandUse.i0()  
     ```
+
+![](docs/src/assets/single-interact.gif)
